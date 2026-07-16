@@ -38,3 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ### Install mui
 
 ### Install Prisma
+
+Build prisma.ts as a Connector
+Build services/app.service.ts (The Service Layer) //Data base logic state
+app/actions.ts (The Server Actions)
