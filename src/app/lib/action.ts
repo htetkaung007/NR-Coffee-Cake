@@ -1,16 +1,12 @@
 import { User as NextAuthUser } from "next-auth";
-import { prisma } from "@/utils/prisma";
-import { Prisma } from "../../prisma/generated/client";
+import { prisma } from "@/app/utils/prisma";
+import { Prisma } from "../../../prisma/generated/client";
+import { NotFoundError } from "./error";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
 
 export class AppService {
-  // ---------------------------------------------------------------------
-  // User
-  // ---------------------------------------------------------------------
-
-  /** Optional lookup — caller decides what to do if no user exists. */
   static async getUserByEmail(email: string) {
     return prisma.user.findFirst({ where: { email } });
   }
@@ -22,10 +18,6 @@ export class AppService {
 
   // ---------------------------------------------------------------------
   // Default setup (transactional)
-  // Each step is its own function so it can be tested and read independently.
-  // The public entry point (createDefaultSetup) reads top-to-bottom like a
-  // newspaper headline; the details live in the private helpers below it.
-  // ---------------------------------------------------------------------
 
   static async createDefaultSetup(nextUser: NextAuthUser) {
     return prisma.$transaction(async (tx) => {
@@ -117,7 +109,7 @@ export class AppService {
   }
 
   // ---------------------------------------------------------------------
-  // Menu
+  // data fetching
   // ---------------------------------------------------------------------
 
   static async getMenuCategories(companyId: number) {
@@ -236,21 +228,19 @@ export class AppService {
 
   static async getCompanyByTableId(tableId: number) {
     const table = await prisma.tabel.findFirst({ where: { id: tableId } });
-    if (!table) throw new Error(`Table not found: ${tableId}`);
+    if (!table) throw new NotFoundError("Table not found", tableId);
 
     const location = await prisma.loaction.findFirst({
       where: { id: table.locationId },
     });
-    if (!location) {
-      throw new Error(`Location not found for table: ${tableId}`);
-    }
+    if (!location)
+      throw new NotFoundError("Location for table not found", tableId);
 
     const company = await prisma.company.findFirst({
       where: { id: location.companyId },
     });
-    if (!company) {
-      throw new Error(`Company not found for location: ${location.id}`);
-    }
+    if (!company)
+      throw new NotFoundError("Company for location not found", location.id);
 
     return company;
   }

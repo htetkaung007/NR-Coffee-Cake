@@ -39,6 +39,15 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ### Install Prisma
 
-Build prisma.ts as a Connector
-Build services/app.service.ts (The Service Layer) //Data base logic state
-app/actions.ts (The Server Actions)
+### //For Data Base and Back-End
+
+#### Build prisma.ts as a Connector
+
+#### Build services/app.service.ts (The Service Layer) //Data base logic state
+
+In this state we use work of transaction if one data creation fails then all data will be rollback and no data will be created.
+It can prevent form unnecessary build.
+
+#### app/actions.ts (The Server Actions)
+
+For server exception we use neverthrew.
