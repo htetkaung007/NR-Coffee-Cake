@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -51,3 +52,6 @@ It can prevent form unnecessary build.
 #### app/actions.ts (The Server Actions)
 
 For server exception we use neverthrew.
+=======
+# NR-Coffee-Cake
+>>>>>>> 7d0f998563780390d40a107ac022cdd4be72a12c
