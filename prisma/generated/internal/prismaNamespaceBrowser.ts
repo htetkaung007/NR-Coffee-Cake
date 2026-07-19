@@ -53,8 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Company: 'Company',
-  Tabel: 'Tabel',
-  Loaction: 'Loaction',
+  Table: 'Table',
+  Location: 'Location',
   SelectedLocation: 'SelectedLocation',
   Menu: 'Menu',
   MenuCategory: 'MenuCategory',
@@ -88,6 +88,7 @@ export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   name: 'name',
+  password: 'password',
   companyId: 'companyId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -109,7 +110,7 @@ export const CompanyScalarFieldEnum = {
 export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeof CompanyScalarFieldEnum]
 
 
-export const TabelScalarFieldEnum = {
+export const TableScalarFieldEnum = {
   id: 'id',
   name: 'name',
   qrcodeImageUrl: 'qrcodeImageUrl',
@@ -119,10 +120,10 @@ export const TabelScalarFieldEnum = {
   isArchived: 'isArchived'
 } as const
 
-export type TabelScalarFieldEnum = (typeof TabelScalarFieldEnum)[keyof typeof TabelScalarFieldEnum]
+export type TableScalarFieldEnum = (typeof TableScalarFieldEnum)[keyof typeof TableScalarFieldEnum]
 
 
-export const LoactionScalarFieldEnum = {
+export const LocationScalarFieldEnum = {
   id: 'id',
   name: 'name',
   companyId: 'companyId',
@@ -131,7 +132,7 @@ export const LoactionScalarFieldEnum = {
   isArchived: 'isArchived'
 } as const
 
-export type LoactionScalarFieldEnum = (typeof LoactionScalarFieldEnum)[keyof typeof LoactionScalarFieldEnum]
+export type LocationScalarFieldEnum = (typeof LocationScalarFieldEnum)[keyof typeof LocationScalarFieldEnum]
 
 
 export const SelectedLocationScalarFieldEnum = {
@@ -223,7 +224,7 @@ export type MenuAddonCategoriesScalarFieldEnum = (typeof MenuAddonCategoriesScal
 
 export const DisableLocationMenusScalarFieldEnum = {
   id: 'id',
-  locationsId: 'locationsId',
+  locationId: 'locationId',
   menuId: 'menuId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -235,7 +236,7 @@ export type DisableLocationMenusScalarFieldEnum = (typeof DisableLocationMenusSc
 
 export const DisableLocationMenuCategoriesScalarFieldEnum = {
   id: 'id',
-  locationsId: 'locationsId',
+  locationId: 'locationId',
   menuCategoryId: 'menuCategoryId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',

@@ -414,8 +414,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never
 export const ModelName = {
   User: "User",
   Company: "Company",
-  Tabel: "Tabel",
-  Loaction: "Loaction",
+  Table: "Table",
+  Location: "Location",
   SelectedLocation: "SelectedLocation",
   Menu: "Menu",
   MenuCategory: "MenuCategory",
@@ -451,8 +451,8 @@ export type TypeMap<
     modelProps:
       | "user"
       | "company"
-      | "tabel"
-      | "loaction"
+      | "table"
+      | "location"
       | "selectedLocation"
       | "menu"
       | "menuCategory"
@@ -619,154 +619,154 @@ export type TypeMap<
         };
       };
     };
-    Tabel: {
-      payload: Prisma.$TabelPayload<ExtArgs>;
-      fields: Prisma.TabelFieldRefs;
+    Table: {
+      payload: Prisma.$TablePayload<ExtArgs>;
+      fields: Prisma.TableFieldRefs;
       operations: {
         findUnique: {
-          args: Prisma.TabelFindUniqueArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload> | null;
+          args: Prisma.TableFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload> | null;
         };
         findUniqueOrThrow: {
-          args: Prisma.TabelFindUniqueOrThrowArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>;
+          args: Prisma.TableFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>;
         };
         findFirst: {
-          args: Prisma.TabelFindFirstArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload> | null;
+          args: Prisma.TableFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload> | null;
         };
         findFirstOrThrow: {
-          args: Prisma.TabelFindFirstOrThrowArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>;
+          args: Prisma.TableFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>;
         };
         findMany: {
-          args: Prisma.TabelFindManyArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>[];
+          args: Prisma.TableFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>[];
         };
         create: {
-          args: Prisma.TabelCreateArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>;
+          args: Prisma.TableCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>;
         };
         createMany: {
-          args: Prisma.TabelCreateManyArgs<ExtArgs>;
+          args: Prisma.TableCreateManyArgs<ExtArgs>;
           result: BatchPayload;
         };
         createManyAndReturn: {
-          args: Prisma.TabelCreateManyAndReturnArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>[];
+          args: Prisma.TableCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>[];
         };
         delete: {
-          args: Prisma.TabelDeleteArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>;
+          args: Prisma.TableDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>;
         };
         update: {
-          args: Prisma.TabelUpdateArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>;
+          args: Prisma.TableUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>;
         };
         deleteMany: {
-          args: Prisma.TabelDeleteManyArgs<ExtArgs>;
+          args: Prisma.TableDeleteManyArgs<ExtArgs>;
           result: BatchPayload;
         };
         updateMany: {
-          args: Prisma.TabelUpdateManyArgs<ExtArgs>;
+          args: Prisma.TableUpdateManyArgs<ExtArgs>;
           result: BatchPayload;
         };
         updateManyAndReturn: {
-          args: Prisma.TabelUpdateManyAndReturnArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>[];
+          args: Prisma.TableUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>[];
         };
         upsert: {
-          args: Prisma.TabelUpsertArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TabelPayload>;
+          args: Prisma.TableUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TablePayload>;
         };
         aggregate: {
-          args: Prisma.TabelAggregateArgs<ExtArgs>;
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTabel>;
+          args: Prisma.TableAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTable>;
         };
         groupBy: {
-          args: Prisma.TabelGroupByArgs<ExtArgs>;
-          result: runtime.Types.Utils.Optional<Prisma.TabelGroupByOutputType>[];
+          args: Prisma.TableGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.TableGroupByOutputType>[];
         };
         count: {
-          args: Prisma.TabelCountArgs<ExtArgs>;
+          args: Prisma.TableCountArgs<ExtArgs>;
           result:
-            | runtime.Types.Utils.Optional<Prisma.TabelCountAggregateOutputType>
+            | runtime.Types.Utils.Optional<Prisma.TableCountAggregateOutputType>
             | number;
         };
       };
     };
-    Loaction: {
-      payload: Prisma.$LoactionPayload<ExtArgs>;
-      fields: Prisma.LoactionFieldRefs;
+    Location: {
+      payload: Prisma.$LocationPayload<ExtArgs>;
+      fields: Prisma.LocationFieldRefs;
       operations: {
         findUnique: {
-          args: Prisma.LoactionFindUniqueArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload> | null;
+          args: Prisma.LocationFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload> | null;
         };
         findUniqueOrThrow: {
-          args: Prisma.LoactionFindUniqueOrThrowArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>;
+          args: Prisma.LocationFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>;
         };
         findFirst: {
-          args: Prisma.LoactionFindFirstArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload> | null;
+          args: Prisma.LocationFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload> | null;
         };
         findFirstOrThrow: {
-          args: Prisma.LoactionFindFirstOrThrowArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>;
+          args: Prisma.LocationFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>;
         };
         findMany: {
-          args: Prisma.LoactionFindManyArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>[];
+          args: Prisma.LocationFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>[];
         };
         create: {
-          args: Prisma.LoactionCreateArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>;
+          args: Prisma.LocationCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>;
         };
         createMany: {
-          args: Prisma.LoactionCreateManyArgs<ExtArgs>;
+          args: Prisma.LocationCreateManyArgs<ExtArgs>;
           result: BatchPayload;
         };
         createManyAndReturn: {
-          args: Prisma.LoactionCreateManyAndReturnArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>[];
+          args: Prisma.LocationCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>[];
         };
         delete: {
-          args: Prisma.LoactionDeleteArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>;
+          args: Prisma.LocationDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>;
         };
         update: {
-          args: Prisma.LoactionUpdateArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>;
+          args: Prisma.LocationUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>;
         };
         deleteMany: {
-          args: Prisma.LoactionDeleteManyArgs<ExtArgs>;
+          args: Prisma.LocationDeleteManyArgs<ExtArgs>;
           result: BatchPayload;
         };
         updateMany: {
-          args: Prisma.LoactionUpdateManyArgs<ExtArgs>;
+          args: Prisma.LocationUpdateManyArgs<ExtArgs>;
           result: BatchPayload;
         };
         updateManyAndReturn: {
-          args: Prisma.LoactionUpdateManyAndReturnArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>[];
+          args: Prisma.LocationUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>[];
         };
         upsert: {
-          args: Prisma.LoactionUpsertArgs<ExtArgs>;
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoactionPayload>;
+          args: Prisma.LocationUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LocationPayload>;
         };
         aggregate: {
-          args: Prisma.LoactionAggregateArgs<ExtArgs>;
-          result: runtime.Types.Utils.Optional<Prisma.AggregateLoaction>;
+          args: Prisma.LocationAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLocation>;
         };
         groupBy: {
-          args: Prisma.LoactionGroupByArgs<ExtArgs>;
-          result: runtime.Types.Utils.Optional<Prisma.LoactionGroupByOutputType>[];
+          args: Prisma.LocationGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.LocationGroupByOutputType>[];
         };
         count: {
-          args: Prisma.LoactionCountArgs<ExtArgs>;
+          args: Prisma.LocationCountArgs<ExtArgs>;
           result:
-            | runtime.Types.Utils.Optional<Prisma.LoactionCountAggregateOutputType>
+            | runtime.Types.Utils.Optional<Prisma.LocationCountAggregateOutputType>
             | number;
         };
       };
@@ -1650,6 +1650,7 @@ export const UserScalarFieldEnum = {
   id: "id",
   email: "email",
   name: "name",
+  password: "password",
   companyId: "companyId",
   createdAt: "createdAt",
   updateTime: "updateTime",
@@ -1671,7 +1672,7 @@ export const CompanyScalarFieldEnum = {
 export type CompanyScalarFieldEnum =
   (typeof CompanyScalarFieldEnum)[keyof typeof CompanyScalarFieldEnum];
 
-export const TabelScalarFieldEnum = {
+export const TableScalarFieldEnum = {
   id: "id",
   name: "name",
   qrcodeImageUrl: "qrcodeImageUrl",
@@ -1681,10 +1682,10 @@ export const TabelScalarFieldEnum = {
   isArchived: "isArchived",
 } as const;
 
-export type TabelScalarFieldEnum =
-  (typeof TabelScalarFieldEnum)[keyof typeof TabelScalarFieldEnum];
+export type TableScalarFieldEnum =
+  (typeof TableScalarFieldEnum)[keyof typeof TableScalarFieldEnum];
 
-export const LoactionScalarFieldEnum = {
+export const LocationScalarFieldEnum = {
   id: "id",
   name: "name",
   companyId: "companyId",
@@ -1693,8 +1694,8 @@ export const LoactionScalarFieldEnum = {
   isArchived: "isArchived",
 } as const;
 
-export type LoactionScalarFieldEnum =
-  (typeof LoactionScalarFieldEnum)[keyof typeof LoactionScalarFieldEnum];
+export type LocationScalarFieldEnum =
+  (typeof LocationScalarFieldEnum)[keyof typeof LocationScalarFieldEnum];
 
 export const SelectedLocationScalarFieldEnum = {
   id: "id",
@@ -1785,7 +1786,7 @@ export type MenuAddonCategoriesScalarFieldEnum =
 
 export const DisableLocationMenusScalarFieldEnum = {
   id: "id",
-  locationsId: "locationsId",
+  locationId: "locationId",
   menuId: "menuId",
   createdAt: "createdAt",
   updateTime: "updateTime",
@@ -1797,7 +1798,7 @@ export type DisableLocationMenusScalarFieldEnum =
 
 export const DisableLocationMenuCategoriesScalarFieldEnum = {
   id: "id",
-  locationsId: "locationsId",
+  locationId: "locationId",
   menuCategoryId: "menuCategoryId",
   createdAt: "createdAt",
   updateTime: "updateTime",
@@ -2063,8 +2064,8 @@ export type PrismaClientOptions = (
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit;
   company?: Prisma.CompanyOmit;
-  tabel?: Prisma.TabelOmit;
-  loaction?: Prisma.LoactionOmit;
+  table?: Prisma.TableOmit;
+  location?: Prisma.LocationOmit;
   selectedLocation?: Prisma.SelectedLocationOmit;
   menu?: Prisma.MenuOmit;
   menuCategory?: Prisma.MenuCategoryOmit;

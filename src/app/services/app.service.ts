@@ -1,52 +1,117 @@
-import { User as NextAuthUser } from "next-auth";
-import { prisma } from "@/app/utils/prisma";
-import { Prisma } from "../../prisma/generated/client";
+import bcrypt from "bcryptjs";
+import { Prisma } from "../../../prisma/generated/client";
+import { prisma } from "../utils/prisma";
+import { NotFoundError, ValidationError } from "../lib/errors";
 
-type Tx = Prisma.TransactionClient; //type Tx = Prisma.TransactionClient; // Type for the transaction client
+// Transaction-scoped Prisma client type, used by the private setup helpers below.
+type Tx = Prisma.TransactionClient;
 
+// AppService ကိုယ်တိုင်ရဲ့ own input shape — NextAuth ရဲ့ User type ကို
+// တိုက်ရိုက် မသုံးတော့ဘူး (Boundaries: Service layer က third-party auth
+// library ရဲ့ type ကို မမှီခိုသင့်ဘူး, NextAuth ကနေရော, register form
+// ကနေရော ၂ နေရာစလုံးက ခေါ်နိုင်ဖို့).
+type NewUserInput = { name?: string | null; email: string };
+
+// AppService ရဲ့ method တွေက this.xxx() အစား AppService.xxx() ကို
+// အသုံးပြုထားတယ် — ဘာကြောင့်လဲဆိုတော့ toSafeResult(AppService.someMethod)
+// လို "function ကို variable ထဲ ခွာထုတ်" တဲ့ pattern ကို actions/*.ts
+// file တွေထဲမှာ အမြဲသုံးနေတယ် (Zod/neverthrow pipeline). ဒီလို ခွာထုတ်
+// လိုက်တာနဲ့ static method ရဲ့ `this` context ပျောက်သွားမယ် (undefined
+// ဖြစ်မယ်) — this.xxx() ခေါ်ထားရင် crash ဖြစ်မယ်, AppService.xxx()
+// ခေါ်ထားရင်တော့ ဘယ်လို detach ဖြစ်ဖြစ် အမြဲ အလုပ်လုပ်မယ်.
 export class AppService {
+  // ---------------------------------------------------------------------
+  // User
+  // ---------------------------------------------------------------------
+
   /** Optional lookup — caller decides what to do if no user exists. */
   static async getUserByEmail(email: string) {
     return prisma.user.findFirst({ where: { email } });
   }
 
   static async getCompanyIdByEmail(email: string) {
-    const user = await this.getUserByEmail(email); // reuse instead of re-querying
+    const user = await AppService.getUserByEmail(email); // reuse instead of re-querying
     return user?.companyId ?? null;
   }
-  // ---------------------------------------------------------------------
-  // Default data retrieval methods for the app, used by the API routes and other services
 
-  static async createDefaultSetup(nextUser: NextAuthUser) {
-    //work of transaction if one data creation fails then all data will be rollback and no data will be created
+  // ---------------------------------------------------------------------
+  // Default setup (transactional)
+  // Each step is its own function so it can be tested and read independently.
+  // The public entry point (createDefaultSetup) reads top-to-bottom like a
+  // newspaper headline; the details live in the private helpers below it.
+  // ---------------------------------------------------------------------
+
+  static async createDefaultSetup(nextUser: NewUserInput, password?: string) {
     return prisma.$transaction(async (tx) => {
-      const company = await this.createDefaultCompany(tx); //for rollback use transaction don't use prisma directly we use tx which is transaction client
-      const user = await this.createUserForCompany(tx, nextUser, company.id);
-      const menu = await this.createDefaultMenu(tx, company.id);
-      await this.createDefaultAddons(tx, menu.id);
-      const location = await this.createDefaultLocation(
+      const company = await AppService.createDefaultCompany(tx);
+      const user = await AppService.createUserForCompany(
+        tx,
+        nextUser,
+        company.id,
+        password,
+      );
+      const menu = await AppService.createDefaultMenu(tx, company.id);
+      await AppService.createDefaultAddons(tx, menu.id);
+      const location = await AppService.createDefaultLocation(
         tx,
         company.id,
         user.id,
       );
-      const table = await this.createDefaultTable(tx, location.id);
+      const table = await AppService.createDefaultTable(tx, location.id);
 
       return { user, company, location, table };
     });
   }
 
+  /**
+   * Credentials (email/password) sign-up. Google OAuth doesn't go through
+   * here — NextAuth's signIn callback calls createDefaultSetup directly.
+   * This is the missing "create" half of the Credentials flow: authorize()
+   * only ever reads (getUserByEmail); this is where a new row gets written.
+   */
+  static async registerUser(input: {
+    name: string;
+    email: string;
+    password: string;
+  }) {
+    const existingUser = await AppService.getUserByEmail(input.email);
+    if (existingUser) {
+      throw new ValidationError("Email is already registered.");
+    }
+
+    const hashedPassword = await bcrypt.hash(input.password, 10);
+    return AppService.createDefaultSetup(
+      { name: input.name, email: input.email },
+      hashedPassword,
+    );
+  }
+  static async verifyCredentials(email: string, password: string) {
+    const user = await AppService.getUserByEmail(email);
+    if (!user || !user.password) return null; // no account, or Google-only account (no password set)
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) return null;
+
+    return user;
+  }
   private static createDefaultCompany(tx: Tx) {
     return tx.company.create({ data: { name: "Default Company" } });
   }
 
   private static createUserForCompany(
     tx: Tx,
-    nextUser: NextAuthUser,
+    nextUser: NewUserInput,
     companyId: number,
+    password?: string,
   ) {
     const { name, email } = nextUser;
     return tx.user.create({
-      data: { name: String(name), email: String(email), companyId },
+      data: {
+        name: name ? String(name) : null,
+        email: String(email),
+        companyId,
+        ...(password ? { password } : {}),
+      },
     });
   }
 
@@ -90,7 +155,7 @@ export class AppService {
     companyId: number,
     userId: number,
   ) {
-    const location = await tx.loaction.create({
+    const location = await tx.location.create({
       data: { name: "Default Location", companyId },
     });
 
@@ -102,13 +167,14 @@ export class AppService {
   }
 
   private static createDefaultTable(tx: Tx, locationId: number) {
-    return tx.tabel.create({
+    return tx.table.create({
       data: { name: "Default Table", locationId, qrcodeImageUrl: "" },
     });
   }
 
   // ---------------------------------------------------------------------
-  //Below are the methods for fetching data for the app, used by the API routes and other services
+  // Menu
+  // ---------------------------------------------------------------------
 
   static async getMenuCategories(companyId: number) {
     return prisma.menuCategory.findMany({
@@ -118,7 +184,7 @@ export class AppService {
   }
 
   static async getMenus(companyId: number) {
-    const categories = await this.getMenuCategories(companyId);
+    const categories = await AppService.getMenuCategories(companyId);
     const categoryIds = categories.map((category) => category.id);
 
     const links = await prisma.menuMenuCategory.findMany({
@@ -156,7 +222,7 @@ export class AppService {
   // ---------------------------------------------------------------------
 
   static async getAddonCategories(companyId: number) {
-    const menus = await this.getMenus(companyId);
+    const menus = await AppService.getMenus(companyId);
     const menuIds = menus.map((menu) => menu.id);
 
     const links = await prisma.menuAddonCategories.findMany({
@@ -170,7 +236,7 @@ export class AppService {
   }
 
   static async getAddons(companyId: number) {
-    const categories = await this.getAddonCategories(companyId);
+    const categories = await AppService.getAddonCategories(companyId);
     const categoryIds = categories.map((category) => category.id);
 
     return prisma.addon.findMany({
@@ -184,7 +250,7 @@ export class AppService {
   // ---------------------------------------------------------------------
 
   static async getLocations(companyId: number) {
-    return prisma.loaction.findMany({
+    return prisma.location.findMany({
       where: { companyId, isArchived: false },
       orderBy: { id: "asc" },
     });
@@ -198,22 +264,22 @@ export class AppService {
   }
 
   static async getTables(companyId: number) {
-    const locations = await this.getLocations(companyId);
+    const locations = await AppService.getLocations(companyId);
     const locationIds = locations.map((location) => location.id);
 
-    return prisma.tabel.findMany({
+    return prisma.table.findMany({
       where: { locationId: { in: locationIds }, isArchived: false },
       orderBy: { id: "asc" },
     });
   }
 
   static async getSelectedLocationTables(locationId: number) {
-    return prisma.tabel.findMany({ where: { locationId } });
+    return prisma.table.findMany({ where: { locationId } });
   }
 
   static async getDisabledLocationMenus(selectedLocationId: number) {
     return prisma.disableLocationMenus.findMany({
-      where: { locationsId: selectedLocationId },
+      where: { locationId: selectedLocationId },
     });
   }
 
@@ -225,31 +291,27 @@ export class AppService {
   // ---------------------------------------------------------------------
 
   static async getCompanyByTableId(tableId: number) {
-    const table = await prisma.tabel.findFirst({ where: { id: tableId } });
-    if (!table) throw new Error(`Table not found: ${tableId}`);
+    const table = await prisma.table.findFirst({ where: { id: tableId } });
+    if (!table) throw new NotFoundError("Table", tableId);
 
-    const location = await prisma.loaction.findFirst({
+    const location = await prisma.location.findFirst({
       where: { id: table.locationId },
     });
-    if (!location) {
-      throw new Error(`Location not found for table: ${tableId}`);
-    }
+    if (!location) throw new NotFoundError("Location for table", tableId);
 
     const company = await prisma.company.findFirst({
       where: { id: location.companyId },
     });
-    if (!company) {
-      throw new Error(`Company not found for location: ${location.id}`);
-    }
+    if (!company) throw new NotFoundError("Company for location", location.id);
 
     return company;
   }
 
   static async getOrderAppMenuCategories(tableId: number) {
-    const company = await this.getCompanyByTableId(tableId);
+    const company = await AppService.getCompanyByTableId(tableId);
 
-    const table = await prisma.tabel.findFirst({ where: { id: tableId } });
-    const location = await prisma.loaction.findFirst({
+    const table = await prisma.table.findFirst({ where: { id: tableId } });
+    const location = await prisma.location.findFirst({
       where: { id: table?.locationId },
     });
 
@@ -261,7 +323,7 @@ export class AppService {
 
     const disabledCategories =
       await prisma.disableLocationMenuCategories.findMany({
-        where: { locationsId: location?.id },
+        where: { locationId: location?.id },
       });
 
     // Bug fix: the original code only compared against

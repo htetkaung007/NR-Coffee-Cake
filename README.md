@@ -49,9 +49,10 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 In this state we use work of transaction if one data creation fails then all data will be rollback and no data will be created.
 It can prevent form unnecessary build.
 
-#### app/actions.ts (The Server Actions)
+#### app/actions.ts (The Server Actions) 
 
-For server exception we use neverthrew.
-=======
+# For server exception we use neverthrew.
+
 # NR-Coffee-Cake
->>>>>>> 7d0f998563780390d40a107ac022cdd4be72a12c
+
+

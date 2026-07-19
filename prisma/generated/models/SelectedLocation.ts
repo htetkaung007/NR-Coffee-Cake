@@ -232,7 +232,7 @@ export type SelectedLocationWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"SelectedLocation"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"SelectedLocation"> | Date | string
   isArchived?: Prisma.BoolFilter<"SelectedLocation"> | boolean
-  location?: Prisma.XOR<Prisma.LoactionScalarRelationFilter, Prisma.LoactionWhereInput>
+  location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
@@ -243,7 +243,7 @@ export type SelectedLocationOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
-  location?: Prisma.LoactionOrderByWithRelationInput
+  location?: Prisma.LocationOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -257,7 +257,7 @@ export type SelectedLocationWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"SelectedLocation"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"SelectedLocation"> | Date | string
   isArchived?: Prisma.BoolFilter<"SelectedLocation"> | boolean
-  location?: Prisma.XOR<Prisma.LoactionScalarRelationFilter, Prisma.LoactionWhereInput>
+  location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
@@ -291,7 +291,7 @@ export type SelectedLocationCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
-  location: Prisma.LoactionCreateNestedOneWithoutSelectedLocationsInput
+  location: Prisma.LocationCreateNestedOneWithoutSelectedLocationsInput
   user: Prisma.UserCreateNestedOneWithoutSelectedLocationsInput
 }
 
@@ -308,7 +308,7 @@ export type SelectedLocationUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  location?: Prisma.LoactionUpdateOneRequiredWithoutSelectedLocationsNestedInput
+  location?: Prisma.LocationUpdateOneRequiredWithoutSelectedLocationsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutSelectedLocationsNestedInput
 }
 
@@ -482,7 +482,7 @@ export type SelectedLocationCreateWithoutUserInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
-  location: Prisma.LoactionCreateNestedOneWithoutSelectedLocationsInput
+  location: Prisma.LocationCreateNestedOneWithoutSelectedLocationsInput
 }
 
 export type SelectedLocationUncheckedCreateWithoutUserInput = {
@@ -584,7 +584,7 @@ export type SelectedLocationUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  location?: Prisma.LoactionUpdateOneRequiredWithoutSelectedLocationsNestedInput
+  location?: Prisma.LocationUpdateOneRequiredWithoutSelectedLocationsNestedInput
 }
 
 export type SelectedLocationUncheckedUpdateWithoutUserInput = {
@@ -643,7 +643,7 @@ export type SelectedLocationSelect<ExtArgs extends runtime.Types.Extensions.Inte
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
-  location?: boolean | Prisma.LoactionDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["selectedLocation"]>
 
@@ -654,7 +654,7 @@ export type SelectedLocationSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
-  location?: boolean | Prisma.LoactionDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["selectedLocation"]>
 
@@ -665,7 +665,7 @@ export type SelectedLocationSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
-  location?: boolean | Prisma.LoactionDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["selectedLocation"]>
 
@@ -680,22 +680,22 @@ export type SelectedLocationSelectScalar = {
 
 export type SelectedLocationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "locationId" | "userId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["selectedLocation"]>
 export type SelectedLocationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  location?: boolean | Prisma.LoactionDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type SelectedLocationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  location?: boolean | Prisma.LoactionDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type SelectedLocationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  location?: boolean | Prisma.LoactionDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $SelectedLocationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SelectedLocation"
   objects: {
-    location: Prisma.$LoactionPayload<ExtArgs>
+    location: Prisma.$LocationPayload<ExtArgs>
     user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1099,7 +1099,7 @@ readonly fields: SelectedLocationFieldRefs;
  */
 export interface Prisma__SelectedLocationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  location<T extends Prisma.LoactionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LoactionDefaultArgs<ExtArgs>>): Prisma.Prisma__LoactionClient<runtime.Types.Result.GetResult<Prisma.$LoactionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  location<T extends Prisma.LocationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LocationDefaultArgs<ExtArgs>>): Prisma.Prisma__LocationClient<runtime.Types.Result.GetResult<Prisma.$LocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.

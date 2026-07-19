@@ -10,8 +10,8 @@
  */
 export type * from './models/User'
 export type * from './models/Company'
-export type * from './models/Tabel'
-export type * from './models/Loaction'
+export type * from './models/Table'
+export type * from './models/Location'
 export type * from './models/SelectedLocation'
 export type * from './models/Menu'
 export type * from './models/MenuCategory'

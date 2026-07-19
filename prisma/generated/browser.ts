@@ -28,15 +28,15 @@ export type User = Prisma.UserModel
  */
 export type Company = Prisma.CompanyModel
 /**
- * Model Tabel
+ * Model Table
  * 
  */
-export type Tabel = Prisma.TabelModel
+export type Table = Prisma.TableModel
 /**
- * Model Loaction
+ * Model Location
  * 
  */
-export type Loaction = Prisma.LoactionModel
+export type Location = Prisma.LocationModel
 /**
  * Model SelectedLocation
  * 

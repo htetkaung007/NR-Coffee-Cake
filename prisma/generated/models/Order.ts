@@ -253,7 +253,7 @@ export type OrderWhereInput = {
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolFilter<"Order"> | boolean
   menu?: Prisma.XOR<Prisma.MenuScalarRelationFilter, Prisma.MenuWhereInput>
-  table?: Prisma.XOR<Prisma.TabelScalarRelationFilter, Prisma.TabelWhereInput>
+  table?: Prisma.XOR<Prisma.TableScalarRelationFilter, Prisma.TableWhereInput>
   OrdersAddons?: Prisma.OrdersAddonListRelationFilter
 }
 
@@ -267,7 +267,7 @@ export type OrderOrderByWithRelationInput = {
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
   menu?: Prisma.MenuOrderByWithRelationInput
-  table?: Prisma.TabelOrderByWithRelationInput
+  table?: Prisma.TableOrderByWithRelationInput
   OrdersAddons?: Prisma.OrdersAddonOrderByRelationAggregateInput
 }
 
@@ -284,7 +284,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolFilter<"Order"> | boolean
   menu?: Prisma.XOR<Prisma.MenuScalarRelationFilter, Prisma.MenuWhereInput>
-  table?: Prisma.XOR<Prisma.TabelScalarRelationFilter, Prisma.TabelWhereInput>
+  table?: Prisma.XOR<Prisma.TableScalarRelationFilter, Prisma.TableWhereInput>
   OrdersAddons?: Prisma.OrdersAddonListRelationFilter
 }, "id">
 
@@ -325,7 +325,7 @@ export type OrderCreateInput = {
   updateTime?: Date | string
   isArchived?: boolean
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
-  table: Prisma.TabelCreateNestedOneWithoutOrdersInput
+  table: Prisma.TableCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
 }
 
@@ -348,7 +348,7 @@ export type OrderUpdateInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
-  table?: Prisma.TabelUpdateOneRequiredWithoutOrdersNestedInput
+  table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
 }
 
@@ -625,7 +625,7 @@ export type OrderCreateWithoutMenuInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
-  table: Prisma.TabelCreateNestedOneWithoutOrdersInput
+  table: Prisma.TableCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
 }
 
@@ -673,7 +673,7 @@ export type OrderCreateWithoutOrdersAddonsInput = {
   updateTime?: Date | string
   isArchived?: boolean
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
-  table: Prisma.TabelCreateNestedOneWithoutOrdersInput
+  table: Prisma.TableCreateNestedOneWithoutOrdersInput
 }
 
 export type OrderUncheckedCreateWithoutOrdersAddonsInput = {
@@ -710,7 +710,7 @@ export type OrderUpdateWithoutOrdersAddonsInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
-  table?: Prisma.TabelUpdateOneRequiredWithoutOrdersNestedInput
+  table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
@@ -781,7 +781,7 @@ export type OrderUpdateWithoutMenuInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  table?: Prisma.TabelUpdateOneRequiredWithoutOrdersNestedInput
+  table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
 }
 
@@ -847,7 +847,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   updateTime?: boolean
   isArchived?: boolean
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
-  table?: boolean | Prisma.TabelDefaultArgs<ExtArgs>
+  table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
   OrdersAddons?: boolean | Prisma.Order$OrdersAddonsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
@@ -862,7 +862,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   updateTime?: boolean
   isArchived?: boolean
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
-  table?: boolean | Prisma.TabelDefaultArgs<ExtArgs>
+  table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
 export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -875,7 +875,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   updateTime?: boolean
   isArchived?: boolean
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
-  table?: boolean | Prisma.TabelDefaultArgs<ExtArgs>
+  table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
 export type OrderSelectScalar = {
@@ -892,24 +892,24 @@ export type OrderSelectScalar = {
 export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "menuId" | "quantity" | "tableId" | "status" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
-  table?: boolean | Prisma.TabelDefaultArgs<ExtArgs>
+  table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
   OrdersAddons?: boolean | Prisma.Order$OrdersAddonsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
-  table?: boolean | Prisma.TabelDefaultArgs<ExtArgs>
+  table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }
 export type OrderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
-  table?: boolean | Prisma.TabelDefaultArgs<ExtArgs>
+  table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }
 
 export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Order"
   objects: {
     menu: Prisma.$MenuPayload<ExtArgs>
-    table: Prisma.$TabelPayload<ExtArgs>
+    table: Prisma.$TablePayload<ExtArgs>
     OrdersAddons: Prisma.$OrdersAddonPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1316,7 +1316,7 @@ readonly fields: OrderFieldRefs;
 export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   menu<T extends Prisma.MenuDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MenuDefaultArgs<ExtArgs>>): Prisma.Prisma__MenuClient<runtime.Types.Result.GetResult<Prisma.$MenuPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  table<T extends Prisma.TabelDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TabelDefaultArgs<ExtArgs>>): Prisma.Prisma__TabelClient<runtime.Types.Result.GetResult<Prisma.$TabelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  table<T extends Prisma.TableDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TableDefaultArgs<ExtArgs>>): Prisma.Prisma__TableClient<runtime.Types.Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   OrdersAddons<T extends Prisma.Order$OrdersAddonsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$OrdersAddonsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdersAddonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.

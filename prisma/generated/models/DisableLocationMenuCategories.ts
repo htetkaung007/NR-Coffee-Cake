@@ -28,19 +28,19 @@ export type AggregateDisableLocationMenuCategories = {
 
 export type DisableLocationMenuCategoriesAvgAggregateOutputType = {
   id: number | null
-  locationsId: number | null
+  locationId: number | null
   menuCategoryId: number | null
 }
 
 export type DisableLocationMenuCategoriesSumAggregateOutputType = {
   id: number | null
-  locationsId: number | null
+  locationId: number | null
   menuCategoryId: number | null
 }
 
 export type DisableLocationMenuCategoriesMinAggregateOutputType = {
   id: number | null
-  locationsId: number | null
+  locationId: number | null
   menuCategoryId: number | null
   createdAt: Date | null
   updateTime: Date | null
@@ -49,7 +49,7 @@ export type DisableLocationMenuCategoriesMinAggregateOutputType = {
 
 export type DisableLocationMenuCategoriesMaxAggregateOutputType = {
   id: number | null
-  locationsId: number | null
+  locationId: number | null
   menuCategoryId: number | null
   createdAt: Date | null
   updateTime: Date | null
@@ -58,7 +58,7 @@ export type DisableLocationMenuCategoriesMaxAggregateOutputType = {
 
 export type DisableLocationMenuCategoriesCountAggregateOutputType = {
   id: number
-  locationsId: number
+  locationId: number
   menuCategoryId: number
   createdAt: number
   updateTime: number
@@ -69,19 +69,19 @@ export type DisableLocationMenuCategoriesCountAggregateOutputType = {
 
 export type DisableLocationMenuCategoriesAvgAggregateInputType = {
   id?: true
-  locationsId?: true
+  locationId?: true
   menuCategoryId?: true
 }
 
 export type DisableLocationMenuCategoriesSumAggregateInputType = {
   id?: true
-  locationsId?: true
+  locationId?: true
   menuCategoryId?: true
 }
 
 export type DisableLocationMenuCategoriesMinAggregateInputType = {
   id?: true
-  locationsId?: true
+  locationId?: true
   menuCategoryId?: true
   createdAt?: true
   updateTime?: true
@@ -90,7 +90,7 @@ export type DisableLocationMenuCategoriesMinAggregateInputType = {
 
 export type DisableLocationMenuCategoriesMaxAggregateInputType = {
   id?: true
-  locationsId?: true
+  locationId?: true
   menuCategoryId?: true
   createdAt?: true
   updateTime?: true
@@ -99,7 +99,7 @@ export type DisableLocationMenuCategoriesMaxAggregateInputType = {
 
 export type DisableLocationMenuCategoriesCountAggregateInputType = {
   id?: true
-  locationsId?: true
+  locationId?: true
   menuCategoryId?: true
   createdAt?: true
   updateTime?: true
@@ -195,7 +195,7 @@ export type DisableLocationMenuCategoriesGroupByArgs<ExtArgs extends runtime.Typ
 
 export type DisableLocationMenuCategoriesGroupByOutputType = {
   id: number
-  locationsId: number
+  locationId: number
   menuCategoryId: number
   createdAt: Date
   updateTime: Date
@@ -227,21 +227,23 @@ export type DisableLocationMenuCategoriesWhereInput = {
   OR?: Prisma.DisableLocationMenuCategoriesWhereInput[]
   NOT?: Prisma.DisableLocationMenuCategoriesWhereInput | Prisma.DisableLocationMenuCategoriesWhereInput[]
   id?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
-  locationsId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
+  locationId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
   menuCategoryId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
   createdAt?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
   isArchived?: Prisma.BoolFilter<"DisableLocationMenuCategories"> | boolean
+  location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   menuCategory?: Prisma.XOR<Prisma.MenuCategoryScalarRelationFilter, Prisma.MenuCategoryWhereInput>
 }
 
 export type DisableLocationMenuCategoriesOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  locationsId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   menuCategoryId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  location?: Prisma.LocationOrderByWithRelationInput
   menuCategory?: Prisma.MenuCategoryOrderByWithRelationInput
 }
 
@@ -250,17 +252,18 @@ export type DisableLocationMenuCategoriesWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.DisableLocationMenuCategoriesWhereInput | Prisma.DisableLocationMenuCategoriesWhereInput[]
   OR?: Prisma.DisableLocationMenuCategoriesWhereInput[]
   NOT?: Prisma.DisableLocationMenuCategoriesWhereInput | Prisma.DisableLocationMenuCategoriesWhereInput[]
-  locationsId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
+  locationId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
   menuCategoryId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
   createdAt?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
   isArchived?: Prisma.BoolFilter<"DisableLocationMenuCategories"> | boolean
+  location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   menuCategory?: Prisma.XOR<Prisma.MenuCategoryScalarRelationFilter, Prisma.MenuCategoryWhereInput>
 }, "id">
 
 export type DisableLocationMenuCategoriesOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  locationsId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   menuCategoryId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -277,7 +280,7 @@ export type DisableLocationMenuCategoriesScalarWhereWithAggregatesInput = {
   OR?: Prisma.DisableLocationMenuCategoriesScalarWhereWithAggregatesInput[]
   NOT?: Prisma.DisableLocationMenuCategoriesScalarWhereWithAggregatesInput | Prisma.DisableLocationMenuCategoriesScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"DisableLocationMenuCategories"> | number
-  locationsId?: Prisma.IntWithAggregatesFilter<"DisableLocationMenuCategories"> | number
+  locationId?: Prisma.IntWithAggregatesFilter<"DisableLocationMenuCategories"> | number
   menuCategoryId?: Prisma.IntWithAggregatesFilter<"DisableLocationMenuCategories"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DisableLocationMenuCategories"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"DisableLocationMenuCategories"> | Date | string
@@ -285,16 +288,16 @@ export type DisableLocationMenuCategoriesScalarWhereWithAggregatesInput = {
 }
 
 export type DisableLocationMenuCategoriesCreateInput = {
-  locationsId: number
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  location: Prisma.LocationCreateNestedOneWithoutDisableLocationMenuCategoriesInput
   menuCategory: Prisma.MenuCategoryCreateNestedOneWithoutDisableLocationMenuCategoriesInput
 }
 
 export type DisableLocationMenuCategoriesUncheckedCreateInput = {
   id?: number
-  locationsId: number
+  locationId: number
   menuCategoryId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -302,16 +305,16 @@ export type DisableLocationMenuCategoriesUncheckedCreateInput = {
 }
 
 export type DisableLocationMenuCategoriesUpdateInput = {
-  locationsId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.LocationUpdateOneRequiredWithoutDisableLocationMenuCategoriesNestedInput
   menuCategory?: Prisma.MenuCategoryUpdateOneRequiredWithoutDisableLocationMenuCategoriesNestedInput
 }
 
 export type DisableLocationMenuCategoriesUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  locationsId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   menuCategoryId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -320,7 +323,7 @@ export type DisableLocationMenuCategoriesUncheckedUpdateInput = {
 
 export type DisableLocationMenuCategoriesCreateManyInput = {
   id?: number
-  locationsId: number
+  locationId: number
   menuCategoryId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -328,7 +331,6 @@ export type DisableLocationMenuCategoriesCreateManyInput = {
 }
 
 export type DisableLocationMenuCategoriesUpdateManyMutationInput = {
-  locationsId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -336,7 +338,7 @@ export type DisableLocationMenuCategoriesUpdateManyMutationInput = {
 
 export type DisableLocationMenuCategoriesUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  locationsId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   menuCategoryId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -355,7 +357,7 @@ export type DisableLocationMenuCategoriesOrderByRelationAggregateInput = {
 
 export type DisableLocationMenuCategoriesCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  locationsId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   menuCategoryId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -364,13 +366,13 @@ export type DisableLocationMenuCategoriesCountOrderByAggregateInput = {
 
 export type DisableLocationMenuCategoriesAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  locationsId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   menuCategoryId?: Prisma.SortOrder
 }
 
 export type DisableLocationMenuCategoriesMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  locationsId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   menuCategoryId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -379,7 +381,7 @@ export type DisableLocationMenuCategoriesMaxOrderByAggregateInput = {
 
 export type DisableLocationMenuCategoriesMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  locationsId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   menuCategoryId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -388,8 +390,50 @@ export type DisableLocationMenuCategoriesMinOrderByAggregateInput = {
 
 export type DisableLocationMenuCategoriesSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  locationsId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   menuCategoryId?: Prisma.SortOrder
+}
+
+export type DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput = {
+  create?: Prisma.XOR<Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput> | Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput[] | Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput | Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput[]
+  createMany?: Prisma.DisableLocationMenuCategoriesCreateManyLocationInputEnvelope
+  connect?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+}
+
+export type DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput = {
+  create?: Prisma.XOR<Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput> | Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput[] | Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput | Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput[]
+  createMany?: Prisma.DisableLocationMenuCategoriesCreateManyLocationInputEnvelope
+  connect?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+}
+
+export type DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput = {
+  create?: Prisma.XOR<Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput> | Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput[] | Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput | Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput[]
+  upsert?: Prisma.DisableLocationMenuCategoriesUpsertWithWhereUniqueWithoutLocationInput | Prisma.DisableLocationMenuCategoriesUpsertWithWhereUniqueWithoutLocationInput[]
+  createMany?: Prisma.DisableLocationMenuCategoriesCreateManyLocationInputEnvelope
+  set?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  disconnect?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  delete?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  connect?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  update?: Prisma.DisableLocationMenuCategoriesUpdateWithWhereUniqueWithoutLocationInput | Prisma.DisableLocationMenuCategoriesUpdateWithWhereUniqueWithoutLocationInput[]
+  updateMany?: Prisma.DisableLocationMenuCategoriesUpdateManyWithWhereWithoutLocationInput | Prisma.DisableLocationMenuCategoriesUpdateManyWithWhereWithoutLocationInput[]
+  deleteMany?: Prisma.DisableLocationMenuCategoriesScalarWhereInput | Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
+}
+
+export type DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput = {
+  create?: Prisma.XOR<Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput> | Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput[] | Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput | Prisma.DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput[]
+  upsert?: Prisma.DisableLocationMenuCategoriesUpsertWithWhereUniqueWithoutLocationInput | Prisma.DisableLocationMenuCategoriesUpsertWithWhereUniqueWithoutLocationInput[]
+  createMany?: Prisma.DisableLocationMenuCategoriesCreateManyLocationInputEnvelope
+  set?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  disconnect?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  delete?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  connect?: Prisma.DisableLocationMenuCategoriesWhereUniqueInput | Prisma.DisableLocationMenuCategoriesWhereUniqueInput[]
+  update?: Prisma.DisableLocationMenuCategoriesUpdateWithWhereUniqueWithoutLocationInput | Prisma.DisableLocationMenuCategoriesUpdateWithWhereUniqueWithoutLocationInput[]
+  updateMany?: Prisma.DisableLocationMenuCategoriesUpdateManyWithWhereWithoutLocationInput | Prisma.DisableLocationMenuCategoriesUpdateManyWithWhereWithoutLocationInput[]
+  deleteMany?: Prisma.DisableLocationMenuCategoriesScalarWhereInput | Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
 }
 
 export type DisableLocationMenuCategoriesCreateNestedManyWithoutMenuCategoryInput = {
@@ -434,16 +478,69 @@ export type DisableLocationMenuCategoriesUncheckedUpdateManyWithoutMenuCategoryN
   deleteMany?: Prisma.DisableLocationMenuCategoriesScalarWhereInput | Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
 }
 
-export type DisableLocationMenuCategoriesCreateWithoutMenuCategoryInput = {
-  locationsId: number
+export type DisableLocationMenuCategoriesCreateWithoutLocationInput = {
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  menuCategory: Prisma.MenuCategoryCreateNestedOneWithoutDisableLocationMenuCategoriesInput
+}
+
+export type DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput = {
+  id?: number
+  menuCategoryId: number
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
 }
 
+export type DisableLocationMenuCategoriesCreateOrConnectWithoutLocationInput = {
+  where: Prisma.DisableLocationMenuCategoriesWhereUniqueInput
+  create: Prisma.XOR<Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput>
+}
+
+export type DisableLocationMenuCategoriesCreateManyLocationInputEnvelope = {
+  data: Prisma.DisableLocationMenuCategoriesCreateManyLocationInput | Prisma.DisableLocationMenuCategoriesCreateManyLocationInput[]
+  skipDuplicates?: boolean
+}
+
+export type DisableLocationMenuCategoriesUpsertWithWhereUniqueWithoutLocationInput = {
+  where: Prisma.DisableLocationMenuCategoriesWhereUniqueInput
+  update: Prisma.XOR<Prisma.DisableLocationMenuCategoriesUpdateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedUpdateWithoutLocationInput>
+  create: Prisma.XOR<Prisma.DisableLocationMenuCategoriesCreateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedCreateWithoutLocationInput>
+}
+
+export type DisableLocationMenuCategoriesUpdateWithWhereUniqueWithoutLocationInput = {
+  where: Prisma.DisableLocationMenuCategoriesWhereUniqueInput
+  data: Prisma.XOR<Prisma.DisableLocationMenuCategoriesUpdateWithoutLocationInput, Prisma.DisableLocationMenuCategoriesUncheckedUpdateWithoutLocationInput>
+}
+
+export type DisableLocationMenuCategoriesUpdateManyWithWhereWithoutLocationInput = {
+  where: Prisma.DisableLocationMenuCategoriesScalarWhereInput
+  data: Prisma.XOR<Prisma.DisableLocationMenuCategoriesUpdateManyMutationInput, Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationInput>
+}
+
+export type DisableLocationMenuCategoriesScalarWhereInput = {
+  AND?: Prisma.DisableLocationMenuCategoriesScalarWhereInput | Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
+  OR?: Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
+  NOT?: Prisma.DisableLocationMenuCategoriesScalarWhereInput | Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
+  id?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
+  locationId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
+  menuCategoryId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
+  createdAt?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
+  updateTime?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
+  isArchived?: Prisma.BoolFilter<"DisableLocationMenuCategories"> | boolean
+}
+
+export type DisableLocationMenuCategoriesCreateWithoutMenuCategoryInput = {
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  location: Prisma.LocationCreateNestedOneWithoutDisableLocationMenuCategoriesInput
+}
+
 export type DisableLocationMenuCategoriesUncheckedCreateWithoutMenuCategoryInput = {
   id?: number
-  locationsId: number
+  locationId: number
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -475,36 +572,55 @@ export type DisableLocationMenuCategoriesUpdateManyWithWhereWithoutMenuCategoryI
   data: Prisma.XOR<Prisma.DisableLocationMenuCategoriesUpdateManyMutationInput, Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutMenuCategoryInput>
 }
 
-export type DisableLocationMenuCategoriesScalarWhereInput = {
-  AND?: Prisma.DisableLocationMenuCategoriesScalarWhereInput | Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
-  OR?: Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
-  NOT?: Prisma.DisableLocationMenuCategoriesScalarWhereInput | Prisma.DisableLocationMenuCategoriesScalarWhereInput[]
-  id?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
-  locationsId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
-  menuCategoryId?: Prisma.IntFilter<"DisableLocationMenuCategories"> | number
-  createdAt?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
-  updateTime?: Prisma.DateTimeFilter<"DisableLocationMenuCategories"> | Date | string
-  isArchived?: Prisma.BoolFilter<"DisableLocationMenuCategories"> | boolean
+export type DisableLocationMenuCategoriesCreateManyLocationInput = {
+  id?: number
+  menuCategoryId: number
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+}
+
+export type DisableLocationMenuCategoriesUpdateWithoutLocationInput = {
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  menuCategory?: Prisma.MenuCategoryUpdateOneRequiredWithoutDisableLocationMenuCategoriesNestedInput
+}
+
+export type DisableLocationMenuCategoriesUncheckedUpdateWithoutLocationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  menuCategoryId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+}
+
+export type DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  menuCategoryId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type DisableLocationMenuCategoriesCreateManyMenuCategoryInput = {
   id?: number
-  locationsId: number
+  locationId: number
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
 }
 
 export type DisableLocationMenuCategoriesUpdateWithoutMenuCategoryInput = {
-  locationsId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.LocationUpdateOneRequiredWithoutDisableLocationMenuCategoriesNestedInput
 }
 
 export type DisableLocationMenuCategoriesUncheckedUpdateWithoutMenuCategoryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  locationsId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -512,7 +628,7 @@ export type DisableLocationMenuCategoriesUncheckedUpdateWithoutMenuCategoryInput
 
 export type DisableLocationMenuCategoriesUncheckedUpdateManyWithoutMenuCategoryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  locationsId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -522,62 +638,69 @@ export type DisableLocationMenuCategoriesUncheckedUpdateManyWithoutMenuCategoryI
 
 export type DisableLocationMenuCategoriesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  locationsId?: boolean
+  locationId?: boolean
   menuCategoryId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   menuCategory?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["disableLocationMenuCategories"]>
 
 export type DisableLocationMenuCategoriesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  locationsId?: boolean
+  locationId?: boolean
   menuCategoryId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   menuCategory?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["disableLocationMenuCategories"]>
 
 export type DisableLocationMenuCategoriesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  locationsId?: boolean
+  locationId?: boolean
   menuCategoryId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   menuCategory?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["disableLocationMenuCategories"]>
 
 export type DisableLocationMenuCategoriesSelectScalar = {
   id?: boolean
-  locationsId?: boolean
+  locationId?: boolean
   menuCategoryId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type DisableLocationMenuCategoriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "locationsId" | "menuCategoryId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["disableLocationMenuCategories"]>
+export type DisableLocationMenuCategoriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "locationId" | "menuCategoryId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["disableLocationMenuCategories"]>
 export type DisableLocationMenuCategoriesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   menuCategory?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
 }
 export type DisableLocationMenuCategoriesIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   menuCategory?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
 }
 export type DisableLocationMenuCategoriesIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   menuCategory?: boolean | Prisma.MenuCategoryDefaultArgs<ExtArgs>
 }
 
 export type $DisableLocationMenuCategoriesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "DisableLocationMenuCategories"
   objects: {
+    location: Prisma.$LocationPayload<ExtArgs>
     menuCategory: Prisma.$MenuCategoryPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
-    locationsId: number
+    locationId: number
     menuCategoryId: number
     createdAt: Date
     updateTime: Date
@@ -976,6 +1099,7 @@ readonly fields: DisableLocationMenuCategoriesFieldRefs;
  */
 export interface Prisma__DisableLocationMenuCategoriesClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  location<T extends Prisma.LocationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LocationDefaultArgs<ExtArgs>>): Prisma.Prisma__LocationClient<runtime.Types.Result.GetResult<Prisma.$LocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   menuCategory<T extends Prisma.MenuCategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MenuCategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__MenuCategoryClient<runtime.Types.Result.GetResult<Prisma.$MenuCategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1007,7 +1131,7 @@ export interface Prisma__DisableLocationMenuCategoriesClient<T, Null = never, Ex
  */
 export interface DisableLocationMenuCategoriesFieldRefs {
   readonly id: Prisma.FieldRef<"DisableLocationMenuCategories", 'Int'>
-  readonly locationsId: Prisma.FieldRef<"DisableLocationMenuCategories", 'Int'>
+  readonly locationId: Prisma.FieldRef<"DisableLocationMenuCategories", 'Int'>
   readonly menuCategoryId: Prisma.FieldRef<"DisableLocationMenuCategories", 'Int'>
   readonly createdAt: Prisma.FieldRef<"DisableLocationMenuCategories", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"DisableLocationMenuCategories", 'DateTime'>
