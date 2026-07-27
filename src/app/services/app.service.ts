@@ -29,9 +29,14 @@ export class AppService {
     return prisma.user.findFirst({ where: { email } });
   }
 
-  static async getCompanyIdByEmail(email: string) {
+  static async getCompanyByEmail(email: string) {
     const user = await AppService.getUserByEmail(email); // reuse instead of re-querying
-    return user?.companyId ?? null;
+    if (!user) throw new NotFoundError("User", email);
+    const company = await prisma.company.findFirst({
+      where: { id: user.companyId },
+    });
+    if (!company) throw new NotFoundError("Company for user", email);
+    return company;
   }
 
   // ---------------------------------------------------------------------
@@ -244,6 +249,13 @@ export class AppService {
       orderBy: { id: "asc" },
     });
   }
+  static async getCompanyNameByCompanyId(companyId: number) {
+    const company = await prisma.company.findFirst({
+      where: { id: companyId },
+    });
+    if (!company) throw new NotFoundError("Company", companyId);
+    return company.name;
+  }
 
   // ---------------------------------------------------------------------
   // Locations & Tables
@@ -282,7 +294,15 @@ export class AppService {
       where: { locationId: selectedLocationId },
     });
   }
-
+  static async getCompanyNameByUserId(userId: number) {
+    const user = await prisma.user.findFirst({ where: { id: userId } });
+    if (!user) throw new NotFoundError("User", userId);
+    const company = await prisma.company.findFirst({
+      where: { id: user.companyId },
+    });
+    if (!company) throw new NotFoundError("Company for user", userId);
+    return company.name;
+  }
   // ---------------------------------------------------------------------
   // Order app
   // Chain lookups: each step depends on the previous one existing, so we

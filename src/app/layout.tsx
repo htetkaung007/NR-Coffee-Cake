@@ -1,4 +1,4 @@
-import Providers from "./providers";
+import { Providers } from "./components/Providers";
 
 // src/app/layout.tsx
 export default function RootLayout({

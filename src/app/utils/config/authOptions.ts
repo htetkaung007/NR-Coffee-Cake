@@ -7,8 +7,6 @@ import { loginSchema } from "@/app/lib/schemas/authSchema";
 import { AppService } from "@/app/services/app.service";
 
 export const authOptions: NextAuthOptions = {
-  // Credentials provider က database session strategy ကို support မလုပ်ဘူး
-  // (NextAuth ရဲ့ limitation) — ဒါကြောင့် "jwt" strategy ကိုပဲ သုံးရမယ်.
   session: { strategy: "jwt" },
 
   providers: [
@@ -55,7 +53,8 @@ export const authOptions: NextAuthOptions = {
       // Sign-in ချိန်မှာပဲ companyId ကို token ထဲ ထည့်ထား — request တိုင်း
       // database ကို ပြန်မထိုးတော့ဘဲ token (encrypted cookie) ထဲကနေပဲ ဖတ်.
       if (user?.email) {
-        token.companyId = await AppService.getCompanyIdByEmail(user.email);
+        const company = await AppService.getCompanyByEmail(user.email);
+        token.companyId = company.id;
       }
       return token;
     },
