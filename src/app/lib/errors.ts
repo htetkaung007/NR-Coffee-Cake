@@ -41,3 +41,12 @@ export class ValidationError extends AppError {
     this.name = "ValidationError";
   }
 }
+export class InsufficientStockError extends AppError {
+  constructor(menuId: number, locationId: number) {
+    super(
+      `Not enough stock for menu ${menuId} at location ${locationId}`,
+      "INSUFFICIENT_STOCK",
+    );
+    this.name = "InsufficientStockError";
+  }
+}

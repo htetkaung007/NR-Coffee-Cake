@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "../utils/config/authOptions";
 import { BackofficeShell } from "../components/BackofficeShell";
-import { AppService } from "../services/app.service";
+import { AppService } from "../services";
 
 interface Props {
   children?: React.ReactNode;

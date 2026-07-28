@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 import { ensureDefaultSetup } from "./ensureDefaultSetup";
 import { loginSchema } from "@/app/lib/schemas/authSchema";
-import { AppService } from "@/app/services/app.service";
+import { AppService } from "@/app/services";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -55,6 +55,12 @@ export const authOptions: NextAuthOptions = {
       if (user?.email) {
         const company = await AppService.getCompanyByEmail(user.email);
         token.companyId = company.id;
+
+        // Prisma User.id (number) ကို token ထဲ cache — Google OAuth ရဲ့
+        // user.id ဟာ Google ကိုယ်ပိုင် account id ဖြစ်လို့ (Rule 9),
+        // email ကနေပဲ ပြန်ရှာရတယ်.
+        const dbUser = await AppService.getUserByEmail(user.email);
+        if (dbUser) token.userId = dbUser.id;
       }
       return token;
     },
@@ -62,6 +68,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.companyId = (token.companyId as number | null) ?? null;
+        session.user.id = (token.userId as number | null) ?? null;
       }
       return session;
     },

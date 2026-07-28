@@ -1,13 +1,63 @@
-import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { AppService } from "@/app/services/app.service";
-import { authOptions } from "@/app/utils/config/authOptions";
+import { AppService } from "@/app/services";
+import { getSessionContext } from "@/app/lib/session";
 import MenuCard from "@/app/components/MenuCard";
+import { Box, Typography } from "@mui/material";
 
 export default async function MenusPage() {
-  const session = await getServerSession(authOptions);
-  const companyId = session?.user?.companyId ?? null;
-  const menus = companyId ? await AppService.getMenus(companyId) : [];
+  const { companyId, userId } = await getSessionContext();
 
-  return <MenuCard />;
+  if (!companyId || !userId) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="text.secondary">
+          Please sign in to view menus.
+        </Typography>
+      </Box>
+    );
+  }
+
+  const selectedLocation = await AppService.getSelectedLocation(userId);
+  if (!selectedLocation) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="text.secondary">
+          No location selected. Please choose a location first.
+        </Typography>
+      </Box>
+    );
+  }
+
+  const menus = await AppService.getMenusWithDetails(
+    companyId,
+    selectedLocation.locationId,
+  );
+
+  if (menus.length === 0) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="text.secondary">No menu items yet.</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "repeat(2, 1fr)",
+          sm: "repeat(2, 1fr)",
+          md: "repeat(3, 1fr)",
+          lg: "repeat(4, 1fr)",
+          xl: "repeat(5, 1fr)",
+        },
+        gap: { xs: 1.5, sm: 2, md: 2.5 },
+        p: { xs: 1.5, sm: 2, md: 3 },
+      }}
+    >
+      {menus.map((menu) => (
+        <MenuCard key={menu.id} item={menu} />
+      ))}
+    </Box>
+  );
 }

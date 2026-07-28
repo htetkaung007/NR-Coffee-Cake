@@ -50,3 +50,11 @@ export function validateWith<T>(
   }
   return ok(parsed.data);
 }
+function isErrorInfo(value: unknown): value is ErrorInfo {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "message" in value &&
+    "code" in value
+  );
+}

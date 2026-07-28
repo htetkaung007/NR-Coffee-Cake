@@ -6,19 +6,8 @@ import { NotFoundError, ValidationError } from "../lib/errors";
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
 
-// AppService ကိုယ်တိုင်ရဲ့ own input shape — NextAuth ရဲ့ User type ကို
-// တိုက်ရိုက် မသုံးတော့ဘူး (Boundaries: Service layer က third-party auth
-// library ရဲ့ type ကို မမှီခိုသင့်ဘူး, NextAuth ကနေရော, register form
-// ကနေရော ၂ နေရာစလုံးက ခေါ်နိုင်ဖို့).
 type NewUserInput = { name?: string | null; email: string };
 
-// AppService ရဲ့ method တွေက this.xxx() အစား AppService.xxx() ကို
-// အသုံးပြုထားတယ် — ဘာကြောင့်လဲဆိုတော့ toSafeResult(AppService.someMethod)
-// လို "function ကို variable ထဲ ခွာထုတ်" တဲ့ pattern ကို actions/*.ts
-// file တွေထဲမှာ အမြဲသုံးနေတယ် (Zod/neverthrow pipeline). ဒီလို ခွာထုတ်
-// လိုက်တာနဲ့ static method ရဲ့ `this` context ပျောက်သွားမယ် (undefined
-// ဖြစ်မယ်) — this.xxx() ခေါ်ထားရင် crash ဖြစ်မယ်, AppService.xxx()
-// ခေါ်ထားရင်တော့ ဘယ်လို detach ဖြစ်ဖြစ် အမြဲ အလုပ်လုပ်မယ်.
 export class AppService {
   // ---------------------------------------------------------------------
   // User
@@ -62,6 +51,9 @@ export class AppService {
         company.id,
         user.id,
       );
+      // MenuStock needs both menuId and locationId, so this must come
+      // after createDefaultLocation, not alongside createDefaultMenu.
+      await AppService.createDefaultMenuStock(tx, menu.id, location.id);
       const table = await AppService.createDefaultTable(tx, location.id);
 
       return { user, company, location, table };
@@ -177,6 +169,16 @@ export class AppService {
     });
   }
 
+  private static createDefaultMenuStock(
+    tx: Tx,
+    menuId: number,
+    locationId: number,
+  ) {
+    return tx.menuStock.create({
+      data: { menuId, locationId, quantity: 1 },
+    });
+  }
+
   // ---------------------------------------------------------------------
   // Menu
   // ---------------------------------------------------------------------
@@ -200,6 +202,36 @@ export class AppService {
     return prisma.menu.findMany({
       where: { id: { in: menuIds }, isArchived: false },
       include: { disableLocationMenus: true },
+    });
+  }
+  static async getMenusWithDetails(companyId: number, locationId: number) {
+    const menus = await AppService.getMenus(companyId);
+    const menuIds = menus.map((menu) => menu.id);
+
+    const categoryLinks = await prisma.menuMenuCategory.findMany({
+      where: { menuId: { in: menuIds }, isArchived: false },
+      include: { menuCategory: true },
+    });
+    const categoryNameByMenuId = new Map(
+      categoryLinks.map((link) => [link.menuId, link.menuCategory.name]),
+    );
+
+    const stocks = await prisma.menuStock.findMany({
+      where: { menuId: { in: menuIds }, locationId, isArchived: false },
+    });
+    const stockByMenuId = new Map(stocks.map((stock) => [stock.menuId, stock]));
+
+    return menus.map((menu) => {
+      const stock = stockByMenuId.get(menu.id);
+      return {
+        id: menu.id,
+        name: menu.name,
+        price: menu.price,
+        category: categoryNameByMenuId.get(menu.id) ?? "Uncategorized",
+        imageUrl: menu.assetUrl || null,
+        stockQuantity: stock?.quantity ?? 0,
+        isManuallyDisabled: stock?.isManuallyDisabled ?? false,
+      };
     });
   }
 

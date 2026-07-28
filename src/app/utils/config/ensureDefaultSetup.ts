@@ -1,4 +1,4 @@
-import { AppService } from "@/app/services/app.service";
+import { AppService } from "@/app/services";
 import type { Account, User as NextAuthUser } from "next-auth";
 
 export async function ensureDefaultSetup(

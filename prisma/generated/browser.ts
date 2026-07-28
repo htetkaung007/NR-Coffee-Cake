@@ -48,6 +48,11 @@ export type SelectedLocation = Prisma.SelectedLocationModel
  */
 export type Menu = Prisma.MenuModel
 /**
+ * Model MenuStock
+ * 
+ */
+export type MenuStock = Prisma.MenuStockModel
+/**
  * Model MenuCategory
  * 
  */

@@ -57,6 +57,7 @@ export const ModelName = {
   Location: 'Location',
   SelectedLocation: 'SelectedLocation',
   Menu: 'Menu',
+  MenuStock: 'MenuStock',
   MenuCategory: 'MenuCategory',
   MenuMenuCategory: 'MenuMenuCategory',
   Addon: 'Addon',
@@ -158,6 +159,20 @@ export const MenuScalarFieldEnum = {
 } as const
 
 export type MenuScalarFieldEnum = (typeof MenuScalarFieldEnum)[keyof typeof MenuScalarFieldEnum]
+
+
+export const MenuStockScalarFieldEnum = {
+  id: 'id',
+  menuId: 'menuId',
+  locationId: 'locationId',
+  quantity: 'quantity',
+  isManuallyDisabled: 'isManuallyDisabled',
+  createdAt: 'createdAt',
+  updateTime: 'updateTime',
+  isArchived: 'isArchived'
+} as const
+
+export type MenuStockScalarFieldEnum = (typeof MenuStockScalarFieldEnum)[keyof typeof MenuStockScalarFieldEnum]
 
 
 export const MenuCategoryScalarFieldEnum = {

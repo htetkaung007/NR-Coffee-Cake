@@ -57,6 +57,7 @@ model Location {
   name                           String
   tables                         Table[]
   selectedLocations              SelectedLocation[]
+  menuStocks                     MenuStock[]
   company                        Company                         @relation(fields: [companyId], references: [id])
   companyId                      Int
   createdAt                      DateTime                        @default(now())
@@ -85,10 +86,25 @@ model Menu {
   menuMenuCategory     MenuMenuCategory[]
   menuAddonCategories  MenuAddonCategories[]
   disableLocationMenus DisableLocationMenus[]
+  menuStocks           MenuStock[]
   orders               Order[]
   createdAt            DateTime               @default(now())
   updateTime           DateTime               @updatedAt
   isArchived           Boolean                @default(false)
+}
+model MenuStock {
+  id                 Int      @id @default(autoincrement())
+  menu               Menu     @relation(fields: [menuId], references: [id])
+  menuId             Int
+  location           Location @relation(fields: [locationId], references: [id])
+  locationId         Int
+  quantity           Int      @default(0)
+  isManuallyDisabled Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updateTime         DateTime @updatedAt
+  isArchived         Boolean  @default(false)
+
+  @@unique([menuId, locationId])
 }
 
 model MenuCategory {
