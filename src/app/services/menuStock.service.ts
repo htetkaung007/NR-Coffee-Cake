@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import type { Prisma } from "../../../prisma/generated/client";
 import { ValidationError, InsufficientStockError } from "../lib/errors";
 
 /**
@@ -7,6 +8,28 @@ import { ValidationError, InsufficientStockError } from "../lib/errors";
  * for menu visibility.
  */
 export class MenuStockService {
+  /** Creates the first location-specific stock row inside the menu transaction. */
+  static async createInitialStock(
+    tx: Prisma.TransactionClient,
+    menuId: number,
+    locationId: number,
+    quantity: number,
+    isAvailable: boolean,
+  ) {
+    if (quantity < 0) {
+      throw new ValidationError("Stock quantity cannot be negative.");
+    }
+
+    return tx.menuStock.create({
+      data: {
+        menuId,
+        locationId,
+        quantity,
+        isManuallyDisabled: !isAvailable,
+      },
+    });
+  }
+
   /** Optional lookup — a menu/location pair may not have a stock row yet
    *  (e.g. never restocked), so absence is a normal state, not an error. */
   static async getStock(menuId: number, locationId: number) {

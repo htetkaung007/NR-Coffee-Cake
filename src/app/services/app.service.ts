@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
+import { MenuService } from "./menu.service";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
@@ -169,6 +170,8 @@ export class AppService {
     });
   }
 
+  /** New menus start with 1 in stock so the default card is orderable
+   *  right away instead of showing "sold out" before staff ever restock. */
   private static createDefaultMenuStock(
     tx: Tx,
     menuId: number,
@@ -180,86 +183,17 @@ export class AppService {
   }
 
   // ---------------------------------------------------------------------
-  // Menu
+  // Menu move to meenu service
   // ---------------------------------------------------------------------
-
-  static async getMenuCategories(companyId: number) {
-    return prisma.menuCategory.findMany({
-      where: { companyId, isArchived: false },
-      orderBy: { id: "asc" },
-    });
-  }
-
-  static async getMenus(companyId: number) {
-    const categories = await AppService.getMenuCategories(companyId);
-    const categoryIds = categories.map((category) => category.id);
-
-    const links = await prisma.menuMenuCategory.findMany({
-      where: { menuCategoryId: { in: categoryIds } },
-    });
-    const menuIds = links.map((link) => link.menuId);
-
-    return prisma.menu.findMany({
-      where: { id: { in: menuIds }, isArchived: false },
-      include: { disableLocationMenus: true },
-    });
-  }
-  static async getMenusWithDetails(companyId: number, locationId: number) {
-    const menus = await AppService.getMenus(companyId);
-    const menuIds = menus.map((menu) => menu.id);
-
-    const categoryLinks = await prisma.menuMenuCategory.findMany({
-      where: { menuId: { in: menuIds }, isArchived: false },
-      include: { menuCategory: true },
-    });
-    const categoryNameByMenuId = new Map(
-      categoryLinks.map((link) => [link.menuId, link.menuCategory.name]),
-    );
-
-    const stocks = await prisma.menuStock.findMany({
-      where: { menuId: { in: menuIds }, locationId, isArchived: false },
-    });
-    const stockByMenuId = new Map(stocks.map((stock) => [stock.menuId, stock]));
-
-    return menus.map((menu) => {
-      const stock = stockByMenuId.get(menu.id);
-      return {
-        id: menu.id,
-        name: menu.name,
-        price: menu.price,
-        category: categoryNameByMenuId.get(menu.id) ?? "Uncategorized",
-        imageUrl: menu.assetUrl || null,
-        stockQuantity: stock?.quantity ?? 0,
-        isManuallyDisabled: stock?.isManuallyDisabled ?? false,
-      };
-    });
-  }
-
-  static async getMenusByCategories(categoryIds: number[]) {
-    const links = await prisma.menuMenuCategory.findMany({
-      where: { menuCategoryId: { in: categoryIds } },
-    });
-    const menuIds = links.map((link) => link.menuId);
-
-    const menus = await prisma.menu.findMany({
-      where: { id: { in: menuIds }, isArchived: false },
-      include: { disableLocationMenus: true },
-    });
-
-    const disabledMenus = await prisma.disableLocationMenus.findMany({
-      where: { menuId: { in: menuIds } },
-    });
-    const disabledMenuIds = new Set(disabledMenus.map((d) => d.menuId));
-
-    return menus.filter((menu) => !disabledMenuIds.has(menu.id));
-  }
 
   // ---------------------------------------------------------------------
   // Addons
+  // Menu core reads/DTOs live in menu.service.ts now (Rule 14 split) —
+  // Addons stays here since it's an adjacent-but-separate domain.
   // ---------------------------------------------------------------------
 
   static async getAddonCategories(companyId: number) {
-    const menus = await AppService.getMenus(companyId);
+    const menus = await MenuService.getMenus(companyId);
     const menuIds = menus.map((menu) => menu.id);
 
     const links = await prisma.menuAddonCategories.findMany({

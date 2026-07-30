@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
   Card,
@@ -12,7 +10,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 
-/** Shape returned by AppService.getMenusWithDetails — the only fields
+/** Shape returned by MenuService.getMenusWithDetails — the only fields
  *  that actually exist across Menu + MenuCategory + MenuStock. */
 export interface MenuCardData {
   id: number;
@@ -28,9 +26,10 @@ interface MenuCardProps {
   item: MenuCardData;
 }
 
-const FALLBACK_IMAGE = "https://placehold.co/600x400/png?text=No+Image";
+const FALLBACK_IMAGE =
+  "https://5ez9pz51cl93qmhn.public.blob.vercel-storage.com/Default%20MenuIcon-8J6xP2FAGf6AoosGMi7w7Lg6nUi4zx.png";
 
-export default function MenuCard({ item }: MenuCardProps) {
+export default function BOMenuCard({ item }: MenuCardProps) {
   const isAvailable = item.stockQuantity > 0 && !item.isManuallyDisabled;
 
   return (
@@ -74,22 +73,28 @@ export default function MenuCard({ item }: MenuCardProps) {
           }}
         />
         <Chip
-          label={item.category}
+          label={
+            <Typography variant="caption" component="span">
+              {item.category}
+            </Typography>
+          }
           size="small"
           sx={{
             position: "absolute",
             top: { xs: 6, sm: 8 },
             left: { xs: 6, sm: 8 },
             height: { xs: 20, sm: 22 },
-            fontSize: { xs: "0.6rem", sm: "0.65rem" },
-            fontWeight: 700,
             bgcolor: "background.paper",
             color: "text.primary",
           }}
         />
         {!isAvailable && (
           <Chip
-            label="Unavailable"
+            label={
+              <Typography variant="caption" component="span">
+                Unavailable
+              </Typography>
+            }
             size="small"
             color="error"
             sx={{
@@ -97,8 +102,6 @@ export default function MenuCard({ item }: MenuCardProps) {
               top: { xs: 6, sm: 8 },
               right: { xs: 6, sm: 8 },
               height: { xs: 20, sm: 22 },
-              fontSize: { xs: "0.6rem", sm: "0.65rem" },
-              fontWeight: 700,
             }}
           />
         )}
@@ -116,9 +119,8 @@ export default function MenuCard({ item }: MenuCardProps) {
         }}
       >
         <Typography
+          variant="body1"
           sx={{
-            fontWeight: 700,
-            fontSize: { xs: "0.8rem", sm: "0.9rem", md: "0.95rem" },
             lineHeight: 1.3,
             color: "text.primary",
             display: "-webkit-box",
@@ -131,6 +133,7 @@ export default function MenuCard({ item }: MenuCardProps) {
         </Typography>
 
         <Typography
+          variant="body1"
           sx={{
             fontWeight: 800,
             fontSize: { xs: "0.85rem", sm: "0.95rem", md: "1rem" },
@@ -151,8 +154,6 @@ export default function MenuCard({ item }: MenuCardProps) {
           sx={{
             mt: { xs: 0.5, sm: 0.75 },
             alignSelf: "flex-start",
-            textTransform: "none",
-            fontWeight: 700,
             fontSize: { xs: "0.65rem", sm: "0.75rem" },
             borderColor: "divider",
             color: "text.primary",

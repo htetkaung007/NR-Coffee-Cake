@@ -1,7 +1,9 @@
-import { AppService } from "@/app/services";
+import { AppService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import MenuCard from "@/app/components/MenuCard";
+import MenuCard from "@/app/components/BoMenuCard";
 import { Box, Typography } from "@mui/material";
+import Link from "next/link";
+import BOMenuCard from "@/app/components/BoMenuCard";
 
 export default async function MenusPage() {
   const { companyId, userId } = await getSessionContext();
@@ -27,7 +29,7 @@ export default async function MenusPage() {
     );
   }
 
-  const menus = await AppService.getMenusWithDetails(
+  const menus = await MenuService.getMenusWithDetails(
     companyId,
     selectedLocation.locationId,
   );
@@ -55,8 +57,11 @@ export default async function MenusPage() {
         p: { xs: 1.5, sm: 2, md: 3 },
       }}
     >
+      {/*  <Button component={Link} href="/backoffice/menus/new">
+        + Create New Menu
+      </Button> */}
       {menus.map((menu) => (
-        <MenuCard key={menu.id} item={menu} />
+        <BOMenuCard key={menu.id} item={menu} />
       ))}
     </Box>
   );
