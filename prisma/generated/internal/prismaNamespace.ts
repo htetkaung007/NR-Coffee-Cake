@@ -1710,6 +1710,7 @@ export const MenuScalarFieldEnum = {
   name: 'name',
   price: 'price',
   assetUrl: 'assetUrl',
+  description: 'description',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived'

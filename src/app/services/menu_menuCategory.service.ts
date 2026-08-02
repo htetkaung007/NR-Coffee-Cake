@@ -9,6 +9,7 @@ export class MenuService {
   static async createMenu(input: {
     name: string;
     price: number;
+    description?: string;
     quantity: number;
     isAvailable: boolean;
     categoryIds: number[];
@@ -16,7 +17,12 @@ export class MenuService {
   }) {
     return prisma.$transaction(async (tx: Tx) => {
       const menu = await tx.menu.create({
-        data: { name: input.name, price: input.price, assetUrl: "" },
+        data: {
+          name: input.name,
+          price: input.price,
+          assetUrl: "",
+          description: input.description,
+        },
       });
 
       await tx.menuMenuCategory.createMany({
@@ -123,12 +129,88 @@ export class MenuService {
       return {
         id: menu.id,
         name: menu.name,
+        description: menu.description || "",
         price: menu.price,
         category: categoryNameByMenuId.get(menu.id) ?? "Uncategorized",
         imageUrl: menu.assetUrl || null,
         stockQuantity: stock?.quantity ?? 0,
         isManuallyDisabled: stock?.isManuallyDisabled ?? false,
       };
+    });
+  }
+
+  static async getMenuById(menuId: number, locationId: number) {
+    const menu = await prisma.menu.findFirst({
+      where: { id: menuId, isArchived: false },
+    });
+    if (!menu) return null;
+
+    const categoryLinks = await prisma.menuMenuCategory.findMany({
+      where: { menuId, isArchived: false },
+    });
+
+    const stock = await prisma.menuStock.findFirst({
+      where: { menuId, locationId },
+    });
+
+    return {
+      id: menu.id,
+      name: menu.name,
+      price: menu.price,
+      description: menu.description || "",
+      imageUrl: menu.assetUrl || null,
+      categoryIds: categoryLinks.map((link) => link.menuCategoryId),
+      quantity: stock?.quantity ?? 0,
+      isAvailable: !(stock?.isManuallyDisabled ?? false),
+    };
+  }
+  static async updateMenu(
+    menuId: number,
+    input: {
+      name: string;
+      price: number;
+      quantity: number;
+      description?: string;
+      isAvailable: boolean;
+      categoryIds: number[];
+      locationId: number;
+    },
+  ) {
+    return prisma.$transaction(async (tx: Tx) => {
+      const menu = await tx.menu.update({
+        where: { id: menuId },
+        data: {
+          name: input.name,
+          price: input.price,
+          description: input.description,
+        },
+      });
+
+      await tx.menuMenuCategory.deleteMany({ where: { menuId } });
+      await tx.menuMenuCategory.createMany({
+        data: input.categoryIds.map((menuCategoryId) => ({
+          menuId,
+          menuCategoryId,
+        })),
+      });
+
+      await tx.menuStock.upsert({
+        where: {
+          menuId_locationId: { menuId, locationId: input.locationId },
+        },
+        update: {
+          quantity: input.quantity,
+          isManuallyDisabled: !input.isAvailable,
+        },
+        create: {
+          menuId,
+          locationId: input.locationId,
+          quantity: input.quantity,
+          isManuallyDisabled: !input.isAvailable,
+        },
+      });
+
+      return menu;
     });
   }
 

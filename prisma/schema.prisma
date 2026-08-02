@@ -83,6 +83,7 @@ model Menu {
   name                 String
   price                Int
   assetUrl             String?
+  description          String?
   menuMenuCategory     MenuMenuCategory[]
   menuAddonCategories  MenuAddonCategories[]
   disableLocationMenus DisableLocationMenus[]

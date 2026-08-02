@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const createMenuSchema = z.object({
   name: z.string().trim().min(1, "Menu item name is required.").max(120),
+  description: z
+    .string()
+    .trim()
+    .max(100, "Description cannot exceed 100 characters."),
   price: z.coerce
     .number()
     .int("Price must be a whole number of MMK.")

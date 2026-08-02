@@ -1,8 +1,8 @@
 import { AppService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import MenuCard from "@/app/components/BoMenuCard";
-import { Box, Typography } from "@mui/material";
-import Link from "next/link";
+
+import { Box, Button, Typography } from "@mui/material";
+
 import BOMenuCard from "@/app/components/BoMenuCard";
 
 export default async function MenusPage() {
@@ -43,27 +43,44 @@ export default async function MenusPage() {
   }
 
   return (
-    <Box
-      sx={{
-        minWidth: 360,
-        display: "grid",
-        gridTemplateColumns: {
-          xs: "repeat(2, 1fr)",
-          sm: "repeat(2, 1fr)",
-          md: "repeat(3, 1fr)",
-          lg: "repeat(4, 1fr)",
-          xl: "repeat(5, 1fr)",
-        },
-        gap: { xs: 1.5, sm: 2, md: 2.5 },
-        p: { xs: 1.5, sm: 2, md: 3 },
-      }}
-    >
-      {/*  <Button component={Link} href="/backoffice/menus/new">
+    <Box>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+        <Button
+          variant="contained"
+          href="/backoffice/menus/new"
+          sx={{
+            mb: 2,
+            ml: 1,
+
+            gap: 1,
+          }}
+        >
+          Create Menu
+        </Button>
+      </Box>
+
+      <Box
+        sx={{
+          minWidth: 360,
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(3, 1fr)",
+            lg: "repeat(4, 1fr)",
+            xl: "repeat(5, 1fr)",
+          },
+          gap: { xs: 1.5, sm: 2, md: 2.5 },
+          p: { xs: 1.5, sm: 2, md: 3 },
+        }}
+      >
+        {/*  <Button component={Link} href="/backoffice/menus/new">
         + Create New Menu
       </Button> */}
-      {menus.map((menu) => (
-        <BOMenuCard key={menu.id} item={menu} />
-      ))}
+        {menus.map((menu) => (
+          <BOMenuCard key={menu.id} item={menu} />
+        ))}
+      </Box>
     </Box>
   );
 }

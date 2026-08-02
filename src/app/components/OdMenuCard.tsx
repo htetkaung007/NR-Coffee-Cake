@@ -18,8 +18,7 @@ interface OdMenuCardProps {
 }
 
 const FALLBACK_IMAGE =
-  "http://localhost:9001/api/v1/download-shared-object/aHR0cDovLzEyNy4wLjAuMTo5MDAwL25ycmVzdGF1cmFudC9tZW51L1VwbG9hZCUyMGltYWdlLndlYnA_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1DMlg4UTVaVURPMzJHUDBLU1dLNiUyRjIwMjYwODAyJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDgwMlQwNjE0NTlaJlgtQW16LUV4cGlyZXM9NDMyMDAmWC1BbXotU2VjdXJpdHktVG9rZW49ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmhZMk5sYzNOTFpYa2lPaUpETWxnNFVUVmFWVVJQTXpKSFVEQkxVMWRMTmlJc0ltVjRjQ0k2TVRjNE5UWTVOREkxTnl3aWNHRnlaVzUwSWpvaVlXUnRhVzRpZlEuOHNyMFdVZ2tyOUljcDhfQlUtYW9JeHgxYjB0N2U1TC1TdW9vTGRNNGRZSVFfVDd4RTRzMlg0Z0EzdDYyanBhTlRtZDFPTXJ4WGFMN3E1YkEzbU9FdFEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnZlcnNpb25JZD1udWxsJlgtQW16LVNpZ25hdHVyZT1kNjBlNDhkOGY1MGIxZDExNDc1NWM5YWZhY2IyNDg3ZWZiNjM0ODVmOTU3Mzk1YWQ4N2M1YTRlNjZiMzI4YjU3";
-
+  "http://localhost:9000/nrrestaurant/menu/2-1785697412707.webp";
 /** Customer-facing card used exclusively for the new-menu live preview. */
 export default function OdMenuCard({ item }: OdMenuCardProps) {
   const isAvailable = item.stockQuantity > 0 && item.isAvailable;
@@ -91,7 +90,7 @@ export default function OdMenuCard({ item }: OdMenuCardProps) {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <Typography variant="body1">{item.name || "Dish name"}</Typography>
             <Typography
-              variant="caption"
+              variant="body2"
               color="text.secondary"
               sx={{
                 mt: 0.5,
