@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
-import { MenuService } from "./menu.service";
+import { MenuService } from "./menu_menuCategory.service";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;

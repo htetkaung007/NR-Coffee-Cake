@@ -32,8 +32,8 @@ export function getTheme(mode: PaletteMode) {
         main: "#10B981",
       },
       background: {
-        default: isLight ? "#F7F7F7" : "#121212", // Secondary Background
-        paper: isLight ? "#FFFFFF" : "#1E1E1E", // Main Background (card/drawer/appbar)
+        default: isLight ? "#FFFFFF" : "#121212", // Secondary Background
+        paper: isLight ? "#F7F7F7" : "#1E1E1E", // Main Background (card/drawer/appbar)
       },
       text: {
         primary: isLight ? "#1F272D" : "#F5F5F5", // Main Text Color
@@ -52,8 +52,8 @@ export function getTheme(mode: PaletteMode) {
       },
       // Card titles, price text — the main readable content size
       body1: {
-        fontWeight: 700,
-        fontSize: "0.8rem",
+        fontWeight: 790,
+        fontSize: "1rem",
         [`@media (min-width:${BREAKPOINTS.sm}px)`]: { fontSize: "0.9rem" },
         [`@media (min-width:${BREAKPOINTS.md}px)`]: { fontSize: "0.95rem" },
       },

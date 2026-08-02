@@ -45,6 +45,7 @@ export default async function MenusPage() {
   return (
     <Box
       sx={{
+        minWidth: 360,
         display: "grid",
         gridTemplateColumns: {
           xs: "repeat(2, 1fr)",

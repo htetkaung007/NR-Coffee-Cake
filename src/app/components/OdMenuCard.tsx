@@ -18,7 +18,7 @@ interface OdMenuCardProps {
 }
 
 const FALLBACK_IMAGE =
-  "https://5ez9pz51cl93qmhn.public.blob.vercel-storage.com/Default%20MenuIcon-8J6xP2FAGf6AoosGMi7w7Lg6nUi4zx.png";
+  "http://localhost:9001/api/v1/download-shared-object/aHR0cDovLzEyNy4wLjAuMTo5MDAwL25ycmVzdGF1cmFudC9tZW51L1VwbG9hZCUyMGltYWdlLndlYnA_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1DMlg4UTVaVURPMzJHUDBLU1dLNiUyRjIwMjYwODAyJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDgwMlQwNjE0NTlaJlgtQW16LUV4cGlyZXM9NDMyMDAmWC1BbXotU2VjdXJpdHktVG9rZW49ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmhZMk5sYzNOTFpYa2lPaUpETWxnNFVUVmFWVVJQTXpKSFVEQkxVMWRMTmlJc0ltVjRjQ0k2TVRjNE5UWTVOREkxTnl3aWNHRnlaVzUwSWpvaVlXUnRhVzRpZlEuOHNyMFdVZ2tyOUljcDhfQlUtYW9JeHgxYjB0N2U1TC1TdW9vTGRNNGRZSVFfVDd4RTRzMlg0Z0EzdDYyanBhTlRtZDFPTXJ4WGFMN3E1YkEzbU9FdFEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnZlcnNpb25JZD1udWxsJlgtQW16LVNpZ25hdHVyZT1kNjBlNDhkOGY1MGIxZDExNDc1NWM5YWZhY2IyNDg3ZWZiNjM0ODVmOTU3Mzk1YWQ4N2M1YTRlNjZiMzI4YjU3";
 
 /** Customer-facing card used exclusively for the new-menu live preview. */
 export default function OdMenuCard({ item }: OdMenuCardProps) {
@@ -29,7 +29,9 @@ export default function OdMenuCard({ item }: OdMenuCardProps) {
       elevation={0}
       sx={{
         width: "100%",
-        maxWidth: 340,
+
+        maxWidth: 350,
+
         mx: "auto",
         overflow: "hidden",
         border: "1px solid",
@@ -53,43 +55,69 @@ export default function OdMenuCard({ item }: OdMenuCardProps) {
           alt={item.name}
           sx={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
+
         <Chip
-          label={item.category}
-          size="small"
-          sx={{ position: "absolute", top: 10, left: 10, fontWeight: 700 }}
-        />
-        <Chip
-          label={isAvailable ? "Available" : "Unavailable"}
+          label={isAvailable ? "Available" : "out of stock"}
           color={isAvailable ? "success" : "error"}
           size="small"
-          sx={{ position: "absolute", top: 10, right: 10, fontWeight: 700 }}
+          sx={{ position: "absolute", top: 10, right: 10 }}
         />
-        <Chip
-          label={`Stock: ${item.stockQuantity}`}
-          size="small"
-          sx={{ position: "absolute", bottom: 10, left: 10, fontWeight: 700 }}
-        />
+        {item.stockQuantity <= 5 && (
+          <Chip
+            label={`Only left : ${item.stockQuantity}`}
+            size="small"
+            sx={{
+              position: "absolute",
+              bottom: 10,
+              left: 10,
+              fontWeight: 700,
+              bgcolor: "background.paper",
+              color: "text.primary",
+            }}
+          />
+        )}
       </Box>
 
       <Box sx={{ pt: 1.5 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-          <Typography sx={{ fontWeight: 800 }}>{item.name || "Dish name"}</Typography>
-          <Typography color="primary.main" sx={{ fontWeight: 800 }}>
-            {item.price.toLocaleString()} MMK
-          </Typography>
-        </Box>
-        <Typography
-          color="text.secondary"
-          sx={{ mt: 0.5, fontSize: "0.78rem", minHeight: "2.5em" }}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 1.5,
+          }}
         >
-          {item.description || "Your item description will appear here."}
-        </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Typography variant="body1">{item.name || "Dish name"}</Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                mt: 0.5,
+                mb: item.description ? 0 : 1,
+                display: "flex",
+              }}
+            >
+              {item.description}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: 795, color: "primary.main" }}
+            >
+              {item.price.toLocaleString()} MMK
+            </Typography>
+          </Box>
+        </Box>
+
         <Button
           fullWidth
           disabled={!isAvailable}
           startIcon={<ShoppingCartOutlinedIcon />}
           variant="contained"
-          sx={{ mt: 1.5, textTransform: "none", fontWeight: 700 }}
+          sx={{ mt: 1.5, mb: 1, textTransform: "none", fontWeight: 700 }}
         >
           Add to cart
         </Button>

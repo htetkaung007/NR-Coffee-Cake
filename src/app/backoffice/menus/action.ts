@@ -10,7 +10,7 @@ import { AppError } from "@/app/lib/errors";
 import {
   createMenuSchema,
   type CreateMenuInput,
-} from "@/app/lib/schemas/menuSchema";
+} from "@/app/lib/schemas/menu_menuCategorySchema";
 import { getSessionContext } from "@/app/lib/session";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 import { AppService, MenuService } from "@/app/services";
@@ -68,9 +68,6 @@ export async function createMenuAction(formData: FormData) {
   }).asyncAndThen(safeCreateMenu);
 
   const actionResult = toActionResult(result);
-  if (actionResult.success) {
-    revalidatePath("/backoffice/menus");
-  }
 
   return actionResult;
 }

@@ -1,5 +1,6 @@
 import { prisma } from "../utils/prisma";
 import type { Prisma } from "../../../prisma/generated/client";
+import { ValidationError } from "../lib/errors";
 
 type Tx = Prisma.TransactionClient;
 
@@ -51,6 +52,37 @@ export class MenuService {
     return prisma.menuCategory.findMany({
       where: { companyId, isArchived: false },
       orderBy: { id: "asc" },
+    });
+  }
+  static async createMenuCategory(companyId: number, name: string) {
+    const existing = await prisma.menuCategory.findFirst({
+      where: {
+        companyId,
+        isArchived: false,
+        name: { equals: name, mode: "insensitive" },
+      },
+    });
+    if (existing) {
+      throw new ValidationError(`"${name}" already exists as a category.`);
+    }
+
+    return prisma.menuCategory.create({
+      data: { name, companyId },
+    });
+  }
+  static async getMenuCategoriesWithCounts(companyId: number) {
+    return prisma.menuCategory.findMany({
+      where: { companyId, isArchived: false },
+      orderBy: { id: "asc" },
+      include: {
+        _count: {
+          select: {
+            menuMenuCategory: {
+              where: { isArchived: false, menu: { isArchived: false } },
+            },
+          },
+        },
+      },
     });
   }
 

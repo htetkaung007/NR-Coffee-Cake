@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "../utils/config/authOptions";
 import { BackofficeShell } from "../components/BackofficeShell";
 import { AppService } from "../services";
+import { Box } from "@mui/material";
 
 interface Props {
   children?: React.ReactNode;
@@ -19,20 +20,21 @@ export default async function BackOfficeLayout({ children }: Props) {
   const companyName = company.name;
 
   return (
-    <div>
+    <Box>
       <BackofficeShell companyName={companyName}>
-        <div style={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
-          <div
-            style={{
-              backgroundColor: "#FFF0D1",
+        <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
               width: "100%",
-              padding: "16px",
+              padding: { xs: 0, sm: 0, md: 3 },
+              borderRadius: 3,
             }}
           >
             {children}
-          </div>
-        </div>
+          </Box>
+        </Box>
       </BackofficeShell>
-    </div>
+    </Box>
   );
 }
