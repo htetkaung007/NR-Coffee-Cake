@@ -13,5 +13,6 @@ export async function getSessionContext() {
   return {
     companyId: session?.user?.companyId ?? null,
     userId: session?.user?.id ?? null,
+    role: session?.user?.role ?? "ADMIN",
   };
 }

@@ -60,7 +60,10 @@ export const authOptions: NextAuthOptions = {
         // user.id ဟာ Google ကိုယ်ပိုင် account id ဖြစ်လို့ (Rule 9),
         // email ကနေပဲ ပြန်ရှာရတယ်.
         const dbUser = await AppService.getUserByEmail(user.email);
-        if (dbUser) token.userId = dbUser.id;
+        if (dbUser) {
+          token.userId = dbUser.id;
+          token.role = dbUser.role;
+        }
       }
       return token;
     },
@@ -69,6 +72,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.companyId = (token.companyId as number | null) ?? null;
         session.user.id = (token.userId as number | null) ?? null;
+        session.user.role =
+          (token.role as "ADMIN" | "MANAGER" | undefined) ?? "ADMIN";
       }
       return session;
     },

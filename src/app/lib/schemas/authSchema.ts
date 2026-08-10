@@ -14,3 +14,11 @@ export const loginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const createManagerSchema = z.object({
+  email: z.string().trim().email("A valid email is required."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
+  locationId: z.coerce.number().int().positive("Select a location."),
+});
+
+export type CreateManagerInput = z.infer<typeof createManagerSchema>;

@@ -19,3 +19,11 @@ export const ORDERSTATUS = {
 } as const
 
 export type ORDERSTATUS = (typeof ORDERSTATUS)[keyof typeof ORDERSTATUS]
+
+
+export const UserRole = {
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER'
+} as const
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole]

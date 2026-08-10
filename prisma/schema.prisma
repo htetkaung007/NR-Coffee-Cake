@@ -18,9 +18,12 @@ model User {
   email              String             @unique
   name               String?
   password           String?
+  role               UserRole           @default(ADMIN)      // ← အသစ်
   company            Company            @relation(fields: [companyId], references: [id])
   selectedLocations  SelectedLocation[]
   companyId          Int
+  location           Location?          @relation(fields: [locationId], references: [id])  // ← အသစ်
+  locationId         Int?                                    // ← အသစ်
   createdAt          DateTime           @default(now())
   updateTime         DateTime           @updatedAt
   isArchived         Boolean            @default(false)
@@ -58,7 +61,9 @@ model Location {
   tables                         Table[]
   selectedLocations              SelectedLocation[]
   menuStocks                     MenuStock[]
+   managers                       User[] 
   company                        Company                         @relation(fields: [companyId], references: [id])
+  archivedAt                     DateTime?
   companyId                      Int
   createdAt                      DateTime                        @default(now())
   updateTime                     DateTime                        @updatedAt
@@ -76,6 +81,7 @@ model SelectedLocation {
   createdAt  DateTime @default(now())
   updateTime DateTime @updatedAt
   isArchived Boolean  @default(false)
+  @@unique([userId])
 }
 
 model Menu {
@@ -221,4 +227,8 @@ enum ORDERSTATUS {
   PAID
   COMPLETED
   CANCELLED
+}
+enum UserRole {
+  ADMIN
+  MANAGER
 }

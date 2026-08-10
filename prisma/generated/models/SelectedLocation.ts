@@ -249,17 +249,17 @@ export type SelectedLocationOrderByWithRelationInput = {
 
 export type SelectedLocationWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  userId?: number
   AND?: Prisma.SelectedLocationWhereInput | Prisma.SelectedLocationWhereInput[]
   OR?: Prisma.SelectedLocationWhereInput[]
   NOT?: Prisma.SelectedLocationWhereInput | Prisma.SelectedLocationWhereInput[]
   locationId?: Prisma.IntFilter<"SelectedLocation"> | number
-  userId?: Prisma.IntFilter<"SelectedLocation"> | number
   createdAt?: Prisma.DateTimeFilter<"SelectedLocation"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"SelectedLocation"> | Date | string
   isArchived?: Prisma.BoolFilter<"SelectedLocation"> | boolean
   location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id">
+}, "id" | "userId">
 
 export type SelectedLocationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

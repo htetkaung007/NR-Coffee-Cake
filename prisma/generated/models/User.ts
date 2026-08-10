@@ -29,11 +29,13 @@ export type AggregateUser = {
 export type UserAvgAggregateOutputType = {
   id: number | null
   companyId: number | null
+  locationId: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
   companyId: number | null
+  locationId: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -41,7 +43,9 @@ export type UserMinAggregateOutputType = {
   email: string | null
   name: string | null
   password: string | null
+  role: $Enums.UserRole | null
   companyId: number | null
+  locationId: number | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -52,7 +56,9 @@ export type UserMaxAggregateOutputType = {
   email: string | null
   name: string | null
   password: string | null
+  role: $Enums.UserRole | null
   companyId: number | null
+  locationId: number | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -63,7 +69,9 @@ export type UserCountAggregateOutputType = {
   email: number
   name: number
   password: number
+  role: number
   companyId: number
+  locationId: number
   createdAt: number
   updateTime: number
   isArchived: number
@@ -74,11 +82,13 @@ export type UserCountAggregateOutputType = {
 export type UserAvgAggregateInputType = {
   id?: true
   companyId?: true
+  locationId?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
   companyId?: true
+  locationId?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -86,7 +96,9 @@ export type UserMinAggregateInputType = {
   email?: true
   name?: true
   password?: true
+  role?: true
   companyId?: true
+  locationId?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -97,7 +109,9 @@ export type UserMaxAggregateInputType = {
   email?: true
   name?: true
   password?: true
+  role?: true
   companyId?: true
+  locationId?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -108,7 +122,9 @@ export type UserCountAggregateInputType = {
   email?: true
   name?: true
   password?: true
+  role?: true
   companyId?: true
+  locationId?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -206,7 +222,9 @@ export type UserGroupByOutputType = {
   email: string
   name: string | null
   password: string | null
+  role: $Enums.UserRole
   companyId: number
+  locationId: number | null
   createdAt: Date
   updateTime: Date
   isArchived: boolean
@@ -240,12 +258,15 @@ export type UserWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   companyId?: Prisma.IntFilter<"User"> | number
+  locationId?: Prisma.IntNullableFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"User"> | Date | string
   isArchived?: Prisma.BoolFilter<"User"> | boolean
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
+  location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
 }
 
 export type UserOrderByWithRelationInput = {
@@ -253,12 +274,15 @@ export type UserOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
+  role?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   selectedLocations?: Prisma.SelectedLocationOrderByRelationAggregateInput
+  location?: Prisma.LocationOrderByWithRelationInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -269,12 +293,15 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   companyId?: Prisma.IntFilter<"User"> | number
+  locationId?: Prisma.IntNullableFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"User"> | Date | string
   isArchived?: Prisma.BoolFilter<"User"> | boolean
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
+  location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -282,7 +309,9 @@ export type UserOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
+  role?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -301,7 +330,9 @@ export type UserScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   companyId?: Prisma.IntWithAggregatesFilter<"User"> | number
+  locationId?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
@@ -311,11 +342,13 @@ export type UserCreateInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
+  location?: Prisma.LocationCreateNestedOneWithoutManagersInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -323,7 +356,9 @@ export type UserUncheckedCreateInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
   companyId: number
+  locationId?: number | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -334,11 +369,13 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
+  location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -346,7 +383,9 @@ export type UserUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -358,7 +397,9 @@ export type UserCreateManyInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
   companyId: number
+  locationId?: number | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -368,6 +409,7 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -378,7 +420,9 @@ export type UserUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -389,7 +433,9 @@ export type UserCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -398,6 +444,7 @@ export type UserCountOrderByAggregateInput = {
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -405,7 +452,9 @@ export type UserMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -416,7 +465,9 @@ export type UserMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   name?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -425,6 +476,7 @@ export type UserMinOrderByAggregateInput = {
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
 }
 
 export type UserListRelationFilter = {
@@ -450,6 +502,10 @@ export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
+export type EnumUserRoleFieldUpdateOperationsInput = {
+  set?: $Enums.UserRole
+}
+
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
@@ -460,6 +516,14 @@ export type BoolFieldUpdateOperationsInput = {
 
 export type IntFieldUpdateOperationsInput = {
   set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
   increment?: number
   decrement?: number
   multiply?: number
@@ -508,6 +572,48 @@ export type UserUncheckedUpdateManyWithoutCompanyNestedInput = {
   deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
+export type UserCreateNestedManyWithoutLocationInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutLocationInput, Prisma.UserUncheckedCreateWithoutLocationInput> | Prisma.UserCreateWithoutLocationInput[] | Prisma.UserUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutLocationInput | Prisma.UserCreateOrConnectWithoutLocationInput[]
+  createMany?: Prisma.UserCreateManyLocationInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutLocationInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutLocationInput, Prisma.UserUncheckedCreateWithoutLocationInput> | Prisma.UserCreateWithoutLocationInput[] | Prisma.UserUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutLocationInput | Prisma.UserCreateOrConnectWithoutLocationInput[]
+  createMany?: Prisma.UserCreateManyLocationInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUpdateManyWithoutLocationNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutLocationInput, Prisma.UserUncheckedCreateWithoutLocationInput> | Prisma.UserCreateWithoutLocationInput[] | Prisma.UserUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutLocationInput | Prisma.UserCreateOrConnectWithoutLocationInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutLocationInput | Prisma.UserUpsertWithWhereUniqueWithoutLocationInput[]
+  createMany?: Prisma.UserCreateManyLocationInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutLocationInput | Prisma.UserUpdateWithWhereUniqueWithoutLocationInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutLocationInput | Prisma.UserUpdateManyWithWhereWithoutLocationInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutLocationNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutLocationInput, Prisma.UserUncheckedCreateWithoutLocationInput> | Prisma.UserCreateWithoutLocationInput[] | Prisma.UserUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutLocationInput | Prisma.UserCreateOrConnectWithoutLocationInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutLocationInput | Prisma.UserUpsertWithWhereUniqueWithoutLocationInput[]
+  createMany?: Prisma.UserCreateManyLocationInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutLocationInput | Prisma.UserUpdateWithWhereUniqueWithoutLocationInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutLocationInput | Prisma.UserUpdateManyWithWhereWithoutLocationInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
 export type UserCreateNestedOneWithoutSelectedLocationsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutSelectedLocationsInput, Prisma.UserUncheckedCreateWithoutSelectedLocationsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutSelectedLocationsInput
@@ -526,10 +632,12 @@ export type UserCreateWithoutCompanyInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
+  location?: Prisma.LocationCreateNestedOneWithoutManagersInput
 }
 
 export type UserUncheckedCreateWithoutCompanyInput = {
@@ -537,6 +645,8 @@ export type UserUncheckedCreateWithoutCompanyInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
+  locationId?: number | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -577,20 +687,75 @@ export type UserScalarWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   companyId?: Prisma.IntFilter<"User"> | number
+  locationId?: Prisma.IntNullableFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"User"> | Date | string
   isArchived?: Prisma.BoolFilter<"User"> | boolean
+}
+
+export type UserCreateWithoutLocationInput = {
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  company: Prisma.CompanyCreateNestedOneWithoutUsersInput
+  selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutLocationInput = {
+  id?: number
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  companyId: number
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutLocationInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutLocationInput, Prisma.UserUncheckedCreateWithoutLocationInput>
+}
+
+export type UserCreateManyLocationInputEnvelope = {
+  data: Prisma.UserCreateManyLocationInput | Prisma.UserCreateManyLocationInput[]
+  skipDuplicates?: boolean
+}
+
+export type UserUpsertWithWhereUniqueWithoutLocationInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutLocationInput, Prisma.UserUncheckedUpdateWithoutLocationInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutLocationInput, Prisma.UserUncheckedCreateWithoutLocationInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutLocationInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutLocationInput, Prisma.UserUncheckedUpdateWithoutLocationInput>
+}
+
+export type UserUpdateManyWithWhereWithoutLocationInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutLocationInput>
 }
 
 export type UserCreateWithoutSelectedLocationsInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
+  location?: Prisma.LocationCreateNestedOneWithoutManagersInput
 }
 
 export type UserUncheckedCreateWithoutSelectedLocationsInput = {
@@ -598,7 +763,9 @@ export type UserUncheckedCreateWithoutSelectedLocationsInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
   companyId: number
+  locationId?: number | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -624,10 +791,12 @@ export type UserUpdateWithoutSelectedLocationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
+  location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSelectedLocationsInput = {
@@ -635,7 +804,9 @@ export type UserUncheckedUpdateWithoutSelectedLocationsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -646,6 +817,8 @@ export type UserCreateManyCompanyInput = {
   email: string
   name?: string | null
   password?: string | null
+  role?: $Enums.UserRole
+  locationId?: number | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -655,10 +828,12 @@ export type UserUpdateWithoutCompanyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
+  location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCompanyInput = {
@@ -666,6 +841,8 @@ export type UserUncheckedUpdateWithoutCompanyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -677,6 +854,57 @@ export type UserUncheckedUpdateManyWithoutCompanyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+}
+
+export type UserCreateManyLocationInput = {
+  id?: number
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  companyId: number
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+}
+
+export type UserUpdateWithoutLocationInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
+  selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutLocationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutLocationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -718,12 +946,15 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   name?: boolean
   password?: boolean
+  role?: boolean
   companyId?: boolean
+  locationId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.User$selectedLocationsArgs<ExtArgs>
+  location?: boolean | Prisma.User$locationArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -732,11 +963,14 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   name?: boolean
   password?: boolean
+  role?: boolean
   companyId?: boolean
+  locationId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.User$locationArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -744,11 +978,14 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   name?: boolean
   password?: boolean
+  role?: boolean
   companyId?: boolean
+  locationId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.User$locationArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -756,23 +993,28 @@ export type UserSelectScalar = {
   email?: boolean
   name?: boolean
   password?: boolean
+  role?: boolean
   companyId?: boolean
+  locationId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "companyId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "companyId" | "locationId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.User$selectedLocationsArgs<ExtArgs>
+  location?: boolean | Prisma.User$locationArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.User$locationArgs<ExtArgs>
 }
 export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  location?: boolean | Prisma.User$locationArgs<ExtArgs>
 }
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -780,13 +1022,16 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
     selectedLocations: Prisma.$SelectedLocationPayload<ExtArgs>[]
+    location: Prisma.$LocationPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     email: string
     name: string | null
     password: string | null
+    role: $Enums.UserRole
     companyId: number
+    locationId: number | null
     createdAt: Date
     updateTime: Date
     isArchived: boolean
@@ -1186,6 +1431,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   selectedLocations<T extends Prisma.User$selectedLocationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$selectedLocationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SelectedLocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  location<T extends Prisma.User$locationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$locationArgs<ExtArgs>>): Prisma.Prisma__LocationClient<runtime.Types.Result.GetResult<Prisma.$LocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1219,7 +1465,9 @@ export interface UserFieldRefs {
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly password: Prisma.FieldRef<"User", 'String'>
+  readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly companyId: Prisma.FieldRef<"User", 'Int'>
+  readonly locationId: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"User", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"User", 'Boolean'>
@@ -1645,6 +1893,25 @@ export type User$selectedLocationsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.SelectedLocationScalarFieldEnum | Prisma.SelectedLocationScalarFieldEnum[]
+}
+
+/**
+ * User.location
+ */
+export type User$locationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Location
+   */
+  select?: Prisma.LocationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Location
+   */
+  omit?: Prisma.LocationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LocationInclude<ExtArgs> | null
+  where?: Prisma.LocationWhereInput
 }
 
 /**

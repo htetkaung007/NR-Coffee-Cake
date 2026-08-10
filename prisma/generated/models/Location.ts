@@ -39,6 +39,7 @@ export type LocationSumAggregateOutputType = {
 export type LocationMinAggregateOutputType = {
   id: number | null
   name: string | null
+  archivedAt: Date | null
   companyId: number | null
   createdAt: Date | null
   updateTime: Date | null
@@ -48,6 +49,7 @@ export type LocationMinAggregateOutputType = {
 export type LocationMaxAggregateOutputType = {
   id: number | null
   name: string | null
+  archivedAt: Date | null
   companyId: number | null
   createdAt: Date | null
   updateTime: Date | null
@@ -57,6 +59,7 @@ export type LocationMaxAggregateOutputType = {
 export type LocationCountAggregateOutputType = {
   id: number
   name: number
+  archivedAt: number
   companyId: number
   createdAt: number
   updateTime: number
@@ -78,6 +81,7 @@ export type LocationSumAggregateInputType = {
 export type LocationMinAggregateInputType = {
   id?: true
   name?: true
+  archivedAt?: true
   companyId?: true
   createdAt?: true
   updateTime?: true
@@ -87,6 +91,7 @@ export type LocationMinAggregateInputType = {
 export type LocationMaxAggregateInputType = {
   id?: true
   name?: true
+  archivedAt?: true
   companyId?: true
   createdAt?: true
   updateTime?: true
@@ -96,6 +101,7 @@ export type LocationMaxAggregateInputType = {
 export type LocationCountAggregateInputType = {
   id?: true
   name?: true
+  archivedAt?: true
   companyId?: true
   createdAt?: true
   updateTime?: true
@@ -192,6 +198,7 @@ export type LocationGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type LocationGroupByOutputType = {
   id: number
   name: string
+  archivedAt: Date | null
   companyId: number
   createdAt: Date
   updateTime: Date
@@ -224,6 +231,7 @@ export type LocationWhereInput = {
   NOT?: Prisma.LocationWhereInput | Prisma.LocationWhereInput[]
   id?: Prisma.IntFilter<"Location"> | number
   name?: Prisma.StringFilter<"Location"> | string
+  archivedAt?: Prisma.DateTimeNullableFilter<"Location"> | Date | string | null
   companyId?: Prisma.IntFilter<"Location"> | number
   createdAt?: Prisma.DateTimeFilter<"Location"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Location"> | Date | string
@@ -231,6 +239,7 @@ export type LocationWhereInput = {
   tables?: Prisma.TableListRelationFilter
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
   menuStocks?: Prisma.MenuStockListRelationFilter
+  managers?: Prisma.UserListRelationFilter
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   disableLocationMenus?: Prisma.DisableLocationMenusListRelationFilter
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesListRelationFilter
@@ -239,6 +248,7 @@ export type LocationWhereInput = {
 export type LocationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -246,6 +256,7 @@ export type LocationOrderByWithRelationInput = {
   tables?: Prisma.TableOrderByRelationAggregateInput
   selectedLocations?: Prisma.SelectedLocationOrderByRelationAggregateInput
   menuStocks?: Prisma.MenuStockOrderByRelationAggregateInput
+  managers?: Prisma.UserOrderByRelationAggregateInput
   company?: Prisma.CompanyOrderByWithRelationInput
   disableLocationMenus?: Prisma.DisableLocationMenusOrderByRelationAggregateInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesOrderByRelationAggregateInput
@@ -257,6 +268,7 @@ export type LocationWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.LocationWhereInput[]
   NOT?: Prisma.LocationWhereInput | Prisma.LocationWhereInput[]
   name?: Prisma.StringFilter<"Location"> | string
+  archivedAt?: Prisma.DateTimeNullableFilter<"Location"> | Date | string | null
   companyId?: Prisma.IntFilter<"Location"> | number
   createdAt?: Prisma.DateTimeFilter<"Location"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Location"> | Date | string
@@ -264,6 +276,7 @@ export type LocationWhereUniqueInput = Prisma.AtLeast<{
   tables?: Prisma.TableListRelationFilter
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
   menuStocks?: Prisma.MenuStockListRelationFilter
+  managers?: Prisma.UserListRelationFilter
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   disableLocationMenus?: Prisma.DisableLocationMenusListRelationFilter
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesListRelationFilter
@@ -272,6 +285,7 @@ export type LocationWhereUniqueInput = Prisma.AtLeast<{
 export type LocationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -289,6 +303,7 @@ export type LocationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.LocationScalarWhereWithAggregatesInput | Prisma.LocationScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Location"> | number
   name?: Prisma.StringWithAggregatesFilter<"Location"> | string
+  archivedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Location"> | Date | string | null
   companyId?: Prisma.IntWithAggregatesFilter<"Location"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Location"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"Location"> | Date | string
@@ -297,12 +312,14 @@ export type LocationScalarWhereWithAggregatesInput = {
 
 export type LocationCreateInput = {
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserCreateNestedManyWithoutLocationInput
   company: Prisma.CompanyCreateNestedOneWithoutLocationsInput
   disableLocationMenus?: Prisma.DisableLocationMenusCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput
@@ -311,6 +328,7 @@ export type LocationCreateInput = {
 export type LocationUncheckedCreateInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -318,18 +336,21 @@ export type LocationUncheckedCreateInput = {
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput
 }
 
 export type LocationUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
   company?: Prisma.CompanyUpdateOneRequiredWithoutLocationsNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput
@@ -338,6 +359,7 @@ export type LocationUpdateInput = {
 export type LocationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -345,6 +367,7 @@ export type LocationUncheckedUpdateInput = {
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput
 }
@@ -352,6 +375,7 @@ export type LocationUncheckedUpdateInput = {
 export type LocationCreateManyInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -360,6 +384,7 @@ export type LocationCreateManyInput = {
 
 export type LocationUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -368,10 +393,16 @@ export type LocationUpdateManyMutationInput = {
 export type LocationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+}
+
+export type LocationNullableScalarRelationFilter = {
+  is?: Prisma.LocationWhereInput | null
+  isNot?: Prisma.LocationWhereInput | null
 }
 
 export type LocationListRelationFilter = {
@@ -392,6 +423,7 @@ export type LocationScalarRelationFilter = {
 export type LocationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -406,6 +438,7 @@ export type LocationAvgOrderByAggregateInput = {
 export type LocationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -415,6 +448,7 @@ export type LocationMaxOrderByAggregateInput = {
 export type LocationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -424,6 +458,22 @@ export type LocationMinOrderByAggregateInput = {
 export type LocationSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+}
+
+export type LocationCreateNestedOneWithoutManagersInput = {
+  create?: Prisma.XOR<Prisma.LocationCreateWithoutManagersInput, Prisma.LocationUncheckedCreateWithoutManagersInput>
+  connectOrCreate?: Prisma.LocationCreateOrConnectWithoutManagersInput
+  connect?: Prisma.LocationWhereUniqueInput
+}
+
+export type LocationUpdateOneWithoutManagersNestedInput = {
+  create?: Prisma.XOR<Prisma.LocationCreateWithoutManagersInput, Prisma.LocationUncheckedCreateWithoutManagersInput>
+  connectOrCreate?: Prisma.LocationCreateOrConnectWithoutManagersInput
+  upsert?: Prisma.LocationUpsertWithoutManagersInput
+  disconnect?: Prisma.LocationWhereInput | boolean
+  delete?: Prisma.LocationWhereInput | boolean
+  connect?: Prisma.LocationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LocationUpdateToOneWithWhereWithoutManagersInput, Prisma.LocationUpdateWithoutManagersInput>, Prisma.LocationUncheckedUpdateWithoutManagersInput>
 }
 
 export type LocationCreateNestedManyWithoutCompanyInput = {
@@ -482,6 +532,10 @@ export type LocationUpdateOneRequiredWithoutTablesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.LocationUpdateToOneWithWhereWithoutTablesInput, Prisma.LocationUpdateWithoutTablesInput>, Prisma.LocationUncheckedUpdateWithoutTablesInput>
 }
 
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type LocationCreateNestedOneWithoutSelectedLocationsInput = {
   create?: Prisma.XOR<Prisma.LocationCreateWithoutSelectedLocationsInput, Prisma.LocationUncheckedCreateWithoutSelectedLocationsInput>
   connectOrCreate?: Prisma.LocationCreateOrConnectWithoutSelectedLocationsInput
@@ -538,14 +592,90 @@ export type LocationUpdateOneRequiredWithoutDisableLocationMenuCategoriesNestedI
   update?: Prisma.XOR<Prisma.XOR<Prisma.LocationUpdateToOneWithWhereWithoutDisableLocationMenuCategoriesInput, Prisma.LocationUpdateWithoutDisableLocationMenuCategoriesInput>, Prisma.LocationUncheckedUpdateWithoutDisableLocationMenuCategoriesInput>
 }
 
-export type LocationCreateWithoutCompanyInput = {
+export type LocationCreateWithoutManagersInput = {
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
+  company: Prisma.CompanyCreateNestedOneWithoutLocationsInput
+  disableLocationMenus?: Prisma.DisableLocationMenusCreateNestedManyWithoutLocationInput
+  disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput
+}
+
+export type LocationUncheckedCreateWithoutManagersInput = {
+  id?: number
+  name: string
+  archivedAt?: Date | string | null
+  companyId: number
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
+  selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
+  menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
+  disableLocationMenus?: Prisma.DisableLocationMenusUncheckedCreateNestedManyWithoutLocationInput
+  disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput
+}
+
+export type LocationCreateOrConnectWithoutManagersInput = {
+  where: Prisma.LocationWhereUniqueInput
+  create: Prisma.XOR<Prisma.LocationCreateWithoutManagersInput, Prisma.LocationUncheckedCreateWithoutManagersInput>
+}
+
+export type LocationUpsertWithoutManagersInput = {
+  update: Prisma.XOR<Prisma.LocationUpdateWithoutManagersInput, Prisma.LocationUncheckedUpdateWithoutManagersInput>
+  create: Prisma.XOR<Prisma.LocationCreateWithoutManagersInput, Prisma.LocationUncheckedCreateWithoutManagersInput>
+  where?: Prisma.LocationWhereInput
+}
+
+export type LocationUpdateToOneWithWhereWithoutManagersInput = {
+  where?: Prisma.LocationWhereInput
+  data: Prisma.XOR<Prisma.LocationUpdateWithoutManagersInput, Prisma.LocationUncheckedUpdateWithoutManagersInput>
+}
+
+export type LocationUpdateWithoutManagersInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
+  selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
+  menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
+  company?: Prisma.CompanyUpdateOneRequiredWithoutLocationsNestedInput
+  disableLocationMenus?: Prisma.DisableLocationMenusUpdateManyWithoutLocationNestedInput
+  disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput
+}
+
+export type LocationUncheckedUpdateWithoutManagersInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
+  selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
+  menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
+  disableLocationMenus?: Prisma.DisableLocationMenusUncheckedUpdateManyWithoutLocationNestedInput
+  disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput
+}
+
+export type LocationCreateWithoutCompanyInput = {
+  name: string
+  archivedAt?: Date | string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  tables?: Prisma.TableCreateNestedManyWithoutLocationInput
+  selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
+  menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserCreateNestedManyWithoutLocationInput
   disableLocationMenus?: Prisma.DisableLocationMenusCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput
 }
@@ -553,12 +683,14 @@ export type LocationCreateWithoutCompanyInput = {
 export type LocationUncheckedCreateWithoutCompanyInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput
 }
@@ -595,6 +727,7 @@ export type LocationScalarWhereInput = {
   NOT?: Prisma.LocationScalarWhereInput | Prisma.LocationScalarWhereInput[]
   id?: Prisma.IntFilter<"Location"> | number
   name?: Prisma.StringFilter<"Location"> | string
+  archivedAt?: Prisma.DateTimeNullableFilter<"Location"> | Date | string | null
   companyId?: Prisma.IntFilter<"Location"> | number
   createdAt?: Prisma.DateTimeFilter<"Location"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Location"> | Date | string
@@ -603,11 +736,13 @@ export type LocationScalarWhereInput = {
 
 export type LocationCreateWithoutTablesInput = {
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserCreateNestedManyWithoutLocationInput
   company: Prisma.CompanyCreateNestedOneWithoutLocationsInput
   disableLocationMenus?: Prisma.DisableLocationMenusCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput
@@ -616,12 +751,14 @@ export type LocationCreateWithoutTablesInput = {
 export type LocationUncheckedCreateWithoutTablesInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput
 }
@@ -644,11 +781,13 @@ export type LocationUpdateToOneWithWhereWithoutTablesInput = {
 
 export type LocationUpdateWithoutTablesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
   company?: Prisma.CompanyUpdateOneRequiredWithoutLocationsNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput
@@ -657,23 +796,27 @@ export type LocationUpdateWithoutTablesInput = {
 export type LocationUncheckedUpdateWithoutTablesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput
 }
 
 export type LocationCreateWithoutSelectedLocationsInput = {
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserCreateNestedManyWithoutLocationInput
   company: Prisma.CompanyCreateNestedOneWithoutLocationsInput
   disableLocationMenus?: Prisma.DisableLocationMenusCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput
@@ -682,12 +825,14 @@ export type LocationCreateWithoutSelectedLocationsInput = {
 export type LocationUncheckedCreateWithoutSelectedLocationsInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput
 }
@@ -710,11 +855,13 @@ export type LocationUpdateToOneWithWhereWithoutSelectedLocationsInput = {
 
 export type LocationUpdateWithoutSelectedLocationsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
   company?: Prisma.CompanyUpdateOneRequiredWithoutLocationsNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput
@@ -723,23 +870,27 @@ export type LocationUpdateWithoutSelectedLocationsInput = {
 export type LocationUncheckedUpdateWithoutSelectedLocationsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput
 }
 
 export type LocationCreateWithoutMenuStocksInput = {
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserCreateNestedManyWithoutLocationInput
   company: Prisma.CompanyCreateNestedOneWithoutLocationsInput
   disableLocationMenus?: Prisma.DisableLocationMenusCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput
@@ -748,12 +899,14 @@ export type LocationCreateWithoutMenuStocksInput = {
 export type LocationUncheckedCreateWithoutMenuStocksInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput
 }
@@ -776,11 +929,13 @@ export type LocationUpdateToOneWithWhereWithoutMenuStocksInput = {
 
 export type LocationUpdateWithoutMenuStocksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
   company?: Prisma.CompanyUpdateOneRequiredWithoutLocationsNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput
@@ -789,24 +944,28 @@ export type LocationUpdateWithoutMenuStocksInput = {
 export type LocationUncheckedUpdateWithoutMenuStocksInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput
 }
 
 export type LocationCreateWithoutDisableLocationMenusInput = {
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserCreateNestedManyWithoutLocationInput
   company: Prisma.CompanyCreateNestedOneWithoutLocationsInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutLocationInput
 }
@@ -814,6 +973,7 @@ export type LocationCreateWithoutDisableLocationMenusInput = {
 export type LocationUncheckedCreateWithoutDisableLocationMenusInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -821,6 +981,7 @@ export type LocationUncheckedCreateWithoutDisableLocationMenusInput = {
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutLocationInput
 }
 
@@ -842,12 +1003,14 @@ export type LocationUpdateToOneWithWhereWithoutDisableLocationMenusInput = {
 
 export type LocationUpdateWithoutDisableLocationMenusInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
   company?: Prisma.CompanyUpdateOneRequiredWithoutLocationsNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput
 }
@@ -855,6 +1018,7 @@ export type LocationUpdateWithoutDisableLocationMenusInput = {
 export type LocationUncheckedUpdateWithoutDisableLocationMenusInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -862,17 +1026,20 @@ export type LocationUncheckedUpdateWithoutDisableLocationMenusInput = {
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput
 }
 
 export type LocationCreateWithoutDisableLocationMenuCategoriesInput = {
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserCreateNestedManyWithoutLocationInput
   company: Prisma.CompanyCreateNestedOneWithoutLocationsInput
   disableLocationMenus?: Prisma.DisableLocationMenusCreateNestedManyWithoutLocationInput
 }
@@ -880,6 +1047,7 @@ export type LocationCreateWithoutDisableLocationMenuCategoriesInput = {
 export type LocationUncheckedCreateWithoutDisableLocationMenuCategoriesInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -887,6 +1055,7 @@ export type LocationUncheckedCreateWithoutDisableLocationMenuCategoriesInput = {
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
+  managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedCreateNestedManyWithoutLocationInput
 }
 
@@ -908,12 +1077,14 @@ export type LocationUpdateToOneWithWhereWithoutDisableLocationMenuCategoriesInpu
 
 export type LocationUpdateWithoutDisableLocationMenuCategoriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
   company?: Prisma.CompanyUpdateOneRequiredWithoutLocationsNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUpdateManyWithoutLocationNestedInput
 }
@@ -921,6 +1092,7 @@ export type LocationUpdateWithoutDisableLocationMenuCategoriesInput = {
 export type LocationUncheckedUpdateWithoutDisableLocationMenuCategoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -928,12 +1100,14 @@ export type LocationUncheckedUpdateWithoutDisableLocationMenuCategoriesInput = {
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedUpdateManyWithoutLocationNestedInput
 }
 
 export type LocationCreateManyCompanyInput = {
   id?: number
   name: string
+  archivedAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -941,12 +1115,14 @@ export type LocationCreateManyCompanyInput = {
 
 export type LocationUpdateWithoutCompanyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutLocationNestedInput
 }
@@ -954,12 +1130,14 @@ export type LocationUpdateWithoutCompanyInput = {
 export type LocationUncheckedUpdateWithoutCompanyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
+  managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenus?: Prisma.DisableLocationMenusUncheckedUpdateManyWithoutLocationNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutLocationNestedInput
 }
@@ -967,6 +1145,7 @@ export type LocationUncheckedUpdateWithoutCompanyInput = {
 export type LocationUncheckedUpdateManyWithoutCompanyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -981,6 +1160,7 @@ export type LocationCountOutputType = {
   tables: number
   selectedLocations: number
   menuStocks: number
+  managers: number
   disableLocationMenus: number
   disableLocationMenuCategories: number
 }
@@ -989,6 +1169,7 @@ export type LocationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   tables?: boolean | LocationCountOutputTypeCountTablesArgs
   selectedLocations?: boolean | LocationCountOutputTypeCountSelectedLocationsArgs
   menuStocks?: boolean | LocationCountOutputTypeCountMenuStocksArgs
+  managers?: boolean | LocationCountOutputTypeCountManagersArgs
   disableLocationMenus?: boolean | LocationCountOutputTypeCountDisableLocationMenusArgs
   disableLocationMenuCategories?: boolean | LocationCountOutputTypeCountDisableLocationMenuCategoriesArgs
 }
@@ -1027,6 +1208,13 @@ export type LocationCountOutputTypeCountMenuStocksArgs<ExtArgs extends runtime.T
 /**
  * LocationCountOutputType without action
  */
+export type LocationCountOutputTypeCountManagersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * LocationCountOutputType without action
+ */
 export type LocationCountOutputTypeCountDisableLocationMenusArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.DisableLocationMenusWhereInput
 }
@@ -1042,6 +1230,7 @@ export type LocationCountOutputTypeCountDisableLocationMenuCategoriesArgs<ExtArg
 export type LocationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  archivedAt?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -1049,6 +1238,7 @@ export type LocationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   tables?: boolean | Prisma.Location$tablesArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.Location$selectedLocationsArgs<ExtArgs>
   menuStocks?: boolean | Prisma.Location$menuStocksArgs<ExtArgs>
+  managers?: boolean | Prisma.Location$managersArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   disableLocationMenus?: boolean | Prisma.Location$disableLocationMenusArgs<ExtArgs>
   disableLocationMenuCategories?: boolean | Prisma.Location$disableLocationMenuCategoriesArgs<ExtArgs>
@@ -1058,6 +1248,7 @@ export type LocationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type LocationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  archivedAt?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -1068,6 +1259,7 @@ export type LocationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type LocationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  archivedAt?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -1078,17 +1270,19 @@ export type LocationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type LocationSelectScalar = {
   id?: boolean
   name?: boolean
+  archivedAt?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type LocationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "companyId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["location"]>
+export type LocationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "archivedAt" | "companyId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["location"]>
 export type LocationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tables?: boolean | Prisma.Location$tablesArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.Location$selectedLocationsArgs<ExtArgs>
   menuStocks?: boolean | Prisma.Location$menuStocksArgs<ExtArgs>
+  managers?: boolean | Prisma.Location$managersArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   disableLocationMenus?: boolean | Prisma.Location$disableLocationMenusArgs<ExtArgs>
   disableLocationMenuCategories?: boolean | Prisma.Location$disableLocationMenuCategoriesArgs<ExtArgs>
@@ -1107,6 +1301,7 @@ export type $LocationPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     tables: Prisma.$TablePayload<ExtArgs>[]
     selectedLocations: Prisma.$SelectedLocationPayload<ExtArgs>[]
     menuStocks: Prisma.$MenuStockPayload<ExtArgs>[]
+    managers: Prisma.$UserPayload<ExtArgs>[]
     company: Prisma.$CompanyPayload<ExtArgs>
     disableLocationMenus: Prisma.$DisableLocationMenusPayload<ExtArgs>[]
     disableLocationMenuCategories: Prisma.$DisableLocationMenuCategoriesPayload<ExtArgs>[]
@@ -1114,6 +1309,7 @@ export type $LocationPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
+    archivedAt: Date | null
     companyId: number
     createdAt: Date
     updateTime: Date
@@ -1515,6 +1711,7 @@ export interface Prisma__LocationClient<T, Null = never, ExtArgs extends runtime
   tables<T extends Prisma.Location$tablesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$tablesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   selectedLocations<T extends Prisma.Location$selectedLocationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$selectedLocationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SelectedLocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   menuStocks<T extends Prisma.Location$menuStocksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$menuStocksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MenuStockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  managers<T extends Prisma.Location$managersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$managersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   disableLocationMenus<T extends Prisma.Location$disableLocationMenusArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$disableLocationMenusArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DisableLocationMenusPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   disableLocationMenuCategories<T extends Prisma.Location$disableLocationMenuCategoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$disableLocationMenuCategoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DisableLocationMenuCategoriesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1549,6 +1746,7 @@ export interface Prisma__LocationClient<T, Null = never, ExtArgs extends runtime
 export interface LocationFieldRefs {
   readonly id: Prisma.FieldRef<"Location", 'Int'>
   readonly name: Prisma.FieldRef<"Location", 'String'>
+  readonly archivedAt: Prisma.FieldRef<"Location", 'DateTime'>
   readonly companyId: Prisma.FieldRef<"Location", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Location", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"Location", 'DateTime'>
@@ -2023,6 +2221,30 @@ export type Location$menuStocksArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.MenuStockScalarFieldEnum | Prisma.MenuStockScalarFieldEnum[]
+}
+
+/**
+ * Location.managers
+ */
+export type Location$managersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**

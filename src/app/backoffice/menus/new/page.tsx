@@ -1,6 +1,6 @@
 // backoffice/menus/new/page.tsx (Server Component)
 import { getSessionContext } from "@/app/lib/session";
-import { MenuService } from "@/app/services";
+
 import NewMenu from "./newMenu";
 
 export default async function NewMenuPage() {
@@ -9,7 +9,5 @@ export default async function NewMenuPage() {
     return null;
   }
 
-  const categories = await MenuService.getMenuCategories(companyId);
-
-  return <NewMenu categories={categories} />;
+  return <NewMenu />;
 }

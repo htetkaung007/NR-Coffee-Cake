@@ -3,12 +3,24 @@ import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
 import { MenuService } from "./menu_menuCategory.service";
+import { LocationService } from "./location.service";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
 
+// AppService ကိုယ်တိုင်ရဲ့ own input shape — NextAuth ရဲ့ User type ကို
+// တိုက်ရိုက် မသုံးတော့ဘူး (Boundaries: Service layer က third-party auth
+// library ရဲ့ type ကို မမှီခိုသင့်ဘူး, NextAuth ကနေရော, register form
+// ကနေရော ၂ နေရာစလုံးက ခေါ်နိုင်ဖို့).
 type NewUserInput = { name?: string | null; email: string };
 
+// AppService ရဲ့ method တွေက this.xxx() အစား AppService.xxx() ကို
+// အသုံးပြုထားတယ် — ဘာကြောင့်လဲဆိုတော့ toSafeResult(AppService.someMethod)
+// လို "function ကို variable ထဲ ခွာထုတ်" တဲ့ pattern ကို actions/*.ts
+// file တွေထဲမှာ အမြဲသုံးနေတယ် (Zod/neverthrow pipeline). ဒီလို ခွာထုတ်
+// လိုက်တာနဲ့ static method ရဲ့ `this` context ပျောက်သွားမယ် (undefined
+// ဖြစ်မယ်) — this.xxx() ခေါ်ထားရင် crash ဖြစ်မယ်, AppService.xxx()
+// ခေါ်ထားရင်တော့ ဘယ်လို detach ဖြစ်ဖြစ် အမြဲ အလုပ်လုပ်မယ်.
 export class AppService {
   // ---------------------------------------------------------------------
   // User
@@ -83,6 +95,61 @@ export class AppService {
       hashedPassword,
     );
   }
+
+  /**
+   * Admin-only flow: creates a Manager account fixed to one location.
+   * Unlike registerUser (which bootstraps a whole new Company),
+   * this attaches to the Admin's *existing* company and location —
+   * no createDefaultCompany/createDefaultLocation involved.
+   *
+   * Also seeds a MenuStock row (quantity 0) at that location for every
+   * menu the company already has, rather than creating a placeholder
+   * "Default Menu": a brand-new branch should start with the same menu
+   * the rest of the company sells (just not stocked yet), not an empty
+   * menu the Manager has to rebuild from scratch. skipDuplicates guards
+   * against a stock row that might already exist for this
+   * menu+location pair (e.g. Admin previously stocked ahead of hiring
+   * a Manager for this branch).
+   */
+  static async createManagerForLocation(input: {
+    email: string;
+    password: string;
+    companyId: number;
+    locationId: number;
+  }) {
+    const existingUser = await AppService.getUserByEmail(input.email);
+    if (existingUser) {
+      throw new ValidationError("Email is already registered.");
+    }
+
+    const hashedPassword = await bcrypt.hash(input.password, 10);
+    const companyMenus = await MenuService.getMenus(input.companyId);
+
+    return prisma.$transaction(async (tx) => {
+      const manager = await AppService.createUserForCompany(
+        tx,
+        { email: input.email },
+        input.companyId,
+        hashedPassword,
+        "MANAGER",
+        input.locationId,
+      );
+
+      if (companyMenus.length > 0) {
+        await tx.menuStock.createMany({
+          data: companyMenus.map((menu) => ({
+            menuId: menu.id,
+            locationId: input.locationId,
+            quantity: 0,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      return manager;
+    });
+  }
+
   static async verifyCredentials(email: string, password: string) {
     const user = await AppService.getUserByEmail(email);
     if (!user || !user.password) return null; // no account, or Google-only account (no password set)
@@ -101,6 +168,8 @@ export class AppService {
     nextUser: NewUserInput,
     companyId: number,
     password?: string,
+    role: "ADMIN" | "MANAGER" = "ADMIN",
+    locationId?: number,
   ) {
     const { name, email } = nextUser;
     return tx.user.create({
@@ -108,6 +177,8 @@ export class AppService {
         name: name ? String(name) : null,
         email: String(email),
         companyId,
+        role,
+        ...(locationId ? { locationId } : {}),
         ...(password ? { password } : {}),
       },
     });
@@ -183,7 +254,7 @@ export class AppService {
   }
 
   // ---------------------------------------------------------------------
-  // Menu move to meenu service
+  // Menu
   // ---------------------------------------------------------------------
 
   // ---------------------------------------------------------------------
@@ -227,14 +298,47 @@ export class AppService {
   // Locations & Tables
   // ---------------------------------------------------------------------
 
-  static async getLocations(companyId: number) {
-    return prisma.location.findMany({
-      where: { companyId, isArchived: false },
-      orderBy: { id: "asc" },
+  /**
+   * Managers have a fixed location (User.locationId) and never touch
+   * SelectedLocation at all — there's nothing to switch between, so
+   * their "selected" location is just whatever they're locked to.
+   * Admins go through the normal SelectedLocation table, since they
+   * can switch between any of the company's locations. Both paths
+   * return the same shape ({ locationId, ... }) so callers like
+   * getMenusWithDetails(companyId, selectedLocation.locationId) work
+   * unchanged regardless of which role called this.
+   */
+  /**
+   * Admin-only: switches the Admin's active location. Managers can't
+   * call this — their location is fixed via User.locationId (see
+   * getSelectedLocation) and isn't meant to change from this page.
+   * Upserts on the @@unique([userId]) constraint so an Admin always
+   * has exactly one active location, never zero or two.
+   */
+  static async setSelectedLocation(userId: number, locationId: number) {
+    const user = await prisma.user.findFirst({ where: { id: userId } });
+    if (!user) throw new NotFoundError("User", String(userId));
+    if (user.role === "MANAGER") {
+      throw new ValidationError(
+        "Managers can't switch locations — contact your Admin.",
+      );
+    }
+
+    return prisma.selectedLocation.upsert({
+      where: { userId },
+      update: { locationId },
+      create: { userId, locationId },
     });
   }
 
   static async getSelectedLocation(userId: number) {
+    const user = await prisma.user.findFirst({ where: { id: userId } });
+
+    if (user?.role === "MANAGER") {
+      if (!user.locationId) return null; // Manager not yet assigned a location
+      return { locationId: user.locationId };
+    }
+
     return prisma.selectedLocation.findFirst({
       where: { userId },
       orderBy: { id: "asc" },
@@ -242,7 +346,7 @@ export class AppService {
   }
 
   static async getTables(companyId: number) {
-    const locations = await AppService.getLocations(companyId);
+    const locations = await LocationService.getActiveLocations(companyId);
     const locationIds = locations.map((location) => location.id);
 
     return prisma.table.findMany({
