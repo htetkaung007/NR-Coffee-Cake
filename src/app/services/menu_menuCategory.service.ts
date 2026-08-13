@@ -13,6 +13,7 @@ export class MenuService {
     quantity: number;
     isAvailable: boolean;
     categoryIds: number[];
+    addonCategoryIds: number[];
     locationId: number;
   }) {
     return prisma.$transaction(async (tx: Tx) => {
@@ -31,6 +32,15 @@ export class MenuService {
           menuCategoryId,
         })),
       });
+
+      if (input.addonCategoryIds.length > 0) {
+        await tx.menuAddonCategories.createMany({
+          data: input.addonCategoryIds.map((addonCategoryId) => ({
+            menuId: menu.id,
+            addonCategoryId,
+          })),
+        });
+      }
 
       await tx.menuStock.create({
         data: {
@@ -149,6 +159,10 @@ export class MenuService {
       where: { menuId, isArchived: false },
     });
 
+    const addonCategoryLinks = await prisma.menuAddonCategories.findMany({
+      where: { menuId, isArchived: false },
+    });
+
     const stock = await prisma.menuStock.findFirst({
       where: { menuId, locationId },
     });
@@ -160,6 +174,7 @@ export class MenuService {
       description: menu.description || "",
       imageUrl: menu.assetUrl || null,
       categoryIds: categoryLinks.map((link) => link.menuCategoryId),
+      addonCategoryIds: addonCategoryLinks.map((link) => link.addonCategoryId),
       quantity: stock?.quantity ?? 0,
       isAvailable: !(stock?.isManuallyDisabled ?? false),
     };
@@ -173,6 +188,7 @@ export class MenuService {
       description?: string;
       isAvailable: boolean;
       categoryIds: number[];
+      addonCategoryIds: number[];
       locationId: number;
     },
   ) {
@@ -193,6 +209,16 @@ export class MenuService {
           menuCategoryId,
         })),
       });
+
+      await tx.menuAddonCategories.deleteMany({ where: { menuId } });
+      if (input.addonCategoryIds.length > 0) {
+        await tx.menuAddonCategories.createMany({
+          data: input.addonCategoryIds.map((addonCategoryId) => ({
+            menuId,
+            addonCategoryId,
+          })),
+        });
+      }
 
       await tx.menuStock.upsert({
         where: {

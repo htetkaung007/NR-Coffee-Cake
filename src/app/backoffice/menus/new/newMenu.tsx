@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
-import { MenuService } from "@/app/services";
+import { AddonService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import MenuForm from "@/app/components/MenuForm";
+import MenuForm from "@/app/components/menuForm/MenuForm";
 
 export default async function NewMenuPage() {
   const { companyId } = await getSessionContext();
@@ -16,7 +16,10 @@ export default async function NewMenuPage() {
     );
   }
 
-  const categories = await MenuService.getMenuCategories(companyId);
+  const [categories, addonCategories] = await Promise.all([
+    MenuService.getMenuCategories(companyId),
+    AddonService.getAddonCategoriesWithAddonsList(),
+  ]);
 
-  return <MenuForm categories={categories} />;
+  return <MenuForm categories={categories} addonCategories={addonCategories} />;
 }

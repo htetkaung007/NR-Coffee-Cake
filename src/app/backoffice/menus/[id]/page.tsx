@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
-import { AppService, MenuService } from "@/app/services";
+import { AddonService, AppService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import MenuForm from "@/app/components/MenuForm";
+import MenuForm from "@/app/components/menuForm/MenuForm";
 
 export default async function EditMenuPage({
   params,
@@ -33,8 +33,9 @@ export default async function EditMenuPage({
     );
   }
 
-  const [categories, menu] = await Promise.all([
+  const [categories, addonCategories, menu] = await Promise.all([
     MenuService.getMenuCategories(companyId),
+    AddonService.getAddonCategoriesWithAddonsList(),
     MenuService.getMenuById(menuId, selectedLocation.locationId),
   ]);
 
@@ -46,5 +47,11 @@ export default async function EditMenuPage({
     );
   }
 
-  return <MenuForm categories={categories} initialData={menu} />;
+  return (
+    <MenuForm
+      categories={categories}
+      addonCategories={addonCategories}
+      initialData={menu}
+    />
+  );
 }

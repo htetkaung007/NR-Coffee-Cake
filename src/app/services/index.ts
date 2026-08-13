@@ -8,3 +8,6 @@ export { AppService } from "./app.service";
 export { MenuService } from "./menu_menuCategory.service";
 export { MenuStockService } from "./menuStock.service";
 export { LocationService } from "./location.service";
+
+export { AddonService } from "./addon.service";
+export { TableService } from "./table.service";

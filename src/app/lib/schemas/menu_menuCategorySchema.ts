@@ -19,6 +19,10 @@ export const createMenuSchema = z.object({
     .array(z.coerce.number().int().positive())
     .min(1, "Select at least one menu category.")
     .transform((ids) => [...new Set(ids)]),
+  addonCategoryIds: z
+    .array(z.coerce.number().int().positive())
+    .optional()
+    .transform((ids) => [...new Set(ids ?? [])]),
   image: z
     .custom<File | null>((value) => value === null || value instanceof File, {
       message: "Image upload is invalid.",

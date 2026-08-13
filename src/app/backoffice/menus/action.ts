@@ -39,6 +39,7 @@ const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
     quantity: input.quantity,
     isAvailable: input.isAvailable,
     categoryIds: input.categoryIds,
+    addonCategoryIds: input.addonCategoryIds,
     locationId: selectedLocation.locationId,
   });
 
@@ -47,6 +48,7 @@ const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
     const { url } = await storage.upload(
       Buffer.from(await input.image.arrayBuffer()),
       input.image.type,
+      "menu",
       menu.id,
     );
     await MenuService.setMenuAsset(menu.id, url);
@@ -66,6 +68,7 @@ export async function createMenuAction(formData: FormData) {
     quantity: formData.get("quantity"),
     isAvailable: formData.get("isAvailable") === "true",
     categoryIds: formData.getAll("categoryIds"),
+    addonCategoryIds: formData.getAll("addonCategoryIds"),
     image,
   }).asyncAndThen(safeCreateMenu);
 
@@ -98,6 +101,7 @@ const safeUpdateMenu = toSafeResult(
       description: input.description,
       isAvailable: input.isAvailable,
       categoryIds: input.categoryIds,
+      addonCategoryIds: input.addonCategoryIds,
       locationId: selectedLocation.locationId,
     });
 
@@ -106,6 +110,7 @@ const safeUpdateMenu = toSafeResult(
       const { url } = await storage.upload(
         Buffer.from(await input.image.arrayBuffer()),
         input.image.type,
+        "menu",
         menu.id,
       );
       await MenuService.setMenuAsset(menu.id, url);
@@ -125,6 +130,7 @@ export async function updateMenuAction(menuId: number, formData: FormData) {
     quantity: formData.get("quantity"),
     isAvailable: formData.get("isAvailable") === "true",
     categoryIds: formData.getAll("categoryIds"),
+    addonCategoryIds: formData.getAll("addonCategoryIds"),
     image,
   }).asyncAndThen((data) => safeUpdateMenu({ ...data, menuId }));
 

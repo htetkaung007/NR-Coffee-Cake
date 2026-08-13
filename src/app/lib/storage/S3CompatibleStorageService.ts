@@ -45,9 +45,9 @@ export class S3CompatibleStorageService implements FileStorageService {
     });
   }
 
-  async upload(file: Buffer, mimeType: string, menuId: number) {
+  async upload(file: Buffer, mimeType: string, folder: string, id: number) {
     const extension = mimeType.split("/")[1] ?? "bin";
-    const key = `menu/${menuId}-${Date.now()}.${extension}`;
+    const key = `${folder}/${id}-${Date.now()}.${extension}`;
 
     await this.client.send(
       new PutObjectCommand({

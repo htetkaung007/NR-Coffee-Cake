@@ -15,7 +15,6 @@ import {
 import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
 import CategoryIcon from "@mui/icons-material/Category";
 import FastfoodIcon from "@mui/icons-material/Fastfood";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
@@ -33,12 +32,7 @@ const navItems = [
     icon: CategoryIcon,
   },
   { label: "Menus", href: "/backoffice/menus", icon: RestaurantMenuIcon },
-  {
-    label: "Addon Categories",
-    href: "/backoffice/addon_categories",
-    icon: LocalOfferIcon,
-  },
-  { label: "Addons", href: "/backoffice/addons", icon: FastfoodIcon },
+  { label: "Add-ons", href: "/backoffice/addons", icon: FastfoodIcon },
 
   { label: "Tables", href: "/backoffice/tables", icon: TableRestaurantIcon },
   { label: "Locations", href: "/backoffice/locations", icon: LocationOnIcon },
