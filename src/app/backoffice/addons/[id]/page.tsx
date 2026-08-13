@@ -1,5 +1,6 @@
 import { Box, Typography } from "@mui/material";
-import { AddonService } from "@/app/services";
+import { AddonService, MenuService } from "@/app/services";
+import { getSessionContext } from "@/app/lib/session";
 import NewAddon from "../new/newAddon";
 
 export default async function EditAddonGroupPage({
@@ -10,8 +11,22 @@ export default async function EditAddonGroupPage({
   const { id } = await params;
   const addonCategoryId = Number(id);
 
-  const category =
-    await AddonService.getAddonCategoryWithAddons(addonCategoryId);
+  const { companyId } = await getSessionContext();
+  if (!companyId) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="text.secondary">
+          Please sign in to edit an addon group.
+        </Typography>
+      </Box>
+    );
+  }
+
+  const [category, menusData, connectedMenuIds] = await Promise.all([
+    AddonService.getAddonCategoryWithAddons(addonCategoryId),
+    MenuService.getMenus(companyId),
+    AddonService.getMenuIdsForAddonCategory(addonCategoryId),
+  ]);
 
   if (!category) {
     return (
@@ -23,8 +38,11 @@ export default async function EditAddonGroupPage({
     );
   }
 
+  const menus = menusData.map((menu) => ({ id: menu.id, name: menu.name }));
+
   return (
     <NewAddon
+      menus={menus}
       initialData={{
         id: category.id,
         groupName: category.name,
@@ -34,6 +52,7 @@ export default async function EditAddonGroupPage({
           name: addon.name,
           price: addon.price,
         })),
+        menuIds: connectedMenuIds,
       }}
     />
   );

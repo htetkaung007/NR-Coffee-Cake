@@ -6,6 +6,7 @@ import {
   Alert,
   Box,
   Button,
+  CardMedia,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,7 +16,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { updateTableNameAction, deleteTableAction } from "../action";
+import UploadOutlinedIcon from "@mui/icons-material/UploadOutlined";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { updateTableAction, deleteTableAction } from "../action";
+import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
 
 interface EditTableProps {
   table: {
@@ -29,6 +34,7 @@ interface EditTableProps {
 export default function EditTable({ table }: EditTableProps) {
   const router = useRouter();
   const [name, setName] = useState(table.name);
+  const [logo, setLogo] = useState<File | null>(null);
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -43,10 +49,16 @@ export default function EditTable({ table }: EditTableProps) {
 
     const formData = new FormData();
     formData.set("name", name);
+    if (logo) formData.set("logo", logo);
 
     startSavingName(async () => {
-      const result = await updateTableNameAction(table.id, formData);
-      if (!result.success) setNameError(result.error.message);
+      const result = await updateTableAction(table.id, formData);
+      if (!result.success) {
+        setNameError(result.error.message);
+        return;
+      }
+      setLogo(null); // clear the picker; router.refresh below shows the new QR
+      router.refresh();
     });
   }
 
@@ -69,7 +81,9 @@ export default function EditTable({ table }: EditTableProps) {
         Edit Table
       </Typography>
 
-      {/* Rename — its own form, its own submit, its own error */}
+      {/* Rename + logo — one form, one submit, one error. Saving with
+          a new logo regenerates the QR code image (see action.ts);
+          content/URL stays the same either way. */}
       <Box
         component="form"
         onSubmit={handleSaveName}
@@ -83,6 +97,7 @@ export default function EditTable({ table }: EditTableProps) {
       >
         <Stack spacing={2}>
           {nameError && <Alert severity="error">{nameError}</Alert>}
+
           <TextField
             label="Table Name"
             required
@@ -90,14 +105,105 @@ export default function EditTable({ table }: EditTableProps) {
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSavingName || !name.trim()}
-            sx={{ alignSelf: "flex-start", px: 3 }}
-          >
-            {isSavingName ? "Saving..." : "Save Name"}
-          </Button>
+
+          <Box>
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<UploadOutlinedIcon />}
+              sx={{ fontSize: "0.8rem" }}
+            >
+              {logo ? "Change Logo" : "Update New Logo"}
+              <input
+                type="file"
+                hidden
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => setLogo(event.target.files?.[0] ?? null)}
+              />
+            </Button>
+
+            {logo ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mt: 0.5,
+                  color: "success.main",
+                }}
+              >
+                <CheckCircleIcon sx={{ fontSize: 16 }} />
+                <Typography variant="caption">
+                  Image uploaded — {logo.name}
+                </Typography>
+              </Box>
+            ) : (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 0.5 }}
+              >
+                Uploading a new logo regenerates the QR code image — reprint it
+                afterward to show the new logo. PNG, JPEG, or WEBP, up to 5MB.
+              </Typography>
+            )}
+          </Box>
+
+          {table.qrcodeImageUrl && (
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.5 }}
+              >
+                Current QR code
+              </Typography>
+              <CardMedia
+                component="img"
+                image={table.qrcodeImageUrl}
+                alt={`QR code for ${table.name}`}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 1.5,
+                  mb: 1,
+                }}
+              />
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<DownloadOutlinedIcon sx={{ fontSize: 14 }} />}
+                onClick={() =>
+                  table.qrcodeImageUrl &&
+                  downloadQrCode(table.qrcodeImageUrl, table.name)
+                }
+                sx={{ fontSize: "0.75rem" }}
+              >
+                Save QR
+              </Button>
+            </Box>
+          )}
+
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSavingName || !name.trim()}
+              sx={{ px: 3 }}
+            >
+              {isSavingName ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              disabled={isSavingName}
+              onClick={() => router.push("/backoffice/tables")}
+            >
+              Cancel
+            </Button>
+          </Box>
         </Stack>
       </Box>
 

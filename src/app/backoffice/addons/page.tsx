@@ -2,11 +2,13 @@ import {
   Box,
   Button,
   Chip,
+  Fab,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import Link from "next/link";
+import AddIcon from "@mui/icons-material/Add";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { AddonService } from "@/app/services";
 
@@ -21,11 +23,31 @@ export default async function AddonsPage() {
       >
         <Typography variant="h6">Add-ons</Typography>
         <Link href="/backoffice/addons/new">
-          <Button variant="contained" size="small">
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ display: { xs: "none", sm: "inline-flex" } }}
+          >
             + New Add-on Group
           </Button>
         </Link>
       </Stack>
+
+      <Link href="/backoffice/addons/new">
+        <Fab
+          color="primary"
+          aria-label="New add-on group"
+          sx={{
+            display: { xs: "flex", sm: "none" },
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            zIndex: 1050,
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      </Link>
 
       {categories.length === 0 ? (
         <Typography color="text.secondary">No addon groups yet.</Typography>

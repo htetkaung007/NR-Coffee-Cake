@@ -20,6 +20,10 @@ export const createAddonGroupSchema = z.object({
   groupName: z.string().trim().min(1, "Group title is required.").max(50),
   isRequired: z.boolean(),
   options: z.array(optionSchema).min(1, "Add at least one option."),
+  menuIds: z
+    .array(z.coerce.number().int().positive())
+    .optional()
+    .transform((ids) => [...new Set(ids ?? [])]),
 });
 
 export type CreateAddonGroupInput = z.infer<typeof createAddonGroupSchema>;
@@ -38,6 +42,10 @@ export const updateAddonGroupSchema = z.object({
   groupName: z.string().trim().min(1, "Group title is required.").max(50),
   isRequired: z.boolean(),
   options: z.array(editableOptionSchema).min(1, "Add at least one option."),
+  menuIds: z
+    .array(z.coerce.number().int().positive())
+    .optional()
+    .transform((ids) => [...new Set(ids ?? [])]),
 });
 
 export type UpdateAddonGroupInput = z.infer<typeof updateAddonGroupSchema>;

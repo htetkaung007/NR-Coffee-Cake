@@ -9,12 +9,16 @@ import {
   IconButton,
   Snackbar,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import { createAddonGroupAction, updateAddonGroupAction } from "../action";
+import MenuMultiSelect, {
+  MenuOption,
+} from "@/app/components/MenuMultiSelected";
 
 interface OptionRow {
   id?: number; // present only for options that already exist (edit mode)
@@ -31,17 +35,25 @@ export interface NewAddonInitialData {
   groupName: string;
   isRequired: boolean;
   options: { id: number; name: string; price: number }[];
+  menuIds: number[];
 }
 
 interface NewAddonProps {
+  menus: MenuOption[];
   initialData?: NewAddonInitialData;
 }
 
-export default function NewAddon({ initialData }: NewAddonProps) {
+export default function NewAddon({ menus, initialData }: NewAddonProps) {
   const router = useRouter();
   const isEditMode = Boolean(initialData);
 
   const [groupName, setGroupName] = useState(initialData?.groupName ?? "");
+  const [isRequired, setIsRequired] = useState(
+    initialData?.isRequired ?? false,
+  );
+  const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>(
+    initialData?.menuIds ?? [],
+  );
   const [options, setOptions] = useState<OptionRow[]>(() =>
     initialData
       ? initialData.options.map((option) => ({
@@ -75,7 +87,7 @@ export default function NewAddon({ initialData }: NewAddonProps) {
 
     const payload = {
       groupName,
-      isRequired: initialData?.isRequired ?? false,
+      isRequired,
       options: options
         .filter((row) => row.name.trim() !== "")
         .map((row) => ({
@@ -83,6 +95,7 @@ export default function NewAddon({ initialData }: NewAddonProps) {
           name: row.name,
           price: row.price,
         })),
+      menuIds: selectedMenuIds,
     };
 
     startTransition(async () => {
@@ -134,9 +147,29 @@ export default function NewAddon({ initialData }: NewAddonProps) {
               : "Or Create Custom Add-On Option"}
           </Typography>
 
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            Group Title
-          </Typography>
+          <Stack
+            direction="row"
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1,
+            }}
+          >
+            <Typography variant="body2">Group Title</Typography>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+              <Typography variant="caption" color="text.secondary">
+                Required
+              </Typography>
+              <Switch
+                size="small"
+                checked={isRequired}
+                onChange={(event) => setIsRequired(event.target.checked)}
+                slotProps={{
+                  input: { "aria-label": "Make this group required" },
+                }}
+              />
+            </Stack>
+          </Stack>
           <TextField
             placeholder="Group Name (e.g., Dipping Sauces)"
             required
@@ -144,7 +177,6 @@ export default function NewAddon({ initialData }: NewAddonProps) {
             value={groupName}
             onChange={(event) => setGroupName(event.target.value)}
             sx={{
-              mb: 3,
               "& .MuiOutlinedInput-root": {
                 bgcolor: "background.default",
                 borderRadius: 2.5,
@@ -152,6 +184,15 @@ export default function NewAddon({ initialData }: NewAddonProps) {
               "& .MuiOutlinedInput-notchedOutline": { border: "none" },
             }}
           />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 0.5, mb: 3 }}
+          >
+            {isRequired
+              ? "Customers must choose one option from this group before adding the item to cart."
+              : "Optional — customers can skip this group."}
+          </Typography>
 
           <Stack
             direction="row"
@@ -234,10 +275,16 @@ export default function NewAddon({ initialData }: NewAddonProps) {
             ))}
           </Stack>
 
+          <MenuMultiSelect
+            menus={menus}
+            selectedMenuIds={selectedMenuIds}
+            onChange={setSelectedMenuIds}
+          />
+
           <Stack
             direction="row"
             spacing={1.5}
-            sx={{ justifyContent: "flex-end" }}
+            sx={{ justifyContent: "flex-end", mt: 3 }}
           >
             <Button
               variant="outlined"

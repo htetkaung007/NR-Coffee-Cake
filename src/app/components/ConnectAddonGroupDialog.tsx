@@ -13,6 +13,7 @@ import {
   IconButton,
   InputAdornment,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -55,6 +56,7 @@ export default function ConnectAddonGroupDialog({
   const [draftIds, setDraftIds] = useState<number[]>(selectedIds);
   const [search, setSearch] = useState("");
   const [groupName, setGroupName] = useState("");
+  const [isRequired, setIsRequired] = useState(false);
   const [options, setOptions] = useState<OptionRow[]>([emptyRow(), emptyRow()]);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -72,6 +74,7 @@ export default function ConnectAddonGroupDialog({
       setDraftIds(selectedIds);
       setSearch("");
       setGroupName("");
+      setIsRequired(false);
       setOptions([emptyRow(), emptyRow()]);
       setError(null);
     }
@@ -114,7 +117,7 @@ export default function ConnectAddonGroupDialog({
       setIsSaving(true);
       const result = await createAddonGroupAction({
         groupName,
-        isRequired: false,
+        isRequired,
         options: options
           .filter((row) => row.name.trim() !== "")
           .map((row) => ({ name: row.name, price: row.price })),
@@ -250,16 +253,37 @@ export default function ConnectAddonGroupDialog({
           Or Create Custom Add-On Option
         </Typography>
 
-        <Typography variant="caption" color="text.secondary">
-          Group Title
-        </Typography>
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 0.5,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Group Title
+          </Typography>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+            <Typography variant="caption" color="text.secondary">
+              Required
+            </Typography>
+            <Switch
+              size="small"
+              checked={isRequired}
+              onChange={(event) => setIsRequired(event.target.checked)}
+              slotProps={{
+                input: { "aria-label": "Make this group required" },
+              }}
+            />
+          </Stack>
+        </Stack>
         <TextField
           placeholder="Group Name (e.g., Dipping Sauces)"
           fullWidth
           value={groupName}
           onChange={(event) => setGroupName(event.target.value)}
           sx={{
-            mt: 0.5,
             mb: 2,
             "& .MuiOutlinedInput-root": {
               bgcolor: "background.default",

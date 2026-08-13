@@ -43,6 +43,16 @@ export class AddonService {
     });
   }
 
+  /** Menus already connected to this group, for populating the Edit
+   *  form's "Connect to Menus" picker. */
+  static async getMenuIdsForAddonCategory(addonCategoryId: number) {
+    const links = await prisma.menuAddonCategories.findMany({
+      where: { addonCategoryId, isArchived: false },
+      select: { menuId: true },
+    });
+    return links.map((link) => link.menuId);
+  }
+
   /** "Or Create Custom Add-On Option" — Group Title + its Options
    *  (name/price rows) created together in one transaction, the same way
    *  createMenu() creates a Menu and its MenuStock together. A blank price
@@ -52,6 +62,7 @@ export class AddonService {
     groupName: string;
     isRequired: boolean;
     options: { name: string; price: number }[];
+    menuIds: number[];
   }) {
     const existing = await prisma.addonCategories.findFirst({
       where: {
@@ -78,6 +89,15 @@ export class AddonService {
         })),
       });
 
+      if (input.menuIds.length > 0) {
+        await tx.menuAddonCategories.createMany({
+          data: input.menuIds.map((menuId) => ({
+            menuId,
+            addonCategoryId: category.id,
+          })),
+        });
+      }
+
       return category;
     });
   }
@@ -94,6 +114,7 @@ export class AddonService {
       groupName: string;
       isRequired: boolean;
       options: { id?: number; name: string; price: number }[];
+      menuIds: number[];
     },
   ) {
     const category = await prisma.addonCategories.findFirst({
@@ -155,6 +176,18 @@ export class AddonService {
             },
           });
         }
+      }
+
+      await tx.menuAddonCategories.deleteMany({
+        where: { addonCategoryId: id },
+      });
+      if (input.menuIds.length > 0) {
+        await tx.menuAddonCategories.createMany({
+          data: input.menuIds.map((menuId) => ({
+            menuId,
+            addonCategoryId: id,
+          })),
+        });
       }
 
       return tx.addonCategories.findFirstOrThrow({

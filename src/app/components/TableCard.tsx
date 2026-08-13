@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Card, Box, Typography, Chip, Button } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
+import { downloadQrCode } from "../lib/qr/downloadQrCode";
 
 export interface TableCardData {
   id: number;
@@ -56,6 +58,12 @@ export default function TableCard({ table }: TableCardProps) {
         gap: 1,
       }}
     >
+      {/* Shows the actual QR code (logo included, since the logo is
+          baked into this same image — see lib/qrCode.ts) rather than a
+          generic icon, so a glance at the card confirms both "does
+          this table have a QR code" and "what does it look like".
+          Falls back to the table icon only if generation somehow
+          hasn't produced a URL yet. */}
       <Box
         sx={{
           width: "100%",
@@ -65,11 +73,21 @@ export default function TableCard({ table }: TableCardProps) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        <TableRestaurantOutlinedIcon
-          sx={{ fontSize: 32, color: "text.secondary" }}
-        />
+        {table.qrcodeImageUrl ? (
+          <Box
+            component="img"
+            src={table.qrcodeImageUrl}
+            alt={`QR code for ${table.name}`}
+            sx={{ width: "100%", height: "100%", objectFit: "contain" }}
+          />
+        ) : (
+          <TableRestaurantOutlinedIcon
+            sx={{ fontSize: 32, color: "text.secondary" }}
+          />
+        )}
       </Box>
 
       <Box
@@ -94,19 +112,35 @@ export default function TableCard({ table }: TableCardProps) {
         )}
       </Box>
 
-      <Button
-        size="small"
-        variant="outlined"
-        startIcon={<PrintOutlinedIcon sx={{ fontSize: 14 }} />}
-        disabled={!table.qrcodeImageUrl}
-        onClick={() =>
-          table.qrcodeImageUrl &&
-          handlePrintQrCode(table.qrcodeImageUrl, table.name)
-        }
-        sx={{ alignSelf: "flex-start", fontSize: "0.75rem" }}
-      >
-        Print QR Code
-      </Button>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<PrintOutlinedIcon sx={{ fontSize: 14 }} />}
+          disabled={!table.qrcodeImageUrl}
+          onClick={() =>
+            table.qrcodeImageUrl &&
+            handlePrintQrCode(table.qrcodeImageUrl, table.name)
+          }
+          sx={{ fontSize: "0.75rem" }}
+        >
+          Print QR Code
+        </Button>
+
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<DownloadOutlinedIcon sx={{ fontSize: 14 }} />}
+          disabled={!table.qrcodeImageUrl}
+          onClick={() =>
+            table.qrcodeImageUrl &&
+            downloadQrCode(table.qrcodeImageUrl, table.name)
+          }
+          sx={{ fontSize: "0.75rem" }}
+        >
+          Save QR
+        </Button>
+      </Box>
 
       <Button
         component={Link}

@@ -15,9 +15,10 @@ import {
 } from "@/app/lib/schemas/tableSchema";
 import { getSessionContext } from "@/app/lib/session";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
-import { generateQrCodeWithLogo } from "@/app/lib/qrCode";
+
 import { config } from "@/app/utils/config";
 import { AppService, TableService } from "@/app/services";
+import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
 
 /**
  * Builds the URL a customer's phone opens after scanning the table's
@@ -98,23 +99,65 @@ export async function createTableAction(formData: FormData) {
   return actionResult;
 }
 
-const safeUpdateTableName = toSafeResult(
+const safeUpdateTable = toSafeResult(
   async (input: UpdateTableInput & { tableId: number }) => {
     const { companyId } = await getSessionContext();
     if (!companyId) {
       throw new AppError("You must be signed in.", "UNAUTHORIZED");
     }
-    return TableService.updateTableName(input.tableId, input.name);
+
+    const existingTable = await TableService.getTableById(input.tableId);
+    await TableService.updateTableName(input.tableId, input.name);
+
+    // Logo is optional on edit too — only touch the QR code at all if
+    // the user actually picked a new file this time.
+    if (input.logo) {
+      // QR *content* (the URL) never changes on edit — it's built from
+      // locationId + tableId, neither of which this action can change.
+      // Only the *image* (logo baked into the PNG) needs regenerating,
+      // so already-printed QR codes with the old logo still scan to
+      // the same place; only their look goes stale until reprinted.
+      const qrContent = buildQrCodeContent(
+        existingTable.locationId,
+        existingTable.id,
+      );
+      const logoBuffer = Buffer.from(await input.logo.arrayBuffer());
+      const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
+
+      const storage = getFileStorageService();
+      const { url } = await storage.upload(
+        qrImageBuffer,
+        "image/png",
+        "table",
+        existingTable.id,
+      );
+
+      // New image is uploaded and the DB row points at it *before* we
+      // touch the old one — if cleanup below fails, the table still
+      // has a working QR code, just an extra orphaned file in MinIO.
+      // Deleting the old image first would risk the opposite: a
+      // successful delete followed by a failed upload, leaving the
+      // table with no QR image at all.
+      await TableService.setTableQrCodeUrl(existingTable.id, url);
+
+      if (existingTable.qrcodeImageUrl) {
+        await storage.delete(existingTable.qrcodeImageUrl);
+      }
+    }
+
+    return { id: input.tableId };
   },
 );
 
-export async function updateTableNameAction(
-  tableId: number,
-  formData: FormData,
-) {
+export async function updateTableAction(tableId: number, formData: FormData) {
+  const logoEntry = formData.get("logo");
+  const logo =
+    logoEntry instanceof File && logoEntry.size > 0 ? logoEntry : null;
+
   const result = await validateWith(updateTableSchema, {
     name: formData.get("name"),
-  }).asyncAndThen((data) => safeUpdateTableName({ ...data, tableId }));
+    logo,
+  }).asyncAndThen((data) => safeUpdateTable({ ...data, tableId }));
 
   const actionResult = toActionResult(result);
   if (actionResult.success) {
