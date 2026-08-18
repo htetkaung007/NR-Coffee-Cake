@@ -1,5 +1,11 @@
 import { prisma } from "../utils/prisma";
-import { NotFoundError } from "../lib/errors";
+import { NotFoundError, ValidationError } from "../lib/errors";
+
+// Name is fixed for the counter "table" row — it isn't a real seated
+// table a customer picks a name for, so locking it here (Service
+// layer) means the rule holds even if something calls createTable
+// directly, not just through the create-table form.
+const COUNTER_TABLE_NAME = "Counter QR code";
 
 /**
  * Table domain — CRUD for a Location's physical tables. Split into its
@@ -27,20 +33,64 @@ export class TableService {
     return table;
   }
 
+  /** True if this location already has a counter row — a location
+   *  should only ever have one, so createTable checks this before
+   *  creating a second one. */
+  static async hasCounterForLocation(locationId: number) {
+    const counter = await prisma.table.findFirst({
+      where: { locationId, isCounter: true, isArchived: false },
+    });
+    return counter !== null;
+  }
+
   /** Does one thing: creates a table with a name under a location.
    *  Does not touch qrcodeImageUrl — the caller (action.ts) uploads
    *  the QR code image afterward, once it has the new table's id to
-   *  encode, then calls setTableQrCodeUrl separately. */
-  static async createTable(locationId: number, name: string) {
-    return prisma.table.create({ data: { name, locationId } });
+   *  encode, then calls setTableQrCodeUrl separately.
+   *
+   *  When isCounter is true, the given name is ignored in favor of
+   *  the fixed COUNTER_TABLE_NAME — the counter isn't a seat a staff
+   *  member names, it's a single fixed entry point for walk-in
+   *  orders, so there's nothing for a custom name to describe. */
+  static async createTable(
+    locationId: number,
+    name: string,
+    isCounter = false,
+  ) {
+    if (isCounter) {
+      const alreadyHasCounter =
+        await TableService.hasCounterForLocation(locationId);
+      if (alreadyHasCounter) {
+        throw new ValidationError(
+          "This location already has a Counter QR code.",
+        );
+      }
+    }
+
+    return prisma.table.create({
+      data: {
+        name: isCounter ? COUNTER_TABLE_NAME : name,
+        locationId,
+        isCounter,
+      },
+    });
   }
 
   /** Does one thing: renames. Does not touch qrcodeImageUrl or
    *  isArchived — those are other methods' jobs. Note the QR code
    *  itself is unaffected by a rename, since it encodes locationId +
    *  tableId, not the name (see tables/action.ts buildQrCodeContent),
-   *  so there's nothing to regenerate here. */
+   *  so there's nothing to regenerate here.
+   *
+   *  Refuses to rename a counter row — the locked name is part of
+   *  what makes it recognizable as "the counter" rather than a table,
+   *  both in the UI and to anyone reading the row directly. */
   static async updateTableName(tableId: number, name: string) {
+    const table = await TableService.getTableById(tableId);
+    if (table.isCounter) {
+      throw new ValidationError("The Counter QR code's name can't be changed.");
+    }
+
     return prisma.table.update({
       where: { id: tableId },
       data: { name },

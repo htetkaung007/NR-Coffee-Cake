@@ -48,6 +48,7 @@ model Table {
   location       Location  @relation(fields: [locationId], references: [id])
   locationId     Int
   orders         Order[]
+  isCounter      Boolean?
   createdAt      DateTime  @default(now())
   updateTime     DateTime  @updatedAt
   isArchived     Boolean   @default(false)

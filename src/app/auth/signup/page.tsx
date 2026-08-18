@@ -1,5 +1,5 @@
 import { SignUpForm } from "@/app/components/SignUpForm";
-import { Typography } from "@mui/material";
+
 import { Suspense } from "react";
 
 export default function SignUpPage() {

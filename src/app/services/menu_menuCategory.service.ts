@@ -70,7 +70,12 @@ export class MenuService {
       orderBy: { id: "asc" },
     });
   }
-  static async createMenuCategory(companyId: number, name: string) {
+  static async createMenuCategory(
+    companyId: number,
+    name: string,
+    locationId: number,
+    isEnabled: boolean,
+  ) {
     const existing = await prisma.menuCategory.findFirst({
       where: {
         companyId,
@@ -82,12 +87,84 @@ export class MenuService {
       throw new ValidationError(`"${name}" already exists as a category.`);
     }
 
-    return prisma.menuCategory.create({
-      data: { name, companyId },
+    return prisma.$transaction(async (tx: Tx) => {
+      const category = await tx.menuCategory.create({
+        data: { name, companyId },
+      });
+
+      if (!isEnabled) {
+        await tx.disableLocationMenuCategories.create({
+          data: { locationId, menuCategoryId: category.id },
+        });
+      }
+
+      return category;
     });
   }
-  static async getMenuCategoriesWithCounts(companyId: number) {
-    return prisma.menuCategory.findMany({
+
+  /** Rename a category, and flip whether it's shown at this location —
+   *  toggling a DisableLocationMenuCategories row rather than a column on
+   *  MenuCategory itself, since "shown or not" is a per-location setting,
+   *  not a property of the category. */
+  static async updateMenuCategory(
+    id: number,
+    input: { name: string; locationId: number; isEnabled: boolean },
+  ) {
+    const category = await prisma.menuCategory.findFirst({
+      where: { id, isArchived: false },
+    });
+    if (!category) {
+      throw new ValidationError("Menu category not found.");
+    }
+
+    const nameTaken = await prisma.menuCategory.findFirst({
+      where: {
+        id: { not: id },
+        companyId: category.companyId,
+        isArchived: false,
+        name: { equals: input.name, mode: "insensitive" },
+      },
+    });
+    if (nameTaken) {
+      throw new ValidationError(
+        `"${input.name}" already exists as a category.`,
+      );
+    }
+
+    return prisma.$transaction(async (tx: Tx) => {
+      const updated = await tx.menuCategory.update({
+        where: { id },
+        data: { name: input.name },
+      });
+
+      const existingDisableRow =
+        await tx.disableLocationMenuCategories.findFirst({
+          where: {
+            menuCategoryId: id,
+            locationId: input.locationId,
+            isArchived: false,
+          },
+        });
+
+      if (input.isEnabled && existingDisableRow) {
+        await tx.disableLocationMenuCategories.update({
+          where: { id: existingDisableRow.id },
+          data: { isArchived: true },
+        });
+      } else if (!input.isEnabled && !existingDisableRow) {
+        await tx.disableLocationMenuCategories.create({
+          data: { locationId: input.locationId, menuCategoryId: id },
+        });
+      }
+
+      return updated;
+    });
+  }
+  static async getMenuCategoriesWithCounts(
+    companyId: number,
+    locationId: number,
+  ) {
+    const categories = await prisma.menuCategory.findMany({
       where: { companyId, isArchived: false },
       orderBy: { id: "asc" },
       include: {
@@ -98,8 +175,16 @@ export class MenuService {
             },
           },
         },
+        disableLocationMenuCategories: {
+          where: { locationId, isArchived: false },
+        },
       },
     });
+
+    return categories.map((category) => ({
+      ...category,
+      isEnabledAtLocation: category.disableLocationMenuCategories.length === 0,
+    }));
   }
 
   static async getMenus(companyId: number) {

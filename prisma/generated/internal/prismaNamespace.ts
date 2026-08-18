@@ -1675,6 +1675,7 @@ export const TableScalarFieldEnum = {
   name: 'name',
   qrcodeImageUrl: 'qrcodeImageUrl',
   locationId: 'locationId',
+  isCounter: 'isCounter',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived'

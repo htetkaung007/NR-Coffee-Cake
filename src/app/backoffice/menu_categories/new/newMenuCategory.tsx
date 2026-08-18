@@ -8,6 +8,7 @@ import {
   Button,
   Snackbar,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -17,6 +18,7 @@ import { createMenuCategoryAction } from "../action";
 export default function NewMenuCategories() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [isEnabled, setIsEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -26,7 +28,7 @@ export default function NewMenuCategories() {
     setError(null);
 
     startTransition(async () => {
-      const result = await createMenuCategoryAction({ name });
+      const result = await createMenuCategoryAction({ name, isEnabled });
       if (!result.success) {
         setError(result.error.message);
         return;
@@ -93,6 +95,35 @@ export default function NewMenuCategories() {
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 2,
+                p: 1.5,
+              }}
+            >
+              <Box>
+                <Typography variant="body2">Enabled</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {isEnabled
+                    ? "Shown at this location."
+                    : "Hidden at this location — you can enable it later."}
+                </Typography>
+              </Box>
+              <Switch
+                checked={isEnabled}
+                onChange={(event) => setIsEnabled(event.target.checked)}
+                slotProps={{
+                  input: { "aria-label": "Enable category at this location" },
+                }}
+              />
+            </Box>
 
             <Button
               type="submit"

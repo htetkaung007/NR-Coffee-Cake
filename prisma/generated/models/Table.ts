@@ -41,6 +41,7 @@ export type TableMinAggregateOutputType = {
   name: string | null
   qrcodeImageUrl: string | null
   locationId: number | null
+  isCounter: boolean | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -51,6 +52,7 @@ export type TableMaxAggregateOutputType = {
   name: string | null
   qrcodeImageUrl: string | null
   locationId: number | null
+  isCounter: boolean | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -61,6 +63,7 @@ export type TableCountAggregateOutputType = {
   name: number
   qrcodeImageUrl: number
   locationId: number
+  isCounter: number
   createdAt: number
   updateTime: number
   isArchived: number
@@ -83,6 +86,7 @@ export type TableMinAggregateInputType = {
   name?: true
   qrcodeImageUrl?: true
   locationId?: true
+  isCounter?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -93,6 +97,7 @@ export type TableMaxAggregateInputType = {
   name?: true
   qrcodeImageUrl?: true
   locationId?: true
+  isCounter?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -103,6 +108,7 @@ export type TableCountAggregateInputType = {
   name?: true
   qrcodeImageUrl?: true
   locationId?: true
+  isCounter?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -200,6 +206,7 @@ export type TableGroupByOutputType = {
   name: string
   qrcodeImageUrl: string | null
   locationId: number
+  isCounter: boolean | null
   createdAt: Date
   updateTime: Date
   isArchived: boolean
@@ -233,6 +240,7 @@ export type TableWhereInput = {
   name?: Prisma.StringFilter<"Table"> | string
   qrcodeImageUrl?: Prisma.StringNullableFilter<"Table"> | string | null
   locationId?: Prisma.IntFilter<"Table"> | number
+  isCounter?: Prisma.BoolNullableFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Table"> | Date | string
   isArchived?: Prisma.BoolFilter<"Table"> | boolean
@@ -245,6 +253,7 @@ export type TableOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   qrcodeImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   locationId?: Prisma.SortOrder
+  isCounter?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -260,6 +269,7 @@ export type TableWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Table"> | string
   qrcodeImageUrl?: Prisma.StringNullableFilter<"Table"> | string | null
   locationId?: Prisma.IntFilter<"Table"> | number
+  isCounter?: Prisma.BoolNullableFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Table"> | Date | string
   isArchived?: Prisma.BoolFilter<"Table"> | boolean
@@ -272,6 +282,7 @@ export type TableOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   qrcodeImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   locationId?: Prisma.SortOrder
+  isCounter?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -290,6 +301,7 @@ export type TableScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Table"> | string
   qrcodeImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Table"> | string | null
   locationId?: Prisma.IntWithAggregatesFilter<"Table"> | number
+  isCounter?: Prisma.BoolNullableWithAggregatesFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"Table"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"Table"> | boolean
@@ -298,6 +310,7 @@ export type TableScalarWhereWithAggregatesInput = {
 export type TableCreateInput = {
   name: string
   qrcodeImageUrl?: string | null
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -310,6 +323,7 @@ export type TableUncheckedCreateInput = {
   name: string
   qrcodeImageUrl?: string | null
   locationId: number
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -319,6 +333,7 @@ export type TableUncheckedCreateInput = {
 export type TableUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -331,6 +346,7 @@ export type TableUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -342,6 +358,7 @@ export type TableCreateManyInput = {
   name: string
   qrcodeImageUrl?: string | null
   locationId: number
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -350,6 +367,7 @@ export type TableCreateManyInput = {
 export type TableUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -360,6 +378,7 @@ export type TableUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -370,6 +389,7 @@ export type TableCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   qrcodeImageUrl?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
+  isCounter?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -385,6 +405,7 @@ export type TableMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   qrcodeImageUrl?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
+  isCounter?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -395,6 +416,7 @@ export type TableMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   qrcodeImageUrl?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
+  isCounter?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -418,6 +440,10 @@ export type TableOrderByRelationAggregateInput = {
 export type TableScalarRelationFilter = {
   is?: Prisma.TableWhereInput
   isNot?: Prisma.TableWhereInput
+}
+
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
 }
 
 export type TableCreateNestedManyWithoutLocationInput = {
@@ -479,6 +505,7 @@ export type TableUpdateOneRequiredWithoutOrdersNestedInput = {
 export type TableCreateWithoutLocationInput = {
   name: string
   qrcodeImageUrl?: string | null
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -489,6 +516,7 @@ export type TableUncheckedCreateWithoutLocationInput = {
   id?: number
   name: string
   qrcodeImageUrl?: string | null
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -529,6 +557,7 @@ export type TableScalarWhereInput = {
   name?: Prisma.StringFilter<"Table"> | string
   qrcodeImageUrl?: Prisma.StringNullableFilter<"Table"> | string | null
   locationId?: Prisma.IntFilter<"Table"> | number
+  isCounter?: Prisma.BoolNullableFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Table"> | Date | string
   isArchived?: Prisma.BoolFilter<"Table"> | boolean
@@ -537,6 +566,7 @@ export type TableScalarWhereInput = {
 export type TableCreateWithoutOrdersInput = {
   name: string
   qrcodeImageUrl?: string | null
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -548,6 +578,7 @@ export type TableUncheckedCreateWithoutOrdersInput = {
   name: string
   qrcodeImageUrl?: string | null
   locationId: number
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -572,6 +603,7 @@ export type TableUpdateToOneWithWhereWithoutOrdersInput = {
 export type TableUpdateWithoutOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -583,6 +615,7 @@ export type TableUncheckedUpdateWithoutOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -592,6 +625,7 @@ export type TableCreateManyLocationInput = {
   id?: number
   name: string
   qrcodeImageUrl?: string | null
+  isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -600,6 +634,7 @@ export type TableCreateManyLocationInput = {
 export type TableUpdateWithoutLocationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -610,6 +645,7 @@ export type TableUncheckedUpdateWithoutLocationInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -620,6 +656,7 @@ export type TableUncheckedUpdateManyWithoutLocationInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -661,6 +698,7 @@ export type TableSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   name?: boolean
   qrcodeImageUrl?: boolean
   locationId?: boolean
+  isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -674,6 +712,7 @@ export type TableSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   name?: boolean
   qrcodeImageUrl?: boolean
   locationId?: boolean
+  isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -685,6 +724,7 @@ export type TableSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   name?: boolean
   qrcodeImageUrl?: boolean
   locationId?: boolean
+  isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -696,12 +736,13 @@ export type TableSelectScalar = {
   name?: boolean
   qrcodeImageUrl?: boolean
   locationId?: boolean
+  isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type TableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "qrcodeImageUrl" | "locationId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["table"]>
+export type TableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "qrcodeImageUrl" | "locationId" | "isCounter" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["table"]>
 export type TableInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   orders?: boolean | Prisma.Table$ordersArgs<ExtArgs>
@@ -725,6 +766,7 @@ export type $TablePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     name: string
     qrcodeImageUrl: string | null
     locationId: number
+    isCounter: boolean | null
     createdAt: Date
     updateTime: Date
     isArchived: boolean
@@ -1157,6 +1199,7 @@ export interface TableFieldRefs {
   readonly name: Prisma.FieldRef<"Table", 'String'>
   readonly qrcodeImageUrl: Prisma.FieldRef<"Table", 'String'>
   readonly locationId: Prisma.FieldRef<"Table", 'Int'>
+  readonly isCounter: Prisma.FieldRef<"Table", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Table", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"Table", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"Table", 'Boolean'>

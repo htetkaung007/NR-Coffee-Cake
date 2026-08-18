@@ -1,12 +1,12 @@
 import { Box, Typography } from "@mui/material";
-import { MenuService } from "@/app/services";
+import { AppService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import MenuCategoryCard from "@/app/components/MenuCategoryCard";
+import MenuCategoriesGrid from "./[id]/page";
 
 export default async function MenuCategoriesPage() {
-  const { companyId } = await getSessionContext();
+  const { companyId, userId } = await getSessionContext();
 
-  if (!companyId) {
+  if (!companyId || !userId) {
     return (
       <Box sx={{ p: 3 }}>
         <Typography color="text.secondary">
@@ -16,41 +16,30 @@ export default async function MenuCategoriesPage() {
     );
   }
 
-  const categories = await MenuService.getMenuCategoriesWithCounts(companyId);
-
-  if (categories.length === 0) {
+  const selectedLocation = await AppService.getSelectedLocation(userId);
+  if (!selectedLocation) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">No menu categories yet.</Typography>
+        <Typography color="text.secondary">
+          No location selected. Please choose a location first.
+        </Typography>
       </Box>
     );
   }
 
+  const categories = await MenuService.getMenuCategoriesWithCounts(
+    companyId,
+    selectedLocation.locationId,
+  );
+
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: {
-          xs: "repeat(2, 1fr)",
-          sm: "repeat(3, 1fr)",
-          md: "repeat(4, 1fr)",
-          lg: "repeat(5, 1fr)",
-          xl: "repeat(6, 1fr)",
-        },
-        gap: { xs: 1.5, sm: 2, md: 2.5 },
-        p: { xs: 1.5, sm: 2, md: 3 },
-      }}
-    >
-      {categories.map((category) => (
-        <MenuCategoryCard
-          key={category.id}
-          category={{
-            id: category.id,
-            name: category.name,
-            menuCount: category._count.menuMenuCategory,
-          }}
-        />
-      ))}
-    </Box>
+    <MenuCategoriesGrid
+      categories={categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+        menuCount: category._count.menuMenuCategory,
+        isEnabledAtLocation: category.isEnabledAtLocation,
+      }))}
+    />
   );
 }

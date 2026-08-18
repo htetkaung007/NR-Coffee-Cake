@@ -6,19 +6,25 @@ import {
   Alert,
   Box,
   Button,
+  FormControlLabel,
   Snackbar,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
 import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
+import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
 import UploadOutlinedIcon from "@mui/icons-material/UploadOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { createTableAction } from "../action";
 
+const COUNTER_NAME = "Counter QR code";
+
 export default function NewTable() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [isCounter, setIsCounter] = useState(false);
   const [logo, setLogo] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -30,6 +36,7 @@ export default function NewTable() {
 
     const formData = new FormData();
     formData.set("name", name);
+    formData.set("isCounter", String(isCounter));
     if (logo) formData.set("logo", logo);
 
     startTransition(async () => {
@@ -79,14 +86,64 @@ export default function NewTable() {
           <Stack spacing={2.5}>
             {error && <Alert severity="error">{error}</Alert>}
 
+            {/* Prominent on purpose (own bordered box, filled icon,
+                bold label) — this single switch changes what the rest
+                of the form means (name becomes fixed/disabled), so it
+                needs to be seen before the Name field, not blend in
+                with the other options below it. */}
+            <Box
+              sx={{
+                border: "1px solid",
+                borderColor: isCounter ? "primary.main" : "divider",
+                borderRadius: 2,
+                p: 1.5,
+                bgcolor: isCounter ? "primary.50" : "transparent",
+                transition: "border-color 0.15s, background-color 0.15s",
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isCounter}
+                    onChange={(event) => setIsCounter(event.target.checked)}
+                  />
+                }
+                label={
+                  <Box
+                    sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                  >
+                    <PointOfSaleOutlinedIcon
+                      fontSize="small"
+                      color={isCounter ? "primary" : "action"}
+                    />
+                    <Typography sx={{ fontWeight: 700 }}>Counter</Typography>
+                  </Box>
+                }
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", ml: 5.5 }}
+              >
+                {isCounter
+                  ? `This creates the walk-in counter QR code, not a seated table. Its name is fixed as "${COUNTER_NAME}".`
+                  : "Turn on if this QR code is for the walk-in counter instead of a seated table."}
+              </Typography>
+            </Box>
+
             <TextField
               label="Table Name"
-              required
+              required={!isCounter}
               autoFocus
               fullWidth
-              value={name}
+              disabled={isCounter}
+              value={isCounter ? COUNTER_NAME : name}
               onChange={(event) => setName(event.target.value)}
-              helperText="e.g. Table 1, Patio A — a QR code will be generated automatically."
+              helperText={
+                isCounter
+                  ? "Locked while Counter is on."
+                  : "e.g. Table 1, Patio A — a QR code will be generated automatically."
+              }
             />
 
             <Box>
@@ -135,7 +192,7 @@ export default function NewTable() {
             <Button
               type="submit"
               variant="contained"
-              disabled={isPending || !name.trim()}
+              disabled={isPending || (!isCounter && !name.trim())}
               sx={{ alignSelf: "flex-start", px: 3 }}
             >
               {isPending ? "Creating..." : "Create Table"}

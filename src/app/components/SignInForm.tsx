@@ -182,7 +182,7 @@ export default function SignInForm() {
               <Link
                 component="button"
                 variant="body2"
-                onClick={() => router.push("/auth/signUp")}
+                onClick={() => router.push("/auth/signup")}
                 sx={{ fontWeight: "bold", textDecoration: "none" }}
               >
                 Sign Up

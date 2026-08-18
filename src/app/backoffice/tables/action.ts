@@ -54,6 +54,7 @@ const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
   const table = await TableService.createTable(
     selectedLocation.locationId,
     input.name,
+    input.isCounter,
   );
 
   // QR code is generated from locationId (stable) rather than the
@@ -88,6 +89,7 @@ export async function createTableAction(formData: FormData) {
 
   const result = await validateWith(createTableSchema, {
     name: formData.get("name"),
+    isCounter: formData.get("isCounter") === "true",
     logo,
   }).asyncAndThen(safeCreateTable);
 

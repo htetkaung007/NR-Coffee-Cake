@@ -43,6 +43,14 @@ export type CreateMenuInput = z.infer<typeof createMenuSchema>;
 
 export const createMenuCategorySchema = z.object({
   name: z.string().trim().min(1, "Category name is required.").max(50),
+  isEnabled: z.boolean(),
 });
 
 export type CreateMenuCategoryInput = z.infer<typeof createMenuCategorySchema>;
+
+export const updateMenuCategorySchema = z.object({
+  name: z.string().trim().min(1, "Category name is required.").max(50),
+  isEnabled: z.boolean(),
+});
+
+export type UpdateMenuCategoryInput = z.infer<typeof updateMenuCategorySchema>;
