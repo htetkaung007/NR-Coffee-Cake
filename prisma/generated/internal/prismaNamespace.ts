@@ -399,7 +399,8 @@ export const ModelName = {
   DisableLocationMenus: 'DisableLocationMenus',
   DisableLocationMenuCategories: 'DisableLocationMenuCategories',
   Order: 'Order',
-  OrdersAddon: 'OrdersAddon'
+  OrdersAddon: 'OrdersAddon',
+  OrderSession: 'OrderSession'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon"
+    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1603,6 +1604,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    OrderSession: {
+      payload: Prisma.$OrderSessionPayload<ExtArgs>
+      fields: Prisma.OrderSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrderSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrderSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.OrderSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrderSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>
+        }
+        findMany: {
+          args: Prisma.OrderSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>[]
+        }
+        create: {
+          args: Prisma.OrderSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>
+        }
+        createMany: {
+          args: Prisma.OrderSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrderSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.OrderSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>
+        }
+        update: {
+          args: Prisma.OrderSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrderSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrderSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrderSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrderSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.OrderSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrderSession>
+        }
+        groupBy: {
+          args: Prisma.OrderSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrderSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderSessionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1675,6 +1750,8 @@ export const TableScalarFieldEnum = {
   name: 'name',
   qrcodeImageUrl: 'qrcodeImageUrl',
   locationId: 'locationId',
+  counterAccessKey: 'counterAccessKey',
+  activeSessionId: 'activeSessionId',
   isCounter: 'isCounter',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -1828,6 +1905,7 @@ export const OrderScalarFieldEnum = {
   menuId: 'menuId',
   quantity: 'quantity',
   tableId: 'tableId',
+  orderSessionId: 'orderSessionId',
   status: 'status',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -1844,6 +1922,19 @@ export const OrdersAddonScalarFieldEnum = {
 } as const
 
 export type OrdersAddonScalarFieldEnum = (typeof OrdersAddonScalarFieldEnum)[keyof typeof OrdersAddonScalarFieldEnum]
+
+
+export const OrderSessionScalarFieldEnum = {
+  id: 'id',
+  tableId: 'tableId',
+  isCounter: 'isCounter',
+  status: 'status',
+  createdAt: 'createdAt',
+  updateTime: 'updateTime',
+  isArchived: 'isArchived'
+} as const
+
+export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2092,6 +2183,7 @@ export type GlobalOmitConfig = {
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesOmit
   order?: Prisma.OrderOmit
   ordersAddon?: Prisma.OrdersAddonOmit
+  orderSession?: Prisma.OrderSessionOmit
 }
 
 /* Types for Logging */

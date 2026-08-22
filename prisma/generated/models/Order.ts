@@ -31,6 +31,7 @@ export type OrderAvgAggregateOutputType = {
   menuId: number | null
   quantity: number | null
   tableId: number | null
+  orderSessionId: number | null
 }
 
 export type OrderSumAggregateOutputType = {
@@ -38,6 +39,7 @@ export type OrderSumAggregateOutputType = {
   menuId: number | null
   quantity: number | null
   tableId: number | null
+  orderSessionId: number | null
 }
 
 export type OrderMinAggregateOutputType = {
@@ -45,6 +47,7 @@ export type OrderMinAggregateOutputType = {
   menuId: number | null
   quantity: number | null
   tableId: number | null
+  orderSessionId: number | null
   status: $Enums.ORDERSTATUS | null
   createdAt: Date | null
   updateTime: Date | null
@@ -56,6 +59,7 @@ export type OrderMaxAggregateOutputType = {
   menuId: number | null
   quantity: number | null
   tableId: number | null
+  orderSessionId: number | null
   status: $Enums.ORDERSTATUS | null
   createdAt: Date | null
   updateTime: Date | null
@@ -67,6 +71,7 @@ export type OrderCountAggregateOutputType = {
   menuId: number
   quantity: number
   tableId: number
+  orderSessionId: number
   status: number
   createdAt: number
   updateTime: number
@@ -80,6 +85,7 @@ export type OrderAvgAggregateInputType = {
   menuId?: true
   quantity?: true
   tableId?: true
+  orderSessionId?: true
 }
 
 export type OrderSumAggregateInputType = {
@@ -87,6 +93,7 @@ export type OrderSumAggregateInputType = {
   menuId?: true
   quantity?: true
   tableId?: true
+  orderSessionId?: true
 }
 
 export type OrderMinAggregateInputType = {
@@ -94,6 +101,7 @@ export type OrderMinAggregateInputType = {
   menuId?: true
   quantity?: true
   tableId?: true
+  orderSessionId?: true
   status?: true
   createdAt?: true
   updateTime?: true
@@ -105,6 +113,7 @@ export type OrderMaxAggregateInputType = {
   menuId?: true
   quantity?: true
   tableId?: true
+  orderSessionId?: true
   status?: true
   createdAt?: true
   updateTime?: true
@@ -116,6 +125,7 @@ export type OrderCountAggregateInputType = {
   menuId?: true
   quantity?: true
   tableId?: true
+  orderSessionId?: true
   status?: true
   createdAt?: true
   updateTime?: true
@@ -214,6 +224,7 @@ export type OrderGroupByOutputType = {
   menuId: number
   quantity: number
   tableId: number
+  orderSessionId: number
   status: $Enums.ORDERSTATUS
   createdAt: Date
   updateTime: Date
@@ -248,10 +259,12 @@ export type OrderWhereInput = {
   menuId?: Prisma.IntFilter<"Order"> | number
   quantity?: Prisma.IntFilter<"Order"> | number
   tableId?: Prisma.IntFilter<"Order"> | number
+  orderSessionId?: Prisma.IntFilter<"Order"> | number
   status?: Prisma.EnumORDERSTATUSFilter<"Order"> | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolFilter<"Order"> | boolean
+  orderSession?: Prisma.XOR<Prisma.OrderSessionScalarRelationFilter, Prisma.OrderSessionWhereInput>
   menu?: Prisma.XOR<Prisma.MenuScalarRelationFilter, Prisma.MenuWhereInput>
   table?: Prisma.XOR<Prisma.TableScalarRelationFilter, Prisma.TableWhereInput>
   OrdersAddons?: Prisma.OrdersAddonListRelationFilter
@@ -262,10 +275,12 @@ export type OrderOrderByWithRelationInput = {
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  orderSessionId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  orderSession?: Prisma.OrderSessionOrderByWithRelationInput
   menu?: Prisma.MenuOrderByWithRelationInput
   table?: Prisma.TableOrderByWithRelationInput
   OrdersAddons?: Prisma.OrdersAddonOrderByRelationAggregateInput
@@ -279,10 +294,12 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   menuId?: Prisma.IntFilter<"Order"> | number
   quantity?: Prisma.IntFilter<"Order"> | number
   tableId?: Prisma.IntFilter<"Order"> | number
+  orderSessionId?: Prisma.IntFilter<"Order"> | number
   status?: Prisma.EnumORDERSTATUSFilter<"Order"> | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolFilter<"Order"> | boolean
+  orderSession?: Prisma.XOR<Prisma.OrderSessionScalarRelationFilter, Prisma.OrderSessionWhereInput>
   menu?: Prisma.XOR<Prisma.MenuScalarRelationFilter, Prisma.MenuWhereInput>
   table?: Prisma.XOR<Prisma.TableScalarRelationFilter, Prisma.TableWhereInput>
   OrdersAddons?: Prisma.OrdersAddonListRelationFilter
@@ -293,6 +310,7 @@ export type OrderOrderByWithAggregationInput = {
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  orderSessionId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -312,6 +330,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   menuId?: Prisma.IntWithAggregatesFilter<"Order"> | number
   quantity?: Prisma.IntWithAggregatesFilter<"Order"> | number
   tableId?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  orderSessionId?: Prisma.IntWithAggregatesFilter<"Order"> | number
   status?: Prisma.EnumORDERSTATUSWithAggregatesFilter<"Order"> | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
@@ -324,6 +343,7 @@ export type OrderCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  orderSession: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
   table: Prisma.TableCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
@@ -334,6 +354,7 @@ export type OrderUncheckedCreateInput = {
   menuId: number
   quantity: number
   tableId: number
+  orderSessionId: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
@@ -347,6 +368,7 @@ export type OrderUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  orderSession?: Prisma.OrderSessionUpdateOneRequiredWithoutOrdersNestedInput
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
   table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
@@ -357,6 +379,7 @@ export type OrderUncheckedUpdateInput = {
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -369,6 +392,7 @@ export type OrderCreateManyInput = {
   menuId: number
   quantity: number
   tableId: number
+  orderSessionId: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
@@ -388,6 +412,7 @@ export type OrderUncheckedUpdateManyInput = {
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -409,6 +434,7 @@ export type OrderCountOrderByAggregateInput = {
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  orderSessionId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -420,6 +446,7 @@ export type OrderAvgOrderByAggregateInput = {
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  orderSessionId?: Prisma.SortOrder
 }
 
 export type OrderMaxOrderByAggregateInput = {
@@ -427,6 +454,7 @@ export type OrderMaxOrderByAggregateInput = {
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  orderSessionId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -438,6 +466,7 @@ export type OrderMinOrderByAggregateInput = {
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  orderSessionId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -449,6 +478,7 @@ export type OrderSumOrderByAggregateInput = {
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  orderSessionId?: Prisma.SortOrder
 }
 
 export type OrderScalarRelationFilter = {
@@ -558,12 +588,55 @@ export type OrderUpdateOneRequiredWithoutOrdersAddonsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutOrdersAddonsInput, Prisma.OrderUpdateWithoutOrdersAddonsInput>, Prisma.OrderUncheckedUpdateWithoutOrdersAddonsInput>
 }
 
+export type OrderCreateNestedManyWithoutOrderSessionInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutOrderSessionInput, Prisma.OrderUncheckedCreateWithoutOrderSessionInput> | Prisma.OrderCreateWithoutOrderSessionInput[] | Prisma.OrderUncheckedCreateWithoutOrderSessionInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutOrderSessionInput | Prisma.OrderCreateOrConnectWithoutOrderSessionInput[]
+  createMany?: Prisma.OrderCreateManyOrderSessionInputEnvelope
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+}
+
+export type OrderUncheckedCreateNestedManyWithoutOrderSessionInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutOrderSessionInput, Prisma.OrderUncheckedCreateWithoutOrderSessionInput> | Prisma.OrderCreateWithoutOrderSessionInput[] | Prisma.OrderUncheckedCreateWithoutOrderSessionInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutOrderSessionInput | Prisma.OrderCreateOrConnectWithoutOrderSessionInput[]
+  createMany?: Prisma.OrderCreateManyOrderSessionInputEnvelope
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+}
+
+export type OrderUpdateManyWithoutOrderSessionNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutOrderSessionInput, Prisma.OrderUncheckedCreateWithoutOrderSessionInput> | Prisma.OrderCreateWithoutOrderSessionInput[] | Prisma.OrderUncheckedCreateWithoutOrderSessionInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutOrderSessionInput | Prisma.OrderCreateOrConnectWithoutOrderSessionInput[]
+  upsert?: Prisma.OrderUpsertWithWhereUniqueWithoutOrderSessionInput | Prisma.OrderUpsertWithWhereUniqueWithoutOrderSessionInput[]
+  createMany?: Prisma.OrderCreateManyOrderSessionInputEnvelope
+  set?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  disconnect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  delete?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  update?: Prisma.OrderUpdateWithWhereUniqueWithoutOrderSessionInput | Prisma.OrderUpdateWithWhereUniqueWithoutOrderSessionInput[]
+  updateMany?: Prisma.OrderUpdateManyWithWhereWithoutOrderSessionInput | Prisma.OrderUpdateManyWithWhereWithoutOrderSessionInput[]
+  deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
+}
+
+export type OrderUncheckedUpdateManyWithoutOrderSessionNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutOrderSessionInput, Prisma.OrderUncheckedCreateWithoutOrderSessionInput> | Prisma.OrderCreateWithoutOrderSessionInput[] | Prisma.OrderUncheckedCreateWithoutOrderSessionInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutOrderSessionInput | Prisma.OrderCreateOrConnectWithoutOrderSessionInput[]
+  upsert?: Prisma.OrderUpsertWithWhereUniqueWithoutOrderSessionInput | Prisma.OrderUpsertWithWhereUniqueWithoutOrderSessionInput[]
+  createMany?: Prisma.OrderCreateManyOrderSessionInputEnvelope
+  set?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  disconnect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  delete?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  update?: Prisma.OrderUpdateWithWhereUniqueWithoutOrderSessionInput | Prisma.OrderUpdateWithWhereUniqueWithoutOrderSessionInput[]
+  updateMany?: Prisma.OrderUpdateManyWithWhereWithoutOrderSessionInput | Prisma.OrderUpdateManyWithWhereWithoutOrderSessionInput[]
+  deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
+}
+
 export type OrderCreateWithoutTableInput = {
   quantity: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  orderSession: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
 }
@@ -572,6 +645,7 @@ export type OrderUncheckedCreateWithoutTableInput = {
   id?: number
   menuId: number
   quantity: number
+  orderSessionId: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
@@ -613,6 +687,7 @@ export type OrderScalarWhereInput = {
   menuId?: Prisma.IntFilter<"Order"> | number
   quantity?: Prisma.IntFilter<"Order"> | number
   tableId?: Prisma.IntFilter<"Order"> | number
+  orderSessionId?: Prisma.IntFilter<"Order"> | number
   status?: Prisma.EnumORDERSTATUSFilter<"Order"> | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
@@ -625,6 +700,7 @@ export type OrderCreateWithoutMenuInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  orderSession: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
   table: Prisma.TableCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
 }
@@ -633,6 +709,7 @@ export type OrderUncheckedCreateWithoutMenuInput = {
   id?: number
   quantity: number
   tableId: number
+  orderSessionId: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
@@ -672,6 +749,7 @@ export type OrderCreateWithoutOrdersAddonsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  orderSession: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
   table: Prisma.TableCreateNestedOneWithoutOrdersInput
 }
@@ -681,6 +759,7 @@ export type OrderUncheckedCreateWithoutOrdersAddonsInput = {
   menuId: number
   quantity: number
   tableId: number
+  orderSessionId: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
@@ -709,6 +788,7 @@ export type OrderUpdateWithoutOrdersAddonsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  orderSession?: Prisma.OrderSessionUpdateOneRequiredWithoutOrdersNestedInput
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
   table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
 }
@@ -718,16 +798,67 @@ export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
+export type OrderCreateWithoutOrderSessionInput = {
+  quantity: number
+  status?: $Enums.ORDERSTATUS
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
+  table: Prisma.TableCreateNestedOneWithoutOrdersInput
+  OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
+}
+
+export type OrderUncheckedCreateWithoutOrderSessionInput = {
+  id?: number
+  menuId: number
+  quantity: number
+  tableId: number
+  status?: $Enums.ORDERSTATUS
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  OrdersAddons?: Prisma.OrdersAddonUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type OrderCreateOrConnectWithoutOrderSessionInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutOrderSessionInput, Prisma.OrderUncheckedCreateWithoutOrderSessionInput>
+}
+
+export type OrderCreateManyOrderSessionInputEnvelope = {
+  data: Prisma.OrderCreateManyOrderSessionInput | Prisma.OrderCreateManyOrderSessionInput[]
+  skipDuplicates?: boolean
+}
+
+export type OrderUpsertWithWhereUniqueWithoutOrderSessionInput = {
+  where: Prisma.OrderWhereUniqueInput
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutOrderSessionInput, Prisma.OrderUncheckedUpdateWithoutOrderSessionInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutOrderSessionInput, Prisma.OrderUncheckedCreateWithoutOrderSessionInput>
+}
+
+export type OrderUpdateWithWhereUniqueWithoutOrderSessionInput = {
+  where: Prisma.OrderWhereUniqueInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutOrderSessionInput, Prisma.OrderUncheckedUpdateWithoutOrderSessionInput>
+}
+
+export type OrderUpdateManyWithWhereWithoutOrderSessionInput = {
+  where: Prisma.OrderScalarWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateManyMutationInput, Prisma.OrderUncheckedUpdateManyWithoutOrderSessionInput>
+}
+
 export type OrderCreateManyTableInput = {
   id?: number
   menuId: number
   quantity: number
+  orderSessionId: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
@@ -740,6 +871,7 @@ export type OrderUpdateWithoutTableInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  orderSession?: Prisma.OrderSessionUpdateOneRequiredWithoutOrdersNestedInput
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
 }
@@ -748,6 +880,7 @@ export type OrderUncheckedUpdateWithoutTableInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -759,6 +892,7 @@ export type OrderUncheckedUpdateManyWithoutTableInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -769,6 +903,7 @@ export type OrderCreateManyMenuInput = {
   id?: number
   quantity: number
   tableId: number
+  orderSessionId: number
   status?: $Enums.ORDERSTATUS
   createdAt?: Date | string
   updateTime?: Date | string
@@ -781,6 +916,7 @@ export type OrderUpdateWithoutMenuInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  orderSession?: Prisma.OrderSessionUpdateOneRequiredWithoutOrdersNestedInput
   table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
 }
@@ -789,6 +925,7 @@ export type OrderUncheckedUpdateWithoutMenuInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -798,6 +935,52 @@ export type OrderUncheckedUpdateWithoutMenuInput = {
 
 export type OrderUncheckedUpdateManyWithoutMenuInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  tableId?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+}
+
+export type OrderCreateManyOrderSessionInput = {
+  id?: number
+  menuId: number
+  quantity: number
+  tableId: number
+  status?: $Enums.ORDERSTATUS
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+}
+
+export type OrderUpdateWithoutOrderSessionInput = {
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
+  table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
+  OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutOrderSessionInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  menuId?: Prisma.IntFieldUpdateOperationsInput | number
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  tableId?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  OrdersAddons?: Prisma.OrdersAddonUncheckedUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateManyWithoutOrderSessionInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
@@ -842,10 +1025,12 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   menuId?: boolean
   quantity?: boolean
   tableId?: boolean
+  orderSessionId?: boolean
   status?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
   OrdersAddons?: boolean | Prisma.Order$OrdersAddonsArgs<ExtArgs>
@@ -857,10 +1042,12 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   menuId?: boolean
   quantity?: boolean
   tableId?: boolean
+  orderSessionId?: boolean
   status?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
@@ -870,10 +1057,12 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   menuId?: boolean
   quantity?: boolean
   tableId?: boolean
+  orderSessionId?: boolean
   status?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
@@ -883,24 +1072,28 @@ export type OrderSelectScalar = {
   menuId?: boolean
   quantity?: boolean
   tableId?: boolean
+  orderSessionId?: boolean
   status?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "menuId" | "quantity" | "tableId" | "status" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "menuId" | "quantity" | "tableId" | "orderSessionId" | "status" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
   OrdersAddons?: boolean | Prisma.Order$OrdersAddonsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }
 export type OrderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
 }
@@ -908,6 +1101,7 @@ export type OrderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
 export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Order"
   objects: {
+    orderSession: Prisma.$OrderSessionPayload<ExtArgs>
     menu: Prisma.$MenuPayload<ExtArgs>
     table: Prisma.$TablePayload<ExtArgs>
     OrdersAddons: Prisma.$OrdersAddonPayload<ExtArgs>[]
@@ -917,6 +1111,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     menuId: number
     quantity: number
     tableId: number
+    orderSessionId: number
     status: $Enums.ORDERSTATUS
     createdAt: Date
     updateTime: Date
@@ -1315,6 +1510,7 @@ readonly fields: OrderFieldRefs;
  */
 export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  orderSession<T extends Prisma.OrderSessionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderSessionDefaultArgs<ExtArgs>>): Prisma.Prisma__OrderSessionClient<runtime.Types.Result.GetResult<Prisma.$OrderSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   menu<T extends Prisma.MenuDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MenuDefaultArgs<ExtArgs>>): Prisma.Prisma__MenuClient<runtime.Types.Result.GetResult<Prisma.$MenuPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   table<T extends Prisma.TableDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TableDefaultArgs<ExtArgs>>): Prisma.Prisma__TableClient<runtime.Types.Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   OrdersAddons<T extends Prisma.Order$OrdersAddonsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$OrdersAddonsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdersAddonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1351,6 +1547,7 @@ export interface OrderFieldRefs {
   readonly menuId: Prisma.FieldRef<"Order", 'Int'>
   readonly quantity: Prisma.FieldRef<"Order", 'Int'>
   readonly tableId: Prisma.FieldRef<"Order", 'Int'>
+  readonly orderSessionId: Prisma.FieldRef<"Order", 'Int'>
   readonly status: Prisma.FieldRef<"Order", 'ORDERSTATUS'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"Order", 'DateTime'>

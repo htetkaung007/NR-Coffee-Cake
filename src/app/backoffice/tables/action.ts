@@ -26,9 +26,20 @@ import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
  * apiOrederAppUrl already comes from env/config, so the order app's own
  * route only needs to read two search params, no route-shape coupling
  * between this app and that one.
+ *
+ * counterAccessKey is included only for Counter QR codes (see
+ * Table.counterAccessKey's doc comment). It's checked once on first
+ * scan and stripped from the URL right after, so it only ever appears
+ * on the physical printed/saved QR code itself, never in a URL the
+ * customer's browser keeps showing.
  */
-function buildQrCodeContent(locationId: number, tableId: number) {
-  return `${config.apiOrederAppUrl}?locationId=${locationId}&tableId=${tableId}`;
+function buildQrCodeContent(
+  locationId: number,
+  tableId: number,
+  counterAccessKey?: string | null,
+) {
+  const base = `${config.apiOrederAppUrl}?locationId=${locationId}&tableId=${tableId}`;
+  return counterAccessKey ? `${base}&key=${counterAccessKey}` : base;
 }
 
 const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
@@ -60,7 +71,11 @@ const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
   // QR code is generated from locationId (stable) rather than the
   // location's name (can be renamed later, which would silently break
   // every already-printed QR code if the name were baked into it).
-  const qrContent = buildQrCodeContent(selectedLocation.locationId, table.id);
+  const qrContent = buildQrCodeContent(
+    selectedLocation.locationId,
+    table.id,
+    table.counterAccessKey,
+  );
 
   // input.logo is already validated by createTableSchema (size + mime
   // type) before this ever runs. Passing null when no logo was given
@@ -122,6 +137,7 @@ const safeUpdateTable = toSafeResult(
       const qrContent = buildQrCodeContent(
         existingTable.locationId,
         existingTable.id,
+        existingTable.counterAccessKey,
       );
       const logoBuffer = Buffer.from(await input.logo.arrayBuffer());
       const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);

@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
 
@@ -72,6 +73,14 @@ export class TableService {
         name: isCounter ? COUNTER_TABLE_NAME : name,
         locationId,
         isCounter,
+        // Random, URL-safe key baked into the Counter QR's printed
+        // URL — see Table.counterAccessKey's doc comment in
+        // schema.prisma for what this is (and isn't) for. Only
+        // generated for Counter rows; regular tables have no
+        // equivalent guessable-URL risk to protect against.
+        counterAccessKey: isCounter
+          ? randomBytes(12).toString("base64url")
+          : null,
       },
     });
   }

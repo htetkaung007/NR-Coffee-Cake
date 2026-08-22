@@ -11,3 +11,4 @@ export { LocationService } from "./location.service";
 
 export { AddonService } from "./addon.service";
 export { TableService } from "./table.service";
+export { OrderSessionService } from "./orderSession.service";

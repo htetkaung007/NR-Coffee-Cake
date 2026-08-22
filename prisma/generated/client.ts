@@ -121,3 +121,8 @@ export type Order = Prisma.OrderModel
  * 
  */
 export type OrdersAddon = Prisma.OrdersAddonModel
+/**
+ * Model OrderSession
+ * 
+ */
+export type OrderSession = Prisma.OrderSessionModel

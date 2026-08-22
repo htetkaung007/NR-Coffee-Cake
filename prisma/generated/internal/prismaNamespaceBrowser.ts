@@ -66,7 +66,8 @@ export const ModelName = {
   DisableLocationMenus: 'DisableLocationMenus',
   DisableLocationMenuCategories: 'DisableLocationMenuCategories',
   Order: 'Order',
-  OrdersAddon: 'OrdersAddon'
+  OrdersAddon: 'OrdersAddon',
+  OrderSession: 'OrderSession'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -118,6 +119,8 @@ export const TableScalarFieldEnum = {
   name: 'name',
   qrcodeImageUrl: 'qrcodeImageUrl',
   locationId: 'locationId',
+  counterAccessKey: 'counterAccessKey',
+  activeSessionId: 'activeSessionId',
   isCounter: 'isCounter',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -271,6 +274,7 @@ export const OrderScalarFieldEnum = {
   menuId: 'menuId',
   quantity: 'quantity',
   tableId: 'tableId',
+  orderSessionId: 'orderSessionId',
   status: 'status',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -287,6 +291,19 @@ export const OrdersAddonScalarFieldEnum = {
 } as const
 
 export type OrdersAddonScalarFieldEnum = (typeof OrdersAddonScalarFieldEnum)[keyof typeof OrdersAddonScalarFieldEnum]
+
+
+export const OrderSessionScalarFieldEnum = {
+  id: 'id',
+  tableId: 'tableId',
+  isCounter: 'isCounter',
+  status: 'status',
+  createdAt: 'createdAt',
+  updateTime: 'updateTime',
+  isArchived: 'isArchived'
+} as const
+
+export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]
 
 
 export const SortOrder = {
