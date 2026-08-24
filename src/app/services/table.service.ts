@@ -8,10 +8,11 @@ import { NotFoundError, ValidationError } from "../lib/errors";
 // directly, not just through the create-table form.
 const COUNTER_TABLE_NAME = "Counter QR code";
 
-/** Short, URL-safe, unguessable key embedded in the Counter QR's
- *  printed link (e.g. /customer?tableId=5&key=<this>). Regenerating it
- *  invalidates every previously-printed copy of that QR at once —
- *  see TableService.rotateCounterKey. */
+/** Short, URL-safe, unguessable key embedded in a table's (Counter or
+ *  regular) printed QR link (e.g. /customer?tableId=5&key=<this> for
+ *  Counter, /table?tableId=8&key=<this> for a regular table).
+ *  Regenerating it invalidates every previously-printed copy of that
+ *  QR at once — see TableService.rotateAccessKey. */
 function generateCounterKey() {
   return randomBytes(6).toString("base64url");
 }
@@ -81,7 +82,7 @@ export class TableService {
         name: isCounter ? COUNTER_TABLE_NAME : name,
         locationId,
         isCounter,
-        counterAccessKey: isCounter ? generateCounterKey() : null,
+        counterAccessKey: generateCounterKey(),
       },
     });
   }
@@ -128,19 +129,15 @@ export class TableService {
     return prisma.table.delete({ where: { id: tableId } });
   }
 
-  /** Issues a new counterAccessKey, invalidating every previously-printed
-   *  copy of this Counter's QR image at once (old links now fail
-   *  OrderSessionService.resolveCounterQrScan). The Controller
-   *  (tables/action.ts) is responsible for regenerating and
-   *  re-uploading the QR image itself afterward — this method only
-   *  updates the key Table row holds. */
-  static async rotateCounterKey(tableId: number) {
-    const table = await TableService.getTableById(tableId);
-    if (!table.isCounter) {
-      throw new ValidationError(
-        "Only the Counter QR code has a key to rotate.",
-      );
-    }
+  /** Issues a new counterAccessKey for ANY table (Counter or regular),
+   *  invalidating every previously-printed copy of that table's QR
+   *  image at once (old links now fail resolveCounterQrScan /
+   *  resolveTableQrScan). The Controller (tables/action.ts) is
+   *  responsible for regenerating and re-uploading the QR image
+   *  itself afterward — this method only updates the key the Table
+   *  row holds. */
+  static async rotateAccessKey(tableId: number) {
+    await TableService.getTableById(tableId);
 
     return prisma.table.update({
       where: { id: tableId },
@@ -148,17 +145,19 @@ export class TableService {
     });
   }
 
-  /** Used by the Counter QR scan handler to resolve tableId+key back
-   *  to a Table row — returns null (rather than throwing) on any
-   *  mismatch so the caller can fail closed to view-only without
-   *  distinguishing "wrong table" from "stale/rotated key" (doing so
-   *  would leak which case it was to whoever is probing). */
-  static async findByCounterKey(tableId: number, key: string) {
+  /** Used by the QR scan handlers (Counter and Table) to resolve
+   *  tableId+key back to a Table row — returns null (rather than
+   *  throwing) on any mismatch so the caller can fail closed to
+   *  view-only without distinguishing "wrong table" from "stale/
+   *  rotated key" (doing so would leak which case it was to whoever
+   *  is probing). isCounter isn't part of the WHERE clause since both
+   *  entry points now use the same key mechanism — the caller already
+   *  knows which kind of table it's resolving. */
+  static async findByAccessKey(tableId: number, key: string) {
     return prisma.table.findFirst({
       where: {
         id: tableId,
         counterAccessKey: key,
-        isCounter: true,
         isArchived: false,
       },
     });

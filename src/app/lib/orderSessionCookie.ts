@@ -5,6 +5,17 @@
  *  never drifts between the two. */
 export const COUNTER_SESSION_COOKIE = "counter_session_token";
 
+/** Same idea as COUNTER_SESSION_COOKIE, but for Table QR sessions —
+ *  kept as a SEPARATE cookie (not reused) because a customer's phone
+ *  could in principle carry both at once (scanned a Counter QR
+ *  earlier, then also scans a Table QR) and the two must resolve
+ *  independently. Every phone that scans the same table's QR gets
+ *  this SAME token written back (see resolveTableQrScan/
+ *  resolveTableSession) — that's what makes the cart shared across
+ *  the group's phones, unlike Counter QR where each phone's cookie
+ *  is its own individual session. */
+export const TABLE_SESSION_COOKIE = "table_session_token";
+
 // No Max-Age is set on this cookie — it's a plain browser-session
 // cookie (cleared when the browser closes). The database is the real
 // lifecycle owner: a CART session that never places an order expires

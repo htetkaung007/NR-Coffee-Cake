@@ -6,16 +6,32 @@ import { OrderSessionService } from "@/app/services";
 import { isSessionTerminal } from "@/app/services/orderSession.service";
 import { AppError } from "@/app/lib/errors";
 import { toActionResult, toSafeResult } from "@/app/lib/actionHelper";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
+import {
+  COUNTER_SESSION_COOKIE,
+  TABLE_SESSION_COOKIE,
+} from "@/app/lib/orderSessionCookie";
 
 /** The one place this file reads the cookie jar — every action below
- *  goes through this instead of repeating `cookies()` +
- *  `.get(COUNTER_SESSION_COOKIE)` itself. Returns the cookie store too
- *  (not just the token) since a couple of callers also need to clear
- *  the cookie in the same request. */
+ *  goes through this instead of repeating `cookies()` + `.get(...)`
+ *  itself. Checks BOTH cookies (a phone could only ever realistically
+ *  hold one at a time in normal use, but nothing stops a Counter scan
+ *  and a Table scan happening in the same browser) and returns which
+ *  cookie NAME matched, so callers that need to clear it clear the
+ *  right one — Counter and Table are separate cookies (see
+ *  TABLE_SESSION_COOKIE's comment), not interchangeable. Returns the
+ *  cookie store too (not just the token) since a couple of callers
+ *  also need to clear the cookie in the same request. */
 async function getCookieToken() {
   const store = await cookies();
-  return { store, token: store.get(COUNTER_SESSION_COOKIE)?.value ?? null };
+  const counterToken = store.get(COUNTER_SESSION_COOKIE)?.value;
+  if (counterToken) {
+    return { store, token: counterToken, cookieName: COUNTER_SESSION_COOKIE };
+  }
+  const tableToken = store.get(TABLE_SESSION_COOKIE)?.value;
+  if (tableToken) {
+    return { store, token: tableToken, cookieName: TABLE_SESSION_COOKIE };
+  }
+  return { store, token: null, cookieName: null };
 }
 
 /** Every cart/order action resolves the session from the cookie
@@ -93,24 +109,43 @@ export async function submitOrderAction() {
  * (getCookieToken) is shared between them; the terminal-status check
  * reuses the Service's isSessionTerminal so it can't drift from
  * getActiveSessionByToken's definition.
+ *
+ * Also returns cart line items (not just status) — needed for Table
+ * QR's shared-cart case: when one phone in the group adds an item,
+ * every other phone polling the SAME session (same token — see
+ * TABLE_SESSION_COOKIE) needs to pick up that change on its next
+ * poll tick, not just a status change. Harmless/unused extra data for
+ * Counter QR, where only one phone is ever really watching.
  */
 export async function pollOrderStatusAction() {
-  const { store, token } = await getCookieToken();
-  if (!token) {
-    return { status: "no_session" as const };
+  const { store, token, cookieName } = await getCookieToken();
+  if (!token || !cookieName) {
+    return { status: "no_session" as const, cart: [] };
   }
 
   const session = await OrderSessionService.getSessionByToken(token);
   if (!session) {
-    store.set(COUNTER_SESSION_COOKIE, "", { maxAge: 0 });
-    return { status: "no_session" as const };
+    store.set(cookieName, "", { maxAge: 0 });
+    return { status: "no_session" as const, cart: [] };
   }
 
   const refreshed = await OrderSessionService.getSessionStatus(session.id);
 
   if (isSessionTerminal(refreshed.status)) {
-    store.set(COUNTER_SESSION_COOKIE, "", { maxAge: 0 });
+    store.set(cookieName, "", { maxAge: 0 });
   }
 
-  return { status: refreshed.status };
+  // session.orders (from getSessionByToken, above) reflects the cart
+  // as of the START of this call — good enough at a 4s poll interval,
+  // and avoids a second DB round-trip just to re-read what's almost
+  // certainly still current.
+  return {
+    status: refreshed.status,
+    cart: session.orders.map((order) => ({
+      id: order.id,
+      menuName: order.menu.name,
+      quantity: order.quantity,
+      price: order.menu.price,
+    })),
+  };
 }

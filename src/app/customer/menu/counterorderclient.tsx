@@ -12,8 +12,8 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  addToCartAction,
   pollOrderStatusAction,
+  addToCartAction,
   submitOrderAction,
 } from "../action";
 
@@ -56,13 +56,16 @@ export default function CounterOrderClient({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Design doc "Step 3: Polling" — only poll once the order has been
-  // submitted; while still CART there's nothing a cashier is looking
-  // at yet, so nothing can change out from under this page except the
-  // customer's own actions. hasSession=false ရင် order/cart
+  // Design doc "Step 3: Polling" — originally only polled once
+  // submitted (PENDING_APPROVAL), since a lone customer's own cart
+  // can't change out from under them. Now also polls during CART:
+  // Table QR sessions are shared across a group's phones (see
+  // TABLE_SESSION_COOKIE), so Person B's screen needs to notice when
+  // Person A adds something. hasSession=false ရင် order/cart
   // လုံးဝမရှိသေးလို့ (view-only browsing) poll လုပ်စရာမလိုဘူး.
   useEffect(() => {
-    if (!hasSession || status !== "PENDING_APPROVAL") return;
+    if (!hasSession) return;
+    if (status !== "CART" && status !== "PENDING_APPROVAL") return;
 
     const interval = setInterval(async () => {
       const result = await pollOrderStatusAction();
@@ -82,6 +85,7 @@ export default function CounterOrderClient({
         return;
       }
       setStatus(result.status);
+      setCart(result.cart);
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);

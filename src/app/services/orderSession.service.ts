@@ -1,7 +1,6 @@
 import { prisma } from "../utils/prisma";
 import type { Prisma } from "../../../prisma/generated/client";
 import { NotFoundError, ValidationError } from "../lib/errors";
-import { TableService } from "./table.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -61,23 +60,37 @@ function generateOrderNumber(sessionId: number) {
  * workflow for Counter orders.
  *
  * Table QR and Counter QR are still two distinct scan entry points
- * (resolveTableQrScan / resolveCounterQrScan) — unlike the cookie
- * question, Counter now also requires a rotating key check that Table
- * doesn't, so a single shared entry point would need to special-case
- * around that anyway. Both funnel into resolveTableSession /
- * resolveCounterSession for the actual reuse-vs-new-session decision.
+ * (resolveTableQrScan / resolveCounterQrScan) — even though every
+ * Table row (not just isCounter ones) now carries its own
+ * counterAccessKey and both are checked the same way, Table's
+ * SESSION resolution stays fundamentally different from Counter's:
+ * Table shares ONE session across every phone that scans it
+ * (Table.activeSessionId — see resolveTableSession), while Counter
+ * gives each phone its own individual session via cookie. That
+ * reuse-vs-new-session decision is different enough per entry point
+ * that a single shared function would need to branch on isCounter
+ * internally anyway.
  */
 export class OrderSessionService {
-  /** Table QR (design doc section 3) — Table.activeSessionId is the
-   *  single source of truth for "which session this table's group is
-   *  currently in". No cookie, no key: the physical QR is permanent
-   *  and every scan of it is trusted to belong to whoever is at that
-   *  physical table. */
-  static async resolveTableQrScan(tableId: number) {
+  /** Table QR (design doc section 3) — like Counter, the printed URL
+   *  carries a rotating key (Table.counterAccessKey) checked first;
+   *  a wrong/stale key fails closed the same way Counter's does. Once
+   *  the key passes, Table.activeSessionId is the single source of
+   *  truth for "which session this table's group is currently in" —
+   *  every phone that scans this table's (valid-keyed) QR lands in
+   *  the SAME session, unlike Counter where each phone gets its own. */
+  static async resolveTableQrScan(tableId: number, key: string) {
     const table = await prisma.table.findFirst({
-      where: { id: tableId, isArchived: false, isCounter: false },
+      where: {
+        id: tableId,
+        counterAccessKey: key,
+        isArchived: false,
+        isCounter: false,
+      },
     });
-    if (!table) throw new NotFoundError("Table", tableId);
+    if (!table) {
+      return { status: "invalid_key" as const };
+    }
 
     return OrderSessionService.resolveTableSession(table);
   }

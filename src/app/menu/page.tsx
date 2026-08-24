@@ -1,12 +1,20 @@
 import { cookies } from "next/headers";
 import { OrderSessionService, MenuService } from "@/app/services";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
+import {
+  COUNTER_SESSION_COOKIE,
+  TABLE_SESSION_COOKIE,
+} from "@/app/lib/orderSessionCookie";
 import CounterOrderClient from "@/app/customer/menu/counterorderclient";
 
 /**
  * View + Order UI ကို page တစ်ခုတည်းထဲ ပေါင်းထားတယ် — cookie session
  * ရှိမရှိအလိုက် CounterOrderClient ကို hasSession flag နဲ့ ခေါ်တာပဲ
  * ကွာသွားတယ်, menu list display ကတော့ ၂ ခုစလုံးအတွက် တူတူပဲ.
+ *
+ * Cookie ၂ မျိုး (Counter/Table) ကို စစ်တယ် — token ကိုယ်တိုင်က
+ * OrderSession.token ချည်းပဲ ကိုယ်စားပြုတာမို့ getActiveSessionByToken
+ * အတွက်တော့ ဘယ် cookie ကလာလာ (Counter ဒါမှမဟုတ် Table) တူတူပဲ
+ * အလုပ်လုပ်တယ် — ဒီ page ကလည်း ခွဲစိတ်စရာမလိုဘူး.
  *
  * SECURITY NOTE: ဒီမှာ hasSession=false ဖြစ်ရင် Add/Submit button
  * hide လုပ်တာက UX ချည်းပဲ — တကယ့် access control က
@@ -25,7 +33,9 @@ export default async function MenuPage({
   const locationId = Number(locationIdParam);
 
   const cookieStore = await cookies();
-  const token = cookieStore.get(COUNTER_SESSION_COOKIE)?.value;
+  const token =
+    cookieStore.get(COUNTER_SESSION_COOKIE)?.value ??
+    cookieStore.get(TABLE_SESSION_COOKIE)?.value;
 
   // /menu ကို cookie ရှိသူ၊ မရှိသူ နှစ်ဦးစလုံး ရောက်ခွင့်ရှိတယ်
   // (middleware guard မလိုတော့ဘူး) — ဒါကြောင့် ဒီမှာကိုယ်တိုင်

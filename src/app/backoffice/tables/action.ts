@@ -22,44 +22,38 @@ import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
 
 /**
  * Builds the URL a customer's phone opens after scanning the table's
- * QR code. Query-string form (Rule: keep it simple over path params) —
- * apiOrederAppUrl already comes from env/config, so the order app's own
- * route only needs to read two (or three, for Counter) search params,
- * no route-shape coupling between this app and that one.
+ * QR code. Both Counter and regular tables now point at THIS app's
+ * own Route Handlers (/customer, /table) — each validates the key
+ * server-side, sets the session cookie, and redirects onward to the
+ * clean, key-free /menu URL before anything renders. Query-string
+ * form (Rule: keep it simple over path params).
  *
- * Regular tables: locationId + tableId only, at apiOrederAppUrl as
- * configured — this URL is permanent and never needs to change (see
- * design doc section 1).
+ * Regular tables: /table?locationId=&tableId=&key=. Unlike Counter,
+ * every phone that scans the SAME table's (valid-keyed) QR lands in
+ * the SAME shared session — see resolveTableQrScan/resolveTableSession.
+ * Still DOES need reprinting periodically like Counter, for the same
+ * reason: rotating the key (TableService.rotateAccessKey) is how a
+ * leaked/copied table QR gets invalidated, since the physical QR
+ * itself can't be un-scanned once shared.
  *
- * Counter: points at THIS app's own /customer Route Handler instead
- * (derived from apiOrederAppUrl's origin) — that handler validates the
- * key server-side and sets the session cookie before redirecting
- * onward, which only works if it runs in this codebase (it needs
- * direct Prisma/OrderSessionService access). ASSUMPTION: apiOrederAppUrl
- * points at this same deployment; if the customer-facing order app is
- * actually a separate deployment, this needs its own base URL instead.
- * Also carries the current counterAccessKey and, unlike a regular table,
- * DOES need reprinting periodically — rotating the key
- * (TableService.rotateCounterKey) is how a leaked/copied Counter QR
- * gets invalidated, since the physical QR itself can't be un-scanned
- * once shared.
+ * Counter: /customer?locationId=&tableId=&key=. Each phone that scans
+ * it gets its own individual session (cookie-identified), unlike
+ * Table's shared one.
  */
 function buildQrCodeContent(
   locationId: number,
   tableId: number,
-  counterAccessKey?: string | null,
+  isCounter: boolean,
+  accessKey: string,
 ) {
-  if (counterAccessKey) {
-    const origin = new URL(config.apiOrederAppUrl).origin;
-    return `${origin}/customer?locationId=${locationId}&tableId=${tableId}&key=${counterAccessKey}`;
-  }
-
-  return `${config.apiOrederAppUrl}?locationId=${locationId}&tableId=${tableId}`;
+  const origin = new URL(config.apiOrederAppUrl).origin;
+  const path = isCounter ? "customer" : "table";
+  return `${origin}/${path}?locationId=${locationId}&tableId=${tableId}&key=${accessKey}`;
 }
 
 /**
  * The one place "regenerate this table's QR image and swap it in"
- * happens — createTable, updateTable (new logo), and rotateCounterKey
+ * happens — createTable, updateTable (new logo), and rotateAccessKey
  * all funnel through this instead of each repeating build→render→
  * upload→set→cleanup themselves. New image is uploaded and the DB row
  * points at it *before* the old one is touched — if cleanup below
@@ -74,14 +68,23 @@ async function regenerateTableQrImage(
   table: {
     id: number;
     locationId: number;
+    isCounter: boolean | null;
     counterAccessKey: string | null;
     qrcodeImageUrl: string | null;
   },
   logoBuffer: Buffer | null,
 ) {
+  if (!table.counterAccessKey) {
+    throw new AppError(
+      "This table has no access key to build a QR code from.",
+      "VALIDATION",
+    );
+  }
+
   const qrContent = buildQrCodeContent(
     table.locationId,
     table.id,
+    table.isCounter === true,
     table.counterAccessKey,
   );
   const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
@@ -241,33 +244,35 @@ export async function deleteTableAction(tableId: number) {
 }
 
 /**
- * Staff-triggered: issues a new counterAccessKey and reprints the QR image
- * around it. Every previously-printed copy of the old QR — screenshot,
- * saved photo, or the physical sticker until it's swapped — stops
- * resolving immediately (OrderSessionService.resolveCounterQrScan will
- * no longer find a Table matching the old key). Use this if a Counter
- * QR is suspected to have been copied/shared beyond the physical
- * counter, or just on a periodic rotation schedule.
+ * Staff-triggered: issues a new counterAccessKey for ANY table
+ * (Counter or regular) and reprints the QR image around it. Every
+ * previously-printed copy of the old QR — screenshot, saved photo, or
+ * the physical sticker until it's swapped — stops resolving
+ * immediately (OrderSessionService.resolveCounterQrScan /
+ * resolveTableQrScan will no longer find a Table matching the old
+ * key). Use this if a table's QR is suspected to have been
+ * copied/shared beyond its physical spot, or just on a periodic
+ * rotation schedule.
  *
  * Note: regenerates the QR with the default icon, not any custom logo
  * that was uploaded originally — logos aren't persisted separately
  * from the rendered image, only baked into it at upload time. Staff
  * can re-upload the logo afterward via updateTableAction if needed.
  */
-const safeRotateCounterKey = toSafeResult(async (tableId: number) => {
+const safeRotateAccessKey = toSafeResult(async (tableId: number) => {
   const { companyId } = await getSessionContext();
   if (!companyId) {
     throw new AppError("You must be signed in.", "UNAUTHORIZED");
   }
 
-  const rotated = await TableService.rotateCounterKey(tableId);
+  const rotated = await TableService.rotateAccessKey(tableId);
   await regenerateTableQrImage(rotated, null);
 
   return { id: rotated.id };
 });
 
-export async function rotateCounterKeyAction(tableId: number) {
-  const result = await safeRotateCounterKey(tableId);
+export async function rotateAccessKeyAction(tableId: number) {
+  const result = await safeRotateAccessKey(tableId);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice/tables");
