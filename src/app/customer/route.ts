@@ -5,7 +5,7 @@ import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 /**
  * Design doc "Step 1: QR Scan & URL Validation". A GET here is the
  * ONLY thing the printed Counter QR points to (e.g.
- * /counter?locationId=1&tableId=5&key=awzy). It never renders
+ * /customer?locationId=1&tableId=5&key=awzy). It never renders
  * a page itself — it validates the key, sets a cookie, and redirects
  * to the clean customer-facing URL. This keeps the key out of
  * anything a customer could bookmark, screenshot, or leave in browser
@@ -52,11 +52,9 @@ export async function GET(request: NextRequest) {
   }
 
   // status === "active" — reused or freshly-started session. Set/renew
-  // the cookie and land on the clean, key-free ordering URL.
-  const orderMenuUrl = new URL("/counter/menu", request.url);
-  orderMenuUrl.searchParams.set("locationId", String(locationId));
-
-  const response = NextResponse.redirect(orderMenuUrl);
+  // the cookie and land on /menu, which now shows the order UI itself
+  // once it sees a valid session cookie (see menu/page.tsx).
+  const response = NextResponse.redirect(menuUrl);
   response.cookies.set(COUNTER_SESSION_COOKIE, result.session.token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

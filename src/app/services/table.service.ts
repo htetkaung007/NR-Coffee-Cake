@@ -9,7 +9,7 @@ import { NotFoundError, ValidationError } from "../lib/errors";
 const COUNTER_TABLE_NAME = "Counter QR code";
 
 /** Short, URL-safe, unguessable key embedded in the Counter QR's
- *  printed link (e.g. /counter?tableId=5&key=<this>). Regenerating it
+ *  printed link (e.g. /customer?tableId=5&key=<this>). Regenerating it
  *  invalidates every previously-printed copy of that QR at once —
  *  see TableService.rotateCounterKey. */
 function generateCounterKey() {

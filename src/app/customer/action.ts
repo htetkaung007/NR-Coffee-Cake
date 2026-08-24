@@ -59,7 +59,7 @@ export async function addToCartAction(menuId: number, quantity: number) {
   const result = await safeAddToCart({ menuId, quantity });
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath("/counter/menu");
+    revalidatePath("/menu");
   }
   return actionResult;
 }
@@ -73,7 +73,7 @@ export async function submitOrderAction() {
   const result = await safeSubmitOrder();
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath("/counter/menu");
+    revalidatePath("/menu");
   }
   return actionResult;
 }

@@ -12,8 +12,8 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  pollOrderStatusAction,
   addToCartAction,
+  pollOrderStatusAction,
   submitOrderAction,
 } from "../action";
 
@@ -32,6 +32,7 @@ interface CartLine {
 }
 
 interface CounterOrderClientProps {
+  hasSession: boolean;
   locationId: number;
   orderNumber: string;
   initialStatus: string;
@@ -42,6 +43,7 @@ interface CounterOrderClientProps {
 const POLL_INTERVAL_MS = 4000;
 
 export default function CounterOrderClient({
+  hasSession,
   locationId,
   orderNumber,
   initialStatus,
@@ -57,9 +59,10 @@ export default function CounterOrderClient({
   // Design doc "Step 3: Polling" — only poll once the order has been
   // submitted; while still CART there's nothing a cashier is looking
   // at yet, so nothing can change out from under this page except the
-  // customer's own actions.
+  // customer's own actions. hasSession=false ရင် order/cart
+  // လုံးဝမရှိသေးလို့ (view-only browsing) poll လုပ်စရာမလိုဘူး.
   useEffect(() => {
-    if (status !== "PENDING_APPROVAL") return;
+    if (!hasSession || status !== "PENDING_APPROVAL") return;
 
     const interval = setInterval(async () => {
       const result = await pollOrderStatusAction();
@@ -82,7 +85,7 @@ export default function CounterOrderClient({
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [status, locationId, router]);
+  }, [hasSession, status, locationId, router]);
 
   function handleAdd(menu: MenuOption) {
     setError(null);
@@ -116,7 +119,7 @@ export default function CounterOrderClient({
     });
   }
 
-  if (status === "PENDING_APPROVAL") {
+  if (hasSession && status === "PENDING_APPROVAL") {
     return (
       <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
@@ -136,7 +139,7 @@ export default function CounterOrderClient({
     );
   }
 
-  if (status === "PENDING" || status === "COOKING") {
+  if (hasSession && (status === "PENDING" || status === "COOKING")) {
     return (
       <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
@@ -150,18 +153,23 @@ export default function CounterOrderClient({
     );
   }
 
-  // CART — still building the order.
+  // CART — still building the order (session ရှိသူ), or view-only
+  // browsing (session မရှိသူ — hasSession=false).
   return (
     <Box sx={{ p: 3, maxWidth: 480, mx: "auto" }}>
-      <Typography variant="h6" sx={{ mb: 0.5 }}>
-        {orderNumber}
-      </Typography>
+      {hasSession && (
+        <Typography variant="h6" sx={{ mb: 0.5 }}>
+          {orderNumber}
+        </Typography>
+      )}
       <Typography
         variant="caption"
         color="text.secondary"
         sx={{ display: "block", mb: 2 }}
       >
-        Add items, then submit for counter approval.
+        {hasSession
+          ? "Add items, then submit for counter approval."
+          : "Browse the menu. Scan the table or counter QR to place an order."}
       </Typography>
 
       {error && (
@@ -189,19 +197,21 @@ export default function CounterOrderClient({
                 {menu.price.toLocaleString()} MMK
               </Typography>
             </Box>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={isPending}
-              onClick={() => handleAdd(menu)}
-            >
-              Add
-            </Button>
+            {hasSession && (
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={isPending}
+                onClick={() => handleAdd(menu)}
+              >
+                Add
+              </Button>
+            )}
           </Card>
         ))}
       </Stack>
 
-      {cart.length > 0 && (
+      {hasSession && cart.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
             Your order
@@ -225,14 +235,16 @@ export default function CounterOrderClient({
         </Box>
       )}
 
-      <Button
-        variant="contained"
-        fullWidth
-        disabled={isPending || cart.length === 0}
-        onClick={handleSubmit}
-      >
-        Submit Order
-      </Button>
+      {hasSession && (
+        <Button
+          variant="contained"
+          fullWidth
+          disabled={isPending || cart.length === 0}
+          onClick={handleSubmit}
+        >
+          Submit Order
+        </Button>
+      )}
     </Box>
   );
 }

@@ -31,7 +31,7 @@ import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
  * configured — this URL is permanent and never needs to change (see
  * design doc section 1).
  *
- * Counter: points at THIS app's own /counter Route Handler instead
+ * Counter: points at THIS app's own /customer Route Handler instead
  * (derived from apiOrederAppUrl's origin) — that handler validates the
  * key server-side and sets the session cookie before redirecting
  * onward, which only works if it runs in this codebase (it needs
@@ -51,7 +51,7 @@ function buildQrCodeContent(
 ) {
   if (counterAccessKey) {
     const origin = new URL(config.apiOrederAppUrl).origin;
-    return `${origin}/counter?locationId=${locationId}&tableId=${tableId}&key=${counterAccessKey}`;
+    return `${origin}/customer?locationId=${locationId}&tableId=${tableId}&key=${counterAccessKey}`;
   }
 
   return `${config.apiOrederAppUrl}?locationId=${locationId}&tableId=${tableId}`;
