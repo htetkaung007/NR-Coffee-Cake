@@ -18,12 +18,12 @@ model User {
   email              String             @unique
   name               String?
   password           String?
-  role               UserRole           @default(ADMIN)      // ← အသစ်
+  role               UserRole           @default(ADMIN)
   company            Company            @relation(fields: [companyId], references: [id])
   selectedLocations  SelectedLocation[]
   companyId          Int
-  location           Location?          @relation(fields: [locationId], references: [id])  // ← အသစ်
-  locationId         Int?                                    // ← အသစ်
+  location           Location?          @relation(fields: [locationId], references: [id])
+  locationId         Int?
   createdAt          DateTime           @default(now())
   updateTime         DateTime           @updatedAt
   isArchived         Boolean            @default(false)
@@ -42,19 +42,34 @@ model Company {
 }
 
 model Table {
-  id             Int       @id @default(autoincrement())
-  name           String
-  qrcodeImageUrl String?   @default("")
-  location       Location  @relation(fields: [locationId], references: [id])
-  locationId     Int
-  OrderSessions   OrderSession[]
-  orders         Order[]
+  id               Int            @id @default(autoincrement())
+  name             String
+  qrcodeImageUrl   String?        @default("")
+  location         Location       @relation(fields: [locationId], references: [id])
+  locationId       Int
+  OrderSessions    OrderSession[]
+  orders           Order[]
+  // The key printed in this Counter's QR URL right now (e.g.
+  // /counter?tableId=5&key=awzy) — checked once at scan time by
+  // OrderSessionService.resolveCounterQrScan. Regenerating it (via
+  // TableService.rotateCounterKey, which also reprints the QR image)
+  // invalidates every previously-printed copy of this QR at once.
+  // Only meaningful when isCounter is true; null for regular tables.
   counterAccessKey String?
-  activeSessionId Int?
-  isCounter      Boolean?
-  createdAt      DateTime  @default(now())
-  updateTime     DateTime  @updatedAt
-  isArchived     Boolean   @default(false)
+  // Which OrderSession this table's QR currently resolves to — null
+  // means the table is free for a brand-new order/group. Set the
+  // moment a scan starts a session (Table QR) and left pointing at a
+  // now-terminal (PAID/COMPLETED/CANCELLED) session until the next
+  // scan supersedes it; see OrderSessionService.resolveTableSession.
+  // Plain scalar, not a formal Prisma relation — OrderSessions above
+  // already covers the Table<->OrderSession link via tableId, and a
+  // second named relation here isn't needed since nothing navigates
+  // table.activeSession directly (the Service looks it up by id).
+  activeSessionId  Int?
+  isCounter        Boolean?
+  createdAt        DateTime       @default(now())
+  updateTime       DateTime       @updatedAt
+  isArchived       Boolean        @default(false)
 
   @@map("tables") // Avoids any issues with database reserved words
 }
@@ -74,6 +89,7 @@ model Location {
   isArchived                     Boolean                         @default(false)
   disableLocationMenus           DisableLocationMenus[]
   disableLocationMenuCategories DisableLocationMenuCategories[]
+  orderSessions                  OrderSession[]
 }
 
 model SelectedLocation {
@@ -200,19 +216,19 @@ model DisableLocationMenuCategories {
 }
 
 model Order {
-  id           Int           @id @default(autoincrement())
-  menuId       Int
-  quantity     Int
-  tableId      Int
+  id             Int           @id @default(autoincrement())
+  menuId         Int
+  quantity       Int
+  tableId        Int
   orderSession   OrderSession  @relation(fields: [orderSessionId], references: [id])
   orderSessionId Int
-  status       ORDERSTATUS   @default(CART)
-  menu         Menu          @relation(fields: [menuId], references: [id])
-  table        Table         @relation(fields: [tableId], references: [id])
-  createdAt    DateTime      @default(now())
-  updateTime   DateTime      @updatedAt
-  isArchived   Boolean       @default(false)
-  OrdersAddons OrdersAddon[]
+  status         ORDERSTATUS   @default(CART)
+  menu           Menu          @relation(fields: [menuId], references: [id])
+  table          Table         @relation(fields: [tableId], references: [id])
+  createdAt      DateTime      @default(now())
+  updateTime     DateTime      @updatedAt
+  isArchived     Boolean       @default(false)
+  OrdersAddons   OrdersAddon[]
 
   @@map("orders") // This fixes the Postgres "Order relation does not exist" issue by naming the table safely
 }
@@ -226,12 +242,37 @@ model OrdersAddon {
   addon    Addon @relation(fields: [addonId], references: [id])
 }
 
+/**
+ * One receipt/order-group — ties multiple Order (line-item) rows
+ * together into one customer-facing total, and is the one place
+ * PAID/CANCELLED/etc. status is decided for the whole order.
+ */
 model OrderSession {
   id          Int         @id @default(autoincrement())
+  // Opaque, unguessable identifier used as the cookie value for
+  // Counter QR sessions — deliberately NOT the same as `id` (a plain
+  // auto-increment int would let one customer's browser guess or
+  // tamper into another customer's cookie/session by changing a
+  // number). Table QR sessions don't need this since they're never
+  // identified by a client-held credential in the first place.
+  token       String      @unique @default(cuid())
+  // Customer-facing label, e.g. "#A042". Generation scheme (daily-reset
+  // vs global) still open — OrderSessionService.generateOrderNumber is
+  // the one place to change it later.
+  orderNumber String
+  location    Location    @relation(fields: [locationId], references: [id])
+  locationId  Int
   table       Table?      @relation(fields: [tableId], references: [id])
   tableId     Int?
   isCounter   Boolean     @default(false)
   status      ORDERSTATUS @default(CART)
+  // Set the moment a customer submits from CART -> PENDING_APPROVAL;
+  // cleared once a cashier accepts/rejects. OrderSessionService checks
+  // this lazily on read (getSessionStatus) and in a batch sweep
+  // (expireStaleApprovals) rather than needing a background job — any
+  // session still PENDING_APPROVAL past this timestamp is treated as
+  // timed out (5-minute window).
+  approvalExpiresAt DateTime?
   orders      Order[]
   createdAt   DateTime    @default(now())
   updateTime  DateTime    @updatedAt

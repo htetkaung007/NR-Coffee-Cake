@@ -24,22 +24,82 @@ import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
  * Builds the URL a customer's phone opens after scanning the table's
  * QR code. Query-string form (Rule: keep it simple over path params) —
  * apiOrederAppUrl already comes from env/config, so the order app's own
- * route only needs to read two search params, no route-shape coupling
- * between this app and that one.
+ * route only needs to read two (or three, for Counter) search params,
+ * no route-shape coupling between this app and that one.
  *
- * counterAccessKey is included only for Counter QR codes (see
- * Table.counterAccessKey's doc comment). It's checked once on first
- * scan and stripped from the URL right after, so it only ever appears
- * on the physical printed/saved QR code itself, never in a URL the
- * customer's browser keeps showing.
+ * Regular tables: locationId + tableId only, at apiOrederAppUrl as
+ * configured — this URL is permanent and never needs to change (see
+ * design doc section 1).
+ *
+ * Counter: points at THIS app's own /counter Route Handler instead
+ * (derived from apiOrederAppUrl's origin) — that handler validates the
+ * key server-side and sets the session cookie before redirecting
+ * onward, which only works if it runs in this codebase (it needs
+ * direct Prisma/OrderSessionService access). ASSUMPTION: apiOrederAppUrl
+ * points at this same deployment; if the customer-facing order app is
+ * actually a separate deployment, this needs its own base URL instead.
+ * Also carries the current counterAccessKey and, unlike a regular table,
+ * DOES need reprinting periodically — rotating the key
+ * (TableService.rotateCounterKey) is how a leaked/copied Counter QR
+ * gets invalidated, since the physical QR itself can't be un-scanned
+ * once shared.
  */
 function buildQrCodeContent(
   locationId: number,
   tableId: number,
   counterAccessKey?: string | null,
 ) {
-  const base = `${config.apiOrederAppUrl}?locationId=${locationId}&tableId=${tableId}`;
-  return counterAccessKey ? `${base}&key=${counterAccessKey}` : base;
+  if (counterAccessKey) {
+    const origin = new URL(config.apiOrederAppUrl).origin;
+    return `${origin}/counter?locationId=${locationId}&tableId=${tableId}&key=${counterAccessKey}`;
+  }
+
+  return `${config.apiOrederAppUrl}?locationId=${locationId}&tableId=${tableId}`;
+}
+
+/**
+ * The one place "regenerate this table's QR image and swap it in"
+ * happens — createTable, updateTable (new logo), and rotateCounterKey
+ * all funnel through this instead of each repeating build→render→
+ * upload→set→cleanup themselves. New image is uploaded and the DB row
+ * points at it *before* the old one is touched — if cleanup below
+ * fails, the table still has a working QR code, just an extra
+ * orphaned file in MinIO. Deleting the old image first would risk the
+ * opposite: a successful delete followed by a failed upload, leaving
+ * the table with no QR image at all. A brand-new table has no old
+ * image to clean up (qrcodeImageUrl defaults to ""), so this is safe
+ * to call from createTable too.
+ */
+async function regenerateTableQrImage(
+  table: {
+    id: number;
+    locationId: number;
+    counterAccessKey: string | null;
+    qrcodeImageUrl: string | null;
+  },
+  logoBuffer: Buffer | null,
+) {
+  const qrContent = buildQrCodeContent(
+    table.locationId,
+    table.id,
+    table.counterAccessKey,
+  );
+  const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
+
+  const storage = getFileStorageService();
+  const { url } = await storage.upload(
+    qrImageBuffer,
+    "image/png",
+    "table",
+    table.id,
+  );
+  await TableService.setTableQrCodeUrl(table.id, url);
+
+  if (table.qrcodeImageUrl) {
+    await storage.delete(table.qrcodeImageUrl);
+  }
+
+  return url;
 }
 
 const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
@@ -68,31 +128,13 @@ const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
     input.isCounter,
   );
 
-  // QR code is generated from locationId (stable) rather than the
-  // location's name (can be renamed later, which would silently break
-  // every already-printed QR code if the name were baked into it).
-  const qrContent = buildQrCodeContent(
-    selectedLocation.locationId,
-    table.id,
-    table.counterAccessKey,
-  );
-
   // input.logo is already validated by createTableSchema (size + mime
   // type) before this ever runs. Passing null when no logo was given
   // lets generateQrCodeWithLogo fall back to the default table icon.
   const logoBuffer = input.logo
     ? Buffer.from(await input.logo.arrayBuffer())
     : null;
-  const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
-
-  const storage = getFileStorageService();
-  const { url } = await storage.upload(
-    qrImageBuffer,
-    "image/png",
-    "table",
-    table.id,
-  );
-  await TableService.setTableQrCodeUrl(table.id, url);
+  await regenerateTableQrImage(table, logoBuffer);
 
   return { id: table.id };
 });
@@ -127,40 +169,15 @@ const safeUpdateTable = toSafeResult(
     await TableService.updateTableName(input.tableId, input.name);
 
     // Logo is optional on edit too — only touch the QR code at all if
-    // the user actually picked a new file this time.
+    // the user actually picked a new file this time. QR *content* (the
+    // URL) never changes on edit — it's built from locationId +
+    // tableId, neither of which this action can change. Only the
+    // *image* (logo baked into the PNG) needs regenerating, so
+    // already-printed QR codes with the old logo still scan to the
+    // same place; only their look goes stale until reprinted.
     if (input.logo) {
-      // QR *content* (the URL) never changes on edit — it's built from
-      // locationId + tableId, neither of which this action can change.
-      // Only the *image* (logo baked into the PNG) needs regenerating,
-      // so already-printed QR codes with the old logo still scan to
-      // the same place; only their look goes stale until reprinted.
-      const qrContent = buildQrCodeContent(
-        existingTable.locationId,
-        existingTable.id,
-        existingTable.counterAccessKey,
-      );
       const logoBuffer = Buffer.from(await input.logo.arrayBuffer());
-      const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
-
-      const storage = getFileStorageService();
-      const { url } = await storage.upload(
-        qrImageBuffer,
-        "image/png",
-        "table",
-        existingTable.id,
-      );
-
-      // New image is uploaded and the DB row points at it *before* we
-      // touch the old one — if cleanup below fails, the table still
-      // has a working QR code, just an extra orphaned file in MinIO.
-      // Deleting the old image first would risk the opposite: a
-      // successful delete followed by a failed upload, leaving the
-      // table with no QR image at all.
-      await TableService.setTableQrCodeUrl(existingTable.id, url);
-
-      if (existingTable.qrcodeImageUrl) {
-        await storage.delete(existingTable.qrcodeImageUrl);
-      }
+      await regenerateTableQrImage(existingTable, logoBuffer);
     }
 
     return { id: input.tableId };
@@ -218,6 +235,43 @@ export async function deleteTableAction(tableId: number) {
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice/tables");
+  }
+
+  return actionResult;
+}
+
+/**
+ * Staff-triggered: issues a new counterAccessKey and reprints the QR image
+ * around it. Every previously-printed copy of the old QR — screenshot,
+ * saved photo, or the physical sticker until it's swapped — stops
+ * resolving immediately (OrderSessionService.resolveCounterQrScan will
+ * no longer find a Table matching the old key). Use this if a Counter
+ * QR is suspected to have been copied/shared beyond the physical
+ * counter, or just on a periodic rotation schedule.
+ *
+ * Note: regenerates the QR with the default icon, not any custom logo
+ * that was uploaded originally — logos aren't persisted separately
+ * from the rendered image, only baked into it at upload time. Staff
+ * can re-upload the logo afterward via updateTableAction if needed.
+ */
+const safeRotateCounterKey = toSafeResult(async (tableId: number) => {
+  const { companyId } = await getSessionContext();
+  if (!companyId) {
+    throw new AppError("You must be signed in.", "UNAUTHORIZED");
+  }
+
+  const rotated = await TableService.rotateCounterKey(tableId);
+  await regenerateTableQrImage(rotated, null);
+
+  return { id: rotated.id };
+});
+
+export async function rotateCounterKeyAction(tableId: number) {
+  const result = await safeRotateCounterKey(tableId);
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath("/backoffice/tables");
+    revalidatePath(`/backoffice/tables/${tableId}`);
   }
 
   return actionResult;

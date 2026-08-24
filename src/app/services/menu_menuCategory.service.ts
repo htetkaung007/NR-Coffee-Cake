@@ -234,6 +234,19 @@ export class MenuService {
     });
   }
 
+  /** Customer-facing entry point (QR scan, view-only menu) — these
+   *  callers only ever have a locationId (from the URL), never a
+   *  companyId, so this looks the company up first rather than asking
+   *  every caller to do that join themselves. */
+  static async getMenusForLocation(locationId: number) {
+    const location = await prisma.location.findFirst({
+      where: { id: locationId, isArchived: false },
+    });
+    if (!location) return [];
+
+    return MenuService.getMenusWithDetails(location.companyId, locationId);
+  }
+
   static async getMenuById(menuId: number, locationId: number) {
     const menu = await prisma.menu.findFirst({
       where: { id: menuId, isArchived: false },

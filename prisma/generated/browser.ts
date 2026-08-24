@@ -99,6 +99,9 @@ export type Order = Prisma.OrderModel
 export type OrdersAddon = Prisma.OrdersAddonModel
 /**
  * Model OrderSession
- * 
+ * *
+ *  * One receipt/order-group — ties multiple Order (line-item) rows
+ *  * together into one customer-facing total, and is the one place
+ *  * PAID/CANCELLED/etc. status is decided for the whole order.
  */
 export type OrderSession = Prisma.OrderSessionModel

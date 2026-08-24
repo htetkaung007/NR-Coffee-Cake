@@ -14,7 +14,10 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model OrderSession
- * 
+ * *
+ *  * One receipt/order-group — ties multiple Order (line-item) rows
+ *  * together into one customer-facing total, and is the one place
+ *  * PAID/CANCELLED/etc. status is decided for the whole order.
  */
 export type OrderSessionModel = runtime.Types.Result.DefaultSelection<Prisma.$OrderSessionPayload>
 
@@ -28,19 +31,25 @@ export type AggregateOrderSession = {
 
 export type OrderSessionAvgAggregateOutputType = {
   id: number | null
+  locationId: number | null
   tableId: number | null
 }
 
 export type OrderSessionSumAggregateOutputType = {
   id: number | null
+  locationId: number | null
   tableId: number | null
 }
 
 export type OrderSessionMinAggregateOutputType = {
   id: number | null
+  token: string | null
+  orderNumber: string | null
+  locationId: number | null
   tableId: number | null
   isCounter: boolean | null
   status: $Enums.ORDERSTATUS | null
+  approvalExpiresAt: Date | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -48,9 +57,13 @@ export type OrderSessionMinAggregateOutputType = {
 
 export type OrderSessionMaxAggregateOutputType = {
   id: number | null
+  token: string | null
+  orderNumber: string | null
+  locationId: number | null
   tableId: number | null
   isCounter: boolean | null
   status: $Enums.ORDERSTATUS | null
+  approvalExpiresAt: Date | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -58,9 +71,13 @@ export type OrderSessionMaxAggregateOutputType = {
 
 export type OrderSessionCountAggregateOutputType = {
   id: number
+  token: number
+  orderNumber: number
+  locationId: number
   tableId: number
   isCounter: number
   status: number
+  approvalExpiresAt: number
   createdAt: number
   updateTime: number
   isArchived: number
@@ -70,19 +87,25 @@ export type OrderSessionCountAggregateOutputType = {
 
 export type OrderSessionAvgAggregateInputType = {
   id?: true
+  locationId?: true
   tableId?: true
 }
 
 export type OrderSessionSumAggregateInputType = {
   id?: true
+  locationId?: true
   tableId?: true
 }
 
 export type OrderSessionMinAggregateInputType = {
   id?: true
+  token?: true
+  orderNumber?: true
+  locationId?: true
   tableId?: true
   isCounter?: true
   status?: true
+  approvalExpiresAt?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -90,9 +113,13 @@ export type OrderSessionMinAggregateInputType = {
 
 export type OrderSessionMaxAggregateInputType = {
   id?: true
+  token?: true
+  orderNumber?: true
+  locationId?: true
   tableId?: true
   isCounter?: true
   status?: true
+  approvalExpiresAt?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -100,9 +127,13 @@ export type OrderSessionMaxAggregateInputType = {
 
 export type OrderSessionCountAggregateInputType = {
   id?: true
+  token?: true
+  orderNumber?: true
+  locationId?: true
   tableId?: true
   isCounter?: true
   status?: true
+  approvalExpiresAt?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -197,9 +228,13 @@ export type OrderSessionGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 
 export type OrderSessionGroupByOutputType = {
   id: number
+  token: string
+  orderNumber: string
+  locationId: number
   tableId: number | null
   isCounter: boolean
   status: $Enums.ORDERSTATUS
+  approvalExpiresAt: Date | null
   createdAt: Date
   updateTime: Date
   isArchived: boolean
@@ -230,48 +265,67 @@ export type OrderSessionWhereInput = {
   OR?: Prisma.OrderSessionWhereInput[]
   NOT?: Prisma.OrderSessionWhereInput | Prisma.OrderSessionWhereInput[]
   id?: Prisma.IntFilter<"OrderSession"> | number
+  token?: Prisma.StringFilter<"OrderSession"> | string
+  orderNumber?: Prisma.StringFilter<"OrderSession"> | string
+  locationId?: Prisma.IntFilter<"OrderSession"> | number
   tableId?: Prisma.IntNullableFilter<"OrderSession"> | number | null
   isCounter?: Prisma.BoolFilter<"OrderSession"> | boolean
   status?: Prisma.EnumORDERSTATUSFilter<"OrderSession"> | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.DateTimeNullableFilter<"OrderSession"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolFilter<"OrderSession"> | boolean
+  location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   table?: Prisma.XOR<Prisma.TableNullableScalarRelationFilter, Prisma.TableWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
 }
 
 export type OrderSessionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  token?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrderInput | Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  approvalExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  location?: Prisma.LocationOrderByWithRelationInput
   table?: Prisma.TableOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
 }
 
 export type OrderSessionWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  token?: string
   AND?: Prisma.OrderSessionWhereInput | Prisma.OrderSessionWhereInput[]
   OR?: Prisma.OrderSessionWhereInput[]
   NOT?: Prisma.OrderSessionWhereInput | Prisma.OrderSessionWhereInput[]
+  orderNumber?: Prisma.StringFilter<"OrderSession"> | string
+  locationId?: Prisma.IntFilter<"OrderSession"> | number
   tableId?: Prisma.IntNullableFilter<"OrderSession"> | number | null
   isCounter?: Prisma.BoolFilter<"OrderSession"> | boolean
   status?: Prisma.EnumORDERSTATUSFilter<"OrderSession"> | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.DateTimeNullableFilter<"OrderSession"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolFilter<"OrderSession"> | boolean
+  location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   table?: Prisma.XOR<Prisma.TableNullableScalarRelationFilter, Prisma.TableWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
-}, "id">
+}, "id" | "token">
 
 export type OrderSessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  token?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrderInput | Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  approvalExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -287,29 +341,41 @@ export type OrderSessionScalarWhereWithAggregatesInput = {
   OR?: Prisma.OrderSessionScalarWhereWithAggregatesInput[]
   NOT?: Prisma.OrderSessionScalarWhereWithAggregatesInput | Prisma.OrderSessionScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"OrderSession"> | number
+  token?: Prisma.StringWithAggregatesFilter<"OrderSession"> | string
+  orderNumber?: Prisma.StringWithAggregatesFilter<"OrderSession"> | string
+  locationId?: Prisma.IntWithAggregatesFilter<"OrderSession"> | number
   tableId?: Prisma.IntNullableWithAggregatesFilter<"OrderSession"> | number | null
   isCounter?: Prisma.BoolWithAggregatesFilter<"OrderSession"> | boolean
   status?: Prisma.EnumORDERSTATUSWithAggregatesFilter<"OrderSession"> | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"OrderSession"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"OrderSession"> | boolean
 }
 
 export type OrderSessionCreateInput = {
+  token?: string
+  orderNumber: string
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
 }
 
 export type OrderSessionUncheckedCreateInput = {
   id?: number
+  token?: string
+  orderNumber: string
+  locationId: number
   tableId?: number | null
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -317,20 +383,28 @@ export type OrderSessionUncheckedCreateInput = {
 }
 
 export type OrderSessionUpdateInput = {
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -339,17 +413,24 @@ export type OrderSessionUncheckedUpdateInput = {
 
 export type OrderSessionCreateManyInput = {
   id?: number
+  token?: string
+  orderNumber: string
+  locationId: number
   tableId?: number | null
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
 }
 
 export type OrderSessionUpdateManyMutationInput = {
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -357,9 +438,13 @@ export type OrderSessionUpdateManyMutationInput = {
 
 export type OrderSessionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -382,9 +467,13 @@ export type OrderSessionScalarRelationFilter = {
 
 export type OrderSessionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  token?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  approvalExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -392,14 +481,19 @@ export type OrderSessionCountOrderByAggregateInput = {
 
 export type OrderSessionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
 }
 
 export type OrderSessionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  token?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  approvalExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -407,9 +501,13 @@ export type OrderSessionMaxOrderByAggregateInput = {
 
 export type OrderSessionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  token?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  approvalExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -417,6 +515,7 @@ export type OrderSessionMinOrderByAggregateInput = {
 
 export type OrderSessionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
 }
 
@@ -462,6 +561,48 @@ export type OrderSessionUncheckedUpdateManyWithoutTableNestedInput = {
   deleteMany?: Prisma.OrderSessionScalarWhereInput | Prisma.OrderSessionScalarWhereInput[]
 }
 
+export type OrderSessionCreateNestedManyWithoutLocationInput = {
+  create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutLocationInput, Prisma.OrderSessionUncheckedCreateWithoutLocationInput> | Prisma.OrderSessionCreateWithoutLocationInput[] | Prisma.OrderSessionUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutLocationInput | Prisma.OrderSessionCreateOrConnectWithoutLocationInput[]
+  createMany?: Prisma.OrderSessionCreateManyLocationInputEnvelope
+  connect?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+}
+
+export type OrderSessionUncheckedCreateNestedManyWithoutLocationInput = {
+  create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutLocationInput, Prisma.OrderSessionUncheckedCreateWithoutLocationInput> | Prisma.OrderSessionCreateWithoutLocationInput[] | Prisma.OrderSessionUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutLocationInput | Prisma.OrderSessionCreateOrConnectWithoutLocationInput[]
+  createMany?: Prisma.OrderSessionCreateManyLocationInputEnvelope
+  connect?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+}
+
+export type OrderSessionUpdateManyWithoutLocationNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutLocationInput, Prisma.OrderSessionUncheckedCreateWithoutLocationInput> | Prisma.OrderSessionCreateWithoutLocationInput[] | Prisma.OrderSessionUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutLocationInput | Prisma.OrderSessionCreateOrConnectWithoutLocationInput[]
+  upsert?: Prisma.OrderSessionUpsertWithWhereUniqueWithoutLocationInput | Prisma.OrderSessionUpsertWithWhereUniqueWithoutLocationInput[]
+  createMany?: Prisma.OrderSessionCreateManyLocationInputEnvelope
+  set?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  disconnect?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  delete?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  connect?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  update?: Prisma.OrderSessionUpdateWithWhereUniqueWithoutLocationInput | Prisma.OrderSessionUpdateWithWhereUniqueWithoutLocationInput[]
+  updateMany?: Prisma.OrderSessionUpdateManyWithWhereWithoutLocationInput | Prisma.OrderSessionUpdateManyWithWhereWithoutLocationInput[]
+  deleteMany?: Prisma.OrderSessionScalarWhereInput | Prisma.OrderSessionScalarWhereInput[]
+}
+
+export type OrderSessionUncheckedUpdateManyWithoutLocationNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutLocationInput, Prisma.OrderSessionUncheckedCreateWithoutLocationInput> | Prisma.OrderSessionCreateWithoutLocationInput[] | Prisma.OrderSessionUncheckedCreateWithoutLocationInput[]
+  connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutLocationInput | Prisma.OrderSessionCreateOrConnectWithoutLocationInput[]
+  upsert?: Prisma.OrderSessionUpsertWithWhereUniqueWithoutLocationInput | Prisma.OrderSessionUpsertWithWhereUniqueWithoutLocationInput[]
+  createMany?: Prisma.OrderSessionCreateManyLocationInputEnvelope
+  set?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  disconnect?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  delete?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  connect?: Prisma.OrderSessionWhereUniqueInput | Prisma.OrderSessionWhereUniqueInput[]
+  update?: Prisma.OrderSessionUpdateWithWhereUniqueWithoutLocationInput | Prisma.OrderSessionUpdateWithWhereUniqueWithoutLocationInput[]
+  updateMany?: Prisma.OrderSessionUpdateManyWithWhereWithoutLocationInput | Prisma.OrderSessionUpdateManyWithWhereWithoutLocationInput[]
+  deleteMany?: Prisma.OrderSessionScalarWhereInput | Prisma.OrderSessionScalarWhereInput[]
+}
+
 export type OrderSessionCreateNestedOneWithoutOrdersInput = {
   create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutOrdersInput, Prisma.OrderSessionUncheckedCreateWithoutOrdersInput>
   connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutOrdersInput
@@ -477,18 +618,26 @@ export type OrderSessionUpdateOneRequiredWithoutOrdersNestedInput = {
 }
 
 export type OrderSessionCreateWithoutTableInput = {
+  token?: string
+  orderNumber: string
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
 }
 
 export type OrderSessionUncheckedCreateWithoutTableInput = {
   id?: number
+  token?: string
+  orderNumber: string
+  locationId: number
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -526,28 +675,93 @@ export type OrderSessionScalarWhereInput = {
   OR?: Prisma.OrderSessionScalarWhereInput[]
   NOT?: Prisma.OrderSessionScalarWhereInput | Prisma.OrderSessionScalarWhereInput[]
   id?: Prisma.IntFilter<"OrderSession"> | number
+  token?: Prisma.StringFilter<"OrderSession"> | string
+  orderNumber?: Prisma.StringFilter<"OrderSession"> | string
+  locationId?: Prisma.IntFilter<"OrderSession"> | number
   tableId?: Prisma.IntNullableFilter<"OrderSession"> | number | null
   isCounter?: Prisma.BoolFilter<"OrderSession"> | boolean
   status?: Prisma.EnumORDERSTATUSFilter<"OrderSession"> | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.DateTimeNullableFilter<"OrderSession"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolFilter<"OrderSession"> | boolean
 }
 
-export type OrderSessionCreateWithoutOrdersInput = {
+export type OrderSessionCreateWithoutLocationInput = {
+  token?: string
+  orderNumber: string
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
+  orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
+}
+
+export type OrderSessionUncheckedCreateWithoutLocationInput = {
+  id?: number
+  token?: string
+  orderNumber: string
+  tableId?: number | null
+  isCounter?: boolean
+  status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
+}
+
+export type OrderSessionCreateOrConnectWithoutLocationInput = {
+  where: Prisma.OrderSessionWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderSessionCreateWithoutLocationInput, Prisma.OrderSessionUncheckedCreateWithoutLocationInput>
+}
+
+export type OrderSessionCreateManyLocationInputEnvelope = {
+  data: Prisma.OrderSessionCreateManyLocationInput | Prisma.OrderSessionCreateManyLocationInput[]
+  skipDuplicates?: boolean
+}
+
+export type OrderSessionUpsertWithWhereUniqueWithoutLocationInput = {
+  where: Prisma.OrderSessionWhereUniqueInput
+  update: Prisma.XOR<Prisma.OrderSessionUpdateWithoutLocationInput, Prisma.OrderSessionUncheckedUpdateWithoutLocationInput>
+  create: Prisma.XOR<Prisma.OrderSessionCreateWithoutLocationInput, Prisma.OrderSessionUncheckedCreateWithoutLocationInput>
+}
+
+export type OrderSessionUpdateWithWhereUniqueWithoutLocationInput = {
+  where: Prisma.OrderSessionWhereUniqueInput
+  data: Prisma.XOR<Prisma.OrderSessionUpdateWithoutLocationInput, Prisma.OrderSessionUncheckedUpdateWithoutLocationInput>
+}
+
+export type OrderSessionUpdateManyWithWhereWithoutLocationInput = {
+  where: Prisma.OrderSessionScalarWhereInput
+  data: Prisma.XOR<Prisma.OrderSessionUpdateManyMutationInput, Prisma.OrderSessionUncheckedUpdateManyWithoutLocationInput>
+}
+
+export type OrderSessionCreateWithoutOrdersInput = {
+  token?: string
+  orderNumber: string
+  isCounter?: boolean
+  status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
 }
 
 export type OrderSessionUncheckedCreateWithoutOrdersInput = {
   id?: number
+  token?: string
+  orderNumber: string
+  locationId: number
   tableId?: number | null
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -570,19 +784,27 @@ export type OrderSessionUpdateToOneWithWhereWithoutOrdersInput = {
 }
 
 export type OrderSessionUpdateWithoutOrdersInput = {
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
 }
 
 export type OrderSessionUncheckedUpdateWithoutOrdersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -590,26 +812,38 @@ export type OrderSessionUncheckedUpdateWithoutOrdersInput = {
 
 export type OrderSessionCreateManyTableInput = {
   id?: number
+  token?: string
+  orderNumber: string
+  locationId: number
   isCounter?: boolean
   status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
 }
 
 export type OrderSessionUpdateWithoutTableInput = {
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateWithoutTableInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -618,8 +852,65 @@ export type OrderSessionUncheckedUpdateWithoutTableInput = {
 
 export type OrderSessionUncheckedUpdateManyWithoutTableInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+}
+
+export type OrderSessionCreateManyLocationInput = {
+  id?: number
+  token?: string
+  orderNumber: string
+  tableId?: number | null
+  isCounter?: boolean
+  status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+}
+
+export type OrderSessionUpdateWithoutLocationInput = {
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
+}
+
+export type OrderSessionUncheckedUpdateWithoutLocationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  tableId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
+}
+
+export type OrderSessionUncheckedUpdateManyWithoutLocationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  tableId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -658,12 +949,17 @@ export type OrderSessionCountOutputTypeCountOrdersArgs<ExtArgs extends runtime.T
 
 export type OrderSessionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  token?: boolean
+  orderNumber?: boolean
+  locationId?: boolean
   tableId?: boolean
   isCounter?: boolean
   status?: boolean
+  approvalExpiresAt?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
   orders?: boolean | Prisma.OrderSession$ordersArgs<ExtArgs>
   _count?: boolean | Prisma.OrderSessionCountOutputTypeDefaultArgs<ExtArgs>
@@ -671,60 +967,82 @@ export type OrderSessionSelect<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type OrderSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  token?: boolean
+  orderNumber?: boolean
+  locationId?: boolean
   tableId?: boolean
   isCounter?: boolean
   status?: boolean
+  approvalExpiresAt?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
 }, ExtArgs["result"]["orderSession"]>
 
 export type OrderSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  token?: boolean
+  orderNumber?: boolean
+  locationId?: boolean
   tableId?: boolean
   isCounter?: boolean
   status?: boolean
+  approvalExpiresAt?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
 }, ExtArgs["result"]["orderSession"]>
 
 export type OrderSessionSelectScalar = {
   id?: boolean
+  token?: boolean
+  orderNumber?: boolean
+  locationId?: boolean
   tableId?: boolean
   isCounter?: boolean
   status?: boolean
+  approvalExpiresAt?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type OrderSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tableId" | "isCounter" | "status" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["orderSession"]>
+export type OrderSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "token" | "orderNumber" | "locationId" | "tableId" | "isCounter" | "status" | "approvalExpiresAt" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["orderSession"]>
 export type OrderSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
   orders?: boolean | Prisma.OrderSession$ordersArgs<ExtArgs>
   _count?: boolean | Prisma.OrderSessionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
 }
 export type OrderSessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
 }
 
 export type $OrderSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "OrderSession"
   objects: {
+    location: Prisma.$LocationPayload<ExtArgs>
     table: Prisma.$TablePayload<ExtArgs> | null
     orders: Prisma.$OrderPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    token: string
+    orderNumber: string
+    locationId: number
     tableId: number | null
     isCounter: boolean
     status: $Enums.ORDERSTATUS
+    approvalExpiresAt: Date | null
     createdAt: Date
     updateTime: Date
     isArchived: boolean
@@ -1122,6 +1440,7 @@ readonly fields: OrderSessionFieldRefs;
  */
 export interface Prisma__OrderSessionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  location<T extends Prisma.LocationDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LocationDefaultArgs<ExtArgs>>): Prisma.Prisma__LocationClient<runtime.Types.Result.GetResult<Prisma.$LocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   table<T extends Prisma.OrderSession$tableArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderSession$tableArgs<ExtArgs>>): Prisma.Prisma__TableClient<runtime.Types.Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   orders<T extends Prisma.OrderSession$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderSession$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1154,9 +1473,13 @@ export interface Prisma__OrderSessionClient<T, Null = never, ExtArgs extends run
  */
 export interface OrderSessionFieldRefs {
   readonly id: Prisma.FieldRef<"OrderSession", 'Int'>
+  readonly token: Prisma.FieldRef<"OrderSession", 'String'>
+  readonly orderNumber: Prisma.FieldRef<"OrderSession", 'String'>
+  readonly locationId: Prisma.FieldRef<"OrderSession", 'Int'>
   readonly tableId: Prisma.FieldRef<"OrderSession", 'Int'>
   readonly isCounter: Prisma.FieldRef<"OrderSession", 'Boolean'>
   readonly status: Prisma.FieldRef<"OrderSession", 'ORDERSTATUS'>
+  readonly approvalExpiresAt: Prisma.FieldRef<"OrderSession", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"OrderSession", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"OrderSession", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"OrderSession", 'Boolean'>

@@ -295,9 +295,13 @@ export type OrdersAddonScalarFieldEnum = (typeof OrdersAddonScalarFieldEnum)[key
 
 export const OrderSessionScalarFieldEnum = {
   id: 'id',
+  token: 'token',
+  orderNumber: 'orderNumber',
+  locationId: 'locationId',
   tableId: 'tableId',
   isCounter: 'isCounter',
   status: 'status',
+  approvalExpiresAt: 'approvalExpiresAt',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived'
