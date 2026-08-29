@@ -4,18 +4,18 @@ import { revalidatePath } from "next/cache";
 import { toActionResult, toSafeResult } from "@/app/lib/actionHelper";
 import { AppError } from "@/app/lib/errors";
 import { getSessionContext } from "@/app/lib/session";
-import { OrderSessionService } from "@/app/services";
+import { OrderSessionApprovalService } from "@/app/services";
 
 const safeAccept = toSafeResult(async (sessionId: number) => {
   const { companyId } = await getSessionContext();
   if (!companyId) {
     throw new AppError("You must be signed in.", "UNAUTHORIZED");
   }
-  return OrderSessionService.acceptCounterSession(sessionId);
+  return OrderSessionApprovalService.acceptCounterSession(sessionId);
 });
 
 /** Cashier accepts a Counter QR session — see
- *  OrderSessionService.acceptCounterSession. The customer's page,
+ *  OrderSessionApprovalService.acceptCounterSession. The customer's page,
  *  polling in the background (CounterOrderClient), picks this up
  *  within a few seconds without any push mechanism — see the design
  *  discussion's polling-vs-websocket tradeoff for why that's enough
@@ -34,11 +34,11 @@ const safeReject = toSafeResult(async (sessionId: number) => {
   if (!companyId) {
     throw new AppError("You must be signed in.", "UNAUTHORIZED");
   }
-  return OrderSessionService.rejectCounterSession(sessionId);
+  return OrderSessionApprovalService.rejectCounterSession(sessionId);
 });
 
 /** Cashier rejects a Counter QR session — see
- *  OrderSessionService.rejectCounterSession. No cookie cleanup needed
+ *  OrderSessionApprovalService.rejectCounterSession. No cookie cleanup needed
  *  here: this is the cashier's browser, not the customer's — the
  *  customer's own next poll (pollOrderStatusAction) is what clears
  *  their cookie once it sees the resulting CANCELLED status. */
@@ -56,10 +56,10 @@ const safeMarkPaid = toSafeResult(async (sessionId: number) => {
   if (!companyId) {
     throw new AppError("You must be signed in.", "UNAUTHORIZED");
   }
-  return OrderSessionService.markSessionPaid(sessionId);
+  return OrderSessionApprovalService.markSessionPaid(sessionId);
 });
 
-/** Cashier marks a session PAID — see OrderSessionService.markSessionPaid
+/** Cashier marks a session PAID — see OrderSessionApprovalService.markSessionPaid
  *  for why the customer's cookie isn't (and can't be) touched from here;
  *  their next poll/page-load is what clears it. For a Table QR session
  *  this is also what frees the table for the next group on its very

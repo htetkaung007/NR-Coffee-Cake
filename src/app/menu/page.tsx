@@ -4,7 +4,7 @@ import {
   COUNTER_SESSION_COOKIE,
   TABLE_SESSION_COOKIE,
 } from "@/app/lib/orderSessionCookie";
-import CounterOrderClient from "@/app/customer/menu/counterorderclient";
+import CounterOrderClient from "../components/orderUI/counterorderclient";
 
 /**
  * View + Order UI ကို page တစ်ခုတည်းထဲ ပေါင်းထားတယ် — cookie session

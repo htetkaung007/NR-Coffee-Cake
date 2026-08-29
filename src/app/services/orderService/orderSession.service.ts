@@ -1,6 +1,6 @@
-import { prisma } from "../utils/prisma";
-import type { Prisma } from "../../../prisma/generated/client";
-import { NotFoundError, ValidationError } from "../lib/errors";
+import { NotFoundError, ValidationError } from "@/app/lib/errors";
+import { prisma } from "@/app/utils/prisma";
+import { Prisma } from "../../../../prisma/generated/browser";
 
 type Tx = Prisma.TransactionClient;
 
@@ -10,7 +10,7 @@ type Tx = Prisma.TransactionClient;
 // section 3). COMPLETED and CANCELLED are treated the same way here so
 // a cancelled or already-served session can't silently keep a table or
 // a customer's cookie locked forever.
-const TERMINAL_STATUSES = ["PAID", "COMPLETED", "CANCELLED"] as const;
+const TERMINAL_STATUSES = ["PAID", "COMPLETED", "CANCELLED"];
 
 /** The single definition of "is this session done" — exported so
  *  Controllers (page.tsx / action.ts) ask the Service instead of each
@@ -55,9 +55,12 @@ function generateOrderNumber(sessionId: number) {
 
 /**
  * OrderSession domain — the layer that groups Order (line-item) rows
- * into one customer-facing receipt, resolves which session a QR scan
- * or a returning cookie should land in, and runs the cashier-approval
- * workflow for Counter orders.
+ * into one customer-facing receipt, and resolves which session a QR
+ * scan or a returning cookie should land in. The cashier-approval /
+ * kitchen-facing half (accept, reject, mark paid, expire stale
+ * approvals, list for the Order List page) lives in the sibling
+ * OrderSessionApprovalService — see that file's class comment for why
+ * it's split out.
  *
  * Table QR and Counter QR are still two distinct scan entry points
  * (resolveTableQrScan / resolveCounterQrScan) — even though every
@@ -274,30 +277,16 @@ export class OrderSessionService {
    *  is still CART (i.e. before "Submit Order"); refuses once it's
    *  PENDING_APPROVAL or beyond, since editing an order the cashier
    *  is already looking at would be confusing at best. */
-  static async addItemToCart(
-    sessionId: number,
-    tableId: number,
-    menuId: number,
-    quantity: number,
-  ) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
-    if (session.status !== "CART") {
-      throw new ValidationError("This order can no longer be edited.");
-    }
-
-    return prisma.order.create({
-      data: {
-        menuId,
-        quantity,
-        tableId,
-        orderSessionId: sessionId,
-        status: "CART",
-      },
-    });
-  }
+  /** addonIds is the FLAT list of every addon the customer picked
+   *  across all of this menu's addon categories (required + optional
+   *  combined) — the client doesn't need to group them by category to
+   *  call this, but the SERVER re-derives the grouping from
+   *  MenuAddonCategories to validate required-category selection.
+   *  This validation is a security boundary, not just UX polish: the
+   *  client-side "Add to Cart" button being disabled until required
+   *  categories are picked can be bypassed by anyone calling this
+   *  action directly, so the real enforcement has to live here (same
+   *  reasoning as requireSessionFromCookie in customer/menu/action.ts). */
 
   static async startNewCounterSession(
     locationId: number,
@@ -318,6 +307,32 @@ export class OrderSessionService {
         where: { id: session.id },
         data: { orderNumber: generateOrderNumber(session.id) },
       });
+    });
+  }
+
+  /** Staff Order-taking page equivalent of submitOrderForApproval —
+   *  CART -> PENDING directly, skipping PENDING_APPROVAL entirely.
+   *  There's no cashier to approve a manager's own order against
+   *  (they ARE the person who'd be approving it), so the 2-minute
+   *  approval window would just be a pointless wait before the
+   *  kitchen sees it. Everything downstream (kitchen sees it in
+   *  PENDING, gets marked COOKING, eventually markSessionPaid) is
+   *  unchanged and identical to a normal accepted order — this only
+   *  removes the approval STEP, not any of the states after it. */
+  static async submitStaffOrder(sessionId: number) {
+    const session = await prisma.orderSession.findFirst({
+      where: { id: sessionId, isArchived: false },
+    });
+    if (!session) throw new NotFoundError("OrderSession", sessionId);
+    if (session.status !== "CART") {
+      throw new ValidationError(
+        "This order has already been submitted or is no longer editable.",
+      );
+    }
+
+    return prisma.orderSession.update({
+      where: { id: sessionId },
+      data: { status: "PENDING" },
     });
   }
 
@@ -374,65 +389,6 @@ export class OrderSessionService {
     return session;
   }
 
-  /** Cashier taps Accept on the Backoffice dashboard —
-   *  PENDING_APPROVAL -> PENDING (kitchen can start). */
-  static async acceptCounterSession(sessionId: number) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
-    if (session.status !== "PENDING_APPROVAL") {
-      throw new ValidationError("This order is not awaiting approval.");
-    }
-
-    return prisma.orderSession.update({
-      where: { id: sessionId },
-      data: { status: "PENDING", approvalExpiresAt: null },
-    });
-  }
-
-  /** Cashier taps Reject — PENDING_APPROVAL -> CANCELLED. Same
-   *  terminal outcome as a timeout (getSessionStatus), just
-   *  cashier-initiated instead of time-initiated. */
-  static async rejectCounterSession(sessionId: number) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
-    if (session.status !== "PENDING_APPROVAL") {
-      throw new ValidationError("This order is not awaiting approval.");
-    }
-
-    return prisma.orderSession.update({
-      where: { id: sessionId },
-      data: { status: "CANCELLED", approvalExpiresAt: null },
-    });
-  }
-
-  /** Marks a session PAID — the single trigger that (a) frees its
-   *  table for the next group, since resolveTableSession treats any
-   *  terminal session as "start fresh" on the very next scan, with no
-   *  extra write needed here beyond the status change, and (b) makes
-   *  the customer's *next* request (page load or poll) the point where
-   *  their cookie gets cleared and they're shown read-only browsing
-   *  (design doc sections 3 and 6). This Service never touches cookies
-   *  itself — cookies are a Route Handler/Server Action concern — the
-   *  cashier's browser calling this is a *different* browser from the
-   *  customer's, so there is no cookie to clear here even in
-   *  principle; the customer-facing endpoint is what reacts to PAID
-   *  the next time that browser is heard from. */
-  static async markSessionPaid(sessionId: number) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
-
-    return prisma.orderSession.update({
-      where: { id: sessionId },
-      data: { status: "PAID" },
-    });
-  }
-
   /** For the Staff Order-taking page (design doc section 7) — starts a
    *  session with no scan/cookie/key involved at all, since a
    *  staff-placed order has no restriction. Reuses
@@ -446,59 +402,5 @@ export class OrderSessionService {
     return table.isCounter
       ? OrderSessionService.startNewCounterSession(table.locationId, table.id)
       : OrderSessionService.startNewTableSession(table);
-  }
-
-  /** Batch version of the lazy-expiry check in getSessionStatus — run
-   *  once at the top of the Backoffice Order List page load so a
-   *  timed-out PENDING_APPROVAL session doesn't still show up asking
-   *  for a decision the customer's own polling has already resolved
-   *  (CANCELLED) on their end. */
-  static async expireStaleApprovals(locationId: number) {
-    return prisma.orderSession.updateMany({
-      where: {
-        locationId,
-        status: "PENDING_APPROVAL",
-        approvalExpiresAt: { lt: new Date() },
-        isArchived: false,
-      },
-      data: { status: "CANCELLED", approvalExpiresAt: null },
-    });
-  }
-
-  /** For the Backoffice Order List page (design doc section 5) — every
-   *  active/recent session at a location, with its line items and the
-   *  display label already resolved (table name vs generated order
-   *  number, per the doc's table). */
-  static async getSessionsForLocation(locationId: number) {
-    const sessions = await prisma.orderSession.findMany({
-      where: { locationId, isArchived: false },
-      orderBy: { id: "desc" },
-      include: {
-        table: true,
-        orders: {
-          where: { isArchived: false },
-          include: { menu: true, OrdersAddons: { include: { addon: true } } },
-        },
-      },
-    });
-
-    return sessions.map((session) => {
-      const total = session.orders.reduce((sum, order) => {
-        const addonsTotal = order.OrdersAddons.reduce(
-          (addonSum, link) => addonSum + link.addon.price,
-          0,
-        );
-        return sum + order.menu.price * order.quantity + addonsTotal;
-      }, 0);
-
-      return {
-        ...session,
-        label:
-          session.table && !session.isCounter
-            ? session.table.name
-            : session.orderNumber,
-        total,
-      };
-    });
   }
 }

@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { AppService, OrderSessionService } from "@/app/services";
+import { AppService, OrderSessionApprovalService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import OrderListView from "./orderListView";
 
@@ -27,9 +27,11 @@ export default async function OrderPage() {
   }
 
   // Reflect any timed-out approvals before rendering — see
-  // OrderSessionService.expireStaleApprovals.
-  await OrderSessionService.expireStaleApprovals(selectedLocation.locationId);
-  const sessions = await OrderSessionService.getSessionsForLocation(
+  // OrderSessionApprovalService.expireStaleApprovals.
+  await OrderSessionApprovalService.expireStaleApprovals(
+    selectedLocation.locationId,
+  );
+  const sessions = await OrderSessionApprovalService.getSessionsForLocation(
     selectedLocation.locationId,
   );
 

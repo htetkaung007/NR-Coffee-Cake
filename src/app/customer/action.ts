@@ -2,14 +2,18 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { OrderSessionService } from "@/app/services";
-import { isSessionTerminal } from "@/app/services/orderSession.service";
+import {
+  OrderSessionService,
+  MenuService,
+  OrderSessionCartService,
+} from "@/app/services";
 import { AppError } from "@/app/lib/errors";
 import { toActionResult, toSafeResult } from "@/app/lib/actionHelper";
 import {
   COUNTER_SESSION_COOKIE,
   TABLE_SESSION_COOKIE,
 } from "@/app/lib/orderSessionCookie";
+import { isSessionTerminal } from "../services/orderService/orderSession.service";
 
 /** The one place this file reads the cookie jar — every action below
  *  goes through this instead of repeating `cookies()` + `.get(...)`
@@ -60,24 +64,55 @@ async function requireSessionFromCookie() {
 }
 
 const safeAddToCart = toSafeResult(
-  async (input: { menuId: number; quantity: number }) => {
+  async (input: { menuId: number; quantity: number; addonIds: number[] }) => {
     const session = await requireSessionFromCookie();
-    return OrderSessionService.addItemToCart(
+    return OrderSessionCartService.addItemToCart(
       session.id,
       session.tableId as number,
       input.menuId,
       input.quantity,
+      input.addonIds,
     );
   },
 );
 
-export async function addToCartAction(menuId: number, quantity: number) {
-  const result = await safeAddToCart({ menuId, quantity });
+export async function addToCartAction(
+  menuId: number,
+  quantity: number,
+  addonIds: number[] = [],
+) {
+  const result = await safeAddToCart({ menuId, quantity, addonIds });
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/menu");
   }
   return actionResult;
+}
+
+const safeRemoveFromCart = toSafeResult(async (orderId: number) => {
+  const session = await requireSessionFromCookie();
+  return OrderSessionCartService.removeItemFromCart(session.id, orderId);
+});
+
+export async function removeFromCartAction(orderId: number) {
+  const result = await safeRemoveFromCart(orderId);
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath("/menu");
+  }
+  return actionResult;
+}
+
+/** No session required — view-only browsing (hasSession=false) can
+ *  open a menu's detail the same as an active order can, so this
+ *  doesn't go through requireSessionFromCookie. locationId is passed
+ *  explicitly (not read from a session) for that same reason: there
+ *  may be no session to read it from. Returns null (not a thrown
+ *  error) for a menu that doesn't exist or belongs to a different
+ *  location's stock — the modal treats that as "nothing to show"
+ *  rather than an error state. */
+export async function getMenuDetailAction(menuId: number, locationId: number) {
+  return MenuService.getMenuDetailForCustomer(menuId, locationId);
 }
 
 const safeSubmitOrder = toSafeResult(async () => {
@@ -97,7 +132,7 @@ export async function submitOrderAction() {
 /**
  * Design doc "Step 3: Polling". Called every few seconds from a client
  * component. Deliberately does the PAID-clears-cookie write here (see
- * OrderSessionService.markSessionPaid's comment) — this IS the
+ * OrderSessionApprovalService.markSessionPaid's comment) — this IS the
  * customer's own browser making the request, so a Server Action here
  * can set the response cookie, unlike the cashier's Approve/Reject/Paid
  * actions in the Backoffice, which run in a different browser entirely.
@@ -141,7 +176,7 @@ export async function pollOrderStatusAction() {
   // certainly still current.
   return {
     status: refreshed.status,
-    cart: session.orders.map((order) => ({
+    cart: session.orders.map((order: (typeof session.orders)[0]) => ({
       id: order.id,
       menuName: order.menu.name,
       quantity: order.quantity,

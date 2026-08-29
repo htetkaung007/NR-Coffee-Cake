@@ -18,6 +18,7 @@ import FastfoodIcon from "@mui/icons-material/Fastfood";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 export const SIDEBAR_WIDTH = 260;
@@ -26,6 +27,11 @@ const TOPBAR_HEIGHT_DESKTOP = 64;
 
 const navItems = [
   { label: "Orders", href: "/backoffice/order", icon: ReceiptLongIcon },
+  {
+    label: "New Order",
+    href: "/backoffice/order/new",
+    icon: AddShoppingCartIcon,
+  },
   {
     label: "Menu Categories",
     href: "/backoffice/menu_categories",

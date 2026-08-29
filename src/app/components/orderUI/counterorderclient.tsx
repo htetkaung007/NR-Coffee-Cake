@@ -7,15 +7,21 @@ import {
   Box,
   Button,
   Card,
+  CardActionArea,
   Chip,
+  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+
+import MenuDetailDialog from "./MenuDetailDialog";
 import {
   pollOrderStatusAction,
   addToCartAction,
   submitOrderAction,
-} from "../action";
+  removeFromCartAction,
+} from "@/app/customer/action";
 
 interface MenuOption {
   id: number;
@@ -55,6 +61,7 @@ export default function CounterOrderClient({
   const [cart, setCart] = useState(initialCart);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [detailMenuId, setDetailMenuId] = useState<number | null>(null);
 
   // Design doc "Step 3: Polling" — originally only polled once
   // submitted (PENDING_APPROVAL), since a lone customer's own cart
@@ -91,23 +98,41 @@ export default function CounterOrderClient({
     return () => clearInterval(interval);
   }, [hasSession, status, locationId, router]);
 
-  function handleAdd(menu: MenuOption) {
+  // Every Add always goes through MenuDetailDialog now, even for a
+  // menu with no addon categories at all — that keeps a single code
+  // path for "attempt to add to cart" instead of a quick-add button
+  // that would need its own copy of the required-addon error handling
+  // MenuDetailDialog already has. The dialog itself just skips
+  // rendering any category UI when addonCategories is empty.
+  async function addToCart(
+    menu: { id: number; name: string; price: number },
+    addonIds: number[],
+  ): Promise<string | null> {
+    const result = await addToCartAction(menu.id, 1, addonIds);
+    if (!result.success) {
+      return result.error.message;
+    }
+    setCart((current) => [
+      ...current,
+      {
+        id: result.data.id,
+        menuName: menu.name,
+        quantity: 1,
+        price: menu.price,
+      },
+    ]);
+    return null;
+  }
+
+  function handleRemove(orderId: number) {
     setError(null);
     startTransition(async () => {
-      const result = await addToCartAction(menu.id, 1);
+      const result = await removeFromCartAction(orderId);
       if (!result.success) {
         setError(result.error.message);
         return;
       }
-      setCart((current) => [
-        ...current,
-        {
-          id: result.data.id,
-          menuName: menu.name,
-          quantity: 1,
-          price: menu.price,
-        },
-      ]);
+      setCart((current) => current.filter((line) => line.id !== orderId));
     });
   }
 
@@ -184,33 +209,29 @@ export default function CounterOrderClient({
 
       <Stack spacing={1.5} sx={{ mb: 3 }}>
         {menus.map((menu) => (
-          <Card
-            key={menu.id}
-            variant="outlined"
-            sx={{
-              p: 1.5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography variant="body1">{menu.name}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {menu.price.toLocaleString()} MMK
-              </Typography>
-            </Box>
-            {hasSession && (
-              <Button
-                size="small"
-                variant="outlined"
-                disabled={isPending}
-                onClick={() => handleAdd(menu)}
-              >
-                Add
-              </Button>
-            )}
+          <Card key={menu.id} variant="outlined">
+            <CardActionArea
+              onClick={() => setDetailMenuId(menu.id)}
+              sx={{
+                p: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+              }}
+            >
+              <Box>
+                <Typography variant="body1">{menu.name}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {menu.price.toLocaleString()} MMK
+                </Typography>
+              </Box>
+              {hasSession && (
+                <Button size="small" variant="outlined" component="span">
+                  Add
+                </Button>
+              )}
+            </CardActionArea>
           </Card>
         ))}
       </Stack>
@@ -225,14 +246,28 @@ export default function CounterOrderClient({
               <Stack
                 key={line.id}
                 direction="row"
-                sx={{ justifyContent: "space-between" }}
+                sx={{ justifyContent: "space-between", alignItems: "center" }}
               >
                 <Typography variant="body2">
                   {line.quantity} × {line.menuName}
                 </Typography>
-                <Typography variant="body2">
-                  {(line.price * line.quantity).toLocaleString()} MMK
-                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  sx={{ alignItems: "center" }}
+                >
+                  <Typography variant="body2">
+                    {(line.price * line.quantity).toLocaleString()} MMK
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    aria-label="Remove item"
+                    disabled={isPending}
+                    onClick={() => handleRemove(line.id)}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
               </Stack>
             ))}
           </Stack>
@@ -249,6 +284,19 @@ export default function CounterOrderClient({
           Submit Order
         </Button>
       )}
+
+      <MenuDetailDialog
+        open={detailMenuId !== null}
+        menuId={detailMenuId}
+        locationId={locationId}
+        canOrder={hasSession}
+        onClose={() => setDetailMenuId(null)}
+        onAddToCart={async (menuId, addonIds) => {
+          const menu = menus.find((item) => item.id === menuId);
+          if (!menu) return "This item is no longer available.";
+          return addToCart(menu, addonIds);
+        }}
+      />
     </Box>
   );
 }

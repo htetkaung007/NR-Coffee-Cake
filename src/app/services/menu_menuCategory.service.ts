@@ -247,6 +247,59 @@ export class MenuService {
     return MenuService.getMenusWithDetails(location.companyId, locationId);
   }
 
+  /** Customer-facing detail view — full nested addon data (category
+   *  name, isRequired, each addon's name/price/isAvailable), unlike
+   *  getMenuById below which only returns bare addonCategoryIds (that
+   *  one feeds the backoffice edit form's checkbox picker, which
+   *  already has the full AddonCategories list loaded separately).
+   *  Archived addons are filtered out; an unavailable-but-not-archived
+   *  addon is still shown (greyed out client-side) so a customer can
+   *  see it exists and isn't just missing. */
+  static async getMenuDetailForCustomer(menuId: number, locationId: number) {
+    const menu = await prisma.menu.findFirst({
+      where: { id: menuId, isArchived: false },
+    });
+    if (!menu) return null;
+
+    const stock = await prisma.menuStock.findFirst({
+      where: { menuId, locationId },
+    });
+
+    const addonCategoryLinks = await prisma.menuAddonCategories.findMany({
+      where: { menuId, isArchived: false },
+      include: {
+        addonCategory: {
+          include: {
+            addons: { where: { isArchived: false }, orderBy: { id: "asc" } },
+          },
+        },
+      },
+    });
+
+    return {
+      id: menu.id,
+      name: menu.name,
+      price: menu.price,
+      description: menu.description || "",
+      imageUrl: menu.assetUrl || null,
+      quantity: stock?.quantity ?? 0,
+      isAvailable: !(stock?.isManuallyDisabled ?? false),
+      addonCategories: addonCategoryLinks
+        .filter((link) => !link.addonCategory.isArchived)
+        .map((link) => ({
+          id: link.addonCategory.id,
+          name: link.addonCategory.name,
+          isRequired: link.addonCategory.isRequired,
+          addons: link.addonCategory.addons.map((addon) => ({
+            id: addon.id,
+            name: addon.name,
+            price: addon.price,
+            isAvailable: addon.isAvailable,
+          })),
+        })),
+    };
+  }
+
   static async getMenuById(menuId: number, locationId: number) {
     const menu = await prisma.menu.findFirst({
       where: { id: menuId, isArchived: false },
