@@ -16,6 +16,9 @@ import { createTheme, type PaletteMode } from "@mui/material/styles";
 // hardcode ထားရတာက createTheme() ထဲက object literal အတွင်းမှာ
 // `theme.breakpoints` ကို self-reference လုပ်လို့ မရလို့ပါ (circular).
 const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
+const FONT_BODY = "var(--font-english), var(--font-myanmar), sans-serif";
+
+const FONT_DISPLAY = "var(--font-display), var(--font-myanmar-serif), serif";
 
 export function getTheme(mode: PaletteMode) {
   const isLight = mode === "light";
@@ -45,33 +48,125 @@ export function getTheme(mode: PaletteMode) {
     },
     typography: {
       // Section headings — e.g. "Menu Item Details" form title
+      fontFamily: FONT_BODY,
+
+      h1: {
+        fontFamily: FONT_DISPLAY,
+        fontWeight: 800,
+        fontSize: "2rem",
+        lineHeight: 1.3,
+
+        [`@media (min-width:${BREAKPOINTS.md}px)`]: {
+          fontSize: "2.5rem",
+        },
+      },
+
+      h2: {
+        fontFamily: FONT_DISPLAY,
+        fontWeight: 800,
+        fontSize: "1.6rem",
+        lineHeight: 1.35,
+
+        [`@media (min-width:${BREAKPOINTS.md}px)`]: {
+          fontSize: "2rem",
+        },
+      },
+
+      // Section headings
       h6: {
+        fontFamily: FONT_DISPLAY,
         fontWeight: 800,
         fontSize: "1.1rem",
-        [`@media (min-width:${BREAKPOINTS.md}px)`]: { fontSize: "1.25rem" },
+        lineHeight: 1.4,
+
+        [`@media (min-width:${BREAKPOINTS.md}px)`]: {
+          fontSize: "1.25rem",
+        },
       },
-      // Card titles, price text — the main readable content size
+
+      // Card title / main readable text
       body1: {
-        fontWeight: 790,
-        fontSize: "1rem",
-        [`@media (min-width:${BREAKPOINTS.sm}px)`]: { fontSize: "0.9rem" },
-        [`@media (min-width:${BREAKPOINTS.md}px)`]: { fontSize: "0.95rem" },
+        fontFamily: FONT_BODY,
+        fontWeight: 600,
+        fontSize: "0.9rem",
+        lineHeight: 1.75,
+
+        [`@media (min-width:${BREAKPOINTS.sm}px)`]: {
+          fontSize: "0.95rem",
+        },
+
+        [`@media (min-width:${BREAKPOINTS.md}px)`]: {
+          fontSize: "1rem",
+        },
       },
-      // Field labels, form helper text
+
+      // Field labels / helper text
       body2: {
-        fontWeight: 700,
+        fontFamily: FONT_BODY,
+        fontWeight: 600,
         fontSize: "0.75rem",
-        [`@media (min-width:${BREAKPOINTS.sm}px)`]: { fontSize: "0.85rem" },
+        lineHeight: 1.7,
+
+        [`@media (min-width:${BREAKPOINTS.sm}px)`]: {
+          fontSize: "0.85rem",
+        },
       },
-      // Category chips, small badges
+
+      // Chips / small labels
       caption: {
+        fontFamily: FONT_BODY,
         fontWeight: 700,
         fontSize: "0.6rem",
-        [`@media (min-width:${BREAKPOINTS.sm}px)`]: { fontSize: "0.65rem" },
+        lineHeight: 1.5,
+
+        [`@media (min-width:${BREAKPOINTS.sm}px)`]: {
+          fontSize: "0.65rem",
+        },
       },
+
       button: {
+        fontFamily: FONT_BODY,
         textTransform: "none",
         fontWeight: 700,
+        fontSize: "0.85rem",
+
+        [`@media (min-width:${BREAKPOINTS.sm}px)`]: {
+          fontSize: "0.9rem",
+        },
+      },
+    },
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            fontFamily: FONT_BODY,
+            textTransform: "none",
+            fontWeight: 700,
+            borderRadius: 8,
+          },
+        },
+      },
+
+      MuiTextField: {
+        defaultProps: {
+          fullWidth: true,
+        },
+      },
+
+      MuiInputBase: {
+        styleOverrides: {
+          root: {
+            fontFamily: FONT_BODY,
+          },
+        },
+      },
+
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            fontFamily: FONT_BODY,
+          },
+        },
       },
     },
   });

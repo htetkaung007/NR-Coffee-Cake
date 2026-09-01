@@ -64,7 +64,7 @@ export default function OrderMenuView({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <OrderTopBar label={sessionLabel} isReadOnly={isReadOnly} />
+      <OrderTopBar shopName={sessionLabel} />
 
       <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
         {!canOrder && !isPendingApproval && !isReadOnly && (

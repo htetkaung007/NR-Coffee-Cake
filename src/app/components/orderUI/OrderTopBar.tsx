@@ -1,56 +1,60 @@
 "use client";
 
-import { AppBar, Toolbar, Box, Typography, Chip } from "@mui/material";
+import { AppBar, Toolbar, Badge, IconButton, Typography } from "@mui/material";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 
 interface OrderTopBarProps {
-  /** "Table 5" for a Table QR session, "#A042" for a Counter/Staff
-   *  session, or null for plain online browsing (no session at all). */
-  label: string | null;
-  isReadOnly: boolean;
+  /** Company.name (the brand's shop name), not Location.name (a branch
+   *  label like "Downtown") — see LocationService.getShopNameForLocation.
+   *  Falls back to a generic label when a location couldn't be resolved
+   *  (e.g. a bad/expired locationId). */
+  shopName: string | null;
+  /** Number of distinct lines in the cart — drives the small red badge
+   *  on the cart icon, same as the mock's red dot. Omitted (or 0) hides
+   *  the badge but the icon itself always shows. */
+  cartItemCount?: number;
+  /** Optional — lets the page decide what tapping the cart icon does
+   *  (e.g. scroll down to the cart summary). No-op if omitted. */
+  onCartClick?: () => void;
 }
 
 /**
- * Distinct from Backoffice's AppBar on purpose — this is a
- * customer-facing screen, not a staff tool, so it uses its own color
- * (primary-tinted, not the neutral Backoffice bar) to make the two
- * apps feel unmistakably different even if a staff member has both
- * open in adjacent tabs.
+ * Simple customer-facing header — Logo + shop name on the left, cart
+ * icon on the right, per the design mock. Plain background.paper (not
+ * primary-tinted) to match the mock's white bar, distinct from
+ * Backoffice's own AppBar.
  */
-export default function OrderTopBar({ label, isReadOnly }: OrderTopBarProps) {
+export default function OrderTopBar({
+  shopName,
+  cartItemCount = 0,
+  onCartClick,
+}: OrderTopBarProps) {
   return (
     <AppBar
       position="sticky"
       elevation={0}
-      color="primary"
-      sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+      color="transparent"
+      sx={{
+        bgcolor: "background.paper",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+      }}
     >
       <Toolbar sx={{ gap: 1.5 }}>
-        <StorefrontOutlinedIcon />
-        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
-          Café Maw
+        <StorefrontOutlinedIcon color="primary" />
+        <Typography
+          variant="h6"
+          sx={{ flexGrow: 1, fontWeight: 700, color: "text.primary" }}
+        >
+          {shopName ?? "Café Maw"}
         </Typography>
 
-        {label && (
-          <Chip
-            label={label}
-            size="small"
-            sx={{
-              bgcolor: "rgba(255,255,255,0.18)",
-              color: "inherit",
-              fontWeight: 600,
-            }}
-          />
-        )}
-
-        {isReadOnly && (
-          <Chip
-            label="Order placed"
-            size="small"
-            color="success"
-            sx={{ fontWeight: 600 }}
-          />
-        )}
+        <IconButton onClick={onCartClick} aria-label="View cart">
+          <Badge badgeContent={cartItemCount} color="error">
+            <ShoppingCartOutlinedIcon sx={{ color: "text.primary" }} />
+          </Badge>
+        </IconButton>
       </Toolbar>
     </AppBar>
   );

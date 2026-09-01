@@ -15,4 +15,11 @@ body {
   color: var(--color-brand-espresso);
   font-family: var(--font-outfit), sans-serif;
   scroll-behavior: smooth;
+  font-family: var(--font-english), var(--font-myanmar), sans-serif;
+}
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
 }

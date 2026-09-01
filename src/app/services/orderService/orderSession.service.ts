@@ -32,7 +32,7 @@ const APPROVAL_WINDOW_MINUTES = 10;
 // CounterOrderClient), so in practice this gets noticed the next time
 // the customer's browser makes any request — a page reload, or an
 // add-to-cart/submit attempt — not the instant the 40 minutes elapse.
-const CART_ABANDON_MINUTES = 2;
+const CART_ABANDON_MINUTES = 40;
 
 /** A session that has ever left CART (submitted at least once, even
  *  if that submission was later rejected) is no longer at risk of

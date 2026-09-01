@@ -1,10 +1,22 @@
 import { cookies } from "next/headers";
-import { OrderSessionService, MenuService } from "@/app/services";
+import {
+  OrderSessionService,
+  MenuService,
+  LocationService,
+} from "@/app/services";
 import {
   COUNTER_SESSION_COOKIE,
   TABLE_SESSION_COOKIE,
 } from "@/app/lib/orderSessionCookie";
 import CounterOrderClient from "../components/orderUI/counterorderclient";
+
+// Session/cart state can change between one visit and the next (a
+// customer's own submit, or another phone on the same Table session)
+// — cookies() already makes this render dynamic, but forcing it
+// explicitly also stops Next's client Router Cache from ever serving
+// a stale copy of this route after navigating away and back (e.g. the
+// cart icon then the browser's own Back button).
+export const dynamic = "force-dynamic";
 
 /**
  * View + Order UI ကို page တစ်ခုတည်းထဲ ပေါင်းထားတယ် — cookie session
@@ -48,13 +60,17 @@ export default async function MenuPage({
   // customer က ကိုယ်တိုင် ပြောင်းလို့ရလို့) — မရှိမှသာ query param ကို သုံး.
   const effectiveLocationId = session ? session.locationId : locationId;
 
-  const menus = await MenuService.getMenusForLocation(effectiveLocationId);
+  const [menus, shopName] = await Promise.all([
+    MenuService.getMenusForLocation(effectiveLocationId),
+    LocationService.getShopNameForLocation(effectiveLocationId),
+  ]);
 
   return (
     <CounterOrderClient
       hasSession={session !== null}
       locationId={effectiveLocationId}
       orderNumber={session?.orderNumber ?? ""}
+      shopName={shopName}
       initialStatus={session?.status ?? "CART"}
       initialCart={
         session?.orders.map((order) => ({
@@ -69,6 +85,14 @@ export default async function MenuPage({
         name: menu.name,
         price: menu.price,
         description: menu.description,
+        category: menu.category,
+        imageUrl: menu.imageUrl,
+        stockQuantity: menu.stockQuantity,
+        // getMenusForLocation exposes isManuallyDisabled (staff toggle),
+        // not isAvailable directly — OdMenuCard's own isAvailable check
+        // ANDs this with stockQuantity > 0, matching
+        // getMenuDetailForCustomer's `!isManuallyDisabled` definition.
+        isAvailable: !menu.isManuallyDisabled,
       }))}
     />
   );

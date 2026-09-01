@@ -14,6 +14,7 @@ import {
   TABLE_SESSION_COOKIE,
 } from "@/app/lib/orderSessionCookie";
 import { isSessionTerminal } from "../services/orderService/orderSession.service";
+import { config } from "../utils/config";
 
 /** The one place this file reads the cookie jar — every action below
  *  goes through this instead of repeating `cookies()` + `.get(...)`
@@ -37,6 +38,7 @@ async function getCookieToken() {
   }
   return { store, token: null, cookieName: null };
 }
+const url = config.orderAppUrl;
 
 /** Every cart/order action resolves the session from the cookie
  *  itself, never from a client-supplied id — a customer's request can
@@ -84,7 +86,7 @@ export async function addToCartAction(
   const result = await safeAddToCart({ menuId, quantity, addonIds });
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath("/menu");
+    revalidatePath(`${url}/menu`);
   }
   return actionResult;
 }
@@ -98,7 +100,7 @@ export async function removeFromCartAction(orderId: number) {
   const result = await safeRemoveFromCart(orderId);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath("/menu");
+    revalidatePath(`${url}/menu`);
   }
   return actionResult;
 }
@@ -124,7 +126,7 @@ export async function submitOrderAction() {
   const result = await safeSubmitOrder();
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath("/menu");
+    revalidatePath(`${url}/menu`);
   }
   return actionResult;
 }

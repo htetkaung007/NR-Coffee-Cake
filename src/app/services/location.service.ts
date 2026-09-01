@@ -39,6 +39,21 @@ export class LocationService {
     return prisma.location.findFirst({ where: { id: locationId } });
   }
 
+  /** Customer-facing top bar needs the shop's brand name (Company.name),
+   *  not the Location's own name (which is a branch label like
+   *  "Downtown" — see Company vs Location in schema.prisma). Does one
+   *  thing: resolves locationId → company name, nothing else. Returns
+   *  null for an archived/missing location, same as getMenusForLocation
+   *  treats that case (customer sees a plain page, no name banner). */
+  static async getShopNameForLocation(
+    locationId: number,
+  ): Promise<string | null> {
+    const location = await prisma.location.findFirst({
+      where: { id: locationId, isArchived: false },
+    });
+    return location?.name ?? null;
+  }
+
   /** Does one thing: creates a location with a name. Nothing else —
    *  callers that also want it selected call setSelectedLocation
    *  themselves afterward, rather than this method reaching into a
