@@ -1,12 +1,15 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Box, Typography } from "@mui/material";
-import { OrderSessionService, LocationService } from "@/app/services";
 import {
-  COUNTER_SESSION_COOKIE,
-  TABLE_SESSION_COOKIE,
-} from "@/app/lib/orderSessionCookie";
+  LocationService,
+  OrderSessionService,
+  TableDraftService,
+} from "@/app/services";
+import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
+import { getContributorToken } from "@/app/lib/contributorToken";
 import CartPageClient from "../components/orderUI/CartPageClient";
+import TableCartPageClient from "../components/orderUI/TableCartPageClient";
 import OrderTopBar from "../components/orderUI/OrderTopBar";
 import { CartButtonStatus } from "../components/orderUI/CartButton";
 
@@ -17,41 +20,91 @@ export const dynamic = "force-dynamic";
  * Its own route (not a section within /menu) — per design feedback,
  * the cart is somewhere the customer navigates TO (via the top bar's
  * cart icon), not a block that lives inline below the menu grid.
- * Status (submitted / confirmed) shows on this page's own Submit
- * button, not a full-page swap — so unlike an earlier version of this
- * page, a non-CART session status is NOT redirected away: reloading
- * /cart while PENDING_APPROVAL must still show that state, which is
- * why session.status is passed through as initialStatus below.
  *
- * A visitor with no session at all (someone just browsing online —
- * never scanned a table/counter QR, so no order exists yet) is NOT an
- * error case: the cart icon is always visible in the top bar
- * regardless of hasSession (see counterorderclient.tsx), so this page
- * has to make sense for that visitor too. It gets a plain "No order
- * yet" message here instead of redirecting — a redirect back to
+ * Branches the same way /menu does: a tableId with a matching
+ * contributorToken (see contributorToken.ts) means Table QR's shared-
+ * draft review (TableCartPageClient); everything else falls through
+ * to Counter QR's own session-based review (CartPageClient), same as
+ * before the per-customer draft redesign.
+ *
+ * A visitor with neither a session nor a table draft to look at
+ * (someone just browsing online — never scanned a table/counter QR)
+ * is NOT an error case: the cart icon is always visible in the top
+ * bar regardless of hasSession (see counterorderclient.tsx), so this
+ * page has to make sense for that visitor too. It gets a plain "No
+ * order yet" message here instead of redirecting — a redirect back to
  * /menu with no locationId to carry over previously produced a broken
  * page (MenuService queried with an invalid id).
  */
 export default async function CartPage({
   searchParams,
 }: {
-  searchParams: Promise<{ locationId?: string }>;
+  searchParams: Promise<{ locationId?: string; tableId?: string }>;
 }) {
-  const { locationId: locationIdParam } = await searchParams;
+  const { locationId: locationIdParam, tableId: tableIdParam } =
+    await searchParams;
+  const tableId = tableIdParam ? Number(tableIdParam) : null;
+
+  if (tableId) {
+    const contributorToken = await getContributorToken(tableId);
+    const isTokenCurrent =
+      contributorToken !== null &&
+      (await TableDraftService.isTokenCurrentForTable(
+        tableId,
+        contributorToken,
+      ));
+    if (contributorToken && isTokenCurrent) {
+      const locationId = Number(locationIdParam);
+      const [draftItems, activeRound, shopName, shortages] = await Promise.all([
+        TableDraftService.getDraftItemsForTable(tableId),
+        OrderSessionService.getActiveRoundForTable(tableId),
+        LocationService.getShopNameForLocation(locationId),
+        TableDraftService.getShortagesForTable(tableId, locationId),
+      ]);
+
+      return (
+        <TableCartPageClient
+          tableId={tableId}
+          locationId={locationId}
+          shopName={shopName}
+          myContributorToken={contributorToken}
+          initialDraftItems={draftItems.map((item) => ({
+            id: item.id,
+            menuId: item.menuId,
+            menuName: item.menu.name,
+            quantity: item.quantity,
+            price: item.menu.price,
+            contributorToken: item.contributorToken ?? "",
+            addonNames: item.OrdersAddons.map((link) => link.addon.name),
+            addonIds: item.OrdersAddons.map((link) => link.addonId),
+          }))}
+          initialActiveRound={
+            activeRound
+              ? {
+                  orderNumber: activeRound.orderNumber,
+                  status: activeRound.status,
+                }
+              : null
+          }
+          initialShortages={shortages}
+        />
+      );
+    }
+  }
 
   const cookieStore = await cookies();
-  const token =
-    cookieStore.get(COUNTER_SESSION_COOKIE)?.value ??
-    cookieStore.get(TABLE_SESSION_COOKIE)?.value;
+  const token = cookieStore.get(COUNTER_SESSION_COOKIE)?.value;
 
   const session = token
     ? await OrderSessionService.getActiveSessionByToken(token)
     : null;
 
   if (!session) {
-    const backHref = locationIdParam
-      ? `/menu?locationId=${locationIdParam}`
-      : "/menu";
+    const backHref = tableId
+      ? `/menu?locationId=${locationIdParam}&tableId=${tableId}`
+      : locationIdParam
+        ? `/menu?locationId=${locationIdParam}`
+        : "/menu";
     return (
       <Box sx={{ minHeight: "100vh" }}>
         <OrderTopBar shopName={null} cartItemCount={0} />
@@ -76,6 +129,10 @@ export default async function CartPage({
   const shopName = await LocationService.getShopNameForLocation(
     session.locationId,
   );
+  const shortages = await OrderSessionService.getShortagesForSession(
+    session.id,
+    session.locationId,
+  );
 
   return (
     <CartPageClient
@@ -83,8 +140,10 @@ export default async function CartPage({
       orderNumber={session.orderNumber}
       shopName={shopName}
       initialStatus={session.status as CartButtonStatus}
+      initialShortages={shortages}
       initialCart={session.orders.map((order) => ({
         id: order.id,
+        menuId: order.menuId,
         menuName: order.menu.name,
         quantity: order.quantity,
         price: order.menu.price,

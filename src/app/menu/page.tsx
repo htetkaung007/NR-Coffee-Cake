@@ -3,55 +3,122 @@ import {
   OrderSessionService,
   MenuService,
   LocationService,
+  TableDraftService,
 } from "@/app/services";
-import {
-  COUNTER_SESSION_COOKIE,
-  TABLE_SESSION_COOKIE,
-} from "@/app/lib/orderSessionCookie";
+import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
+import { getContributorToken } from "@/app/lib/contributorToken";
 import CounterOrderClient from "../components/orderUI/counterorderclient";
+import TableOrderClient from "../components/orderUI/TableOrderClient";
 
 // Session/cart state can change between one visit and the next (a
-// customer's own submit, or another phone on the same Table session)
-// — cookies() already makes this render dynamic, but forcing it
+// customer's own submit, or another contributor's draft add) —
+// cookies() already makes this render dynamic, but forcing it
 // explicitly also stops Next's client Router Cache from ever serving
 // a stale copy of this route after navigating away and back (e.g. the
 // cart icon then the browser's own Back button).
 export const dynamic = "force-dynamic";
 
+function buildMenuOptions(
+  menus: Awaited<ReturnType<typeof MenuService.getMenusForLocation>>,
+) {
+  return menus.map((menu) => ({
+    id: menu.id,
+    name: menu.name,
+    price: menu.price,
+    description: menu.description,
+    category: menu.category,
+    imageUrl: menu.imageUrl,
+    stockQuantity: menu.stockQuantity,
+    // getMenusForLocation exposes isManuallyDisabled (staff toggle),
+    // not isAvailable directly — OdMenuCard's own isAvailable check
+    // ANDs this with stockQuantity > 0, matching
+    // getMenuDetailForCustomer's `!isManuallyDisabled` definition.
+    isAvailable: !menu.isManuallyDisabled,
+  }));
+}
+
 /**
- * View + Order UI ကို page တစ်ခုတည်းထဲ ပေါင်းထားတယ် — cookie session
- * ရှိမရှိအလိုက် CounterOrderClient ကို hasSession flag နဲ့ ခေါ်တာပဲ
- * ကွာသွားတယ်, menu list display ကတော့ ၂ ခုစလုံးအတွက် တူတူပဲ.
+ * View + Order UI ကို page တစ်ခုတည်းထဲ ပေါင်းထားတယ် — Table QR (per-
+ * customer draft design) vs Counter QR/plain-browsing (session cookie)
+ * ကို branch ခွဲပြီး client component သီးခြားစီ (TableOrderClient vs
+ * CounterOrderClient) ကို ခေါ်တယ်, menu list query ကတော့ ၂ ခုစလုံး
+ * အတွက် တူတူပဲ (buildMenuOptions).
  *
- * Cookie ၂ မျိုး (Counter/Table) ကို စစ်တယ် — token ကိုယ်တိုင်က
- * OrderSession.token ချည်းပဲ ကိုယ်စားပြုတာမို့ getActiveSessionByToken
- * အတွက်တော့ ဘယ် cookie ကလာလာ (Counter ဒါမှမဟုတ် Table) တူတူပဲ
- * အလုပ်လုပ်တယ် — ဒီ page ကလည်း ခွဲစိတ်စရာမလိုဘူး.
+ * tableId ရှိရင်တောင် contributorToken မရှိရင် (ဒီ browser ဒီ table
+ * ကို scan ဝင်ခဲ့ဖူးတာ မဟုတ်ဘူး — url ကို လက်နဲ့ ရိုက်ထည့်တာမျိုး)
+ * ဒါမှမဟုတ် token က stale ဖြစ်နေရင် (Table.contributorEpoch ကျော်
+ * သွားပြီ — table ကို paid လုပ်ပြီးသွားလို့, ပြန် scan မှသာ token
+ * အသစ်ရမယ်) Table branch ကို မယုံဘဲ ပုံမှန် browsing view ဆီ
+ * ဆက်သွားတယ်.
  *
  * SECURITY NOTE: ဒီမှာ hasSession=false ဖြစ်ရင် Add/Submit button
  * hide လုပ်တာက UX ချည်းပဲ — တကယ့် access control က
- * customer/menu/action.ts ရဲ့ requireSessionFromCookie() (Server
- * Action boundary) မှာပဲရှိတယ်. Cookie မရှိတဲ့သူက button ကို hide
- * ထားရင်တောင် Server Action ကို တိုက်ရိုက်ခေါ်ဖို့ ကြိုးစားရင်
- * UNAUTHORIZED AppError နဲ့ reject ခံရမယ် — ဒီ page က ဒါကို
- * ထပ်မလုပ်တော့ဘူး, Service/Action layer ကိုပဲ ယုံတယ်.
+ * customer/action.ts ရဲ့ requireSessionFromCookie()/
+ * requireContributorToken() (Server Action boundary) မှာပဲရှိတယ်.
+ * Cookie မရှိတဲ့သူက button ကို hide ထားရင်တောင် Server Action ကို
+ * တိုက်ရိုက်ခေါ်ဖို့ ကြိုးစားရင် UNAUTHORIZED AppError နဲ့ reject
+ * ခံရမယ် — ဒီ page က ဒါကို ထပ်မလုပ်တော့ဘူး, Service/Action layer
+ * ကိုပဲ ယုံတယ်.
  */
 export default async function MenuPage({
   searchParams,
 }: {
-  searchParams: Promise<{ locationId?: string }>;
+  searchParams: Promise<{ locationId?: string; tableId?: string }>;
 }) {
-  const { locationId: locationIdParam } = await searchParams;
+  const { locationId: locationIdParam, tableId: tableIdParam } =
+    await searchParams;
   const locationId = Number(locationIdParam);
+  const tableId = tableIdParam ? Number(tableIdParam) : null;
+
+  if (tableId) {
+    const contributorToken = await getContributorToken(tableId);
+    const isTokenCurrent =
+      contributorToken !== null &&
+      (await TableDraftService.isTokenCurrentForTable(
+        tableId,
+        contributorToken,
+      ));
+    if (contributorToken && isTokenCurrent) {
+      const [menus, shopName, draftItems, activeRound] = await Promise.all([
+        MenuService.getMenusForLocation(locationId),
+        LocationService.getShopNameForLocation(locationId),
+        TableDraftService.getDraftItemsForTable(tableId),
+        OrderSessionService.getActiveRoundForTable(tableId),
+      ]);
+
+      return (
+        <TableOrderClient
+          tableId={tableId}
+          locationId={locationId}
+          shopName={shopName}
+          myContributorToken={contributorToken}
+          initialDraftItems={draftItems.map((item) => ({
+            id: item.id,
+            menuId: item.menuId,
+            menuName: item.menu.name,
+            quantity: item.quantity,
+            price: item.menu.price,
+            contributorToken: item.contributorToken ?? "",
+            addonNames: item.OrdersAddons.map((link) => link.addon.name),
+            addonIds: item.OrdersAddons.map((link) => link.addonId),
+          }))}
+          initialActiveRound={
+            activeRound
+              ? {
+                  orderNumber: activeRound.orderNumber,
+                  status: activeRound.status,
+                }
+              : null
+          }
+          menus={buildMenuOptions(menus)}
+        />
+      );
+    }
+  }
 
   const cookieStore = await cookies();
-  const token =
-    cookieStore.get(COUNTER_SESSION_COOKIE)?.value ??
-    cookieStore.get(TABLE_SESSION_COOKIE)?.value;
+  const token = cookieStore.get(COUNTER_SESSION_COOKIE)?.value;
 
-  // /menu ကို cookie ရှိသူ၊ မရှိသူ နှစ်ဦးစလုံး ရောက်ခွင့်ရှိတယ်
-  // (middleware guard မလိုတော့ဘူး) — ဒါကြောင့် ဒီမှာကိုယ်တိုင်
-  // real (DB-backed) check ကို getActiveSessionByToken နဲ့ လုပ်ရမယ်.
   const session = token
     ? await OrderSessionService.getActiveSessionByToken(token)
     : null;
@@ -75,25 +142,13 @@ export default async function MenuPage({
       initialCart={
         session?.orders.map((order) => ({
           id: order.id,
+          menuId: order.menuId,
           menuName: order.menu.name,
           quantity: order.quantity,
           price: order.menu.price,
         })) ?? []
       }
-      menus={menus.map((menu) => ({
-        id: menu.id,
-        name: menu.name,
-        price: menu.price,
-        description: menu.description,
-        category: menu.category,
-        imageUrl: menu.imageUrl,
-        stockQuantity: menu.stockQuantity,
-        // getMenusForLocation exposes isManuallyDisabled (staff toggle),
-        // not isAvailable directly — OdMenuCard's own isAvailable check
-        // ANDs this with stockQuantity > 0, matching
-        // getMenuDetailForCustomer's `!isManuallyDisabled` definition.
-        isAvailable: !menu.isManuallyDisabled,
-      }))}
+      menus={buildMenuOptions(menus)}
     />
   );
 }

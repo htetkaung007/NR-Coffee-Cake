@@ -34,6 +34,7 @@ export default async function OrderPage() {
   const sessions = await OrderSessionApprovalService.getSessionsForLocation(
     selectedLocation.locationId,
   );
+  const entries = OrderSessionApprovalService.groupSessionsForDisplay(sessions);
 
-  return <OrderListView sessions={sessions} />;
+  return <OrderListView entries={entries} />;
 }

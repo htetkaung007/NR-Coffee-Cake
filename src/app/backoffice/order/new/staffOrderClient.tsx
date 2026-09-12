@@ -51,7 +51,7 @@ interface StaffOrderClientProps {
 /**
  * Reuses MenuDetailDialog as-is (same required-radio / optional-
  * checkbox addon UI a customer sees) — only the "what happens after
- * Add to Cart" wiring differs, via the onAddToCart callback prop, so
+ * Add to Cart" wiring differs, via the onSubmit callback prop, so
  * the dialog itself needed zero changes for this second caller. Cart
  * state lives here (not in a cookie/OrderSession the way
  * CounterOrderClient's does at first) until a table is picked and
@@ -91,6 +91,7 @@ export default function StaffOrderClient({
 
   async function handleAddToCart(
     menuId: number,
+    quantity: number,
     addonIds: number[],
   ): Promise<string | null> {
     if (!sessionId || tableId === "") {
@@ -103,7 +104,7 @@ export default function StaffOrderClient({
       sessionId,
       tableId,
       menuId,
-      1,
+      quantity,
       addonIds,
     );
     if (!result.success) {
@@ -114,7 +115,7 @@ export default function StaffOrderClient({
       {
         id: result.data.id,
         menuName: menu.name,
-        quantity: 1,
+        quantity,
         price: menu.price,
       },
     ]);
@@ -279,7 +280,7 @@ export default function StaffOrderClient({
         locationId={locationId}
         canOrder={sessionId !== null}
         onClose={() => setDetailMenuId(null)}
-        onAddToCart={handleAddToCart}
+        onSubmit={handleAddToCart}
       />
     </Box>
   );

@@ -18,6 +18,11 @@ interface CartButtonProps {
   total?: number;
   disabled: boolean;
   onClick: () => void;
+  /** "Submit Order" (Counter QR) vs "Send to Kitchen" (Table QR's
+   *  draft-merge submit) — same button, same status states either
+   *  way, just different call-to-action copy for the one state
+   *  (CART) where anything is actually clickable. */
+  submitLabel?: string;
 }
 
 /**
@@ -33,6 +38,7 @@ export default function CartButton({
   total,
   disabled,
   onClick,
+  submitLabel = "Submit Order",
 }: CartButtonProps) {
   if (status === "PENDING_APPROVAL") {
     return (
@@ -70,7 +76,7 @@ export default function CartButton({
     <Button variant="contained" fullWidth disabled={disabled} onClick={onClick}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Typography component="span" sx={{ fontWeight: 700 }}>
-          Submit Order
+          {submitLabel}
         </Typography>
         {itemCount > 0 && (
           <Typography component="span" variant="body2">

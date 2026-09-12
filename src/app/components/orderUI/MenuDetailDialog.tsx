@@ -19,6 +19,8 @@ import {
   Alert,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 import { getMenuDetailAction } from "@/app/customer/action";
 
 interface Addon {
@@ -41,7 +43,19 @@ interface MenuDetail {
   price: number;
   description: string;
   imageUrl: string | null;
+  quantity: number;
+  isAvailable: boolean;
   addonCategories: AddonCategory[];
+}
+
+/** Pre-fills the dialog for editing an already-added line — see
+ *  DraftList's Edit button. Presence of this prop (vs undefined) is
+ *  what switches the dialog between "Add to Cart" and "Save Changes"
+ *  mode, not a separate boolean, so there's only one source of truth
+ *  for which mode it's in. */
+export interface MenuDetailEditingSelection {
+  quantity: number;
+  addonIds: number[];
 }
 
 interface MenuDetailDialogProps {
@@ -50,7 +64,12 @@ interface MenuDetailDialogProps {
   locationId: number;
   canOrder: boolean;
   onClose: () => void;
-  onAddToCart: (menuId: number, addonIds: number[]) => Promise<string | null>;
+  onSubmit: (
+    menuId: number,
+    quantity: number,
+    addonIds: number[],
+  ) => Promise<string | null>;
+  editing?: MenuDetailEditingSelection;
 }
 
 /**
@@ -69,11 +88,13 @@ export default function MenuDetailDialog({
   locationId,
   canOrder,
   onClose,
-  onAddToCart,
+  onSubmit,
+  editing,
 }: MenuDetailDialogProps) {
   const [fetchedForMenuId, setFetchedForMenuId] = useState<number | null>(null);
   const [detail, setDetail] = useState<MenuDetail | null>(null);
   const [selected, setSelected] = useState<Record<number, number[]>>({});
+  const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Derived, not a separate state field set inside the effect below —
@@ -89,8 +110,31 @@ export default function MenuDetailDialog({
     getMenuDetailAction(menuId, locationId).then((result) => {
       setDetail(result);
       setFetchedForMenuId(menuId);
-      setSelected({});
+      if (editing) {
+        // Pre-fill from the existing line's own selection — addonIds
+        // is flat (not grouped by category), so it's re-grouped here
+        // the same way the server re-derives grouping from
+        // MenuAddonCategories (see validateAddonSelection's comment).
+        const grouped: Record<number, number[]> = {};
+        for (const category of result?.addonCategories ?? []) {
+          const picked = category.addons
+            .map((addon) => addon.id)
+            .filter((id) => editing.addonIds.includes(id));
+          if (picked.length > 0) grouped[category.id] = picked;
+        }
+        setSelected(grouped);
+        setQuantity(editing.quantity);
+      } else {
+        setSelected({});
+        setQuantity(1);
+      }
     });
+    // editing is a fresh object every render from most callers — only
+    // its identity-independent contents matter for re-initializing,
+    // so it's read inside the effect but deliberately left out of the
+    // dependency array (open/menuId already re-run this per dialog
+    // open, which is the only time re-initializing should happen).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, menuId, locationId]);
 
   function selectRequired(categoryId: number, addonId: number) {
@@ -116,12 +160,19 @@ export default function MenuDetailDialog({
       .filter((category) => category.isRequired)
       .some((category) => (selected[category.id] ?? []).length === 0) ?? false;
 
-  async function handleAdd() {
+  // Editing an existing line still shows the stock cap so the
+  // customer knows how far they can raise the quantity, but a
+  // shortage that appeared since they first added it shouldn't lock
+  // them out of REDUCING or removing it — only raising further.
+  const maxQuantity = Math.max(detail?.quantity ?? 0, editing?.quantity ?? 0);
+  const isSoldOut = maxQuantity <= 0 || detail?.isAvailable === false;
+
+  async function handleSubmit() {
     if (!detail) return;
     setSubmitting(true);
     setError(null);
     const addonIds = Object.values(selected).flat();
-    const errorMessage = await onAddToCart(detail.id, addonIds);
+    const errorMessage = await onSubmit(detail.id, quantity, addonIds);
     setSubmitting(false);
     if (errorMessage) {
       setError(errorMessage);
@@ -164,6 +215,46 @@ export default function MenuDetailDialog({
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
               {detail.price.toLocaleString()} MMK
             </Typography>
+
+            {isSoldOut ? (
+              <Alert severity="warning">This item just sold out.</Alert>
+            ) : (
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                  Quantity
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  sx={{ alignItems: "center" }}
+                >
+                  <IconButton
+                    size="small"
+                    disabled={quantity <= 1}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  >
+                    <RemoveIcon fontSize="small" />
+                  </IconButton>
+                  <Typography sx={{ minWidth: 24, textAlign: "center" }}>
+                    {quantity}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    disabled={quantity >= maxQuantity}
+                    onClick={() =>
+                      setQuantity((q) => Math.min(maxQuantity, q + 1))
+                    }
+                  >
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                  {maxQuantity <= 5 && (
+                    <Typography variant="caption" color="warning.main">
+                      Only {maxQuantity} left
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            )}
 
             {detail.addonCategories.map((category) => (
               <Box key={category.id}>
@@ -230,10 +321,10 @@ export default function MenuDetailDialog({
               <Button
                 variant="contained"
                 fullWidth
-                disabled={missingRequired || submitting}
-                onClick={handleAdd}
+                disabled={missingRequired || submitting || isSoldOut}
+                onClick={handleSubmit}
               >
-                Add to Cart
+                {editing ? "Save Changes" : "Add to Cart"}
               </Button>
             )}
           </Stack>

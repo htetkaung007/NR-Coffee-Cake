@@ -1,8 +1,38 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
+import { MenuStockService } from "../menuStock.service";
 
 type Tx = Prisma.TransactionClient;
+
+/** Shared by submitOrderForApproval and submitStaffOrder — both need
+ *  to atomically decrement stock for every one of the session's CART
+ *  items before actually transitioning it out of CART (see the
+ *  "decrement at submit, not at add-to-cart/draft" design discussion);
+ *  only the target status and whether an approval window gets set
+ *  differ between the two, which each keeps as its own small
+ *  transaction body around this. A shortage on even one item throws
+ *  inside the transaction, rolling back the whole submit — no status
+ *  change, no partial decrement left behind. */
+async function decrementStockForSession(
+  tx: Tx,
+  sessionId: number,
+  locationId: number,
+) {
+  const orders = await tx.order.findMany({
+    where: { orderSessionId: sessionId, isArchived: false },
+    include: { menu: true },
+  });
+  for (const order of orders) {
+    await MenuStockService.decrementStock(
+      tx,
+      order.menuId,
+      order.menu.name,
+      locationId,
+      order.quantity,
+    );
+  }
+}
 
 // A session that has reached one of these statuses is "done" — a new
 // scan (Table QR) or a new cookie-matched visit (Counter QR) must not
@@ -48,8 +78,11 @@ function isAbandonedCart(session: { status: string; createdAt: Date }) {
 
 /** Placeholder scheme — see design doc section 9 ("orderNumber
  *  generation strategy not yet decided"). Swap this one function for a
- *  per-location daily counter later; nothing else needs to change. */
-function generateOrderNumber(sessionId: number) {
+ *  per-location daily counter later; nothing else needs to change.
+ *  Exported so TableDraftService.submitDraft can reuse the exact same
+ *  scheme instead of a second copy — every OrderSession gets its
+ *  number the same way regardless of which flow created it. */
+export function generateOrderNumber(sessionId: number) {
   return `#A${String(sessionId).padStart(3, "0")}`;
 }
 
@@ -63,59 +96,20 @@ function generateOrderNumber(sessionId: number) {
  * it's split out.
  *
  * Table QR and Counter QR are still two distinct scan entry points
- * (resolveTableQrScan / resolveCounterQrScan) — even though every
- * Table row (not just isCounter ones) now carries its own
- * counterAccessKey and both are checked the same way, Table's
- * SESSION resolution stays fundamentally different from Counter's:
- * Table shares ONE session across every phone that scans it
- * (Table.activeSessionId — see resolveTableSession), while Counter
- * gives each phone its own individual session via cookie. That
- * reuse-vs-new-session decision is different enough per entry point
- * that a single shared function would need to branch on isCounter
- * internally anyway.
+ * (resolveTableQrScan / resolveCounterQrScan) — Table QR's scan no
+ * longer resolves or creates a session at all (see
+ * resolveTableQrScan's own comment — drafts replaced that), while
+ * Counter QR still gives each phone its own individual session via
+ * cookie the same way it always did. That difference is why a single
+ * shared scan function still wouldn't make sense even now.
  */
 export class OrderSessionService {
-  /** Table QR (design doc section 3) — like Counter, the printed URL
-   *  carries a rotating key (Table.counterAccessKey) checked first;
-   *  a wrong/stale key fails closed the same way Counter's does. Once
-   *  the key passes, Table.activeSessionId is the single source of
-   *  truth for "which session this table's group is currently in" —
-   *  every phone that scans this table's (valid-keyed) QR lands in
-   *  the SAME session, unlike Counter where each phone gets its own. */
-  static async resolveTableQrScan(tableId: number, key: string) {
-    const table = await prisma.table.findFirst({
-      where: {
-        id: tableId,
-        counterAccessKey: key,
-        isArchived: false,
-        isCounter: false,
-      },
-    });
-    if (!table) {
-      return { status: "invalid_key" as const };
-    }
-
-    return OrderSessionService.resolveTableSession(table);
-  }
-
-  static async resolveTableSession(table: {
-    id: number;
-    locationId: number;
-    activeSessionId: number | null;
-  }) {
-    if (table.activeSessionId) {
-      const current = await prisma.orderSession.findFirst({
-        where: { id: table.activeSessionId, isArchived: false },
-      });
-      if (current && !isSessionTerminal(current.status)) {
-        return { status: "active" as const, session: current };
-      }
-    }
-
-    const session = await OrderSessionService.startNewTableSession(table);
-    return { status: "active" as const, session };
-  }
-
+  /** Used by startStaffSession (a staff-placed order, no scan/cookie
+   *  involved) to create a Table-QR-shaped session directly. No longer
+   *  called from the customer-facing scan flow (see
+   *  resolveTableQrScan's own comment) — drafts replaced that path,
+   *  but a staff member manually opening a tab for a walk-in table
+   *  still needs a real session to exist right away, so this stays. */
   static async startNewTableSession(table: { id: number; locationId: number }) {
     return prisma.$transaction(async (tx: Tx) => {
       const session = await tx.orderSession.create({
@@ -138,6 +132,104 @@ export class OrderSessionService {
       await tx.table.update({
         where: { id: table.id },
         data: { activeSessionId: session.id },
+      });
+
+      return numbered;
+    });
+  }
+
+  /** Table QR — validates the table's rotating key
+   *  (Table.counterAccessKey), same check Counter's key gets, but no
+   *  longer resolves or creates an OrderSession here. With drafts
+   *  decoupled from any session (see TableDraftService), a scan only
+   *  needs to confirm this is a real, current table link — the scan
+   *  Route Handler uses the returned table's id to set up this
+   *  browser's contributorToken (getOrCreateContributorToken), and a
+   *  session only ever gets created later, at Send to Kitchen
+   *  (TableDraftService.submitDraft). */
+  static async resolveTableQrScan(tableId: number, key: string) {
+    const table = await prisma.table.findFirst({
+      where: {
+        id: tableId,
+        counterAccessKey: key,
+        isArchived: false,
+        isCounter: false,
+      },
+    });
+    if (!table) {
+      return { status: "invalid_key" as const };
+    }
+    return { status: "valid" as const, table };
+  }
+
+  /** Read-only — does NOT create a session if none exists (unlike the
+   *  pre-draft Table flow this replaced). Lets the browsing/cart UI
+   *  show "Round 1 — confirmed, cooking" alongside the draft-adding
+   *  UI for whatever round comes next. A terminal session (PAID/
+   *  CANCELLED/COMPLETED) is treated the same as "no active round" —
+   *  same reasoning markSessionPaid's own comment describes: the
+   *  table's activeSessionId pointer is left as-is on payment, and
+   *  every reader is expected to treat a terminal session behind it
+   *  as stale rather than requiring a second write to clear it. */
+  static async getActiveRoundForTable(tableId: number) {
+    const table = await prisma.table.findFirst({
+      where: { id: tableId, isArchived: false },
+    });
+    if (!table?.activeSessionId) return null;
+
+    const current = await prisma.orderSession.findFirst({
+      where: { id: table.activeSessionId, isArchived: false },
+    });
+    if (!current || isSessionTerminal(current.status)) return null;
+    return current;
+  }
+
+  /**
+   * "Order More" (design discussion) — Counter QR only: a Counter
+   * customer whose current round has already been Accepted (PENDING/
+   * COOKING) can start a brand-new round for the same table without
+   * touching the round already in the kitchen. Table QR doesn't need
+   * this anymore — with drafts decoupled from any session
+   * (TableDraftService), "Order More" there is just adding more
+   * drafts and calling submitDraft again; see that method's own
+   * comment.
+   *
+   * Only PENDING/COOKING may start a next round: CART has nothing to
+   * "confirm" yet (just keep adding to the current one), and
+   * PENDING_APPROVAL must be Accepted or Rejected first — starting a
+   * second round while the first is still awaiting a decision would
+   * let a customer route around a pending Reject.
+   */
+  static async startNextRound(session: {
+    locationId: number;
+    tableId: number | null;
+    isCounter: boolean;
+    status: string;
+  }) {
+    if (session.status !== "PENDING" && session.status !== "COOKING") {
+      throw new ValidationError(
+        "This order must be confirmed by the counter before you can start a new one.",
+      );
+    }
+    if (!session.tableId) {
+      throw new ValidationError("Order session has no table.");
+    }
+    const tableId = session.tableId;
+
+    return prisma.$transaction(async (tx: Tx) => {
+      const next = await tx.orderSession.create({
+        data: {
+          locationId: session.locationId,
+          tableId,
+          isCounter: session.isCounter,
+          status: "CART",
+          orderNumber: "",
+        },
+      });
+
+      const numbered = await tx.orderSession.update({
+        where: { id: next.id },
+        data: { orderNumber: generateOrderNumber(next.id) },
       });
 
       return numbered;
@@ -330,10 +422,35 @@ export class OrderSessionService {
       );
     }
 
-    return prisma.orderSession.update({
-      where: { id: sessionId },
-      data: { status: "PENDING" },
+    return prisma.$transaction(async (tx: Tx) => {
+      await decrementStockForSession(tx, sessionId, session.locationId);
+      return tx.orderSession.update({
+        where: { id: sessionId },
+        data: { status: "PENDING" },
+      });
     });
+  }
+
+  /** Counter QR's counterpart to TableDraftService.getShortagesForTable
+   *  — same informational-only pre-check (see MenuStockService.
+   *  findShortages's own comment for why this isn't the real guard),
+   *  just against a single session's CART items instead of a table's
+   *  merged draft picks, since Counter never had multiple
+   *  contributors to merge across. */
+  static async getShortagesForSession(sessionId: number, locationId: number) {
+    const orders = await prisma.order.findMany({
+      where: { orderSessionId: sessionId, isArchived: false },
+      include: { menu: true },
+    });
+
+    return MenuStockService.findShortages(
+      locationId,
+      orders.map((order) => ({
+        menuId: order.menuId,
+        menuName: order.menu.name,
+        quantity: order.quantity,
+      })),
+    );
   }
 
   /** Customer taps "Submit Order" — CART -> PENDING_APPROVAL, starting
@@ -356,9 +473,12 @@ export class OrderSessionService {
       Date.now() + APPROVAL_WINDOW_MINUTES * 60_000,
     );
 
-    return prisma.orderSession.update({
-      where: { id: sessionId },
-      data: { status: "PENDING_APPROVAL", approvalExpiresAt },
+    return prisma.$transaction(async (tx: Tx) => {
+      await decrementStockForSession(tx, sessionId, session.locationId);
+      return tx.orderSession.update({
+        where: { id: sessionId },
+        data: { status: "PENDING_APPROVAL", approvalExpiresAt },
+      });
     });
   }
 

@@ -42,9 +42,11 @@ export class ValidationError extends AppError {
   }
 }
 export class InsufficientStockError extends AppError {
-  constructor(menuId: number, locationId: number) {
+  constructor(menuName: string, available: number) {
     super(
-      `Not enough stock for menu ${menuId} at location ${locationId}`,
+      available > 0
+        ? `Only ${available} ${menuName} left — please adjust the quantity.`
+        : `${menuName} just sold out.`,
       "INSUFFICIENT_STOCK",
     );
     this.name = "InsufficientStockError";

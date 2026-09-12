@@ -1752,6 +1752,7 @@ export const TableScalarFieldEnum = {
   locationId: 'locationId',
   counterAccessKey: 'counterAccessKey',
   activeSessionId: 'activeSessionId',
+  contributorEpoch: 'contributorEpoch',
   isCounter: 'isCounter',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -1906,7 +1907,7 @@ export const OrderScalarFieldEnum = {
   quantity: 'quantity',
   tableId: 'tableId',
   orderSessionId: 'orderSessionId',
-  status: 'status',
+  contributorToken: 'contributorToken',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived'

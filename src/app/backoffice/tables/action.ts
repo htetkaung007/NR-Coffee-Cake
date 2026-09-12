@@ -24,13 +24,17 @@ import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
  * Builds the URL a customer's phone opens after scanning the table's
  * QR code. Both Counter and regular tables now point at THIS app's
  * own Route Handlers (/customer, /table) — each validates the key
- * server-side, sets the session cookie, and redirects onward to the
- * clean, key-free /menu URL before anything renders. Query-string
- * form (Rule: keep it simple over path params).
+ * server-side, sets a cookie (a session for Counter, a per-table
+ * contributor token for regular tables — see the two entries below),
+ * and redirects onward to the clean, key-free /menu URL before
+ * anything renders. Query-string form (Rule: keep it simple over path
+ * params).
  *
  * Regular tables: /table?locationId=&tableId=&key=. Unlike Counter,
- * every phone that scans the SAME table's (valid-keyed) QR lands in
- * the SAME shared session — see resolveTableQrScan/resolveTableSession.
+ * every phone that scans the SAME table's (valid-keyed) QR shares one
+ * draft/order (see the per-customer draft design —
+ * resolveTableQrScan, TableDraftService, contributorToken.ts) rather
+ * than getting its own individual session the way Counter does.
  * Still DOES need reprinting periodically like Counter, for the same
  * reason: rotating the key (TableService.rotateAccessKey) is how a
  * leaked/copied table QR gets invalidated, since the physical QR
@@ -46,7 +50,7 @@ function buildQrCodeContent(
   isCounter: boolean,
   accessKey: string,
 ) {
-  const origin = new URL(config.apiOrederAppUrl).origin;
+  const origin = new URL(config.mainUrl).origin;
   const path = isCounter ? "customer" : "table";
   return `${origin}/${path}?locationId=${locationId}&tableId=${tableId}&key=${accessKey}`;
 }

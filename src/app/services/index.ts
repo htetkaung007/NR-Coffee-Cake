@@ -14,3 +14,4 @@ export { TableService } from "./table.service";
 export { OrderSessionService } from "./orderService/orderSession.service";
 export { OrderSessionApprovalService } from "./orderService/orderSessionApproval.service";
 export { OrderSessionCartService } from "./orderService/orderSessionCart.service";
+export { TableDraftService } from "./tableDraft.service";

@@ -73,3 +73,24 @@ export async function markSessionPaidAction(sessionId: number) {
   }
   return actionResult;
 }
+
+const safeMarkEntryPaid = toSafeResult(async (sessionIds: number[]) => {
+  const { companyId } = await getSessionContext();
+  if (!companyId) {
+    throw new AppError("You must be signed in.", "UNAUTHORIZED");
+  }
+  return OrderSessionApprovalService.markSessionsPaid(sessionIds);
+});
+
+/** Whole-entry version for the grouped Order List (see
+ *  OrderSessionApprovalService.markSessionsPaid) — one confirm click
+ *  settles every open round of a table's tab at once, rather than the
+ *  cashier repeating Mark-as-Paid per round. */
+export async function markEntryPaidAction(sessionIds: number[]) {
+  const result = await safeMarkEntryPaid(sessionIds);
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath("/backoffice/order");
+  }
+  return actionResult;
+}

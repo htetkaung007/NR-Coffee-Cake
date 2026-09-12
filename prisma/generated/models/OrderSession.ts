@@ -460,9 +460,9 @@ export type OrderSessionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type OrderSessionScalarRelationFilter = {
-  is?: Prisma.OrderSessionWhereInput
-  isNot?: Prisma.OrderSessionWhereInput
+export type OrderSessionNullableScalarRelationFilter = {
+  is?: Prisma.OrderSessionWhereInput | null
+  isNot?: Prisma.OrderSessionWhereInput | null
 }
 
 export type OrderSessionCountOrderByAggregateInput = {
@@ -609,12 +609,18 @@ export type OrderSessionCreateNestedOneWithoutOrdersInput = {
   connect?: Prisma.OrderSessionWhereUniqueInput
 }
 
-export type OrderSessionUpdateOneRequiredWithoutOrdersNestedInput = {
+export type OrderSessionUpdateOneWithoutOrdersNestedInput = {
   create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutOrdersInput, Prisma.OrderSessionUncheckedCreateWithoutOrdersInput>
   connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutOrdersInput
   upsert?: Prisma.OrderSessionUpsertWithoutOrdersInput
+  disconnect?: Prisma.OrderSessionWhereInput | boolean
+  delete?: Prisma.OrderSessionWhereInput | boolean
   connect?: Prisma.OrderSessionWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrderSessionUpdateToOneWithWhereWithoutOrdersInput, Prisma.OrderSessionUpdateWithoutOrdersInput>, Prisma.OrderSessionUncheckedUpdateWithoutOrdersInput>
+}
+
+export type EnumORDERSTATUSFieldUpdateOperationsInput = {
+  set?: $Enums.ORDERSTATUS
 }
 
 export type OrderSessionCreateWithoutTableInput = {

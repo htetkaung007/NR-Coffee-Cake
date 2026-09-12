@@ -1,17 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Box, IconButton, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import OrderTopBar from "./OrderTopBar";
+import { usePollOrderStatus } from "./usePollOrderStatus";
 
-import {
-  pollOrderStatusAction,
-  submitOrderAction,
-} from "@/app/customer/action";
-import CartList, { CartLine } from "@/app/cart/Cartlist";
+import { startNextRoundAction, submitOrderAction } from "@/app/customer/action";
+import CartList, { CartLine, Shortage } from "@/app/cart/Cartlist";
 import CartButton, { CartButtonStatus } from "./CartButton";
 
 interface CartPageClientProps {
@@ -20,9 +25,16 @@ interface CartPageClientProps {
   shopName: string | null;
   initialStatus: CartButtonStatus;
   initialCart: CartLine[];
+  /** Snapshot taken at page load — see Cartlist.tsx's own comment on
+   *  why Counter's cart just shows this (dimmed, disables Submit)
+   *  rather than letting the customer fix it themselves: there's no
+   *  polling pre-submit here (a lone Counter customer's own cart can't
+   *  change from anyone but them — see counterorderclient.tsx), so
+   *  this can go stale between load and submit; the real enforcement
+   *  is still the atomic decrementStock inside submitOrderForApproval,
+   *  same as it always was. */
+  initialShortages: Shortage[];
 }
-
-const POLL_INTERVAL_MS = 4000;
 
 /**
  * The cart's own page (see cart/page.tsx for why it's a separate
@@ -40,12 +52,14 @@ export default function CartPageClient({
   shopName,
   initialStatus,
   initialCart,
+  initialShortages,
 }: CartPageClientProps) {
   const router = useRouter();
   const [cart, setCart] = useState(initialCart);
   const [status, setStatus] = useState<CartButtonStatus>(initialStatus);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const hasShortage = initialShortages.length > 0;
 
   const cartTotal = useMemo(
     () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
@@ -55,28 +69,16 @@ export default function CartPageClient({
   // Only starts once submitted — while still in CART on this page,
   // there's nothing server-side that could change without this
   // customer's own action (unlike /menu's browsing view, which polls
-  // even pre-submit for shared Table sessions).
-  useEffect(() => {
-    if (status !== "PENDING_APPROVAL") return;
-
-    const interval = setInterval(async () => {
-      const result = await pollOrderStatusAction();
-      const isTerminalOutcome =
-        result.status === "no_session" ||
-        result.status === "PAID" ||
-        result.status === "CANCELLED" ||
-        result.status === "COMPLETED";
-
-      if (isTerminalOutcome) {
-        router.push(`/menu?locationId=${locationId}`);
-        return;
-      }
+  // even pre-submit for shared Table sessions — see
+  // counterorderclient.tsx's isTableSession).
+  usePollOrderStatus(
+    status === "PENDING_APPROVAL",
+    (result) => {
       setStatus(result.status as CartButtonStatus);
       setCart(result.cart);
-    }, POLL_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, [status, locationId, router]);
+    },
+    () => router.push(`/menu?locationId=${locationId}`),
+  );
 
   function handleSubmit() {
     setError(null);
@@ -87,6 +89,23 @@ export default function CartPageClient({
         return;
       }
       setStatus("PENDING_APPROVAL");
+    });
+  }
+
+  // Only shown once the current round is PENDING/COOKING (see
+  // startNextRoundAction / OrderSessionService.startNextRound for the
+  // gate) — a fresh round means a fresh cart, so this navigates back
+  // to /menu rather than staying here once it succeeds.
+  function handleOrderMore() {
+    setError(null);
+    startTransition(async () => {
+      const result = await startNextRoundAction();
+      if (!result.success) {
+        setError(result.error.message);
+        return;
+      }
+      router.push(`/menu?locationId=${locationId}`);
+      router.refresh();
     });
   }
 
@@ -131,14 +150,35 @@ export default function CartPageClient({
           </Typography>
         ) : (
           <>
-            <CartList cart={cart} />
+            <CartList cart={cart} shortages={initialShortages} />
             <CartButton
               status={status}
               itemCount={cart.length}
               total={cartTotal}
-              disabled={isPending || cart.length === 0}
+              disabled={isPending || cart.length === 0 || hasShortage}
               onClick={handleSubmit}
             />
+            {hasShortage && status === "CART" && (
+              <Typography
+                variant="caption"
+                color="error"
+                sx={{ display: "block", mt: 1 }}
+              >
+                Some items in your cart just ran out — please ask staff for help
+                before submitting.
+              </Typography>
+            )}
+            {(status === "PENDING" || status === "COOKING") && (
+              <Button
+                variant="outlined"
+                fullWidth
+                disabled={isPending}
+                onClick={handleOrderMore}
+                sx={{ mt: 1.5 }}
+              >
+                Order More
+              </Button>
+            )}
           </>
         )}
       </Box>

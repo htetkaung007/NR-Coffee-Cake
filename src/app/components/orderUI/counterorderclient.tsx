@@ -33,13 +33,12 @@ export default function CounterOrderClient({
 
   const [cart, setCart] = useState(initialCart);
 
-  // Design doc "Step 3: Polling" — originally only polled once
-  // submitted (PENDING_APPROVAL), since a lone customer's own cart
-  // can't change out from under them. Now also polls during CART:
-  // Table QR sessions are shared across a group's phones (see
-  // TABLE_SESSION_COOKIE), so Person B's screen needs to notice when
-  // Person A adds something. hasSession=false ရင် order/cart
-  // လုံးဝမရှိသေးလို့ (view-only browsing) poll လုပ်စရာမလိုဘူး.
+  // No polling here — Counter QR is now the only flow this component
+  // handles (Table QR moved to TableOrderClient's per-customer draft
+  // model), and a single Counter customer's own cart can't change
+  // from anyone but this same phone, so there's nothing pre-submit to
+  // poll for. Post-submit status polling lives on /cart instead (see
+  // CartPageClient).
 
   // Every Add always goes through MenuDetailDialog now, even for a
   // menu with no addon categories at all — that keeps a single code
@@ -51,9 +50,10 @@ export default function CounterOrderClient({
   // not surfaced again here.
   async function addToCart(
     menu: { id: number; name: string; price: number },
+    quantity: number,
     addonIds: number[],
   ): Promise<string | null> {
-    const result = await addToCartAction(menu.id, 1, addonIds);
+    const result = await addToCartAction(menu.id, quantity, addonIds);
     if (!result.success) {
       return result.error.message;
     }
@@ -61,8 +61,9 @@ export default function CounterOrderClient({
       ...current,
       {
         id: result.data.id,
+        menuId: menu.id,
         menuName: menu.name,
-        quantity: 1,
+        quantity,
         price: menu.price,
       },
     ]);

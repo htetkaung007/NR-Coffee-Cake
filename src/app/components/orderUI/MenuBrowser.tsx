@@ -36,9 +36,10 @@ interface MenuBrowserProps {
   /** Called once the customer confirms Add-to-cart inside the detail
    *  dialog (addons + quantity already resolved there). Returns an
    *  error message string to show inline in the dialog, or null on
-   *  success — same contract MenuDetailDialog already expects. */
+   *  success — same contract MenuDetailDialog itself expects. */
   onAddToCart: (
     menu: { id: number; name: string; price: number },
+    quantity: number,
     addonIds: number[],
   ) => Promise<string | null>;
 }
@@ -170,10 +171,10 @@ export default function MenuBrowser({
         locationId={locationId}
         canOrder={canOrder}
         onClose={() => setDetailMenuId(null)}
-        onAddToCart={async (menuId, addonIds) => {
+        onSubmit={async (menuId, quantity, addonIds) => {
           const menu = menus.find((item) => item.id === menuId);
           if (!menu) return "This item is no longer available.";
-          return onAddToCart(menu, addonIds);
+          return onAddToCart(menu, quantity, addonIds);
         }}
       />
     </>

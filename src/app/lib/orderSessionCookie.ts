@@ -5,16 +5,25 @@
  *  never drifts between the two. */
 export const COUNTER_SESSION_COOKIE = "counter_session_token";
 
-/** Same idea as COUNTER_SESSION_COOKIE, but for Table QR sessions —
- *  kept as a SEPARATE cookie (not reused) because a customer's phone
- *  could in principle carry both at once (scanned a Counter QR
- *  earlier, then also scans a Table QR) and the two must resolve
- *  independently. Every phone that scans the same table's QR gets
- *  this SAME token written back (see resolveTableQrScan/
- *  resolveTableSession) — that's what makes the cart shared across
- *  the group's phones, unlike Counter QR where each phone's cookie
- *  is its own individual session. */
-export const TABLE_SESSION_COOKIE = "table_session_token";
+// TABLE_SESSION_COOKIE was removed — the per-customer draft redesign
+// (see CONTRIBUTOR_TOKEN_COOKIE below) moved everything Table-QR
+// related onto tableId as the shared key instead: drafts before Send
+// to Kitchen, and round status after it (see TableDraftService,
+// OrderSessionService.getActiveRoundForTable). Every phone at a table
+// needs to see the SAME thing regardless of which phone did what, and
+// keying that off tableId achieves that automatically — keying it off
+// a session-token cookie (this constant's old job) didn't, which was
+// the bug the redesign fixed (see the "Round 2 sync bug" design
+// discussion).
+
+/** Per-customer draft-ownership token — see the Table-QR per-customer
+ *  draft design (Order.contributorToken). Unlike COUNTER/TABLE_SESSION
+ *  above (one value each), this cookie holds a JSON map of
+ *  { [tableId]: token } since one browser may carry drafts for several
+ *  different tables over its lifetime (see contributorToken.ts for the
+ *  read/write helpers — this constant is just the shared name so the
+ *  scan Route Handler and the draft Server Actions can't drift). */
+export const CONTRIBUTOR_TOKEN_COOKIE = "table_contributor_tokens";
 
 // No Max-Age is set on this cookie — it's a plain browser-session
 // cookie (cleared when the browser closes). The database is the real

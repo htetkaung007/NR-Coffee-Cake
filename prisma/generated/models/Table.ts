@@ -30,12 +30,14 @@ export type TableAvgAggregateOutputType = {
   id: number | null
   locationId: number | null
   activeSessionId: number | null
+  contributorEpoch: number | null
 }
 
 export type TableSumAggregateOutputType = {
   id: number | null
   locationId: number | null
   activeSessionId: number | null
+  contributorEpoch: number | null
 }
 
 export type TableMinAggregateOutputType = {
@@ -45,6 +47,7 @@ export type TableMinAggregateOutputType = {
   locationId: number | null
   counterAccessKey: string | null
   activeSessionId: number | null
+  contributorEpoch: number | null
   isCounter: boolean | null
   createdAt: Date | null
   updateTime: Date | null
@@ -58,6 +61,7 @@ export type TableMaxAggregateOutputType = {
   locationId: number | null
   counterAccessKey: string | null
   activeSessionId: number | null
+  contributorEpoch: number | null
   isCounter: boolean | null
   createdAt: Date | null
   updateTime: Date | null
@@ -71,6 +75,7 @@ export type TableCountAggregateOutputType = {
   locationId: number
   counterAccessKey: number
   activeSessionId: number
+  contributorEpoch: number
   isCounter: number
   createdAt: number
   updateTime: number
@@ -83,12 +88,14 @@ export type TableAvgAggregateInputType = {
   id?: true
   locationId?: true
   activeSessionId?: true
+  contributorEpoch?: true
 }
 
 export type TableSumAggregateInputType = {
   id?: true
   locationId?: true
   activeSessionId?: true
+  contributorEpoch?: true
 }
 
 export type TableMinAggregateInputType = {
@@ -98,6 +105,7 @@ export type TableMinAggregateInputType = {
   locationId?: true
   counterAccessKey?: true
   activeSessionId?: true
+  contributorEpoch?: true
   isCounter?: true
   createdAt?: true
   updateTime?: true
@@ -111,6 +119,7 @@ export type TableMaxAggregateInputType = {
   locationId?: true
   counterAccessKey?: true
   activeSessionId?: true
+  contributorEpoch?: true
   isCounter?: true
   createdAt?: true
   updateTime?: true
@@ -124,6 +133,7 @@ export type TableCountAggregateInputType = {
   locationId?: true
   counterAccessKey?: true
   activeSessionId?: true
+  contributorEpoch?: true
   isCounter?: true
   createdAt?: true
   updateTime?: true
@@ -224,6 +234,7 @@ export type TableGroupByOutputType = {
   locationId: number
   counterAccessKey: string | null
   activeSessionId: number | null
+  contributorEpoch: number
   isCounter: boolean | null
   createdAt: Date
   updateTime: Date
@@ -260,6 +271,7 @@ export type TableWhereInput = {
   locationId?: Prisma.IntFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableFilter<"Table"> | number | null
+  contributorEpoch?: Prisma.IntFilter<"Table"> | number
   isCounter?: Prisma.BoolNullableFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Table"> | Date | string
@@ -276,6 +288,7 @@ export type TableOrderByWithRelationInput = {
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrderInput | Prisma.SortOrder
   activeSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  contributorEpoch?: Prisma.SortOrder
   isCounter?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -295,6 +308,7 @@ export type TableWhereUniqueInput = Prisma.AtLeast<{
   locationId?: Prisma.IntFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableFilter<"Table"> | number | null
+  contributorEpoch?: Prisma.IntFilter<"Table"> | number
   isCounter?: Prisma.BoolNullableFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Table"> | Date | string
@@ -311,6 +325,7 @@ export type TableOrderByWithAggregationInput = {
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrderInput | Prisma.SortOrder
   activeSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  contributorEpoch?: Prisma.SortOrder
   isCounter?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -332,6 +347,7 @@ export type TableScalarWhereWithAggregatesInput = {
   locationId?: Prisma.IntWithAggregatesFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableWithAggregatesFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableWithAggregatesFilter<"Table"> | number | null
+  contributorEpoch?: Prisma.IntWithAggregatesFilter<"Table"> | number
   isCounter?: Prisma.BoolNullableWithAggregatesFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"Table"> | Date | string
@@ -343,6 +359,7 @@ export type TableCreateInput = {
   qrcodeImageUrl?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -359,6 +376,7 @@ export type TableUncheckedCreateInput = {
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -372,6 +390,7 @@ export type TableUpdateInput = {
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -388,6 +407,7 @@ export type TableUncheckedUpdateInput = {
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -403,6 +423,7 @@ export type TableCreateManyInput = {
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -414,6 +435,7 @@ export type TableUpdateManyMutationInput = {
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -427,6 +449,7 @@ export type TableUncheckedUpdateManyInput = {
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -440,6 +463,7 @@ export type TableCountOrderByAggregateInput = {
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
+  contributorEpoch?: Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -450,6 +474,7 @@ export type TableAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
+  contributorEpoch?: Prisma.SortOrder
 }
 
 export type TableMaxOrderByAggregateInput = {
@@ -459,6 +484,7 @@ export type TableMaxOrderByAggregateInput = {
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
+  contributorEpoch?: Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -472,6 +498,7 @@ export type TableMinOrderByAggregateInput = {
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
+  contributorEpoch?: Prisma.SortOrder
   isCounter?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -482,6 +509,7 @@ export type TableSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
+  contributorEpoch?: Prisma.SortOrder
 }
 
 export type TableListRelationFilter = {
@@ -585,6 +613,7 @@ export type TableCreateWithoutLocationInput = {
   qrcodeImageUrl?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -599,6 +628,7 @@ export type TableUncheckedCreateWithoutLocationInput = {
   qrcodeImageUrl?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -643,6 +673,7 @@ export type TableScalarWhereInput = {
   locationId?: Prisma.IntFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableFilter<"Table"> | number | null
+  contributorEpoch?: Prisma.IntFilter<"Table"> | number
   isCounter?: Prisma.BoolNullableFilter<"Table"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Table"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Table"> | Date | string
@@ -654,6 +685,7 @@ export type TableCreateWithoutOrdersInput = {
   qrcodeImageUrl?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -669,6 +701,7 @@ export type TableUncheckedCreateWithoutOrdersInput = {
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -697,6 +730,7 @@ export type TableUpdateWithoutOrdersInput = {
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -712,6 +746,7 @@ export type TableUncheckedUpdateWithoutOrdersInput = {
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -724,6 +759,7 @@ export type TableCreateWithoutOrderSessionsInput = {
   qrcodeImageUrl?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -739,6 +775,7 @@ export type TableUncheckedCreateWithoutOrderSessionsInput = {
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -767,6 +804,7 @@ export type TableUpdateWithoutOrderSessionsInput = {
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -782,6 +820,7 @@ export type TableUncheckedUpdateWithoutOrderSessionsInput = {
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -795,6 +834,7 @@ export type TableCreateManyLocationInput = {
   qrcodeImageUrl?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
+  contributorEpoch?: number
   isCounter?: boolean | null
   createdAt?: Date | string
   updateTime?: Date | string
@@ -806,6 +846,7 @@ export type TableUpdateWithoutLocationInput = {
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -820,6 +861,7 @@ export type TableUncheckedUpdateWithoutLocationInput = {
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -834,6 +876,7 @@ export type TableUncheckedUpdateManyWithoutLocationInput = {
   qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
   isCounter?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -887,6 +930,7 @@ export type TableSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
+  contributorEpoch?: boolean
   isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -904,6 +948,7 @@ export type TableSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
+  contributorEpoch?: boolean
   isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -918,6 +963,7 @@ export type TableSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
+  contributorEpoch?: boolean
   isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -932,13 +978,14 @@ export type TableSelectScalar = {
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
+  contributorEpoch?: boolean
   isCounter?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type TableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "qrcodeImageUrl" | "locationId" | "counterAccessKey" | "activeSessionId" | "isCounter" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["table"]>
+export type TableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "qrcodeImageUrl" | "locationId" | "counterAccessKey" | "activeSessionId" | "contributorEpoch" | "isCounter" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["table"]>
 export type TableInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   OrderSessions?: boolean | Prisma.Table$OrderSessionsArgs<ExtArgs>
@@ -966,6 +1013,7 @@ export type $TablePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     locationId: number
     counterAccessKey: string | null
     activeSessionId: number | null
+    contributorEpoch: number
     isCounter: boolean | null
     createdAt: Date
     updateTime: Date
@@ -1402,6 +1450,7 @@ export interface TableFieldRefs {
   readonly locationId: Prisma.FieldRef<"Table", 'Int'>
   readonly counterAccessKey: Prisma.FieldRef<"Table", 'String'>
   readonly activeSessionId: Prisma.FieldRef<"Table", 'Int'>
+  readonly contributorEpoch: Prisma.FieldRef<"Table", 'Int'>
   readonly isCounter: Prisma.FieldRef<"Table", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Table", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"Table", 'DateTime'>
