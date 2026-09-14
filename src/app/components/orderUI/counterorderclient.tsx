@@ -7,8 +7,12 @@ import { Box, Typography } from "@mui/material";
 import OrderTopBar from "./OrderTopBar";
 import MenuBrowser, { MenuOption } from "./MenuBrowser";
 
-import { addToCartAction } from "@/app/customer/action";
-import { CartLine } from "@/app/cart/Cartlist";
+import { addToCartAction } from "@/app/(storefront)/customer/action";
+import { CartLine } from "@/app/(storefront)/cart/Cartlist";
+import {
+  ORDER_PAGE_BACKGROUND_COLOR,
+  ORDER_PAGE_BACKGROUND_IMAGE,
+} from "./orderPageBackground";
 
 interface CounterOrderClientProps {
   hasSession: boolean;
@@ -79,24 +83,9 @@ export default function CounterOrderClient({
     <Box
       sx={{
         minHeight: "100vh",
-        p: 3,
-        border: "2px solid #59402F",
-        borderRadius: "9px",
-        boxShadow: "8px 8px 0 #59402F",
-        background: `
-      radial-gradient(
-        circle,
-        rgba(79, 53, 37, 0.12) 1px,
-        transparent 1.25px
-      ),
-      linear-gradient(
-        135deg,
-        rgba(197, 151, 104, 0.08),
-        transparent 45%
-      ),
-      #EFE5D3
-    `,
-        backgroundSize: "9px 9px, auto, auto",
+        backgroundColor: ORDER_PAGE_BACKGROUND_COLOR,
+        backgroundImage: ORDER_PAGE_BACKGROUND_IMAGE,
+        backgroundAttachment: "fixed",
       }}
     >
       <OrderTopBar
@@ -106,6 +95,7 @@ export default function CounterOrderClient({
           router.push(`/cart?locationId=${locationId}`);
           router.refresh();
         }}
+        onHistoryClick={() => router.push(`/history?locationId=${locationId}`)}
       />
       <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: "auto" }}>
         {hasSession && (
@@ -127,6 +117,9 @@ export default function CounterOrderClient({
           menus={menus}
           locationId={locationId}
           canOrder={hasSession}
+          backgroundColor={ORDER_PAGE_BACKGROUND_COLOR}
+          backgroundImage={ORDER_PAGE_BACKGROUND_IMAGE}
+          backgroundAttachment="fixed"
           onAddToCart={addToCart}
         />
       </Box>

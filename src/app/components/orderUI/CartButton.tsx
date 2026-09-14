@@ -11,11 +11,6 @@ export type CartButtonStatus =
 
 interface CartButtonProps {
   status: CartButtonStatus;
-  itemCount: number;
-  /** Sum of price × quantity across the cart. Only shown while still
-   *  in CART status (once submitted, the order total won't change on
-   *  this screen, so showing the item breakdown is enough). */
-  total?: number;
   disabled: boolean;
   onClick: () => void;
   /** "Submit Order" (Counter QR) vs "Send to Kitchen" (Table QR's
@@ -34,8 +29,6 @@ interface CartButtonProps {
  */
 export default function CartButton({
   status,
-  itemCount,
-  total,
   disabled,
   onClick,
   submitLabel = "Submit Order",
@@ -73,18 +66,20 @@ export default function CartButton({
   }
 
   return (
-    <Button variant="contained" fullWidth disabled={disabled} onClick={onClick}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <Typography component="span" sx={{ fontWeight: 700 }}>
-          {submitLabel}
-        </Typography>
-        {itemCount > 0 && (
-          <Typography component="span" variant="body2">
-            ({itemCount} {itemCount === 1 ? "item" : "items"}
-            {total !== undefined ? ` · ${total.toLocaleString()} MMK` : ""})
-          </Typography>
-        )}
-      </Stack>
+    <Button
+      variant="contained"
+      fullWidth
+      disabled={disabled}
+      onClick={onClick}
+      sx={{
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+        whiteSpace: "nowrap",
+        "&:hover": { transform: "translateY(-1px)", boxShadow: 4 },
+      }}
+    >
+      <Typography component="span" sx={{ fontWeight: 700 }}>
+        {submitLabel}
+      </Typography>
     </Button>
   );
 }

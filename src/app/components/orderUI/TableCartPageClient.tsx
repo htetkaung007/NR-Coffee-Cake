@@ -2,10 +2,17 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Box, IconButton, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-import OrderTopBar from "./OrderTopBar";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 import DraftList from "./DraftList";
 import CartButton from "./CartButton";
@@ -16,8 +23,8 @@ import {
   removeDraftItemAction,
   submitDraftAction,
   updateDraftItemAction,
-} from "@/app/customer/action";
-import { DraftLine, Shortage } from "@/app/cart/Cartlist";
+} from "@/app/(storefront)/customer/action";
+import { DraftLine, Shortage } from "@/app/(storefront)/cart/Cartlist";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -113,9 +120,19 @@ export default function TableCartPageClient({
   }
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
-      <OrderTopBar shopName={shopName} cartItemCount={draftItems.length} />
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
+    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
+      <Box
+        sx={{
+          p: { xs: 2, sm: 3 },
+          maxWidth: 720,
+          mx: "auto",
+          width: "100%",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
         <Stack
           direction="row"
           spacing={0.5}
@@ -128,7 +145,12 @@ export default function TableCartPageClient({
           >
             <ArrowBackIcon fontSize="small" />
           </IconButton>
-          <Typography variant="h6">Table order</Typography>
+          <Stack>
+            <Typography variant="h6">Table order</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {shopName ?? "Café Maw"}
+            </Typography>
+          </Stack>
         </Stack>
 
         <ActiveRoundBanner activeRound={activeRound} />
@@ -144,23 +166,72 @@ export default function TableCartPageClient({
             Nothing in the draft yet — go back to the menu to add something.
           </Typography>
         ) : (
-          <>
-            <DraftList
-              draftItems={draftItems}
-              myContributorToken={myContributorToken}
-              shortages={shortages}
-              onRemove={handleRemove}
-              onEdit={(item) => setEditingItem(item)}
-              isPending={isPending}
-            />
-            <CartButton
-              status="CART"
-              itemCount={draftItems.length}
-              total={draftTotal}
-              disabled={isPending || draftItems.length === 0 || hasShortage}
-              onClick={handleSendToKitchen}
-              submitLabel="Send to Kitchen"
-            />
+          <Box
+            sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+          >
+            <Box
+              sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 3,
+                p: 1.5,
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+              }}
+            >
+              <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                <DraftList
+                  draftItems={draftItems}
+                  myContributorToken={myContributorToken}
+                  shortages={shortages}
+                  onRemove={handleRemove}
+                  onEdit={(item) => setEditingItem(item)}
+                  isPending={isPending}
+                />
+              </Box>
+              <Box sx={{ pt: 1.5 }}>
+                <Divider sx={{ mb: 1.5 }} />
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: "space-between", mb: 1.5 }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    Total Price
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {draftTotal.toLocaleString()} MMK
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      flex: 1,
+                      whiteSpace: "nowrap",
+                      transition:
+                        "transform 0.15s ease, background-color 0.15s ease",
+                      "&:hover": {
+                        transform: "translateY(-1px)",
+                        bgcolor: "action.hover",
+                      },
+                    }}
+                    onClick={goBackToMenu}
+                  >
+                    Add More
+                  </Button>
+                  <Box sx={{ flex: 2 }}>
+                    <CartButton
+                      status="CART"
+                      disabled={isPending || draftItems.length === 0 || hasShortage}
+                      onClick={handleSendToKitchen}
+                      submitLabel="Send to Kitchen"
+                    />
+                  </Box>
+                </Stack>
+              </Box>
+            </Box>
             {hasShortage && (
               <Typography
                 variant="caption"
@@ -171,7 +242,7 @@ export default function TableCartPageClient({
                 kitchen.
               </Typography>
             )}
-          </>
+          </Box>
         )}
       </Box>
 

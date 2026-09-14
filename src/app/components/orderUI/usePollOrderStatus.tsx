@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { pollOrderStatusAction } from "@/app/customer/action";
+import { pollOrderStatusAction } from "@/app/(storefront)/customer/action";
 
 export const POLL_INTERVAL_MS = 4000;
 

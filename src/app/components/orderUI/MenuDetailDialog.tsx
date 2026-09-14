@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogActions,
   IconButton,
   Box,
   Typography,
@@ -17,11 +18,12 @@ import {
   Button,
   CircularProgress,
   Alert,
+  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import { getMenuDetailAction } from "@/app/customer/action";
+import { getMenuDetailAction } from "@/app/(storefront)/customer/action";
 
 interface Addon {
   id: number;
@@ -167,6 +169,19 @@ export default function MenuDetailDialog({
   const maxQuantity = Math.max(detail?.quantity ?? 0, editing?.quantity ?? 0);
   const isSoldOut = maxQuantity <= 0 || detail?.isAvailable === false;
 
+  // Live preview of what "Add to Cart" is about to submit — base price
+  // plus whichever addons are currently selected, times quantity. Not
+  // the source of truth for billing (that's computed server-side from
+  // scratch, see OrderSessionApprovalService), just UI feedback.
+  const allAddons = detail?.addonCategories.flatMap((c) => c.addons) ?? [];
+  const selectedAddonsTotal = Object.values(selected)
+    .flat()
+    .reduce((sum, addonId) => {
+      const addon = allAddons.find((a) => a.id === addonId);
+      return sum + (addon?.price ?? 0);
+    }, 0);
+  const totalPrice = ((detail?.price ?? 0) + selectedAddonsTotal) * quantity;
+
   async function handleSubmit() {
     if (!detail) return;
     setSubmitting(true);
@@ -182,9 +197,21 @@ export default function MenuDetailDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ display: "flex", alignItems: "center", pr: 6 }}>
-        {detail?.name ?? ""}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="xs"
+      sx={{
+        "& .MuiDialog-paper": {
+          maxWidth: 480,
+          maxHeight: "85vh",
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
+    >
+      <DialogTitle sx={{ pr: 6, flexShrink: 0 }}>
         <IconButton
           onClick={onClose}
           sx={{ position: "absolute", right: 8, top: 8 }}
@@ -192,7 +219,7 @@ export default function MenuDetailDialog({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ flex: "1 1 auto", overflowY: "auto" }}>
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress size={28} />
@@ -207,14 +234,35 @@ export default function MenuDetailDialog({
 
         {!loading && detail && (
           <Stack spacing={2.5}>
+            <Box sx={{ textAlign: "center" }}>
+              {detail.imageUrl && (
+                <Box
+                  component="img"
+                  src={detail.imageUrl}
+                  alt={detail.name}
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    borderRadius: 2,
+                    objectFit: "cover",
+                    mx: "auto",
+                    mb: 1,
+                  }}
+                />
+              )}
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                {detail.name}
+              </Typography>
+            </Box>
+
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              {detail.price.toLocaleString()} MMK
+            </Typography>
             {detail.description && (
               <Typography variant="body2" color="text.secondary">
                 {detail.description}
               </Typography>
             )}
-            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              {detail.price.toLocaleString()} MMK
-            </Typography>
 
             {isSoldOut ? (
               <Alert severity="warning">This item just sold out.</Alert>
@@ -259,19 +307,32 @@ export default function MenuDetailDialog({
             {detail.addonCategories.map((category) => (
               <Box key={category.id}>
                 <Divider sx={{ mb: 1.5 }} />
-                <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                  {category.name}
+                <Stack
+                  direction="row"
+                  sx={{
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 0.5,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {category.name}
+                  </Typography>
                   {category.isRequired && (
-                    <Typography
-                      component="span"
-                      variant="caption"
+                    <Chip
+                      label="Required"
+                      size="small"
                       color="error"
-                      sx={{ ml: 0.75 }}
-                    >
-                      Required
-                    </Typography>
+                      variant="outlined"
+                      sx={{
+                        height: 20,
+                        fontSize: "0.7rem",
+                        fontWeight: 600,
+                        borderRadius: 1,
+                      }}
+                    />
                   )}
-                </Typography>
+                </Stack>
 
                 {category.isRequired ? (
                   <RadioGroup
@@ -286,7 +347,14 @@ export default function MenuDetailDialog({
                         value={addon.id}
                         disabled={!addon.isAvailable}
                         control={<Radio size="small" />}
-                        label={addonLabel(addon)}
+                        label={<AddonLabel addon={addon} />}
+                        sx={{
+                          width: "100%",
+                          mr: 0,
+                          "& .MuiFormControlLabel-label": {
+                            width: "100%",
+                          },
+                        }}
                       />
                     ))}
                   </RadioGroup>
@@ -307,7 +375,14 @@ export default function MenuDetailDialog({
                             }
                           />
                         }
-                        label={addonLabel(addon)}
+                        label={<AddonLabel addon={addon} />}
+                        sx={{
+                          width: "100%",
+                          mr: 0,
+                          "& .MuiFormControlLabel-label": {
+                            width: "100%",
+                          },
+                        }}
                       />
                     ))}
                   </Stack>
@@ -316,26 +391,66 @@ export default function MenuDetailDialog({
             ))}
 
             {error && <Alert severity="error">{error}</Alert>}
-
-            {canOrder && (
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={missingRequired || submitting || isSoldOut}
-                onClick={handleSubmit}
-              >
-                {editing ? "Save Changes" : "Add to Cart"}
-              </Button>
-            )}
           </Stack>
         )}
       </DialogContent>
+      {!loading && detail && canOrder && (
+        <DialogActions
+          sx={{
+            flexDirection: "column",
+            alignItems: "stretch",
+            flexShrink: 0,
+            px: 3,
+            py: 2,
+            gap: 1,
+            borderTop: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          {!isSoldOut && (
+            <Stack
+              direction="row"
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
+            >
+              <Typography sx={{ fontWeight: 700 }}>{detail.name}</Typography>
+              <Typography sx={{ fontWeight: 700, color: "primary.main" }}>
+                {totalPrice.toLocaleString()} MMK
+              </Typography>
+            </Stack>
+          )}
+          <Button
+            variant="contained"
+            fullWidth
+            disabled={missingRequired || submitting || isSoldOut}
+            onClick={handleSubmit}
+          >
+            {editing ? "Save Changes" : "Add to Cart"}
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 }
 
-function addonLabel(addon: Addon) {
-  const priceSuffix =
-    addon.price > 0 ? ` (+${addon.price.toLocaleString()} MMK)` : "";
-  return `${addon.name}${priceSuffix}`;
+function AddonLabel({ addon }: { addon: Addon }) {
+  return (
+    <Stack
+      direction="row"
+      sx={{
+        width: "100%",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <span>{addon.name}</span>
+      <Typography
+        variant="body2"
+        sx={{ fontWeight: 600 }}
+        color={addon.price > 0 ? "error" : "success"}
+      >
+        {addon.price > 0 ? `+${addon.price.toLocaleString()} MMK` : "Free"}
+      </Typography>
+    </Stack>
+  );
 }

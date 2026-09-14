@@ -19,6 +19,7 @@ import { getContributorToken } from "@/app/lib/contributorToken";
 import {
   addToCartSchema,
   removeFromCartSchema,
+  updateCartItemSchema,
   menuDetailSchema,
   addDraftItemSchema,
   removeDraftItemSchema,
@@ -27,13 +28,14 @@ import {
   pollTableSchema,
   AddToCartInput,
   RemoveFromCartInput,
+  UpdateCartItemInput,
   AddDraftItemInput,
   RemoveDraftItemInput,
   UpdateDraftItemInput,
   SubmitDraftInput,
 } from "@/app/lib/schemas/customerOrderSchema";
-import { isSessionTerminal } from "../services/orderService/orderSession.service";
-import { config } from "../utils/config";
+import { isSessionTerminal } from "@/app/services/orderService/orderSession.service";
+import { config } from "@/app/utils/config";
 
 /** The one place this file reads the Counter session cookie — every
  *  Counter-flow action below goes through this instead of repeating
@@ -112,6 +114,37 @@ export async function removeFromCartAction(orderId: number) {
   const result = await validateWith(removeFromCartSchema, {
     orderId,
   }).asyncAndThen(safeRemoveFromCart);
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath(`${url}/menu`);
+  }
+  return actionResult;
+}
+
+const safeUpdateCartItem = toSafeResult(async (input: UpdateCartItemInput) => {
+  const session = await requireSessionFromCookie();
+  return OrderSessionCartService.updateItemInCart(
+    session.id,
+    input.orderId,
+    input.quantity,
+    input.addonIds,
+  );
+});
+
+/** Counter QR's counterpart to updateDraftItemAction — powers CartList's
+ *  Edit button the same way updateDraftItemAction powers DraftList's
+ *  (MenuDetailDialog reused in "edit" mode calls this instead of
+ *  addToCartAction when it opened pre-filled from an existing line). */
+export async function updateCartItemAction(
+  orderId: number,
+  quantity: number,
+  addonIds: number[] = [],
+) {
+  const result = await validateWith(updateCartItemSchema, {
+    orderId,
+    quantity,
+    addonIds,
+  }).asyncAndThen(safeUpdateCartItem);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath(`${url}/menu`);

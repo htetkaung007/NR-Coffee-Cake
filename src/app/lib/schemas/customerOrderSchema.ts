@@ -22,6 +22,13 @@ export const removeFromCartSchema = z.object({
 });
 export type RemoveFromCartInput = z.infer<typeof removeFromCartSchema>;
 
+export const updateCartItemSchema = z.object({
+  orderId: positiveInt,
+  quantity,
+  addonIds,
+});
+export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
+
 export const menuDetailSchema = z.object({
   menuId: positiveInt,
   locationId: positiveInt,

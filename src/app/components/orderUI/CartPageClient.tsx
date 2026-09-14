@@ -6,18 +6,24 @@ import {
   Alert,
   Box,
   Button,
+  Divider,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-import OrderTopBar from "./OrderTopBar";
 import { usePollOrderStatus } from "./usePollOrderStatus";
 
-import { startNextRoundAction, submitOrderAction } from "@/app/customer/action";
-import CartList, { CartLine, Shortage } from "@/app/cart/Cartlist";
+import {
+  removeFromCartAction,
+  startNextRoundAction,
+  submitOrderAction,
+  updateCartItemAction,
+} from "@/app/(storefront)/customer/action";
+import CartList, { CartLine, Shortage } from "@/app/(storefront)/cart/Cartlist";
 import CartButton, { CartButtonStatus } from "./CartButton";
+import MenuDetailDialog from "./MenuDetailDialog";
 
 interface CartPageClientProps {
   locationId: number;
@@ -25,14 +31,14 @@ interface CartPageClientProps {
   shopName: string | null;
   initialStatus: CartButtonStatus;
   initialCart: CartLine[];
-  /** Snapshot taken at page load — see Cartlist.tsx's own comment on
-   *  why Counter's cart just shows this (dimmed, disables Submit)
-   *  rather than letting the customer fix it themselves: there's no
-   *  polling pre-submit here (a lone Counter customer's own cart can't
-   *  change from anyone but them — see counterorderclient.tsx), so
-   *  this can go stale between load and submit; the real enforcement
-   *  is still the atomic decrementStock inside submitOrderForApproval,
-   *  same as it always was. */
+  /** Snapshot taken at page load — there's no polling pre-submit here
+   *  (a lone Counter customer's own cart can't change from anyone but
+   *  them — see counterorderclient.tsx), so this can go stale between
+   *  load and submit; the real enforcement is still the atomic
+   *  decrementStock inside submitOrderForApproval, same as it always
+   *  was. Shown dimmed with a warning, and Edit/Cancel let the
+   *  customer self-serve a fix (same as Table's draft review) rather
+   *  than being forced to just wait or ask staff. */
   initialShortages: Shortage[];
 }
 
@@ -59,6 +65,7 @@ export default function CartPageClient({
   const [status, setStatus] = useState<CartButtonStatus>(initialStatus);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [editingItem, setEditingItem] = useState<CartLine | null>(null);
   const hasShortage = initialShortages.length > 0;
 
   const cartTotal = useMemo(
@@ -92,6 +99,18 @@ export default function CartPageClient({
     });
   }
 
+  function handleRemove(orderId: number) {
+    setError(null);
+    startTransition(async () => {
+      const result = await removeFromCartAction(orderId);
+      if (!result.success) {
+        setError(result.error.message);
+        return;
+      }
+      setCart((current) => current.filter((line) => line.id !== orderId));
+    });
+  }
+
   // Only shown once the current round is PENDING/COOKING (see
   // startNextRoundAction / OrderSessionService.startNextRound for the
   // gate) — a fresh round means a fresh cart, so this navigates back
@@ -120,9 +139,19 @@ export default function CartPageClient({
   }
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
-      <OrderTopBar shopName={shopName} cartItemCount={cart.length} />
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
+    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
+      <Box
+        sx={{
+          p: { xs: 2, sm: 3 },
+          maxWidth: 720,
+          mx: "auto",
+          width: "100%",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
         <Stack
           direction="row"
           spacing={0.5}
@@ -135,7 +164,12 @@ export default function CartPageClient({
           >
             <ArrowBackIcon fontSize="small" />
           </IconButton>
-          <Typography variant="h6">{orderNumber}</Typography>
+          <Stack>
+            <Typography variant="h6">{orderNumber}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {shopName ?? "Café Maw"}
+            </Typography>
+          </Stack>
         </Stack>
 
         {error && (
@@ -149,23 +183,89 @@ export default function CartPageClient({
             Your cart is empty — go back to the menu to add something.
           </Typography>
         ) : (
-          <>
-            <CartList cart={cart} shortages={initialShortages} />
-            <CartButton
-              status={status}
-              itemCount={cart.length}
-              total={cartTotal}
-              disabled={isPending || cart.length === 0 || hasShortage}
-              onClick={handleSubmit}
-            />
+          <Box
+            sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+          >
+            <Box
+              sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 3,
+                p: 1.5,
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+              }}
+            >
+              <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                <CartList
+                  cart={cart}
+                  shortages={initialShortages}
+                  editable={status === "CART"}
+                  isPending={isPending}
+                  onRemove={handleRemove}
+                  onEdit={setEditingItem}
+                />
+              </Box>
+              {status === "CART" ? (
+                <Box sx={{ pt: 1.5 }}>
+                  <Divider sx={{ mb: 1.5 }} />
+                  <Stack
+                    direction="row"
+                    sx={{ justifyContent: "space-between", mb: 1.5 }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      Total Price
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {cartTotal.toLocaleString()} MMK
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        flex: 1,
+                        whiteSpace: "nowrap",
+                        transition:
+                          "transform 0.15s ease, background-color 0.15s ease",
+                        "&:hover": {
+                          transform: "translateY(-1px)",
+                          bgcolor: "action.hover",
+                        },
+                      }}
+                      onClick={goBackToMenu}
+                    >
+                      Add More
+                    </Button>
+                    <Box sx={{ flex: 2 }}>
+                      <CartButton
+                        status={status}
+                        disabled={isPending || cart.length === 0 || hasShortage}
+                        onClick={handleSubmit}
+                      />
+                    </Box>
+                  </Stack>
+                </Box>
+              ) : (
+                <Box sx={{ pt: 1.5 }}>
+                  <CartButton
+                    status={status}
+                    disabled={isPending || cart.length === 0 || hasShortage}
+                    onClick={handleSubmit}
+                  />
+                </Box>
+              )}
+            </Box>
             {hasShortage && status === "CART" && (
               <Typography
                 variant="caption"
                 color="error"
                 sx={{ display: "block", mt: 1 }}
               >
-                Some items in your cart just ran out — please ask staff for help
-                before submitting.
+                Some items in your cart just ran out — edit or cancel them
+                below before submitting.
               </Typography>
             )}
             {(status === "PENDING" || status === "COOKING") && (
@@ -179,9 +279,44 @@ export default function CartPageClient({
                 Order More
               </Button>
             )}
-          </>
+          </Box>
         )}
       </Box>
+
+      <MenuDetailDialog
+        open={editingItem !== null}
+        menuId={editingItem?.menuId ?? null}
+        locationId={locationId}
+        canOrder
+        onClose={() => setEditingItem(null)}
+        editing={
+          editingItem
+            ? {
+                quantity: editingItem.quantity,
+                addonIds: editingItem.addonIds ?? [],
+              }
+            : undefined
+        }
+        onSubmit={async (_menuId, quantity, addonIds) => {
+          if (!editingItem) return "Nothing to update.";
+          const result = await updateCartItemAction(
+            editingItem.id,
+            quantity,
+            addonIds,
+          );
+          if (!result.success) {
+            return result.error.message;
+          }
+          setCart((current) =>
+            current.map((line) =>
+              line.id === editingItem.id
+                ? { ...line, quantity, addonIds }
+                : line,
+            ),
+          );
+          return null;
+        }}
+      />
     </Box>
   );
 }

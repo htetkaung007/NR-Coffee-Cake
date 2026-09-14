@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 export const createMenuSchema = z.object({
-  name: z.string().trim().min(1, "Menu item name is required.").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Menu item name is required.")
+    .max(50, "Menu item name cannot exceed 50 characters."),
   description: z
     .string()
     .trim()

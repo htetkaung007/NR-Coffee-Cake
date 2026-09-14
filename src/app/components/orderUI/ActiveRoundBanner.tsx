@@ -2,7 +2,10 @@
 
 import { Chip } from "@mui/material";
 
-const ROUND_STATUS_LABEL: Record<string, string> = {
+/** Exported so the History page (see /history/page.tsx) can label past
+ *  rounds the same way this banner labels the current one, instead of
+ *  keeping a second copy that could drift. */
+export const ROUND_STATUS_LABEL: Record<string, string> = {
   PENDING_APPROVAL: "Awaiting counter approval",
   PENDING: "Confirmed — cooking soon",
   COOKING: "Cooking",

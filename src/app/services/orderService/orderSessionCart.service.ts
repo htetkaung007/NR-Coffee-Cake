@@ -47,7 +47,6 @@ export class OrderSessionCartService {
           quantity,
           tableId,
           orderSessionId: sessionId,
-          status: "CART",
         },
       });
 
@@ -90,6 +89,56 @@ export class OrderSessionCartService {
     await prisma.$transaction(async (tx: Tx) => {
       await tx.ordersAddon.deleteMany({ where: { orderId } });
       await tx.order.delete({ where: { id: orderId } });
+    });
+  }
+
+  /** Same ownership+status boundary as removeItemFromCart (orderId
+   *  must belong to sessionId, session must still be CART), combined
+   *  with TableDraftService.updateDraftItem's replace-wholesale addon
+   *  logic (delete then recreate rather than diffing old vs new — the
+   *  addon set is small enough that a diff wouldn't meaningfully save
+   *  work). Table QR's draft rows and Counter's session cart rows are
+   *  both just Order rows (see TableDraftService's class comment), so
+   *  this is the Counter-session-scoped twin of updateDraftItem rather
+   *  than a new concept. */
+  static async updateItemInCart(
+    sessionId: number,
+    orderId: number,
+    quantity: number,
+    addonIds: number[] = [],
+  ) {
+    const session = await prisma.orderSession.findFirst({
+      where: { id: sessionId, isArchived: false },
+    });
+    if (!session) throw new NotFoundError("OrderSession", sessionId);
+    if (session.status !== "CART") {
+      throw new ValidationError("This order can no longer be edited.");
+    }
+
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, orderSessionId: sessionId },
+    });
+    if (!order) {
+      throw new NotFoundError("Order", orderId);
+    }
+
+    await OrderSessionCartService.validateAddonSelection(
+      order.menuId,
+      addonIds,
+    );
+
+    return prisma.$transaction(async (tx: Tx) => {
+      await tx.ordersAddon.deleteMany({ where: { orderId } });
+      const updated = await tx.order.update({
+        where: { id: orderId },
+        data: { quantity },
+      });
+      if (addonIds.length > 0) {
+        await tx.ordersAddon.createMany({
+          data: addonIds.map((addonId) => ({ orderId, addonId })),
+        });
+      }
+      return updated;
     });
   }
 

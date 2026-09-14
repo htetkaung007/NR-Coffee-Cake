@@ -77,6 +77,7 @@ export default function MenuForm({
   const [showSuccess, setShowSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const MAX_NAME_LENGTH = 50;
   const MAX_DESCRIPTION_LENGTH = 100;
 
   useEffect(
@@ -212,6 +213,10 @@ export default function MenuForm({
               fullWidth
               value={name}
               onChange={(event) => setName(event.target.value)}
+              slotProps={{
+                htmlInput: { maxLength: MAX_NAME_LENGTH },
+              }}
+              helperText={`${name.length}/${MAX_NAME_LENGTH} characters`}
             />
             <TextField
               label="Description"

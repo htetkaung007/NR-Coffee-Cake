@@ -3,6 +3,7 @@
 import { AppBar, Toolbar, Badge, IconButton, Typography } from "@mui/material";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 
 interface OrderTopBarProps {
   /** Company.name (the brand's shop name), not Location.name (a branch
@@ -17,18 +18,23 @@ interface OrderTopBarProps {
   /** Optional — lets the page decide what tapping the cart icon does
    *  (e.g. scroll down to the cart summary). No-op if omitted. */
   onCartClick?: () => void;
+  /** Optional — lets the page decide what tapping the history icon
+   *  does (e.g. navigate to /history for this table's tab). No-op if
+   *  omitted; the icon itself always shows, same as the cart icon. */
+  onHistoryClick?: () => void;
 }
 
 /**
- * Simple customer-facing header — Logo + shop name on the left, cart
- * icon on the right, per the design mock. Plain background.paper (not
- * primary-tinted) to match the mock's white bar, distinct from
- * Backoffice's own AppBar.
+ * Simple customer-facing header — Logo + shop name on the left, history
+ * and cart icons on the right, per the design mock. Plain
+ * background.paper (not primary-tinted) to match the mock's white bar,
+ * distinct from Backoffice's own AppBar.
  */
 export default function OrderTopBar({
   shopName,
   cartItemCount = 0,
   onCartClick,
+  onHistoryClick,
 }: OrderTopBarProps) {
   return (
     <AppBar
@@ -49,6 +55,10 @@ export default function OrderTopBar({
         >
           {shopName ?? "Café Maw"}
         </Typography>
+
+        <IconButton onClick={onHistoryClick} aria-label="View order history">
+          <HistoryOutlinedIcon sx={{ color: "text.primary" }} />
+        </IconButton>
 
         <IconButton onClick={onCartClick} aria-label="View cart">
           <Badge badgeContent={cartItemCount} color="error">

@@ -7,8 +7,8 @@ import {
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import CounterOrderClient from "../components/orderUI/counterorderclient";
-import TableOrderClient from "../components/orderUI/TableOrderClient";
+import CounterOrderClient from "@/app/components/orderUI/CounterOrderClient";
+import TableOrderClient from "@/app/components/orderUI/TableOrderClient";
 
 // Session/cart state can change between one visit and the next (a
 // customer's own submit, or another contributor's draft add) —

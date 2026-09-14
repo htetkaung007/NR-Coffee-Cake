@@ -62,7 +62,7 @@ const APPROVAL_WINDOW_MINUTES = 10;
 // CounterOrderClient), so in practice this gets noticed the next time
 // the customer's browser makes any request — a page reload, or an
 // add-to-cart/submit attempt — not the instant the 40 minutes elapse.
-const CART_ABANDON_MINUTES = 40;
+const CART_ABANDON_MINUTES = 5;
 
 /** A session that has ever left CART (submitted at least once, even
  *  if that submission was later rejected) is no longer at risk of
@@ -321,6 +321,40 @@ export class OrderSessionService {
     return { status: "locked" as const, lastSession: current };
   }
 
+  /** "History" page (Table QR only) — lets a customer waiting to pay
+   *  review every round already sent to the kitchen for this table's
+   *  tab, not just whichever one getActiveRoundForTable calls "the"
+   *  active round. Mirrors markSessionsPaid's own grouping: a table's
+   *  tab can be several OrderSession rows deep ("Order More" starts a
+   *  new round without touching one already cooking), all settled
+   *  together in one bill — so this is everything on that bill so far.
+   *
+   *  Excludes CART (nothing submitted yet — that's the live draft,
+   *  shown on the menu/cart pages instead) and every terminal status.
+   *  A caller only reaches this after requireContributorToken/
+   *  isTokenCurrentForTable passes, and that check itself already goes
+   *  stale the moment the table is paid (Table.contributorEpoch bumps
+   *  — see its own comment), so in practice "authorized to call this"
+   *  and "table's tab is still open" are the same condition; no
+   *  PAID/CANCELLED/COMPLETED round can still be legitimately reachable
+   *  here. */
+  static async getRoundHistoryForTable(tableId: number) {
+    return prisma.orderSession.findMany({
+      where: {
+        tableId,
+        isArchived: false,
+        status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
+      },
+      orderBy: { id: "asc" },
+      include: {
+        orders: {
+          where: { isArchived: false },
+          include: { menu: true, OrdersAddons: { include: { addon: true } } },
+        },
+      },
+    });
+  }
+
   /** Read-only lookup for a page load that already has a cookie (i.e.
    *  after the scan Route Handler has already run) — unlike
    *  resolveCounterSession, this never starts a new session; it just
@@ -333,7 +367,7 @@ export class OrderSessionService {
       include: {
         orders: {
           where: { isArchived: false },
-          include: { menu: true },
+          include: { menu: true, OrdersAddons: { include: { addon: true } } },
           orderBy: { id: "asc" },
         },
       },

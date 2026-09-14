@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   Card,
   CardActionArea,
+  Divider,
   IconButton,
   MenuItem,
   Select,
@@ -73,6 +74,12 @@ export default function StaffOrderClient({
   const [submittedOrderNumber, setSubmittedOrderNumber] = useState<
     string | null
   >(null);
+
+  const cartTotal = useMemo(
+    () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
+    [cart],
+  );
+  const menuListRef = useRef<HTMLDivElement>(null);
 
   async function handleTableChange(newTableId: number) {
     setError(null);
@@ -160,7 +167,15 @@ export default function StaffOrderClient({
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 560 }}>
+    <Box
+      sx={{
+        p: 3,
+        maxWidth: 560,
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Typography variant="h6" sx={{ mb: 2 }}>
         New Order
       </Typography>
@@ -195,83 +210,136 @@ export default function StaffOrderClient({
       )}
 
       {sessionId && (
-        <>
-          <Stack spacing={1.5} sx={{ mb: 3 }}>
-            {menus.map((menu) => (
-              <Card key={menu.id} variant="outlined">
-                <CardActionArea
-                  onClick={() => setDetailMenuId(menu.id)}
-                  sx={{
-                    p: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    <Typography variant="body1">{menu.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {menu.price.toLocaleString()} MMK
-                    </Typography>
-                  </Box>
-                  <Button size="small" variant="outlined" component="span">
-                    Add
-                  </Button>
-                </CardActionArea>
-              </Card>
-            ))}
-          </Stack>
-
-          {cart.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
-                This order
-              </Typography>
-              <Stack spacing={0.5}>
-                {cart.map((line) => (
-                  <Stack
-                    key={line.id}
-                    direction="row"
+        <Box
+          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+        >
+          <Box ref={menuListRef} sx={{ flex: 1, overflowY: "auto", minHeight: 0, mb: 1.5 }}>
+            <Stack spacing={1.5}>
+              {menus.map((menu) => (
+                <Card key={menu.id} variant="outlined">
+                  <CardActionArea
+                    onClick={() => setDetailMenuId(menu.id)}
                     sx={{
-                      justifyContent: "space-between",
+                      p: 1.5,
+                      display: "flex",
                       alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 2,
                     }}
                   >
-                    <Typography variant="body2">
-                      {line.quantity} × {line.menuName}
-                    </Typography>
+                    <Box>
+                      <Typography variant="body1">{menu.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {menu.price.toLocaleString()} MMK
+                      </Typography>
+                    </Box>
+                    <Button size="small" variant="outlined" component="span">
+                      Add
+                    </Button>
+                  </CardActionArea>
+                </Card>
+              ))}
+            </Stack>
+          </Box>
+
+          <Box
+            sx={{
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 3,
+              p: 1.5,
+            }}
+          >
+            {cart.length > 0 && (
+              <Box sx={{ mb: 1.5 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
+                  This order
+                </Typography>
+                <Stack spacing={0.5}>
+                  {cart.map((line) => (
                     <Stack
+                      key={line.id}
                       direction="row"
-                      spacing={0.5}
-                      sx={{ alignItems: "center" }}
+                      sx={{
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
                     >
                       <Typography variant="body2">
-                        {(line.price * line.quantity).toLocaleString()} MMK
+                        {line.quantity} × {line.menuName}
                       </Typography>
-                      <IconButton
-                        size="small"
-                        aria-label="Remove item"
-                        onClick={() => handleRemove(line.id)}
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center" }}
                       >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
+                        <Typography variant="body2">
+                          {(line.price * line.quantity).toLocaleString()} MMK
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          aria-label="Remove item"
+                          onClick={() => handleRemove(line.id)}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
                     </Stack>
-                  </Stack>
-                ))}
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            <Box>
+              <Divider sx={{ mb: 1.5 }} />
+              <Stack
+                direction="row"
+                sx={{ justifyContent: "space-between", mb: 1.5 }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  Total Price ({cart.length}{" "}
+                  {cart.length === 1 ? "item" : "items"})
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {cartTotal.toLocaleString()} MMK
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    whiteSpace: "nowrap",
+                    transition:
+                      "transform 0.15s ease, background-color 0.15s ease",
+                    "&:hover": {
+                      transform: "translateY(-1px)",
+                      bgcolor: "action.hover",
+                    },
+                  }}
+                  onClick={() =>
+                    menuListRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+                  }
+                >
+                  Add More
+                </Button>
+                <Button
+                  variant="contained"
+                  sx={{
+                    flex: 2,
+                    whiteSpace: "nowrap",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    "&:hover": { transform: "translateY(-1px)", boxShadow: 4 },
+                  }}
+                  disabled={submitting || cart.length === 0}
+                  onClick={handleSubmit}
+                >
+                  Send to Kitchen
+                </Button>
               </Stack>
             </Box>
-          )}
-
-          <Button
-            variant="contained"
-            fullWidth
-            disabled={submitting || cart.length === 0}
-            onClick={handleSubmit}
-          >
-            Send to Kitchen
-          </Button>
-        </>
+          </Box>
+        </Box>
       )}
 
       <MenuDetailDialog

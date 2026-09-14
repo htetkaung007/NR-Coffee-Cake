@@ -64,8 +64,15 @@ function WatercolorScribbleOverlay() {
 /** Customer-facing card — used both for the backoffice's new-menu live
  *  preview (no onAddToCart) and the customer-facing order grid (with
  *  onAddToCart wired to open MenuDetailDialog). */
+const DESCRIPTION_PREVIEW_LENGTH = 28;
+
 export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
   const isAvailable = item.stockQuantity > 0 && item.isAvailable;
+  const isDescriptionTruncated =
+    item.description.length > DESCRIPTION_PREVIEW_LENGTH;
+  const descriptionPreview = isDescriptionTruncated
+    ? item.description.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
+    : item.description;
 
   return (
     <Card
@@ -75,6 +82,7 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
         width: "100%",
 
         maxWidth: 360,
+        maxHeight: 340,
 
         mx: "auto",
         overflow: "hidden",
@@ -143,71 +151,70 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
         )}
       </Box>
 
-      <Box sx={{ pt: 1.5 }}>
-        <Box
+      <Box sx={{ pt: 1.5, px: 1, pb: 1.5 }}>
+        <Typography
+          variant="body1"
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 1.5,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Typography variant="body1">{item.name || "Dish name"}</Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                mt: 0.5,
-                mb: item.description ? 0 : 1,
-                display: "flex",
-              }}
-            >
-              {item.description}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 795, color: "primary.main" }}
-            >
-              {item.price.toLocaleString()} MMK
-            </Typography>
-          </Box>
-        </Box>
+          {item.name || "Dish name"}
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{ fontWeight: 795, color: "primary.main" }}
+        >
+          {item.price.toLocaleString()} MMK
+        </Typography>
+
+        {item.description && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 0.5 }}
+          >
+            {descriptionPreview}
+            {isDescriptionTruncated && (
+              <Typography
+                component="span"
+                variant="body2"
+                sx={{ color: "primary.main", fontWeight: 600, ml: 0.5 }}
+              >
+                See more
+              </Typography>
+            )}
+          </Typography>
+        )}
 
         <Button
           variant="contained"
-          endIcon={<ShoppingCartOutlinedIcon />}
+          size="small"
+          endIcon={<ShoppingCartOutlinedIcon sx={{ fontSize: 16 }} />}
           sx={{
             // Button shape
             borderRadius: "5px",
+            mt: 1,
 
             // Button size
             minHeight: {
-              xs: 42,
-              sm: 46,
+              xs: 32,
+              sm: 36,
             },
 
             px: {
-              xs: 2,
-              sm: 2.5,
+              xs: 1.25,
+              sm: 1.5,
             },
 
             py: {
-              xs: 0.9,
-              sm: 1.1,
+              xs: 0.4,
+              sm: 0.5,
             },
 
-            // Typography
-            fontFamily: "var(--font-english), var(--font-myanmar), sans-serif",
-            fontSize: {
-              xs: "0.78rem",
-              sm: "0.85rem",
-            },
-            fontWeight: 700,
-            textTransform: "none",
+            // Typography — fontFamily/fontWeight/textTransform already
+            // come from theme.ts's `button` variant + MuiButton override.
             whiteSpace: "nowrap",
 
             // Color

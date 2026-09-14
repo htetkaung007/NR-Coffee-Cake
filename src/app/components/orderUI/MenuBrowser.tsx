@@ -33,6 +33,20 @@ interface MenuBrowserProps {
   menus: MenuOption[];
   locationId: number;
   canOrder: boolean;
+  /** Matches the caller page's own background so the sticky search/
+   *  category bar blends in instead of showing up as a mismatched flat
+   *  block against that page's background. Must be opaque — this bar
+   *  paints above the menu grid (z-index 3) while the customer
+   *  scrolls, so "transparent" lets scrolled-up cards show through it
+   *  instead of being hidden underneath. */
+  backgroundColor: string;
+  /** Optional — lets a caller with a `backgroundAttachment: "fixed"`
+   *  page background (e.g. TableOrderClient's radial-gradient) hand the
+   *  same image/attachment to the sticky bar so it lines up pixel-for-
+   *  pixel with what's behind it instead of reading as a flat color
+   *  patch. Layered on top of backgroundColor as a fallback. */
+  backgroundImage?: string;
+  backgroundAttachment?: string;
   /** Called once the customer confirms Add-to-cart inside the detail
    *  dialog (addons + quantity already resolved there). Returns an
    *  error message string to show inline in the dialog, or null on
@@ -43,6 +57,12 @@ interface MenuBrowserProps {
     addonIds: number[],
   ) => Promise<string | null>;
 }
+
+/** Matches MUI's default Toolbar height (theme.mixins.toolbar) so the
+ *  sticky search/category bar picks up exactly where OrderTopBar's
+ *  own sticky AppBar ends, instead of overlapping under it or leaving
+ *  a gap above it. */
+const TOPBAR_HEIGHT = { xs: 56, sm: 64 };
 
 /**
  * Browsing surface only: search box, category tabs, the OdMenuCard
@@ -55,6 +75,9 @@ export default function MenuBrowser({
   menus,
   locationId,
   canOrder,
+  backgroundColor,
+  backgroundImage,
+  backgroundAttachment,
   onAddToCart,
 }: MenuBrowserProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,57 +105,70 @@ export default function MenuBrowser({
 
   return (
     <>
-      {/* Sticky search bar — stays pinned as the customer scrolls
-         down the grid, per the design mock. */}
-      <TextField
-        fullWidth
-        placeholder="Search Menus"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+      {/* Sticky search bar + category tabs — stay pinned together as
+         the customer scrolls down the grid, per the design mock. */}
+      <Box
         sx={{
           position: "sticky",
-          top: 8,
+          top: TOPBAR_HEIGHT,
           zIndex: 3,
-          mb: 2,
-          bgcolor: "background.paper",
-          borderRadius: 3,
-          "& .MuiOutlinedInput-root": { borderRadius: 3 },
+          bgcolor: backgroundColor,
+          backgroundImage,
+          backgroundAttachment,
+          pt: 1,
+          mb: 3,
         }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
-
-      {/* Category tabs — auto-switches to scrollable once there are
-         more than MAX_TABS_BEFORE_SCROLL categories (design mock's
-         "up to 5, then side-by-side scroll" note). */}
-      <Tabs
-        value={activeCategory}
-        onChange={(_, value) => setActiveCategory(value)}
-        variant={
-          categories.length > MAX_TABS_BEFORE_SCROLL ? "scrollable" : "standard"
-        }
-        scrollButtons={
-          categories.length > MAX_TABS_BEFORE_SCROLL ? "auto" : false
-        }
-        allowScrollButtonsMobile
-        sx={{ mb: 3, minHeight: 36 }}
       >
-        {categories.map((category) => (
-          <Tab
-            key={category}
-            value={category}
-            label={category}
-            sx={{ minHeight: 36 }}
-          />
-        ))}
-      </Tabs>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search Menus"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{
+            mb: 2,
+            borderRadius: 3,
+            "& .MuiOutlinedInput-root": { borderRadius: 3 },
+            "& .MuiOutlinedInput-input": {
+              py: { xs: 0.75, sm: 1, md: 1.25, lg: 1.25 },
+            },
+          }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        {/* Category tabs — auto-switches to scrollable once there are
+           more than MAX_TABS_BEFORE_SCROLL categories (design mock's
+           "up to 5, then side-by-side scroll" note). */}
+        <Tabs
+          value={activeCategory}
+          onChange={(_, value) => setActiveCategory(value)}
+          variant={
+            categories.length > MAX_TABS_BEFORE_SCROLL ? "scrollable" : "standard"
+          }
+          scrollButtons={
+            categories.length > MAX_TABS_BEFORE_SCROLL ? "auto" : false
+          }
+          allowScrollButtonsMobile
+          sx={{ minHeight: 36 }}
+        >
+          {categories.map((category) => (
+            <Tab
+              key={category}
+              value={category}
+              label={category}
+              sx={{ minHeight: 36 }}
+            />
+          ))}
+        </Tabs>
+      </Box>
 
       <Box
         sx={{
@@ -146,6 +182,7 @@ export default function MenuBrowser({
           },
           gap: { xs: 2, sm: 2, md: 2.5 },
           p: { xs: 1, sm: 1, md: 3 },
+          alignItems: "start",
         }}
       >
         {visibleMenus.map((menu) => (

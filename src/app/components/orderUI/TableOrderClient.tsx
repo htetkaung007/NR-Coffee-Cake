@@ -8,9 +8,13 @@ import OrderTopBar from "./OrderTopBar";
 import MenuBrowser, { MenuOption } from "./MenuBrowser";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 
-import { addDraftItemAction } from "@/app/customer/action";
-import { DraftLine } from "@/app/cart/Cartlist";
+import { addDraftItemAction } from "@/app/(storefront)/customer/action";
+import { DraftLine } from "@/app/(storefront)/cart/Cartlist";
 import { useRefreshOnVisible } from "./useRefreshOnVisible";
+import {
+  ORDER_PAGE_BACKGROUND_COLOR,
+  ORDER_PAGE_BACKGROUND_IMAGE,
+} from "./orderPageBackground";
 
 interface TableOrderClientProps {
   tableId: number;
@@ -87,21 +91,12 @@ export default function TableOrderClient({
     return null;
   }
 
-  const myItemCount = draftItems.filter(
-    (item) => item.contributorToken === myContributorToken,
-  ).length;
-
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: "var(--color-brand-cream)",
-        backgroundImage: `
-          radial-gradient(circle at 8% 15%, var(--color-brand-accent) 0%, transparent 30%),
-          radial-gradient(circle at 92% 10%, var(--color-brand-caramel) 0%, transparent 35%),
-          radial-gradient(circle at 15% 90%, var(--color-brand-caramel) 0%, transparent 30%),
-          radial-gradient(circle at 90% 85%, var(--color-brand-accent) 0%, transparent 30%)
-        `,
+        backgroundColor: ORDER_PAGE_BACKGROUND_COLOR,
+        backgroundImage: ORDER_PAGE_BACKGROUND_IMAGE,
         backgroundAttachment: "fixed",
       }}
     >
@@ -111,6 +106,9 @@ export default function TableOrderClient({
         onCartClick={() =>
           router.push(`/cart?locationId=${locationId}&tableId=${tableId}`)
         }
+        onHistoryClick={() =>
+          router.push(`/history?locationId=${locationId}&tableId=${tableId}`)
+        }
       />
       <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: "auto" }}>
         <ActiveRoundBanner activeRound={activeRound} />
@@ -119,15 +117,16 @@ export default function TableOrderClient({
           color="text.secondary"
           sx={{ display: "block", mb: 2 }}
         >
-          {myItemCount > 0
-            ? "Everyone at the table can see what's been added — check your cart to send it to the kitchen."
-            : "Add items — everyone at your table shares the same order."}
+          Add items — everyone at your table shares the same order.
         </Typography>
 
         <MenuBrowser
           menus={menus}
           locationId={locationId}
           canOrder
+          backgroundColor={ORDER_PAGE_BACKGROUND_COLOR}
+          backgroundImage={ORDER_PAGE_BACKGROUND_IMAGE}
+          backgroundAttachment="fixed"
           onAddToCart={handleAddToCart}
         />
       </Box>

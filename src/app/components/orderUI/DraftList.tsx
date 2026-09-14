@@ -1,7 +1,12 @@
 "use client";
 
-import { Box, Button, Card, Stack, Typography } from "@mui/material";
-import { DraftLine, Shortage } from "@/app/cart/Cartlist";
+import { Card, Divider, Stack, Typography } from "@mui/material";
+import {
+  CartLineActions,
+  CartLineRow,
+  DraftLine,
+  Shortage,
+} from "@/app/(storefront)/cart/Cartlist";
 
 interface DraftListProps {
   draftItems: DraftLine[];
@@ -76,68 +81,28 @@ export default function DraftList({
               </Typography>
             </Stack>
 
-            <Stack spacing={1}>
-              {items.map((item) => {
-                const shortage = shortageByMenuId.get(item.menuId);
-                return (
-                  <Box key={item.id} sx={{ opacity: shortage ? 0.5 : 1 }}>
-                    <Stack
-                      direction="row"
-                      sx={{
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="body2">
-                          {item.quantity} × {item.menuName}
-                        </Typography>
-                        {item.addonNames.length > 0 && (
-                          <Typography variant="caption" color="text.secondary">
-                            + {item.addonNames.join(", ")}
-                          </Typography>
-                        )}
-                      </Box>
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ alignItems: "center" }}
-                      >
-                        <Typography variant="body2">
-                          {(item.price * item.quantity).toLocaleString()} MMK
-                        </Typography>
-                        {isMine && (
-                          <>
-                            <Button
-                              size="small"
-                              disabled={isPending}
-                              onClick={() => onEdit(item)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="small"
-                              color="error"
-                              disabled={isPending}
-                              onClick={() => onRemove(item.id)}
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        )}
-                      </Stack>
-                    </Stack>
-                    {shortage && (
-                      <Typography variant="caption" color="error">
-                        {shortage.available > 0
-                          ? `Only ${shortage.available} left`
-                          : "This just sold out"}
-                        {isMine ? " — please edit or cancel." : "."}
-                      </Typography>
-                    )}
-                  </Box>
-                );
-              })}
+            <Stack
+              spacing={1}
+              divider={<Divider flexItem sx={{ opacity: 0.5 }} />}
+            >
+              {items.map((item) => (
+                <CartLineRow
+                  key={item.id}
+                  line={item}
+                  shortage={shortageByMenuId.get(item.menuId)}
+                  addons={item.addonNames}
+                  actionable={isMine}
+                  actions={
+                    isMine ? (
+                      <CartLineActions
+                        disabled={isPending}
+                        onEdit={() => onEdit(item)}
+                        onRemove={() => onRemove(item.id)}
+                      />
+                    ) : undefined
+                  }
+                />
+              ))}
             </Stack>
           </Card>
         );

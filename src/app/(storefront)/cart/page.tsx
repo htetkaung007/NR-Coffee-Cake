@@ -8,10 +8,10 @@ import {
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import CartPageClient from "../components/orderUI/CartPageClient";
-import TableCartPageClient from "../components/orderUI/TableCartPageClient";
-import OrderTopBar from "../components/orderUI/OrderTopBar";
-import { CartButtonStatus } from "../components/orderUI/CartButton";
+import CartPageClient from "@/app/components/orderUI/CartPageClient";
+import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
+import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
+import { CartButtonStatus } from "@/app/components/orderUI/CartButton";
 
 // Same reasoning as /menu — see that page's dynamic export comment.
 export const dynamic = "force-dynamic";
@@ -147,6 +147,8 @@ export default async function CartPage({
         menuName: order.menu.name,
         quantity: order.quantity,
         price: order.menu.price,
+        addonNames: order.OrdersAddons.map((link) => link.addon.name),
+        addonIds: order.OrdersAddons.map((link) => link.addonId),
       }))}
     />
   );

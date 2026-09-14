@@ -31,8 +31,16 @@ interface MenuCardProps {
 const FALLBACK_IMAGE =
   "http://localhost:9001/api/v1/download-shared-object/aHR0cDovLzEyNy4wLjAuMTo5MDAwL25ycmVzdGF1cmFudC9tZW51L1VwbG9hZCUyMGltYWdlLndlYnA_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1DMlg4UTVaVURPMzJHUDBLU1dLNiUyRjIwMjYwODAyJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDgwMlQwNzQ0NTNaJlgtQW16LUV4cGlyZXM9NDMyMDAmWC1BbXotU2VjdXJpdHktVG9rZW49ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmhZMk5sYzNOTFpYa2lPaUpETWxnNFVUVmFWVVJQTXpKSFVEQkxVMWRMTmlJc0ltVjRjQ0k2TVRjNE5UWTVOREkxTnl3aWNHRnlaVzUwSWpvaVlXUnRhVzRpZlEuOHNyMFdVZ2tyOUljcDhfQlUtYW9JeHgxYjB0N2U1TC1TdW9vTGRNNGRZSVFfVDd4RTRzMlg0Z0EzdDYyanBhTlRtZDFPTXJ4WGFMN3E1YkEzbU9FdFEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnZlcnNpb25JZD1udWxsJlgtQW16LVNpZ25hdHVyZT0wZGY1N2Y0ZmJlNDZlZDUxMDAwOGY1NWNhMmYyNDhiYjM0NjEwMmZiOTg5NTY4NjI2NGNkZTJiMTMxNWU0YmVl";
 
+const DESCRIPTION_PREVIEW_LENGTH = 40;
+
 export default function BOMenuCard({ item }: MenuCardProps) {
   const isAvailable = item.stockQuantity > 0 && !item.isManuallyDisabled;
+  const description = item.description ?? "";
+  const isDescriptionTruncated =
+    description.length > DESCRIPTION_PREVIEW_LENGTH;
+  const descriptionPreview = isDescriptionTruncated
+    ? description.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
+    : description;
 
   return (
     <Card
@@ -133,6 +141,27 @@ export default function BOMenuCard({ item }: MenuCardProps) {
         >
           {item.name}
         </Typography>
+
+        {description && (
+          <Typography variant="body2" color="text.secondary">
+            {descriptionPreview}
+            {isDescriptionTruncated && (
+              <Typography
+                component={Link}
+                href={`/backoffice/menus/${item.id}`}
+                variant="body2"
+                sx={{
+                  color: "primary.main",
+                  fontWeight: 600,
+                  ml: 0.5,
+                  textDecoration: "none",
+                }}
+              >
+                See more
+              </Typography>
+            )}
+          </Typography>
+        )}
 
         <Typography
           variant="body1"
