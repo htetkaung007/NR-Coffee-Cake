@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { AppService, OrderSessionApprovalService } from "@/app/services";
+import { LocationService, OrderSessionApprovalService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import OrderListView from "./orderListView";
 
@@ -15,7 +15,7 @@ export default async function OrderPage() {
     );
   }
 
-  const selectedLocation = await AppService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
     return (
       <Box sx={{ p: 3 }}>

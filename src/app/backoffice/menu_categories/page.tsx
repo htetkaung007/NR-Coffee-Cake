@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { AppService, MenuService } from "@/app/services";
+import { LocationService, MenuCategoryService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import MenuCategoriesGrid from "./[id]/page";
 
@@ -16,7 +16,7 @@ export default async function MenuCategoriesPage() {
     );
   }
 
-  const selectedLocation = await AppService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
     return (
       <Box sx={{ p: 3 }}>
@@ -27,7 +27,7 @@ export default async function MenuCategoriesPage() {
     );
   }
 
-  const categories = await MenuService.getMenuCategoriesWithCounts(
+  const categories = await MenuCategoryService.getMenuCategoriesWithCounts(
     companyId,
     selectedLocation.locationId,
   );

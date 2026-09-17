@@ -5,7 +5,7 @@ import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 /**
  * Design doc "Step 1: QR Scan & URL Validation". A GET here is the
  * ONLY thing the printed Counter QR points to (e.g.
- * /customer?locationId=1&tableId=5&key=awzy). It never renders
+ * /counter?locationId=1&tableId=5&key=awzy). It never renders
  * a page itself — it validates the key, sets a cookie, and redirects
  * to the clean customer-facing URL. This keeps the key out of
  * anything a customer could bookmark, screenshot, or leave in browser

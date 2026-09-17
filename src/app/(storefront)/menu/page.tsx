@@ -26,7 +26,7 @@ function buildMenuOptions(
     name: menu.name,
     price: menu.price,
     description: menu.description,
-    category: menu.category,
+    categories: menu.categories,
     imageUrl: menu.imageUrl,
     stockQuantity: menu.stockQuantity,
     // getMenusForLocation exposes isManuallyDisabled (staff toggle),

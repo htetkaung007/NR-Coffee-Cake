@@ -17,13 +17,13 @@ import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 import DraftList from "./DraftList";
 import CartButton from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";
-import { usePolling } from "./usePolling";
+import { usePolling } from "@/app/lib/hooks/usePolling";
 import {
   pollTableAction,
   removeDraftItemAction,
   submitDraftAction,
   updateDraftItemAction,
-} from "@/app/(storefront)/customer/action";
+} from "@/app/(storefront)/counter/action";
 import { DraftLine, Shortage } from "@/app/(storefront)/cart/Cartlist";
 
 const POLL_INTERVAL_MS = 4000;

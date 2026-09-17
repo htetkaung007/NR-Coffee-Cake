@@ -12,7 +12,7 @@ import {
   type CreateManagerInput,
 } from "@/app/lib/schemas/authSchema";
 import { getSessionContext } from "@/app/lib/session";
-import { AppService } from "@/app/services";
+import { AppService, LocationService } from "@/app/services";
 
 const safeCreateManager = toSafeResult(async (input: CreateManagerInput) => {
   const { companyId, role } = await getSessionContext();
@@ -51,7 +51,7 @@ const safeSetSelectedLocation = toSafeResult(
     if (!input.userId) {
       throw new AppError("You must be signed in.", "UNAUTHORIZED");
     }
-    return AppService.setSelectedLocation(input.userId, input.locationId);
+    return LocationService.setSelectedLocation(input.userId, input.locationId);
   },
 );
 

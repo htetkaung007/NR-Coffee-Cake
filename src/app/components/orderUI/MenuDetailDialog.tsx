@@ -23,7 +23,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import { getMenuDetailAction } from "@/app/(storefront)/customer/action";
+import { getMenuDetailAction } from "@/app/(storefront)/counter/action";
 
 interface Addon {
   id: number;

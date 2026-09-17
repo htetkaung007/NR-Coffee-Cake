@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { AppService, TableService } from "@/app/services";
+import { LocationService, TableService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import TableCard from "@/app/components/TableCard";
 
@@ -18,7 +18,7 @@ export default async function TablesPage() {
     );
   }
 
-  const selectedLocation = await AppService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
     return (
       <Box sx={{ p: 3 }}>

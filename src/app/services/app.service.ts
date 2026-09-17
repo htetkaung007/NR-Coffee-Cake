@@ -2,8 +2,7 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
-import { MenuService } from "./menu_menuCategory.service";
-import { LocationService } from "./location.service";
+import { MenuService } from "./menu.service";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
@@ -254,10 +253,6 @@ export class AppService {
   }
 
   // ---------------------------------------------------------------------
-  // Menu
-  // ---------------------------------------------------------------------
-
-  // ---------------------------------------------------------------------
   // Addons
   // Menu core reads/DTOs live in menu.service.ts now (Rule 14 split) —
   // Addons stays here since it's an adjacent-but-separate domain.
@@ -294,76 +289,6 @@ export class AppService {
     return company.name;
   }
 
-  // ---------------------------------------------------------------------
-  // Locations & Tables
-  // ---------------------------------------------------------------------
-
-  /**
-   * Managers have a fixed location (User.locationId) and never touch
-   * SelectedLocation at all — there's nothing to switch between, so
-   * their "selected" location is just whatever they're locked to.
-   * Admins go through the normal SelectedLocation table, since they
-   * can switch between any of the company's locations. Both paths
-   * return the same shape ({ locationId, ... }) so callers like
-   * getMenusWithDetails(companyId, selectedLocation.locationId) work
-   * unchanged regardless of which role called this.
-   */
-  /**
-   * Admin-only: switches the Admin's active location. Managers can't
-   * call this — their location is fixed via User.locationId (see
-   * getSelectedLocation) and isn't meant to change from this page.
-   * Upserts on the @@unique([userId]) constraint so an Admin always
-   * has exactly one active location, never zero or two.
-   */
-  static async setSelectedLocation(userId: number, locationId: number) {
-    const user = await prisma.user.findFirst({ where: { id: userId } });
-    if (!user) throw new NotFoundError("User", String(userId));
-    if (user.role === "MANAGER") {
-      throw new ValidationError(
-        "Managers can't switch locations — contact your Admin.",
-      );
-    }
-
-    return prisma.selectedLocation.upsert({
-      where: { userId },
-      update: { locationId },
-      create: { userId, locationId },
-    });
-  }
-
-  static async getSelectedLocation(userId: number) {
-    const user = await prisma.user.findFirst({ where: { id: userId } });
-
-    if (user?.role === "MANAGER") {
-      if (!user.locationId) return null; // Manager not yet assigned a location
-      return { locationId: user.locationId };
-    }
-
-    return prisma.selectedLocation.findFirst({
-      where: { userId },
-      orderBy: { id: "asc" },
-    });
-  }
-
-  static async getTables(companyId: number) {
-    const locations = await LocationService.getActiveLocations(companyId);
-    const locationIds = locations.map((location) => location.id);
-
-    return prisma.table.findMany({
-      where: { locationId: { in: locationIds }, isArchived: false },
-      orderBy: { id: "asc" },
-    });
-  }
-
-  static async getSelectedLocationTables(locationId: number) {
-    return prisma.table.findMany({ where: { locationId } });
-  }
-
-  static async getDisabledLocationMenus(selectedLocationId: number) {
-    return prisma.disableLocationMenus.findMany({
-      where: { locationId: selectedLocationId },
-    });
-  }
   static async getCompanyNameByUserId(userId: number) {
     const user = await prisma.user.findFirst({ where: { id: userId } });
     if (!user) throw new NotFoundError("User", userId);

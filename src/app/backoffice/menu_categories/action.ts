@@ -13,7 +13,7 @@ import {
   updateMenuCategorySchema,
 } from "@/app/lib/schemas/menu_menuCategorySchema";
 import { getSessionContext } from "@/app/lib/session";
-import { AppService, MenuService } from "@/app/services";
+import { LocationService, MenuCategoryService } from "@/app/services";
 import { revalidatePath } from "next/cache";
 
 const CreateMenuCategory = toSafeResult(
@@ -26,7 +26,7 @@ const CreateMenuCategory = toSafeResult(
       );
     }
 
-    const selectedLocation = await AppService.getSelectedLocation(userId);
+    const selectedLocation = await LocationService.getSelectedLocation(userId);
     if (!selectedLocation) {
       throw new AppError(
         "No location selected. Please choose a location first.",
@@ -34,7 +34,7 @@ const CreateMenuCategory = toSafeResult(
       );
     }
 
-    return MenuService.createMenuCategory(
+    return MenuCategoryService.createMenuCategory(
       companyId,
       input.name,
       selectedLocation.locationId,
@@ -71,7 +71,7 @@ const UpdateMenuCategory = toSafeResult(
       );
     }
 
-    const selectedLocation = await AppService.getSelectedLocation(userId);
+    const selectedLocation = await LocationService.getSelectedLocation(userId);
     if (!selectedLocation) {
       throw new AppError(
         "No location selected. Please choose a location first.",
@@ -79,7 +79,7 @@ const UpdateMenuCategory = toSafeResult(
       );
     }
 
-    return MenuService.updateMenuCategory(input.menuCategoryId, {
+    return MenuCategoryService.updateMenuCategory(input.menuCategoryId, {
       name: input.name,
       locationId: selectedLocation.locationId,
       isEnabled: input.isEnabled,

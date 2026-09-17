@@ -82,7 +82,7 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
         width: "100%",
 
         maxWidth: 360,
-        maxHeight: 340,
+        maxHeight: 400,
 
         mx: "auto",
         overflow: "hidden",
@@ -170,11 +170,7 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
         </Typography>
 
         {item.description && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mt: 0.5 }}
-          >
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             {descriptionPreview}
             {isDescriptionTruncated && (
               <Typography

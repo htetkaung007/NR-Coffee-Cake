@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
+import { LocationService } from "./location.service";
 
 // Name is fixed for the counter "table" row — it isn't a real seated
 // table a customer picks a name for, so locking it here (Service
@@ -9,7 +10,7 @@ import { NotFoundError, ValidationError } from "../lib/errors";
 const COUNTER_TABLE_NAME = "Counter QR code";
 
 /** Short, URL-safe, unguessable key embedded in a table's (Counter or
- *  regular) printed QR link (e.g. /customer?tableId=5&key=<this> for
+ *  regular) printed QR link (e.g. /counter?tableId=5&key=<this> for
  *  Counter, /table?tableId=8&key=<this> for a regular table).
  *  Regenerating it invalidates every previously-printed copy of that
  *  QR at once — see TableService.rotateAccessKey. */
@@ -33,6 +34,19 @@ export class TableService {
   static async getTablesByLocation(locationId: number) {
     return prisma.table.findMany({
       where: { locationId, isArchived: false },
+      orderBy: { id: "asc" },
+    });
+  }
+
+  /** All tables across every active location in a company — e.g. for a
+   *  company-wide table picker. Archived locations are excluded (mirrors
+   *  LocationService.getActiveLocations), same as archived tables are. */
+  static async getTablesForCompany(companyId: number) {
+    const locations = await LocationService.getActiveLocations(companyId);
+    const locationIds = locations.map((location) => location.id);
+
+    return prisma.table.findMany({
+      where: { locationId: { in: locationIds }, isArchived: false },
       orderBy: { id: "asc" },
     });
   }

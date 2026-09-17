@@ -7,12 +7,12 @@ import { Box, Typography } from "@mui/material";
 import OrderTopBar from "./OrderTopBar";
 import MenuBrowser, { MenuOption } from "./MenuBrowser";
 
-import { addToCartAction } from "@/app/(storefront)/customer/action";
+import { addToCartAction } from "@/app/(storefront)/counter/action";
 import { CartLine } from "@/app/(storefront)/cart/Cartlist";
 import {
   ORDER_PAGE_BACKGROUND_COLOR,
   ORDER_PAGE_BACKGROUND_IMAGE,
-} from "./orderPageBackground";
+} from "@/app/lib/theme/orderPageBackground";
 
 interface CounterOrderClientProps {
   hasSession: boolean;

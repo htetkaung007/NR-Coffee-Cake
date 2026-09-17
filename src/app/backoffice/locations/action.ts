@@ -14,7 +14,7 @@ import {
   type UpdateLocationInput,
 } from "@/app/lib/schemas/locationSchema";
 import { getSessionContext } from "@/app/lib/session";
-import { AppService, LocationService } from "@/app/services";
+import { LocationService } from "@/app/services";
 
 /** Every write in this file starts by confirming the caller is an
  *  Admin — Managers have no Location-management access at all (their
@@ -116,7 +116,7 @@ export async function hardDeleteLocationAction(locationId: number) {
 
 const safeSetSelected = toSafeResult(
   async (input: { userId: number; locationId: number }) =>
-    AppService.setSelectedLocation(input.userId, input.locationId),
+    LocationService.setSelectedLocation(input.userId, input.locationId),
 );
 
 export async function selectLocationAction(locationId: number) {

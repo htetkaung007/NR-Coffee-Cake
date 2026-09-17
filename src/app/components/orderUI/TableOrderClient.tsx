@@ -8,13 +8,13 @@ import OrderTopBar from "./OrderTopBar";
 import MenuBrowser, { MenuOption } from "./MenuBrowser";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 
-import { addDraftItemAction } from "@/app/(storefront)/customer/action";
+import { addDraftItemAction } from "@/app/(storefront)/counter/action";
 import { DraftLine } from "@/app/(storefront)/cart/Cartlist";
-import { useRefreshOnVisible } from "./useRefreshOnVisible";
+import { useRefreshOnVisible } from "@/app/lib/hooks/useRefreshOnVisible";
 import {
   ORDER_PAGE_BACKGROUND_COLOR,
   ORDER_PAGE_BACKGROUND_IMAGE,
-} from "./orderPageBackground";
+} from "@/app/lib/theme/orderPageBackground";
 
 interface TableOrderClientProps {
   tableId: number;

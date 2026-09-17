@@ -1,5 +1,10 @@
 import { Box, Typography } from "@mui/material";
-import { AddonService, AppService, MenuService } from "@/app/services";
+import {
+  AddonService,
+  LocationService,
+  MenuCategoryService,
+  MenuService,
+} from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import MenuForm from "@/app/components/menuForm/MenuForm";
 
@@ -22,7 +27,7 @@ export default async function EditMenuPage({
     );
   }
 
-  const selectedLocation = await AppService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
     return (
       <Box sx={{ p: 3 }}>
@@ -34,7 +39,7 @@ export default async function EditMenuPage({
   }
 
   const [categories, addonCategories, menu] = await Promise.all([
-    MenuService.getMenuCategories(companyId),
+    MenuCategoryService.getMenuCategories(companyId),
     AddonService.getAddonCategoriesWithAddonsList(),
     MenuService.getMenuById(menuId, selectedLocation.locationId),
   ]);

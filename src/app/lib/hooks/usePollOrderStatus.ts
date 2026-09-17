@@ -1,6 +1,6 @@
 "use client";
 
-import { pollOrderStatusAction } from "@/app/(storefront)/customer/action";
+import { pollOrderStatusAction } from "@/app/(storefront)/counter/action";
 import { usePolling } from "./usePolling";
 
 export const POLL_INTERVAL_MS = 4000;

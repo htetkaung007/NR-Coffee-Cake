@@ -1,4 +1,4 @@
-import { AppService, MenuService } from "@/app/services";
+import { LocationService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import { Box, Button, Typography, Fab } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -15,7 +15,7 @@ export default async function MenusPage() {
       </Box>
     );
   }
-  const selectedLocation = await AppService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
     return (
       <Box sx={{ p: 3 }}>

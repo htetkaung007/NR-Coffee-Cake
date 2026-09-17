@@ -127,4 +127,61 @@ export class LocationService {
       (Date.now() - archivedAt.getTime()) / (1000 * 60 * 60 * 24);
     return Math.max(0, Math.ceil(HARD_DELETE_GRACE_DAYS - daysSinceArchived));
   }
+
+  // ---------------------------------------------------------------------
+  // Selected location (per-user active-location pointer)
+  // ---------------------------------------------------------------------
+
+  /**
+   * Managers have a fixed location (User.locationId) and never touch
+   * SelectedLocation at all — there's nothing to switch between, so
+   * their "selected" location is just whatever they're locked to.
+   * Admins go through the normal SelectedLocation table, since they
+   * can switch between any of the company's locations. Both paths
+   * return the same shape ({ locationId, ... }) so callers like
+   * MenuService.getMenusWithDetails(companyId, selectedLocation.locationId)
+   * work unchanged regardless of which role called this.
+   */
+  static async getSelectedLocation(userId: number) {
+    const user = await prisma.user.findFirst({ where: { id: userId } });
+
+    if (user?.role === "MANAGER") {
+      if (!user.locationId) return null; // Manager not yet assigned a location
+      return { locationId: user.locationId };
+    }
+
+    return prisma.selectedLocation.findFirst({
+      where: { userId },
+      orderBy: { id: "asc" },
+    });
+  }
+
+  /**
+   * Admin-only: switches the Admin's active location. Managers can't
+   * call this — their location is fixed via User.locationId (see
+   * getSelectedLocation) and isn't meant to change from this page.
+   * Upserts on the @@unique([userId]) constraint so an Admin always
+   * has exactly one active location, never zero or two.
+   */
+  static async setSelectedLocation(userId: number, locationId: number) {
+    const user = await prisma.user.findFirst({ where: { id: userId } });
+    if (!user) throw new NotFoundError("User", String(userId));
+    if (user.role === "MANAGER") {
+      throw new ValidationError(
+        "Managers can't switch locations — contact your Admin.",
+      );
+    }
+
+    return prisma.selectedLocation.upsert({
+      where: { userId },
+      update: { locationId },
+      create: { userId, locationId },
+    });
+  }
+
+  static async getDisabledLocationMenus(selectedLocationId: number) {
+    return prisma.disableLocationMenus.findMany({
+      where: { locationId: selectedLocationId },
+    });
+  }
 }

@@ -18,7 +18,7 @@ export interface MenuCardData {
   name: string;
   price: number;
   description?: string;
-  category: string;
+  categories: string[];
   imageUrl: string | null;
   stockQuantity: number;
   isManuallyDisabled: boolean;
@@ -85,7 +85,7 @@ export default function BOMenuCard({ item }: MenuCardProps) {
         <Chip
           label={
             <Typography variant="caption" component="span">
-              {item.category}
+              {item.categories.join(", ")}
             </Typography>
           }
           size="small"

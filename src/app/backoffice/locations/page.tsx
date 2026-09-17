@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { AppService, LocationService } from "@/app/services";
+import { LocationService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import LocationCard from "@/app/components/locationCard";
 
@@ -30,7 +30,7 @@ export default async function LocationsPage() {
 
   const [locations, selectedLocation] = await Promise.all([
     LocationService.getAllLocationsForCompany(companyId),
-    userId ? AppService.getSelectedLocation(userId) : null,
+    userId ? LocationService.getSelectedLocation(userId) : null,
   ]);
 
   return (

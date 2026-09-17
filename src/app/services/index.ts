@@ -5,10 +5,10 @@
 // every file that imports it.
 
 export { AppService } from "./app.service";
-export { MenuService } from "./menu_menuCategory.service";
+export { MenuService } from "./menu.service";
+export { MenuCategoryService } from "./menuCategory.service";
 export { MenuStockService } from "./menuStock.service";
 export { LocationService } from "./location.service";
-
 export { AddonService } from "./addon.service";
 export { TableService } from "./table.service";
 export { OrderSessionService } from "./orderService/orderSession.service";

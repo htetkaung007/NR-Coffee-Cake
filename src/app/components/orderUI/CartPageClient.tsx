@@ -13,14 +13,14 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-import { usePollOrderStatus } from "./usePollOrderStatus";
+import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 
 import {
   removeFromCartAction,
   startNextRoundAction,
   submitOrderAction,
   updateCartItemAction,
-} from "@/app/(storefront)/customer/action";
+} from "@/app/(storefront)/counter/action";
 import CartList, { CartLine, Shortage } from "@/app/(storefront)/cart/Cartlist";
 import CartButton, { CartButtonStatus } from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";

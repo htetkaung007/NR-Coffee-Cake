@@ -13,7 +13,7 @@ import {
 } from "@/app/lib/schemas/menu_menuCategorySchema";
 import { getSessionContext } from "@/app/lib/session";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
-import { AppService, MenuService } from "@/app/services";
+import { LocationService, MenuService } from "@/app/services";
 
 const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
   const { companyId, userId } = await getSessionContext();
@@ -24,7 +24,7 @@ const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
     );
   }
 
-  const selectedLocation = await AppService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
     throw new AppError(
       "Select a location before creating a menu item.",
@@ -86,7 +86,7 @@ const safeUpdateMenu = toSafeResult(
       );
     }
 
-    const selectedLocation = await AppService.getSelectedLocation(userId);
+    const selectedLocation = await LocationService.getSelectedLocation(userId);
     if (!selectedLocation) {
       throw new AppError(
         "Select a location before updating a menu item.",

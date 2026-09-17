@@ -17,13 +17,13 @@ import { getSessionContext } from "@/app/lib/session";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 
 import { config } from "@/app/utils/config";
-import { AppService, TableService } from "@/app/services";
+import { LocationService, TableService } from "@/app/services";
 import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
 
 /**
  * Builds the URL a customer's phone opens after scanning the table's
  * QR code. Both Counter and regular tables now point at THIS app's
- * own Route Handlers (/customer, /table) — each validates the key
+ * own Route Handlers (/counter, /table) — each validates the key
  * server-side, sets a cookie (a session for Counter, a per-table
  * contributor token for regular tables — see the two entries below),
  * and redirects onward to the clean, key-free /menu URL before
@@ -40,7 +40,7 @@ import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
  * leaked/copied table QR gets invalidated, since the physical QR
  * itself can't be un-scanned once shared.
  *
- * Counter: /customer?locationId=&tableId=&key=. Each phone that scans
+ * Counter: /counter?locationId=&tableId=&key=. Each phone that scans
  * it gets its own individual session (cookie-identified), unlike
  * Table's shared one.
  */
@@ -51,7 +51,7 @@ function buildQrCodeContent(
   accessKey: string,
 ) {
   const origin = new URL(config.mainUrl).origin;
-  const path = isCounter ? "customer" : "table";
+  const path = isCounter ? "counter" : "table";
   return `${origin}/${path}?locationId=${locationId}&tableId=${tableId}&key=${accessKey}`;
 }
 
@@ -120,8 +120,8 @@ const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
 
   // Same "which location am I working in" lookup Menu creation uses —
   // Admins get their SelectedLocation, Managers get their fixed
-  // User.locationId. See AppService.getSelectedLocation.
-  const selectedLocation = await AppService.getSelectedLocation(userId);
+  // User.locationId. See LocationService.getSelectedLocation.
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
     throw new AppError(
       "Select a location before creating a table.",
