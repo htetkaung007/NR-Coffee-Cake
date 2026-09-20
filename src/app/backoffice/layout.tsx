@@ -5,6 +5,7 @@ import { authOptions } from "../utils/config/authOptions";
 import { BackofficeShell } from "../components/BackofficeShell";
 import { AppService } from "../services";
 import { Box } from "@mui/material";
+import { SurfaceThemeProvider } from "../lib/theme/ThemeModeProvider";
 
 interface Props {
   children?: React.ReactNode;
@@ -20,21 +21,23 @@ export default async function BackOfficeLayout({ children }: Props) {
   const companyName = company.name;
 
   return (
-    <Box>
-      <BackofficeShell companyName={companyName}>
-        <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
-          <Box
-            sx={{
-              bgcolor: "background.paper",
-              width: "100%",
-              padding: { xs: 0, sm: 0, md: 3 },
-              borderRadius: 3,
-            }}
-          >
-            {children}
+    <SurfaceThemeProvider surface="bo">
+      <Box>
+        <BackofficeShell companyName={companyName}>
+          <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                width: "100%",
+                padding: { xs: 0, sm: 0, md: 3 },
+                borderRadius: 3,
+              }}
+            >
+              {children}
+            </Box>
           </Box>
-        </Box>
-      </BackofficeShell>
-    </Box>
+        </BackofficeShell>
+      </Box>
+    </SurfaceThemeProvider>
   );
 }

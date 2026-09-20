@@ -1,6 +1,9 @@
 import { randomBytes } from "crypto";
 import { prisma } from "../utils/prisma";
-import { NotFoundError, ValidationError } from "../lib/errors";
+import { AppError, NotFoundError, ValidationError } from "../lib/errors";
+import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
+import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
+import { config } from "@/app/utils/config";
 import { LocationService } from "./location.service";
 
 // Name is fixed for the counter "table" row — it isn't a real seated
@@ -26,9 +29,10 @@ function generateCounterKey() {
  *
  * Does one thing per method (Clean Code's "Do One Thing"): createTable
  * only creates the row; setTableQrCodeUrl only attaches an already-
- * uploaded QR code's URL. The image upload itself belongs to the
- * storage layer (FileStorageService), not here — this Service only
- * knows about Table rows, never about S3/MinIO.
+ * uploaded QR code's URL. regenerateQrImage is the one orchestrating
+ * method: it decides how a table's QR image is built and stored, but
+ * still goes through FileStorageService rather than talking to S3/MinIO
+ * itself.
  */
 export class TableService {
   static async getTablesByLocation(locationId: number) {
@@ -68,9 +72,9 @@ export class TableService {
   }
 
   /** Does one thing: creates a table with a name under a location.
-   *  Does not touch qrcodeImageUrl — the caller (action.ts) uploads
-   *  the QR code image afterward, once it has the new table's id to
-   *  encode, then calls setTableQrCodeUrl separately.
+   *  Does not touch qrcodeImageUrl — the caller (action.ts) calls
+   *  regenerateQrImage afterward, once it has the new table's id to
+   *  encode.
    *
    *  When isCounter is true, the given name is ignored in favor of
    *  the fixed COUNTER_TABLE_NAME — the counter isn't a seat a staff
@@ -104,7 +108,7 @@ export class TableService {
   /** Does one thing: renames. Does not touch qrcodeImageUrl or
    *  isArchived — those are other methods' jobs. Note the QR code
    *  itself is unaffected by a rename, since it encodes locationId +
-   *  tableId, not the name (see tables/action.ts buildQrCodeContent),
+   *  tableId, not the name (see buildQrCodeContent),
    *  so there's nothing to regenerate here.
    *
    *  Refuses to rename a counter row — the locked name is part of
@@ -123,9 +127,8 @@ export class TableService {
   }
 
   /** Does one thing: attaches a QR code image URL to an existing table.
-   *  Mirrors MenuService.setMenuAsset — the Service layer never talks
-   *  to the storage provider directly, it only persists the URL the
-   *  Controller already got back from FileStorageService.upload(). */
+   *  Mirrors MenuService.setMenuAsset — it only persists a URL that
+   *  FileStorageService.upload() already returned. */
   static async setTableQrCodeUrl(tableId: number, url: string) {
     return prisma.table.update({
       where: { id: tableId },
@@ -135,8 +138,7 @@ export class TableService {
 
   /** Does one thing: deletes the Table row. Does NOT touch the QR
    *  code image in storage — that's the Controller's job (action.ts),
-   *  since this Service has no dependency on FileStorageService (Rule
-   *  1: Services stay storage-provider-agnostic). Callers should read
+   *  which deletes it after this returns. Callers should read
    *  qrcodeImageUrl via getTableById *before* calling this, since the
    *  row (and that URL) is gone once this returns. */
   static async deleteTable(tableId: number) {
@@ -146,10 +148,9 @@ export class TableService {
   /** Issues a new counterAccessKey for ANY table (Counter or regular),
    *  invalidating every previously-printed copy of that table's QR
    *  image at once (old links now fail resolveCounterQrScan /
-   *  resolveTableQrScan). The Controller (tables/action.ts) is
-   *  responsible for regenerating and re-uploading the QR image
-   *  itself afterward — this method only updates the key the Table
-   *  row holds. */
+   *  resolveTableQrScan). This method only updates the key the Table
+   *  row holds — the caller (tables/action.ts) must follow up with
+   *  regenerateQrImage to reprint the image around the new key. */
   static async rotateAccessKey(tableId: number) {
     await TableService.getTableById(tableId);
 
@@ -175,5 +176,94 @@ export class TableService {
         isArchived: false,
       },
     });
+  }
+
+  /**
+   * The one place "regenerate this table's QR image and swap it in"
+   * happens — createTable, updateTable (new logo), and rotateAccessKey
+   * all funnel through this instead of each repeating build→render→
+   * upload→set→cleanup themselves. New image is uploaded and the DB row
+   * points at it *before* the old one is touched — if cleanup below
+   * fails, the table still has a working QR code, just an extra
+   * orphaned file in MinIO. Deleting the old image first would risk the
+   * opposite: a successful delete followed by a failed upload, leaving
+   * the table with no QR image at all. A brand-new table has no old
+   * image to clean up (qrcodeImageUrl defaults to ""), so this is safe
+   * to call from createTable too.
+   */
+  static async regenerateQrImage(
+    table: {
+      id: number;
+      locationId: number;
+      isCounter: boolean | null;
+      counterAccessKey: string | null;
+      qrcodeImageUrl: string | null;
+    },
+    logoBuffer: Buffer | null,
+  ) {
+    if (!table.counterAccessKey) {
+      throw new AppError(
+        "This table has no access key to build a QR code from.",
+        "VALIDATION",
+      );
+    }
+
+    const qrContent = TableService.buildQrCodeContent(
+      table.locationId,
+      table.id,
+      table.isCounter === true,
+      table.counterAccessKey,
+    );
+    const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
+
+    const storage = getFileStorageService();
+    const { url } = await storage.upload(
+      qrImageBuffer,
+      "image/png",
+      "table",
+      table.id,
+    );
+    await TableService.setTableQrCodeUrl(table.id, url);
+
+    if (table.qrcodeImageUrl) {
+      await storage.delete(table.qrcodeImageUrl);
+    }
+
+    return url;
+  }
+
+  /**
+   * Builds the URL a customer's phone opens after scanning the table's
+   * QR code. Both Counter and regular tables now point at THIS app's
+   * own Route Handlers (/counter, /table) — each validates the key
+   * server-side, sets a cookie (a session for Counter, a per-table
+   * contributor token for regular tables — see the two entries below),
+   * and redirects onward to the clean, key-free /menu URL before
+   * anything renders. Query-string form (Rule: keep it simple over path
+   * params).
+   *
+   * Regular tables: /table?locationId=&tableId=&key=. Unlike Counter,
+   * every phone that scans the SAME table's (valid-keyed) QR shares one
+   * draft/order (see the per-customer draft design —
+   * resolveTableQrScan, TableDraftService, contributorToken.ts) rather
+   * than getting its own individual session the way Counter does.
+   * Still DOES need reprinting periodically like Counter, for the same
+   * reason: rotating the key (TableService.rotateAccessKey) is how a
+   * leaked/copied table QR gets invalidated, since the physical QR
+   * itself can't be un-scanned once shared.
+   *
+   * Counter: /counter?locationId=&tableId=&key=. Each phone that scans
+   * it gets its own individual session (cookie-identified), unlike
+   * Table's shared one.
+   */
+  private static buildQrCodeContent(
+    locationId: number,
+    tableId: number,
+    isCounter: boolean,
+    accessKey: string,
+  ) {
+    const origin = new URL(config.mainUrl).origin;
+    const path = isCounter ? "counter" : "table";
+    return `${origin}/${path}?locationId=${locationId}&tableId=${tableId}&key=${accessKey}`;
   }
 }

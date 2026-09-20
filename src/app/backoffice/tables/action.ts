@@ -16,98 +16,7 @@ import {
 import { getSessionContext } from "@/app/lib/session";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 
-import { config } from "@/app/utils/config";
 import { LocationService, TableService } from "@/app/services";
-import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
-
-/**
- * Builds the URL a customer's phone opens after scanning the table's
- * QR code. Both Counter and regular tables now point at THIS app's
- * own Route Handlers (/counter, /table) — each validates the key
- * server-side, sets a cookie (a session for Counter, a per-table
- * contributor token for regular tables — see the two entries below),
- * and redirects onward to the clean, key-free /menu URL before
- * anything renders. Query-string form (Rule: keep it simple over path
- * params).
- *
- * Regular tables: /table?locationId=&tableId=&key=. Unlike Counter,
- * every phone that scans the SAME table's (valid-keyed) QR shares one
- * draft/order (see the per-customer draft design —
- * resolveTableQrScan, TableDraftService, contributorToken.ts) rather
- * than getting its own individual session the way Counter does.
- * Still DOES need reprinting periodically like Counter, for the same
- * reason: rotating the key (TableService.rotateAccessKey) is how a
- * leaked/copied table QR gets invalidated, since the physical QR
- * itself can't be un-scanned once shared.
- *
- * Counter: /counter?locationId=&tableId=&key=. Each phone that scans
- * it gets its own individual session (cookie-identified), unlike
- * Table's shared one.
- */
-function buildQrCodeContent(
-  locationId: number,
-  tableId: number,
-  isCounter: boolean,
-  accessKey: string,
-) {
-  const origin = new URL(config.mainUrl).origin;
-  const path = isCounter ? "counter" : "table";
-  return `${origin}/${path}?locationId=${locationId}&tableId=${tableId}&key=${accessKey}`;
-}
-
-/**
- * The one place "regenerate this table's QR image and swap it in"
- * happens — createTable, updateTable (new logo), and rotateAccessKey
- * all funnel through this instead of each repeating build→render→
- * upload→set→cleanup themselves. New image is uploaded and the DB row
- * points at it *before* the old one is touched — if cleanup below
- * fails, the table still has a working QR code, just an extra
- * orphaned file in MinIO. Deleting the old image first would risk the
- * opposite: a successful delete followed by a failed upload, leaving
- * the table with no QR image at all. A brand-new table has no old
- * image to clean up (qrcodeImageUrl defaults to ""), so this is safe
- * to call from createTable too.
- */
-async function regenerateTableQrImage(
-  table: {
-    id: number;
-    locationId: number;
-    isCounter: boolean | null;
-    counterAccessKey: string | null;
-    qrcodeImageUrl: string | null;
-  },
-  logoBuffer: Buffer | null,
-) {
-  if (!table.counterAccessKey) {
-    throw new AppError(
-      "This table has no access key to build a QR code from.",
-      "VALIDATION",
-    );
-  }
-
-  const qrContent = buildQrCodeContent(
-    table.locationId,
-    table.id,
-    table.isCounter === true,
-    table.counterAccessKey,
-  );
-  const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
-
-  const storage = getFileStorageService();
-  const { url } = await storage.upload(
-    qrImageBuffer,
-    "image/png",
-    "table",
-    table.id,
-  );
-  await TableService.setTableQrCodeUrl(table.id, url);
-
-  if (table.qrcodeImageUrl) {
-    await storage.delete(table.qrcodeImageUrl);
-  }
-
-  return url;
-}
 
 const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
   const { companyId, userId } = await getSessionContext();
@@ -141,7 +50,7 @@ const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
   const logoBuffer = input.logo
     ? Buffer.from(await input.logo.arrayBuffer())
     : null;
-  await regenerateTableQrImage(table, logoBuffer);
+  await TableService.regenerateQrImage(table, logoBuffer);
 
   return { id: table.id };
 });
@@ -184,7 +93,7 @@ const safeUpdateTable = toSafeResult(
     // same place; only their look goes stale until reprinted.
     if (input.logo) {
       const logoBuffer = Buffer.from(await input.logo.arrayBuffer());
-      await regenerateTableQrImage(existingTable, logoBuffer);
+      await TableService.regenerateQrImage(existingTable, logoBuffer);
     }
 
     return { id: input.tableId };
@@ -270,7 +179,7 @@ const safeRotateAccessKey = toSafeResult(async (tableId: number) => {
   }
 
   const rotated = await TableService.rotateAccessKey(tableId);
-  await regenerateTableQrImage(rotated, null);
+  await TableService.regenerateQrImage(rotated, null);
 
   return { id: rotated.id };
 });

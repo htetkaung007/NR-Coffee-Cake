@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import type { PaletteMode } from "@mui/material";
-import { getTheme } from "./theme";
+import { getBoTheme } from "./theme";
+import { getOdTheme } from "./odTheme";
 
 type ThemeModeContextValue = {
   mode: PaletteMode;
@@ -14,6 +15,17 @@ const ThemeModeContext = createContext<ThemeModeContextValue | null>(null);
 
 const STORAGE_KEY = "theme-mode";
 
+// Server Component layout ကနေ function ကို Client Component ဆီ prop အနေနဲ့
+// ပို့လို့ မရလို့ (serialize မလုပ်နိုင်) string key နဲ့ပဲ ပို့ပြီး ဒီမှာ resolve လုပ်တယ်.
+const THEME_BUILDERS = {
+  bo: getBoTheme,
+  od: getOdTheme,
+} as const;
+
+export type ThemeSurface = keyof typeof THEME_BUILDERS;
+
+/** Light/dark mode state + toggle ကိုပဲ ကိုင်တယ် (app တစ်ခုလုံးမှာ တစ်ခုတည်း, root layout ကနေ mount).
+ *  Theme object ကိုတော့ SurfaceThemeProvider က surface အလိုက် ဆောက်တယ်. */
 export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<PaletteMode>(() => {
     if (typeof window === "undefined") {
@@ -36,16 +48,32 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Mode ပြောင်းတိုင်း theme object အသစ် ပြန်မတည်ဆောက်စေရန် memoize
-  const theme = useMemo(() => getTheme(mode), [mode]);
-
   return (
     <ThemeModeContext.Provider value={{ mode, toggleMode }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      {children}
     </ThemeModeContext.Provider>
+  );
+}
+
+/** Surface (Backoffice / Order-app) တစ်ခုချင်းစီရဲ့ layout ကနေ mount လုပ်ပြီး
+ *  လက်ရှိ mode နဲ့ သက်ဆိုင်ရာ theme ကို ဆောက်ပေးတယ်. */
+export function SurfaceThemeProvider({
+  surface,
+  children,
+}: {
+  surface: ThemeSurface;
+  children: React.ReactNode;
+}) {
+  const { mode } = useThemeMode();
+
+  // Mode ပြောင်းတိုင်း theme object အသစ် ပြန်မတည်ဆောက်စေရန် memoize
+  const theme = useMemo(() => THEME_BUILDERS[surface](mode), [surface, mode]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
   );
 }
 
