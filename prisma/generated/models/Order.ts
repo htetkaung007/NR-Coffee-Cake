@@ -49,6 +49,7 @@ export type OrderMinAggregateOutputType = {
   tableId: number | null
   orderSessionId: number | null
   contributorToken: string | null
+  note: string | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -61,6 +62,7 @@ export type OrderMaxAggregateOutputType = {
   tableId: number | null
   orderSessionId: number | null
   contributorToken: string | null
+  note: string | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -73,6 +75,7 @@ export type OrderCountAggregateOutputType = {
   tableId: number
   orderSessionId: number
   contributorToken: number
+  note: number
   createdAt: number
   updateTime: number
   isArchived: number
@@ -103,6 +106,7 @@ export type OrderMinAggregateInputType = {
   tableId?: true
   orderSessionId?: true
   contributorToken?: true
+  note?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -115,6 +119,7 @@ export type OrderMaxAggregateInputType = {
   tableId?: true
   orderSessionId?: true
   contributorToken?: true
+  note?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -127,6 +132,7 @@ export type OrderCountAggregateInputType = {
   tableId?: true
   orderSessionId?: true
   contributorToken?: true
+  note?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -226,6 +232,7 @@ export type OrderGroupByOutputType = {
   tableId: number
   orderSessionId: number | null
   contributorToken: string | null
+  note: string | null
   createdAt: Date
   updateTime: Date
   isArchived: boolean
@@ -261,6 +268,7 @@ export type OrderWhereInput = {
   tableId?: Prisma.IntFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableFilter<"Order"> | string | null
+  note?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolFilter<"Order"> | boolean
@@ -277,6 +285,7 @@ export type OrderOrderByWithRelationInput = {
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   contributorToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -296,6 +305,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   tableId?: Prisma.IntFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableFilter<"Order"> | string | null
+  note?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolFilter<"Order"> | boolean
@@ -312,6 +322,7 @@ export type OrderOrderByWithAggregationInput = {
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   contributorToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -332,6 +343,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   tableId?: Prisma.IntWithAggregatesFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableWithAggregatesFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  note?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"Order"> | boolean
@@ -340,6 +352,7 @@ export type OrderScalarWhereWithAggregatesInput = {
 export type OrderCreateInput = {
   quantity: number
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -356,6 +369,7 @@ export type OrderUncheckedCreateInput = {
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -365,6 +379,7 @@ export type OrderUncheckedCreateInput = {
 export type OrderUpdateInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -381,6 +396,7 @@ export type OrderUncheckedUpdateInput = {
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -394,6 +410,7 @@ export type OrderCreateManyInput = {
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -402,6 +419,7 @@ export type OrderCreateManyInput = {
 export type OrderUpdateManyMutationInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -414,6 +432,7 @@ export type OrderUncheckedUpdateManyInput = {
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -436,6 +455,7 @@ export type OrderCountOrderByAggregateInput = {
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
   contributorToken?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -456,6 +476,7 @@ export type OrderMaxOrderByAggregateInput = {
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
   contributorToken?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -468,6 +489,7 @@ export type OrderMinOrderByAggregateInput = {
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
   contributorToken?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -629,6 +651,7 @@ export type OrderUncheckedUpdateManyWithoutOrderSessionNestedInput = {
 export type OrderCreateWithoutTableInput = {
   quantity: number
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -643,6 +666,7 @@ export type OrderUncheckedCreateWithoutTableInput = {
   quantity: number
   orderSessionId?: number | null
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -685,6 +709,7 @@ export type OrderScalarWhereInput = {
   tableId?: Prisma.IntFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableFilter<"Order"> | string | null
+  note?: Prisma.StringNullableFilter<"Order"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Order"> | Date | string
   isArchived?: Prisma.BoolFilter<"Order"> | boolean
@@ -693,6 +718,7 @@ export type OrderScalarWhereInput = {
 export type OrderCreateWithoutMenuInput = {
   quantity: number
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -707,6 +733,7 @@ export type OrderUncheckedCreateWithoutMenuInput = {
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -742,6 +769,7 @@ export type OrderUpdateManyWithWhereWithoutMenuInput = {
 export type OrderCreateWithoutOrdersAddonsInput = {
   quantity: number
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -757,6 +785,7 @@ export type OrderUncheckedCreateWithoutOrdersAddonsInput = {
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -781,6 +810,7 @@ export type OrderUpdateToOneWithWhereWithoutOrdersAddonsInput = {
 export type OrderUpdateWithoutOrdersAddonsInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -796,6 +826,7 @@ export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -804,6 +835,7 @@ export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
 export type OrderCreateWithoutOrderSessionInput = {
   quantity: number
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -818,6 +850,7 @@ export type OrderUncheckedCreateWithoutOrderSessionInput = {
   quantity: number
   tableId: number
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -856,6 +889,7 @@ export type OrderCreateManyTableInput = {
   quantity: number
   orderSessionId?: number | null
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -864,6 +898,7 @@ export type OrderCreateManyTableInput = {
 export type OrderUpdateWithoutTableInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -878,6 +913,7 @@ export type OrderUncheckedUpdateWithoutTableInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -890,6 +926,7 @@ export type OrderUncheckedUpdateManyWithoutTableInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -901,6 +938,7 @@ export type OrderCreateManyMenuInput = {
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -909,6 +947,7 @@ export type OrderCreateManyMenuInput = {
 export type OrderUpdateWithoutMenuInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -923,6 +962,7 @@ export type OrderUncheckedUpdateWithoutMenuInput = {
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -935,6 +975,7 @@ export type OrderUncheckedUpdateManyWithoutMenuInput = {
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -946,6 +987,7 @@ export type OrderCreateManyOrderSessionInput = {
   quantity: number
   tableId: number
   contributorToken?: string | null
+  note?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -954,6 +996,7 @@ export type OrderCreateManyOrderSessionInput = {
 export type OrderUpdateWithoutOrderSessionInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -968,6 +1011,7 @@ export type OrderUncheckedUpdateWithoutOrderSessionInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -980,6 +1024,7 @@ export type OrderUncheckedUpdateManyWithoutOrderSessionInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1023,6 +1068,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
+  note?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -1040,6 +1086,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
+  note?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -1055,6 +1102,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
+  note?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -1070,12 +1118,13 @@ export type OrderSelectScalar = {
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
+  note?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "menuId" | "quantity" | "tableId" | "orderSessionId" | "contributorToken" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "menuId" | "quantity" | "tableId" | "orderSessionId" | "contributorToken" | "note" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orderSession?: boolean | Prisma.Order$orderSessionArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
@@ -1109,6 +1158,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     tableId: number
     orderSessionId: number | null
     contributorToken: string | null
+    note: string | null
     createdAt: Date
     updateTime: Date
     isArchived: boolean
@@ -1545,6 +1595,7 @@ export interface OrderFieldRefs {
   readonly tableId: Prisma.FieldRef<"Order", 'Int'>
   readonly orderSessionId: Prisma.FieldRef<"Order", 'Int'>
   readonly contributorToken: Prisma.FieldRef<"Order", 'String'>
+  readonly note: Prisma.FieldRef<"Order", 'String'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"Order", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"Order", 'Boolean'>

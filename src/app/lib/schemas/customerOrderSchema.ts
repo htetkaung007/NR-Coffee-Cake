@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { countWords, MAX_ORDER_NOTE_WORDS } from "@/app/lib/orderNote";
 
 // Shared primitives — every id crossing this boundary is a Prisma
 // autoincrement Int (always positive), and "quantity" always means
@@ -9,11 +10,23 @@ import { z } from "zod";
 const positiveInt = z.number().int().positive();
 const quantity = z.number().int().min(1).max(99);
 const addonIds = z.array(positiveInt).default([]);
+// Optional per-item instruction ("no onion"). Limited by WORDS, not
+// characters — see countWords for what counts as a word. Defined once
+// so all four add/update schemas below enforce the same rule.
+const orderNoteSchema = z
+  .string()
+  .trim()
+  .optional()
+  .refine(
+    (value) => !value || countWords(value) <= MAX_ORDER_NOTE_WORDS,
+    `Note must be ${MAX_ORDER_NOTE_WORDS} words or fewer.`,
+  );
 
 export const addToCartSchema = z.object({
   menuId: positiveInt,
   quantity,
   addonIds,
+  note: orderNoteSchema,
 });
 export type AddToCartInput = z.infer<typeof addToCartSchema>;
 
@@ -26,6 +39,7 @@ export const updateCartItemSchema = z.object({
   orderId: positiveInt,
   quantity,
   addonIds,
+  note: orderNoteSchema,
 });
 export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
 
@@ -40,6 +54,7 @@ export const addDraftItemSchema = z.object({
   menuId: positiveInt,
   quantity,
   addonIds,
+  note: orderNoteSchema,
 });
 export type AddDraftItemInput = z.infer<typeof addDraftItemSchema>;
 
@@ -54,6 +69,7 @@ export const updateDraftItemSchema = z.object({
   orderId: positiveInt,
   quantity,
   addonIds,
+  note: orderNoteSchema,
 });
 export type UpdateDraftItemInput = z.infer<typeof updateDraftItemSchema>;
 

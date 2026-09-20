@@ -6,7 +6,15 @@
       "Bash(grep -rnoE \"#[0-9a-fA-F]{3,8}\\\\b|brand-[a-z-]+|primary\\\\.[a-z]+|\\\\\"primary\\\\\"|color=\\\\\"primary\\\\\"\" src/app/components/orderUI \"src/app/\\(storefront\\)\" src/app/components/OdMenuCard.tsx)",
       "Bash(awk -F: '{print $NF}')",
       "Bash(python3 -)",
-      "Bash(echo \"grep exit: $?\")"
+      "Bash(echo \"grep exit: $?\")",
+      "Bash(grep -v \":0$\")",
+      "Bash(grep -rnE \"\\\\\"\\(white|black\\)\\\\\"|common\\\\.\\(white|black\\)|#[0-9a-fA-F]{3,8}\\\\b\" src/app/qr src/app/lib/qr/qrCode.ts src/app/components/BoMenuCard.tsx)",
+      "Bash(git diff *)",
+      "Bash(grep -E \"^\\(esbuild|tsx|ts-node|swc|vite-node|sucrase\\)$\")",
+      "Bash(node -)",
+      "Bash(NODE_PATH=/workspace/node_modules node /tmp/claude-0/-workspace/0d009132-1c66-4f72-9d91-80e949e579bc/scratchpad/out/check.js)",
+      "Bash(grep -rnE \"maxLength|inputProps|slotProps|helperText|\\\\.length\\\\} ?/|/ ?\\\\$\\\\{|MAX_|_MAX|LIMIT\" src/app/components/menuForm/MenuForm.tsx)",
+      "Bash(NODE_PATH=/workspace/node_modules node /tmp/claude-0/-workspace/0d009132-1c66-4f72-9d91-80e949e579bc/scratchpad/out2/check.js)"
     ]
   }
 }

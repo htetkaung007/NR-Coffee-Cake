@@ -349,6 +349,9 @@ export default function StaffOrderClient({
         canOrder={sessionId !== null}
         onClose={() => setDetailMenuId(null)}
         onSubmit={handleAddToCart}
+        // addStaffCartItemAction has no note parameter (yet) — hide the
+        // field rather than let a typed note be silently dropped.
+        allowNote={false}
       />
     </Box>
   );

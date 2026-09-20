@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
+import { normalizeOrderNote } from "@/app/lib/orderNote";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 
@@ -29,6 +30,7 @@ export class OrderSessionCartService {
     menuId: number,
     quantity: number,
     addonIds: number[] = [],
+    note?: string,
   ) {
     const session = await prisma.orderSession.findFirst({
       where: { id: sessionId, isArchived: false },
@@ -47,6 +49,7 @@ export class OrderSessionCartService {
           quantity,
           tableId,
           orderSessionId: sessionId,
+          note: normalizeOrderNote(note),
         },
       });
 
@@ -106,6 +109,7 @@ export class OrderSessionCartService {
     orderId: number,
     quantity: number,
     addonIds: number[] = [],
+    note?: string,
   ) {
     const session = await prisma.orderSession.findFirst({
       where: { id: sessionId, isArchived: false },
@@ -131,7 +135,7 @@ export class OrderSessionCartService {
       await tx.ordersAddon.deleteMany({ where: { orderId } });
       const updated = await tx.order.update({
         where: { id: orderId },
-        data: { quantity },
+        data: { quantity, note: normalizeOrderNote(note) },
       });
       if (addonIds.length > 0) {
         await tx.ordersAddon.createMany({

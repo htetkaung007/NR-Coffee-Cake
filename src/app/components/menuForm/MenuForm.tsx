@@ -22,6 +22,7 @@ import {
 } from "@/app/backoffice/menus/action";
 import { AddonGroupOption } from "../ConnectAddonGroupDialog";
 import OdMenuCard, { OdMenuCardData } from "../OdMenuCard";
+import { SurfaceThemeScope } from "@/app/lib/theme/ThemeModeProvider";
 import ConnectedAddonsSection from "./Connectedaddonssection";
 import MenuCategoryChips, { MenuCategoryOption } from "./Menucategorychips";
 import MenuImageUploader from "./Menuimageuploader";
@@ -349,7 +350,11 @@ export default function MenuForm({
             LIVE CUSTOMER PREVIEW
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <OdMenuCard item={previewData} />
+          {/* Backoffice runs the Bo theme, but this card must look exactly
+              like the customer's — render it under the Od theme. */}
+          <SurfaceThemeScope surface="od">
+            <OdMenuCard item={previewData} />
+          </SurfaceThemeScope>
         </Box>
       </Box>
 

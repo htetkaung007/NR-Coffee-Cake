@@ -35,6 +35,7 @@ interface SessionOrderLine {
   quantity: number;
   menu: { name: string };
   OrdersAddons: SessionOrderAddon[];
+  note?: string | null;
 }
 
 interface SessionData {
@@ -80,6 +81,15 @@ function ItemList({ orders }: { orders: SessionOrderLine[] }) {
               sx={{ display: "block", pl: 2 }}
             >
               + {order.OrdersAddons.map((link) => link.addon.name).join(", ")}
+            </Typography>
+          )}
+          {order.note && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", pl: 2, overflowWrap: "anywhere" }}
+            >
+              Note: {order.note}
             </Typography>
           )}
         </Box>

@@ -1,5 +1,6 @@
 import { prisma } from "../../utils/prisma";
 import { NotFoundError, ValidationError } from "../../lib/errors";
+import { orderLinesTotal } from "../../lib/orderTotals";
 
 /**
  * The cashier-approval / kitchen-facing half of the OrderSession
@@ -188,13 +189,7 @@ export class OrderSessionApprovalService {
     });
 
     return sessions.map((session) => {
-      const total = session.orders.reduce((sum, order) => {
-        const addonsTotal = order.OrdersAddons.reduce(
-          (addonSum, link) => addonSum + link.addon.price,
-          0,
-        );
-        return sum + order.menu.price * order.quantity + addonsTotal;
-      }, 0);
+      const total = orderLinesTotal(session.orders);
 
       return {
         ...session,

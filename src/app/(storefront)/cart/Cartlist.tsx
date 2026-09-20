@@ -1,7 +1,19 @@
 "use client";
 
 import { forwardRef } from "react";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Divider,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
+import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
+
+import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper";
 
 export interface CartLine {
   id: number;
@@ -9,6 +21,8 @@ export interface CartLine {
   menuName: string;
   quantity: number;
   price: number;
+  /** The menu's photo (Menu.assetUrl); null/absent falls back to an icon. */
+  imageUrl?: string | null;
   /** Populated when the caller fetched addon links alongside the order
    *  (both Counter's own cart and Table's draft do on initial load) —
    *  optional because a couple of read paths (e.g. CartButton's status-
@@ -16,6 +30,8 @@ export interface CartLine {
    *  customer can no longer edit anyway. */
   addonNames?: string[];
   addonIds?: number[];
+  /** Customer's per-item instruction ("no onion"); null/absent = none. */
+  note?: string | null;
 }
 
 export interface Shortage {
@@ -35,129 +51,203 @@ export interface Shortage {
 export interface DraftLine extends CartLine {
   contributorToken: string;
   addonNames: string[];
-  /** Needed (not just addonNames) so DraftList's Edit button can
-   *  re-open MenuDetailDialog with the actual previous selection
-   *  pre-checked — addonNames alone can't tell the dialog WHICH addon
-   *  ids to pre-select, since names aren't guaranteed unique across
-   *  categories the way ids are. */
+  /** Needed (not just addonNames) so tapping a line can re-open
+   *  MenuDetailDialog with the actual previous selection pre-checked —
+   *  addonNames alone can't tell the dialog WHICH addon ids to
+   *  pre-select, since names aren't guaranteed unique across categories
+   *  the way ids are. */
   addonIds: number[];
 }
 
-interface CartLineActionsProps {
-  disabled: boolean;
-  onEdit: () => void;
-  onRemove: () => void;
-}
+/** Highest quantity a line can be raised to — the same cap the server's
+ *  schema enforces (see customerOrderSchema). */
+const MAX_LINE_QUANTITY = 99;
 
-/** Edit/Cancel button pair shared by CartList (Counter, current
- *  customer's whole cart) and DraftList (Table, only the current
- *  contributor's own items) — same actions, same backend contract
- *  (both ultimately reject anything that's no longer still-editable
- *  server-side), so the buttons themselves don't need to know which
- *  flow they're in. */
-export function CartLineActions({
-  disabled,
-  onEdit,
-  onRemove,
-}: CartLineActionsProps) {
-  return (
-    <Stack
-      direction="row"
-      spacing={0.5}
-      sx={{ justifyContent: "flex-end", mt: 0.5 }}
-    >
-      <Button size="small" disabled={disabled} onClick={onEdit}>
-        Edit
-      </Button>
-      <Button size="small" color="error" disabled={disabled} onClick={onRemove}>
-        Cancel
-      </Button>
-    </Stack>
-  );
-}
+const mutedTextSx = (theme: { palette: { decor: { mutedText: string } } }) => ({
+  color: theme.palette.decor.mutedText,
+});
 
 interface CartLineRowProps {
   line: CartLine;
   shortage?: Shortage;
   addons?: string[];
-  /** Controls the shortage copy: an actionable row (the viewer can
-   *  Edit/Cancel it themselves) is told so; a read-only row (someone
-   *  else's item on a shared Table draft) shouldn't imply a fix the
-   *  viewer can't perform. */
+  /** Whether the viewer can change this line: tap it to edit, the − / +
+   *  stepper, and the ✕ to remove. A read-only row (someone else's item
+   *  on a shared Table draft, or a cart that's already submitted) shows
+   *  the quantity as plain text and has none of those. */
   actionable?: boolean;
-  actions?: React.ReactNode;
+  /** A change is being saved — controls are disabled meanwhile. */
+  disabled?: boolean;
+  onEdit?: () => void;
+  onRemove?: () => void;
+  onQuantityChange?: (next: number) => void;
 }
 
-/** One cart/draft line's display — quantity chip, name (truncated),
- *  price, optional addon summary, optional actions slot, optional
- *  shortage warning. Shared by CartList (flat list) and DraftList
- *  (grouped into per-contributor cards) so this row's look can't drift
- *  between the two flows. */
+/** One cart/draft line: photo, name, addons, note and quantity on the
+ *  left; price and the ✕ (remove) on the right. Tapping the row opens it
+ *  for editing. Shared by CartList (flat list) and DraftList (grouped into
+ *  per-contributor cards) so its look can't drift between the two flows. */
 export function CartLineRow({
   line,
   shortage,
   addons = [],
   actionable = false,
-  actions,
+  disabled = false,
+  onEdit,
+  onRemove,
+  onQuantityChange,
 }: CartLineRowProps) {
+  const canEdit = actionable && !!onEdit && !disabled;
+  const canRemove = actionable && !!onRemove;
+  const changeQuantity = actionable ? onQuantityChange : undefined;
+
   return (
-    <Box sx={{ opacity: shortage ? 0.5 : 1 }}>
-      <Stack
-        direction="row"
-        sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
+    <Box
+      onClick={canEdit ? onEdit : undefined}
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 1.5,
+        py: 1.5,
+        opacity: shortage ? 0.5 : 1,
+        cursor: canEdit ? "pointer" : "default",
+        ...(canEdit && { "&:hover": { bgcolor: "action.hover" } }),
+      }}
+    >
+      <Avatar
+        variant="rounded"
+        src={line.imageUrl ?? undefined}
+        alt={line.menuName}
+        sx={{
+          width: { xs: 64, sm: 72 },
+          height: { xs: 64, sm: 72 },
+          flexShrink: 0,
+          borderRadius: 3,
+          bgcolor: "background.paper",
+          color: "text.secondary",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
       >
-        <Box sx={{ minWidth: 0 }}>
-          <Stack
-            direction="row"
-            spacing={0.75}
-            sx={{ alignItems: "center", minWidth: 0 }}
-          >
-            <Box
-              component="span"
-              sx={{
-                flexShrink: 0,
-                minWidth: 26,
-                textAlign: "center",
-                px: 0.5,
-                py: 0.1,
-                borderRadius: 1,
-                bgcolor: "action.selected",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-              }}
-            >
-              {line.quantity}×
-            </Box>
-            <Typography
-              variant="body2"
-              sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {line.menuName}
-            </Typography>
-          </Stack>
+        <RestaurantOutlinedIcon fontSize="small" />
+      </Avatar>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* The keyboard-reachable "edit" target — pointer users can tap
+           anywhere on the row (the wrapper's onClick). */}
+        <Box
+          role={canEdit ? "button" : undefined}
+          tabIndex={canEdit ? 0 : undefined}
+          aria-label={canEdit ? `Edit ${line.menuName}` : undefined}
+          onKeyDown={
+            canEdit
+              ? (event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onEdit?.();
+                  }
+                }
+              : undefined
+          }
+          sx={{
+            outline: "none",
+            "&:focus-visible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+              borderRadius: 1,
+            },
+          }}
+        >
+          <Typography variant="body1" sx={{ fontWeight: 700, lineHeight: 1.35 }}>
+            {line.menuName}
+          </Typography>
           {addons.length > 0 && (
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="body2" sx={mutedTextSx}>
               + {addons.join(", ")}
             </Typography>
           )}
+          {line.note && (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ alignItems: "flex-start", mt: 0.25 }}
+            >
+              <StickyNote2OutlinedIcon
+                sx={[{ fontSize: 14, mt: "3px" }, mutedTextSx]}
+              />
+              <Typography
+                variant="body2"
+                sx={[
+                  { fontStyle: "italic", overflowWrap: "anywhere" },
+                  mutedTextSx,
+                ]}
+              >
+                {line.note}
+              </Typography>
+            </Stack>
+          )}
         </Box>
-        <Typography variant="body2" sx={{ flexShrink: 0, pl: 1 }}>
+
+        <Box sx={{ mt: 0.5 }} onClick={(event) => event.stopPropagation()}>
+          {changeQuantity ? (
+            <QuantityStepper
+              variant="plain"
+              disabled={disabled}
+              quantity={{
+                value: line.quantity,
+                max: MAX_LINE_QUANTITY,
+                onDecrease: () => changeQuantity(line.quantity - 1),
+                onIncrease: () => changeQuantity(line.quantity + 1),
+              }}
+            />
+          ) : (
+            <Typography variant="body2" sx={mutedTextSx}>
+              Qty {line.quantity}
+            </Typography>
+          )}
+        </Box>
+
+        {shortage && (
+          <Typography variant="caption" color="error" sx={{ display: "block" }}>
+            {shortage.available > 0
+              ? `Only ${shortage.available} left`
+              : "This just sold out"}
+            {actionable ? " — change the quantity or remove it." : "."}
+          </Typography>
+        )}
+      </Box>
+
+      <Stack sx={{ alignItems: "flex-end", flexShrink: 0, gap: 1 }}>
+        <Typography
+          variant="body1"
+          sx={{ fontWeight: 700, color: "error.main", whiteSpace: "nowrap" }}
+        >
           {(line.price * line.quantity).toLocaleString()} MMK
         </Typography>
+        {canRemove && (
+          <IconButton
+            aria-label={`Remove ${line.menuName}`}
+            size="small"
+            disabled={disabled}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove?.();
+            }}
+            sx={{
+              width: 32,
+              height: 32,
+              color: "text.secondary",
+              bgcolor: "background.paper",
+              border: "1px solid",
+              borderColor: "divider",
+              "&:hover": { color: "error.main", bgcolor: "action.hover" },
+            }}
+          >
+            <CloseIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+        )}
       </Stack>
-      {actions}
-      {shortage && (
-        <Typography variant="caption" color="error">
-          {shortage.available > 0
-            ? `Only ${shortage.available} left`
-            : "This just sold out"}
-          {actionable ? " — please edit or cancel." : "."}
-        </Typography>
-      )}
     </Box>
   );
 }
@@ -170,24 +260,36 @@ interface CartListProps {
    *  has to be able to show it. */
   shortages?: Shortage[];
   /** True while the cart is still self-service editable (status ===
-   *  "CART") — Edit/Cancel are hidden once it isn't, since the backend
-   *  would reject them anyway and a disabled-looking action that still
-   *  tried the request would just surface a server error for something
-   *  the UI could have prevented outright. */
+   *  "CART") — tap-to-edit, the quantity stepper and ✕ are hidden once
+   *  it isn't, since the backend would reject them anyway and a control
+   *  that still tried the request would just surface a server error for
+   *  something the UI could have prevented outright. */
   editable?: boolean;
   onRemove?: (orderId: number) => void;
   onEdit?: (line: CartLine) => void;
+  onQuantityChange?: (line: CartLine, next: number) => void;
   isPending?: boolean;
+  title?: string;
 }
 
 /**
- * Renders what's in the cart (line name/qty/price/addons), with
- * optional per-item Edit/Cancel when `editable` — it doesn't own the
- * cart data itself. Forwarded ref so CounterOrderClient can position/
- * scroll to this block if needed later.
+ * Renders what's in the cart (photo, name, addons, note, quantity,
+ * price), with tap-to-edit, a − / + quantity stepper and a ✕ remove per
+ * item when `editable` — it doesn't own the cart data itself. Forwarded
+ * ref so CounterOrderClient can position/scroll to this block if needed
+ * later.
  */
 const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
-  { cart, shortages = [], editable = false, onRemove, onEdit, isPending = false },
+  {
+    cart,
+    shortages = [],
+    editable = false,
+    onRemove,
+    onEdit,
+    onQuantityChange,
+    isPending = false,
+    title = "Your order",
+  },
   ref,
 ) {
   if (cart.length === 0) return null;
@@ -198,10 +300,10 @@ const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
 
   return (
     <Box ref={ref} sx={{ mb: 3 }}>
-      <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
-        Your order
+      <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 700 }}>
+        {title}
       </Typography>
-      <Stack spacing={1}>
+      <Stack divider={<Divider />}>
         {cart.map((line) => (
           <CartLineRow
             key={line.id}
@@ -209,14 +311,13 @@ const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
             shortage={shortageByMenuId.get(line.menuId)}
             addons={line.addonNames}
             actionable={editable}
-            actions={
-              editable && onEdit && onRemove ? (
-                <CartLineActions
-                  disabled={isPending}
-                  onEdit={() => onEdit(line)}
-                  onRemove={() => onRemove(line.id)}
-                />
-              ) : undefined
+            disabled={isPending}
+            onEdit={onEdit ? () => onEdit(line) : undefined}
+            onRemove={onRemove ? () => onRemove(line.id) : undefined}
+            onQuantityChange={
+              onQuantityChange
+                ? (next) => onQuantityChange(line, next)
+                : undefined
             }
           />
         ))}

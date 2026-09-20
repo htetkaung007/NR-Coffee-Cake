@@ -101,15 +101,10 @@ export default async function MenuPage({
             contributorToken: item.contributorToken ?? "",
             addonNames: item.OrdersAddons.map((link) => link.addon.name),
             addonIds: item.OrdersAddons.map((link) => link.addonId),
+            note: item.note,
           }))}
-          initialActiveRound={
-            activeRound
-              ? {
-                  orderNumber: activeRound.orderNumber,
-                  status: activeRound.status,
-                }
-              : null
-          }
+          initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
+          activeRoundId={activeRound?.id ?? null}
           menus={buildMenuOptions(menus)}
         />
       );
@@ -146,6 +141,7 @@ export default async function MenuPage({
           menuName: order.menu.name,
           quantity: order.quantity,
           price: order.menu.price,
+          note: order.note,
         })) ?? []
       }
       menus={buildMenuOptions(menus)}

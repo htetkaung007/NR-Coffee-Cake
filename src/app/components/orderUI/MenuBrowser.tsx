@@ -49,6 +49,7 @@ interface MenuBrowserProps {
     menu: { id: number; name: string; price: number },
     quantity: number,
     addonIds: number[],
+    note: string,
   ) => Promise<string | null>;
 }
 
@@ -193,8 +194,10 @@ export default function MenuBrowser({
             md: "repeat(3, 1fr)",
             lg: "repeat(4, 1fr)",
           },
-          gap: { xs: 2, sm: 2, md: 2.5 },
-          p: { xs: 1, sm: 1, md: 3 },
+          // xs: 14px gap + 4px side padding → with the page's 16px, a
+          // 390px phone gets (390 - 40 - 14) / 2 = 168px cards.
+          gap: { xs: 1.75, sm: 2, md: 2.5 },
+          p: { xs: 0.5, sm: 1, md: 3 },
           alignItems: "start",
         }}
       >
@@ -221,10 +224,10 @@ export default function MenuBrowser({
         locationId={locationId}
         canOrder={canOrder}
         onClose={() => setDetailMenuId(null)}
-        onSubmit={async (menuId, quantity, addonIds) => {
+        onSubmit={async (menuId, quantity, addonIds, note) => {
           const menu = menus.find((item) => item.id === menuId);
           if (!menu) return "This item is no longer available.";
-          return onAddToCart(menu, quantity, addonIds);
+          return onAddToCart(menu, quantity, addonIds, note);
         }}
       />
     </>

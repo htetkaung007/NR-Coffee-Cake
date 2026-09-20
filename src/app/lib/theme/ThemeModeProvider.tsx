@@ -55,9 +55,11 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Surface (Backoffice / Order-app) တစ်ခုချင်းစီရဲ့ layout ကနေ mount လုပ်ပြီး
- *  လက်ရှိ mode နဲ့ သက်ဆိုင်ရာ theme ကို ဆောက်ပေးတယ်. */
-export function SurfaceThemeProvider({
+/** Surface တစ်ခုရဲ့ theme ကိုပဲ (CssBaseline မပါဘဲ) လက်ရှိ mode နဲ့ ဆောက်ပေးတယ်.
+ *  တခြား surface ရဲ့ layout ထဲမှာ Od component ကို ထည့်ပြရတဲ့ နေရာ (ဥပမာ backoffice
+ *  ရဲ့ live customer preview) အတွက် — CssBaseline က page တစ်ခုလုံးကို ထပ်ခြယ်မှာမို့
+ *  ဒီမှာ မထည့်ဘူး. */
+export function SurfaceThemeScope({
   surface,
   children,
 }: {
@@ -69,11 +71,23 @@ export function SurfaceThemeProvider({
   // Mode ပြောင်းတိုင်း theme object အသစ် ပြန်မတည်ဆောက်စေရန် memoize
   const theme = useMemo(() => THEME_BUILDERS[surface](mode), [surface, mode]);
 
+  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+}
+
+/** Surface (Backoffice / Order-app) တစ်ခုချင်းစီရဲ့ layout ကနေ mount လုပ်ပြီး
+ *  theme + CssBaseline ကို ပေးတယ်. */
+export function SurfaceThemeProvider({
+  surface,
+  children,
+}: {
+  surface: ThemeSurface;
+  children: React.ReactNode;
+}) {
   return (
-    <ThemeProvider theme={theme}>
+    <SurfaceThemeScope surface={surface}>
       <CssBaseline />
       {children}
-    </ThemeProvider>
+    </SurfaceThemeScope>
   );
 }
 

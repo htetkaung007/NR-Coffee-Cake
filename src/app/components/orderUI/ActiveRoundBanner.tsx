@@ -14,14 +14,19 @@ export const ROUND_STATUS_LABEL: Record<string, string> = {
 export interface ActiveRound {
   orderNumber: string;
   status: string;
+  /** Filled by the cart flows (not the menu page): the round's id — for
+   *  its receipt link and to recognise "the round I was waiting on" —
+   *  and its billing total. */
+  id?: number;
+  total?: number;
 }
 
-/** Shown on both TableOrderClient (browsing) and TableCartPageClient
- *  (draft review) — a table can have an already-submitted round
- *  cooking AND a fresh draft being built for the next one at the same
- *  time (see the design discussion), so this is deliberately just a
- *  read-only status chip, separate from whatever the draft's own
- *  Send-to-Kitchen button is doing. */
+/** Shown on TableCartPageClient's draft view (not on the menu page,
+ *  which is kept to just the menu) — a table can have an already-
+ *  submitted round cooking AND a fresh draft being built for the next
+ *  one at the same time (see the design discussion), so this is
+ *  deliberately just a read-only status chip, separate from whatever
+ *  the draft's own Send-to-Kitchen button is doing. */
 export default function ActiveRoundBanner({
   activeRound,
 }: {

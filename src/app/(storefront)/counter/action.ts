@@ -16,6 +16,8 @@ import {
 } from "@/app/lib/actionHelper";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
+import { toCartLine } from "@/app/lib/roundLine";
+import { orderLinesTotal } from "@/app/lib/orderTotals";
 import {
   addToCartSchema,
   removeFromCartSchema,
@@ -85,6 +87,7 @@ const safeAddToCart = toSafeResult(async (input: AddToCartInput) => {
     input.menuId,
     input.quantity,
     input.addonIds,
+    input.note,
   );
 });
 
@@ -92,11 +95,13 @@ export async function addToCartAction(
   menuId: number,
   quantity: number,
   addonIds: number[] = [],
+  note?: string,
 ) {
   const result = await validateWith(addToCartSchema, {
     menuId,
     quantity,
     addonIds,
+    note,
   }).asyncAndThen(safeAddToCart);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
@@ -128,6 +133,7 @@ const safeUpdateCartItem = toSafeResult(async (input: UpdateCartItemInput) => {
     input.orderId,
     input.quantity,
     input.addonIds,
+    input.note,
   );
 });
 
@@ -139,11 +145,13 @@ export async function updateCartItemAction(
   orderId: number,
   quantity: number,
   addonIds: number[] = [],
+  note?: string,
 ) {
   const result = await validateWith(updateCartItemSchema, {
     orderId,
     quantity,
     addonIds,
+    note,
   }).asyncAndThen(safeUpdateCartItem);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
@@ -240,13 +248,13 @@ export async function startNextRoundAction() {
 export async function pollOrderStatusAction() {
   const { store, token, cookieName } = await getCookieToken();
   if (!token || !cookieName) {
-    return { status: "no_session" as const, cart: [] };
+    return { status: "no_session" as const, cart: [], total: 0 };
   }
 
   const session = await OrderSessionService.getSessionByToken(token);
   if (!session) {
     store.set(cookieName, "", { maxAge: 0 });
-    return { status: "no_session" as const, cart: [] };
+    return { status: "no_session" as const, cart: [], total: 0 };
   }
 
   const refreshed = await OrderSessionService.getSessionStatus(session.id);
@@ -261,12 +269,15 @@ export async function pollOrderStatusAction() {
   // certainly still current.
   return {
     status: refreshed.status,
+    total: orderLinesTotal(session.orders),
     cart: session.orders.map((order: (typeof session.orders)[0]) => ({
       id: order.id,
       menuId: order.menuId,
       menuName: order.menu.name,
       quantity: order.quantity,
       price: order.menu.price,
+      imageUrl: order.menu.assetUrl,
+      note: order.note,
     })),
   };
 }
@@ -308,6 +319,7 @@ const safeAddDraftItem = toSafeResult(async (input: AddDraftItemInput) => {
     input.menuId,
     input.quantity,
     input.addonIds,
+    input.note,
   );
 });
 
@@ -319,12 +331,14 @@ export async function addDraftItemAction(
   menuId: number,
   quantity: number,
   addonIds: number[] = [],
+  note?: string,
 ) {
   const result = await validateWith(addDraftItemSchema, {
     tableId,
     menuId,
     quantity,
     addonIds,
+    note,
   }).asyncAndThen(safeAddDraftItem);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
@@ -362,6 +376,7 @@ const safeUpdateDraftItem = toSafeResult(
       input.orderId,
       input.quantity,
       input.addonIds,
+      input.note,
     );
   },
 );
@@ -375,12 +390,14 @@ export async function updateDraftItemAction(
   orderId: number,
   quantity: number,
   addonIds: number[] = [],
+  note?: string,
 ) {
   const result = await validateWith(updateDraftItemSchema, {
     tableId,
     orderId,
     quantity,
     addonIds,
+    note,
   }).asyncAndThen(safeUpdateDraftItem);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
@@ -455,7 +472,7 @@ export async function pollTableAction(tableId: number, locationId: number) {
 
   const [draftItems, activeRound, shortages] = await Promise.all([
     TableDraftService.getDraftItemsForTable(parsed.data.tableId),
-    OrderSessionService.getActiveRoundForTable(parsed.data.tableId),
+    OrderSessionService.getActiveRoundWithOrdersForTable(parsed.data.tableId),
     TableDraftService.getShortagesForTable(
       parsed.data.tableId,
       parsed.data.locationId,
@@ -474,10 +491,18 @@ export async function pollTableAction(tableId: number, locationId: number) {
       contributorToken: item.contributorToken ?? "",
       addonNames: item.OrdersAddons.map((link) => link.addon.name),
       addonIds: item.OrdersAddons.map((link) => link.addonId),
+      imageUrl: item.menu.assetUrl,
+      note: item.note,
     })),
     activeRound: activeRound
-      ? { orderNumber: activeRound.orderNumber, status: activeRound.status }
+      ? {
+          id: activeRound.id,
+          orderNumber: activeRound.orderNumber,
+          status: activeRound.status,
+          total: orderLinesTotal(activeRound.orders),
+        }
       : null,
+    roundItems: activeRound ? activeRound.orders.map(toCartLine) : [],
     shortages,
   };
 }

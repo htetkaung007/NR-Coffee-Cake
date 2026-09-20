@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
+import { normalizeOrderNote } from "@/app/lib/orderNote";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../prisma/generated/client";
 import { getTokenEpoch } from "../lib/contributorToken";
@@ -57,6 +58,7 @@ export class TableDraftService {
     menuId: number,
     quantity: number,
     addonIds: number[] = [],
+    note?: string,
   ) {
     await OrderSessionCartService.validateAddonSelection(menuId, addonIds);
 
@@ -68,6 +70,7 @@ export class TableDraftService {
           tableId,
           orderSessionId: null,
           contributorToken,
+          note: normalizeOrderNote(note),
         },
       });
 
@@ -117,6 +120,7 @@ export class TableDraftService {
     orderId: number,
     quantity: number,
     addonIds: number[] = [],
+    note?: string,
   ) {
     const order = await prisma.order.findFirst({
       where: { id: orderId, orderSessionId: null },
@@ -137,7 +141,7 @@ export class TableDraftService {
       await tx.ordersAddon.deleteMany({ where: { orderId } });
       const updated = await tx.order.update({
         where: { id: orderId },
-        data: { quantity },
+        data: { quantity, note: normalizeOrderNote(note) },
       });
       if (addonIds.length > 0) {
         await tx.ordersAddon.createMany({
@@ -201,11 +205,14 @@ export class TableDraftService {
 
   /**
    * "Send to Kitchen" — merges every contributor's draft picks for
-   * this table into one round. Identical (menu, addon set) rows from
+   * this table into one round. Identical (menu, addon set, note) rows from
    * different contributors collapse into a single row with summed
    * quantity, so the counter sees e.g. "Coffee × 2" as one line
    * straight from the database — no display-time aggregation needed
    * on that side (see OrderListView's ItemList, unchanged by this).
+   * The note is part of "identical": two "Coffee" drafts with different
+   * notes ("no sugar" vs none) stay separate lines, and a merged line
+   * keeps its note — otherwise the kitchen would lose it here.
    * The draft rows are deleted once merged (they're staging, not
    * history); the merged rows attached to the new OrderSession are
    * the real record from here on, same as any Order row always was.
@@ -246,13 +253,15 @@ export class TableDraftService {
         menuName: string;
         quantity: number;
         addonIds: number[];
+        note: string | null;
       }
     >();
     for (const item of draftItems) {
       const addonIds = item.OrdersAddons.map((link) => link.addonId).sort(
         (a, b) => a - b,
       );
-      const key = `${item.menuId}:${addonIds.join(",")}`;
+      const note = normalizeOrderNote(item.note);
+      const key = `${item.menuId}:${addonIds.join(",")}:${note ?? ""}`;
       const existing = groups.get(key);
       if (existing) {
         existing.quantity += item.quantity;
@@ -262,6 +271,7 @@ export class TableDraftService {
           menuName: item.menu.name,
           quantity: item.quantity,
           addonIds,
+          note,
         });
       }
     }
@@ -316,6 +326,7 @@ export class TableDraftService {
             quantity: group.quantity,
             tableId,
             orderSessionId: numbered.id,
+            note: group.note,
           },
         });
         if (group.addonIds.length > 0) {

@@ -109,6 +109,15 @@ export const sharedThemeOptions: ThemeOptions = {
       },
     },
 
+    // Compact emphasized text — 14px / 600. Used by the menu card's name
+    // and price on mobile (OdMenuCard).
+    subtitle2: {
+      fontFamily: FONT_BODY,
+      fontWeight: 600,
+      fontSize: "0.875rem",
+      lineHeight: 1.4,
+    },
+
     button: {
       fontFamily: FONT_BODY,
       textTransform: "none",

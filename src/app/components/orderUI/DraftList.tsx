@@ -2,7 +2,6 @@
 
 import { Card, Divider, Stack, Typography } from "@mui/material";
 import {
-  CartLineActions,
   CartLineRow,
   DraftLine,
   Shortage,
@@ -14,14 +13,16 @@ interface DraftListProps {
   shortages?: Shortage[];
   onRemove: (orderId: number) => void;
   onEdit: (item: DraftLine) => void;
+  onQuantityChange: (item: DraftLine, next: number) => void;
   isPending: boolean;
 }
 
 /**
  * Per-customer draft review (design mock: "Customer 1 order" /
  * "Customer 2 order" as separate cards) — one card per contributor
- * that has picked anything, mine first. Only MY card gets working
- * Edit/Cancel buttons per item; everyone else's picks are visible (the
+ * that has picked anything, mine first. Only MY card's lines are
+ * tappable (edit), have the − / + quantity stepper and the ✕ remove;
+ * everyone else's picks are visible (the
  * whole point of a shared draft) but read-only — see
  * TableDraftService.removeDraftItem/updateDraftItem's ownership
  * checks, which this UI mirrors rather than relying on alone (a
@@ -35,6 +36,7 @@ export default function DraftList({
   shortages = [],
   onRemove,
   onEdit,
+  onQuantityChange,
   isPending,
 }: DraftListProps) {
   if (draftItems.length === 0) return null;
@@ -92,15 +94,10 @@ export default function DraftList({
                   shortage={shortageByMenuId.get(item.menuId)}
                   addons={item.addonNames}
                   actionable={isMine}
-                  actions={
-                    isMine ? (
-                      <CartLineActions
-                        disabled={isPending}
-                        onEdit={() => onEdit(item)}
-                        onRemove={() => onRemove(item.id)}
-                      />
-                    ) : undefined
-                  }
+                  disabled={isPending}
+                  onEdit={() => onEdit(item)}
+                  onRemove={() => onRemove(item.id)}
+                  onQuantityChange={(next) => onQuantityChange(item, next)}
                 />
               ))}
             </Stack>

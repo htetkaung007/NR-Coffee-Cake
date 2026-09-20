@@ -1,9 +1,15 @@
 "use client";
 
-import { AppBar, Toolbar, Badge, IconButton, Typography } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Badge,
+  CircularProgress,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
-import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 
 interface OrderTopBarProps {
   /** Company.name (the brand's shop name), not Location.name (a branch
@@ -18,15 +24,16 @@ interface OrderTopBarProps {
   /** Optional — lets the page decide what tapping the cart icon does
    *  (e.g. scroll down to the cart summary). No-op if omitted. */
   onCartClick?: () => void;
-  /** Optional — lets the page decide what tapping the history icon
-   *  does (e.g. navigate to /history for this table's tab). No-op if
-   *  omitted; the icon itself always shows, same as the cart icon. */
-  onHistoryClick?: () => void;
+  /** True while a submitted order is waiting on counter approval — shows
+   *  a small spinner beside the cart icon, so the status is visible from
+   *  the menu page without a banner taking up room. */
+  awaitingApproval?: boolean;
 }
 
 /**
- * Simple customer-facing header — Logo + shop name on the left, history
- * and cart icons on the right, per the design mock. Plain
+ * Simple customer-facing header — Logo + shop name on the left, the cart
+ * icon (with its item-count badge) on the right, per the design mock.
+ * History is reached from OrderBotBar, not from here. Plain
  * background.paper (not primary-tinted) to match the mock's white bar,
  * distinct from Backoffice's own AppBar.
  */
@@ -34,7 +41,7 @@ export default function OrderTopBar({
   shopName,
   cartItemCount = 0,
   onCartClick,
-  onHistoryClick,
+  awaitingApproval = false,
 }: OrderTopBarProps) {
   return (
     <AppBar
@@ -56,9 +63,13 @@ export default function OrderTopBar({
           {shopName ?? "Café Maw"}
         </Typography>
 
-        <IconButton onClick={onHistoryClick} aria-label="View order history">
-          <HistoryOutlinedIcon sx={{ color: "text.primary" }} />
-        </IconButton>
+        {awaitingApproval && (
+          <CircularProgress
+            size={18}
+            thickness={5}
+            aria-label="Waiting for counter approval"
+          />
+        )}
 
         <IconButton onClick={onCartClick} aria-label="View cart">
           <Badge badgeContent={cartItemCount} color="error">

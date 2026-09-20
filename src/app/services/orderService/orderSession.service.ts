@@ -184,6 +184,47 @@ export class OrderSessionService {
     return current;
   }
 
+  /** getActiveRoundForTable plus the round's line items — for the
+   *  Table cart page, which keeps showing what was just sent to the
+   *  kitchen (with the approval status on its button) instead of
+   *  going blank once the draft has been merged into a round. */
+  static async getActiveRoundWithOrdersForTable(tableId: number) {
+    const round = await OrderSessionService.getActiveRoundForTable(tableId);
+    if (!round) return null;
+
+    const orders = await prisma.order.findMany({
+      where: { orderSessionId: round.id, isArchived: false },
+      orderBy: { id: "asc" },
+      include: { menu: true, OrdersAddons: { include: { addon: true } } },
+    });
+    return { ...round, orders };
+  }
+
+  /** One round of a table's still-open tab, for the receipt page. The
+   *  tableId is part of the lookup (not just the id) so a round id from
+   *  another table — ids are sequential and guessable — matches nothing;
+   *  null covers "no such round", "not this table's" and "already
+   *  finished/never submitted" alike (same set getRoundHistoryForTable
+   *  lists). The caller still has to have checked the viewer's
+   *  contributor token for tableId. */
+  static async getRoundDetailForTable(tableId: number, roundId: number) {
+    return prisma.orderSession.findFirst({
+      where: {
+        id: roundId,
+        tableId,
+        isArchived: false,
+        status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
+      },
+      include: {
+        orders: {
+          where: { isArchived: false },
+          orderBy: { id: "asc" },
+          include: { menu: true, OrdersAddons: { include: { addon: true } } },
+        },
+      },
+    });
+  }
+
   /**
    * "Order More" (design discussion) — Counter QR only: a Counter
    * customer whose current round has already been Accepted (PENDING/

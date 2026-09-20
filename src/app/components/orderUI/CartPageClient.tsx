@@ -7,11 +7,9 @@ import {
   Box,
   Button,
   Divider,
-  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 
@@ -24,8 +22,16 @@ import {
 import CartList, { CartLine, Shortage } from "@/app/(storefront)/cart/Cartlist";
 import CartButton, { CartButtonStatus } from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";
+import BackCircleButton from "./BackCircleButton";
+import OrderConfirmedScreen from "./OrderConfirmedScreen";
+import EmptyCartState from "./EmptyCartState";
 
 interface CartPageClientProps {
+  /** The round's id — for the receipt link on the order-confirmed screen. */
+  sessionId: number;
+  /** The round's billing total at page load, for the order-confirmed
+   *  screen (kept current by the status poll). */
+  initialTotal: number;
   locationId: number;
   orderNumber: string;
   shopName: string | null;
@@ -53,6 +59,8 @@ interface CartPageClientProps {
  * nothing left here to show once the session itself is gone.
  */
 export default function CartPageClient({
+  sessionId,
+  initialTotal,
   locationId,
   orderNumber,
   shopName,
@@ -66,6 +74,7 @@ export default function CartPageClient({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [editingItem, setEditingItem] = useState<CartLine | null>(null);
+  const [roundTotal, setRoundTotal] = useState(initialTotal);
   const hasShortage = initialShortages.length > 0;
 
   const cartTotal = useMemo(
@@ -83,6 +92,7 @@ export default function CartPageClient({
     (result) => {
       setStatus(result.status as CartButtonStatus);
       setCart(result.cart);
+      setRoundTotal(result.total);
     },
     () => router.push(`/menu?locationId=${locationId}`),
   );
@@ -96,6 +106,29 @@ export default function CartPageClient({
         return;
       }
       setStatus("PENDING_APPROVAL");
+    });
+  }
+
+  // The − / + on a line: save the new quantity (same addons and note),
+  // then reflect it locally.
+  function handleQuantityChange(line: CartLine, next: number) {
+    setError(null);
+    startTransition(async () => {
+      const result = await updateCartItemAction(
+        line.id,
+        next,
+        line.addonIds ?? [],
+        line.note ?? undefined,
+      );
+      if (!result.success) {
+        setError(result.error.message);
+        return;
+      }
+      setCart((current) =>
+        current.map((item) =>
+          item.id === line.id ? { ...item, quantity: next } : item,
+        ),
+      );
     });
   }
 
@@ -138,6 +171,33 @@ export default function CartPageClient({
     router.refresh();
   }
 
+  // Approved by the counter: show the order-confirmed screen for as long
+  // as this round is the current one — on the live approval and on any
+  // later visit to /cart. "Order more" starts a new round (a fresh
+  // cart), which is what takes the customer off it.
+  if (status === "PENDING" || status === "COOKING") {
+    return (
+      <OrderConfirmedScreen
+        orderNumber={orderNumber}
+        itemCount={cart.length}
+        total={roundTotal}
+        seeOrderHref={`/history/${sessionId}?locationId=${locationId}`}
+        onBack={goBackToMenu}
+        onOrderMore={handleOrderMore}
+        isPending={isPending}
+      />
+    );
+  }
+
+  // An empty cart — a fresh round after "Order more", or the last item was
+  // removed — is just the empty state, never the confirmed screen (that's
+  // tied to a round that's still PENDING/COOKING, handled above).
+  if (cart.length === 0) {
+    return (
+      <EmptyCartState onBack={goBackToMenu} onBrowseMenu={goBackToMenu} />
+    );
+  }
+
   return (
     <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
       <Box
@@ -154,16 +214,10 @@ export default function CartPageClient({
       >
         <Stack
           direction="row"
-          spacing={0.5}
+          spacing={1.5}
           sx={{ alignItems: "center", mb: 2 }}
         >
-          <IconButton
-            size="small"
-            aria-label="Back to menu"
-            onClick={goBackToMenu}
-          >
-            <ArrowBackIcon fontSize="small" />
-          </IconButton>
+          <BackCircleButton ariaLabel="Back to menu" onClick={goBackToMenu} />
           <Stack>
             <Typography variant="h6">{orderNumber}</Typography>
             <Typography variant="caption" color="text.secondary">
@@ -178,109 +232,93 @@ export default function CartPageClient({
           </Alert>
         )}
 
-        {cart.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">
-            Your cart is empty — go back to the menu to add something.
-          </Typography>
-        ) : (
+        <Box
+          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+        >
           <Box
-            sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+            sx={{
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 3,
+              p: 1.5,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+            }}
           >
-            <Box
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 3,
-                p: 1.5,
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                minHeight: 0,
-              }}
-            >
-              <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-                <CartList
-                  cart={cart}
-                  shortages={initialShortages}
-                  editable={status === "CART"}
-                  isPending={isPending}
-                  onRemove={handleRemove}
-                  onEdit={setEditingItem}
+            <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+              <CartList
+                cart={cart}
+                shortages={initialShortages}
+                editable={status === "CART"}
+                isPending={isPending}
+                onRemove={handleRemove}
+                onEdit={setEditingItem}
+                onQuantityChange={handleQuantityChange}
+              />
+            </Box>
+            {status === "CART" ? (
+              <Box sx={{ pt: 1.5 }}>
+                <Divider sx={{ mb: 1.5 }} />
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: "space-between", mb: 1.5 }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    Total Price
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {cartTotal.toLocaleString()} MMK
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      flex: 1,
+                      whiteSpace: "nowrap",
+                      transition:
+                        "transform 0.15s ease, background-color 0.15s ease",
+                      "&:hover": {
+                        transform: "translateY(-1px)",
+                        bgcolor: "action.hover",
+                      },
+                    }}
+                    onClick={goBackToMenu}
+                  >
+                    Add More
+                  </Button>
+                  <Box sx={{ flex: 2 }}>
+                    <CartButton
+                      status={status}
+                      disabled={isPending || cart.length === 0 || hasShortage}
+                      onClick={handleSubmit}
+                    />
+                  </Box>
+                </Stack>
+              </Box>
+            ) : (
+              <Box sx={{ pt: 1.5 }}>
+                <CartButton
+                  status={status}
+                  disabled={isPending || cart.length === 0 || hasShortage}
+                  onClick={handleSubmit}
                 />
               </Box>
-              {status === "CART" ? (
-                <Box sx={{ pt: 1.5 }}>
-                  <Divider sx={{ mb: 1.5 }} />
-                  <Stack
-                    direction="row"
-                    sx={{ justifyContent: "space-between", mb: 1.5 }}
-                  >
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      Total Price
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {cartTotal.toLocaleString()} MMK
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      variant="outlined"
-                      sx={{
-                        flex: 1,
-                        whiteSpace: "nowrap",
-                        transition:
-                          "transform 0.15s ease, background-color 0.15s ease",
-                        "&:hover": {
-                          transform: "translateY(-1px)",
-                          bgcolor: "action.hover",
-                        },
-                      }}
-                      onClick={goBackToMenu}
-                    >
-                      Add More
-                    </Button>
-                    <Box sx={{ flex: 2 }}>
-                      <CartButton
-                        status={status}
-                        disabled={isPending || cart.length === 0 || hasShortage}
-                        onClick={handleSubmit}
-                      />
-                    </Box>
-                  </Stack>
-                </Box>
-              ) : (
-                <Box sx={{ pt: 1.5 }}>
-                  <CartButton
-                    status={status}
-                    disabled={isPending || cart.length === 0 || hasShortage}
-                    onClick={handleSubmit}
-                  />
-                </Box>
-              )}
-            </Box>
-            {hasShortage && status === "CART" && (
-              <Typography
-                variant="caption"
-                color="error"
-                sx={{ display: "block", mt: 1 }}
-              >
-                Some items in your cart just ran out — edit or cancel them
-                below before submitting.
-              </Typography>
-            )}
-            {(status === "PENDING" || status === "COOKING") && (
-              <Button
-                variant="outlined"
-                fullWidth
-                disabled={isPending}
-                onClick={handleOrderMore}
-                sx={{ mt: 1.5 }}
-              >
-                Order More
-              </Button>
             )}
           </Box>
-        )}
+          {hasShortage && status === "CART" && (
+            <Typography
+              variant="caption"
+              color="error"
+              sx={{ display: "block", mt: 1 }}
+            >
+              Some items in your cart just ran out — edit or cancel them
+              below before submitting.
+            </Typography>
+          )}
+        </Box>
       </Box>
 
       <MenuDetailDialog
@@ -294,15 +332,17 @@ export default function CartPageClient({
             ? {
                 quantity: editingItem.quantity,
                 addonIds: editingItem.addonIds ?? [],
+                note: editingItem.note ?? undefined,
               }
             : undefined
         }
-        onSubmit={async (_menuId, quantity, addonIds) => {
+        onSubmit={async (_menuId, quantity, addonIds, note) => {
           if (!editingItem) return "Nothing to update.";
           const result = await updateCartItemAction(
             editingItem.id,
             quantity,
             addonIds,
+            note,
           );
           if (!result.success) {
             return result.error.message;
@@ -310,7 +350,7 @@ export default function CartPageClient({
           setCart((current) =>
             current.map((line) =>
               line.id === editingItem.id
-                ? { ...line, quantity, addonIds }
+                ? { ...line, quantity, addonIds, note: note || null }
                 : line,
             ),
           );

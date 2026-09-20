@@ -1,15 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import {
-  Box,
-  Card,
-  Chip,
-  Divider,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Box, Stack, Typography } from "@mui/material";
 import {
   LocationService,
   OrderSessionService,
@@ -17,20 +8,18 @@ import {
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
+import { orderLinesTotal } from "@/app/lib/orderTotals";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
-import { ROUND_STATUS_LABEL } from "@/app/components/orderUI/ActiveRoundBanner";
+import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
+import BackCircleButton from "@/app/components/orderUI/BackCircleButton";
 
 // Same reasoning as /menu and /cart — see those pages' own comment.
 export const dynamic = "force-dynamic";
 
-function roundChipColor(status: string) {
-  return status === "PENDING_APPROVAL" ? "default" : "success";
-}
-
 /**
  * Read-only "what have I ordered so far" screen for a customer still
- * waiting to pay — reachable from the top bar's history icon (see
- * OrderTopBar's onHistoryClick).
+ * waiting to pay — reachable from the bottom bar's History tab (see
+ * OrderBotBar).
  *
  * Branches the same way /menu and /cart do: a tableId with a matching
  * contributorToken means Table QR, where "history" is every round
@@ -72,24 +61,34 @@ export default async function HistoryPage({
         OrderSessionService.getRoundHistoryForTable(tableId),
         LocationService.getShopNameForLocation(locationId),
       ]);
+      // Every round listed below — the same set markSessionsPaid later
+      // settles as one bill — so the sticky total always equals the sum
+      // of the cards above it.
+      const tableTotal = rounds.reduce(
+        (sum, round) => sum + orderLinesTotal(round.orders),
+        0,
+      );
 
       return (
-        <Box sx={{ minHeight: "100vh" }}>
+        <Box
+          sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}
+        >
           <OrderTopBar shopName={shopName} cartItemCount={0} />
-          <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
+          <Box
+            sx={{
+              flex: 1,
+              width: "100%",
+              p: { xs: 2, sm: 3 },
+              maxWidth: 720,
+              mx: "auto",
+            }}
+          >
             <Stack
               direction="row"
-              spacing={0.5}
+              spacing={1.5}
               sx={{ alignItems: "center", mb: 2 }}
             >
-              <Link
-                href={backHref}
-                style={{ color: "inherit", display: "flex" }}
-              >
-                <IconButton size="small" aria-label="Back to menu">
-                  <ArrowBackIcon fontSize="small" />
-                </IconButton>
-              </Link>
+              <BackCircleButton href={backHref} ariaLabel="Back to menu" />
               <Typography variant="h6">Order history</Typography>
             </Stack>
 
@@ -100,77 +99,63 @@ export default async function HistoryPage({
               </Typography>
             ) : (
               <Stack spacing={1.5}>
-                {rounds.map((round) => {
-                  const total = round.orders.reduce(
-                    (sum, order) => sum + order.menu.price * order.quantity,
-                    0,
-                  );
-                  return (
-                    <Card key={round.id} variant="outlined" sx={{ p: 1.5 }}>
-                      <Stack
-                        direction="row"
-                        sx={{ justifyContent: "space-between", mb: 1 }}
-                      >
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          sx={{ alignItems: "center" }}
-                        >
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {round.orderNumber}
-                          </Typography>
-                          <Chip
-                            size="small"
-                            label={
-                              ROUND_STATUS_LABEL[round.status] ?? round.status
-                            }
-                            color={roundChipColor(round.status)}
-                          />
-                        </Stack>
-                        <Typography variant="body2" color="text.secondary">
-                          {total.toLocaleString()} MMK
-                        </Typography>
-                      </Stack>
-                      <Divider sx={{ mb: 1 }} />
-                      <Stack spacing={0.75}>
-                        {round.orders.map((order) => {
-                          const addonNames = order.OrdersAddons.map(
-                            (link) => link.addon.name,
-                          );
-                          return (
-                            <Box key={order.id}>
-                              <Stack
-                                direction="row"
-                                sx={{ justifyContent: "space-between" }}
-                              >
-                                <Typography variant="body2">
-                                  {order.quantity} × {order.menu.name}
-                                </Typography>
-                                <Typography variant="body2">
-                                  {(
-                                    order.menu.price * order.quantity
-                                  ).toLocaleString()}{" "}
-                                  MMK
-                                </Typography>
-                              </Stack>
-                              {addonNames.length > 0 && (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  + {addonNames.join(", ")}
-                                </Typography>
-                              )}
-                            </Box>
-                          );
-                        })}
-                      </Stack>
-                    </Card>
-                  );
-                })}
+                {rounds.map((round) => (
+                  <OrderHistoryCard
+                    key={round.id}
+                    href={`/history/${round.id}?locationId=${round.locationId}&tableId=${tableId}`}
+                    orderNumber={round.orderNumber}
+                    status={round.status}
+                    items={round.orders.map((order) => ({
+                      quantity: order.quantity,
+                      name: order.menu.name,
+                    }))}
+                    total={orderLinesTotal(round.orders)}
+                  />
+                ))}
               </Stack>
             )}
           </Box>
+
+          {rounds.length > 0 && (
+            <Box
+              sx={{
+                position: "sticky",
+                bottom: 0,
+                zIndex: 1,
+                bgcolor: "background.paper",
+                borderTop: "1px solid",
+                borderColor: "divider",
+                px: { xs: 2, sm: 3 },
+                pt: 1.5,
+                pb: "calc(12px + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
+              <Stack
+                direction="row"
+                sx={{
+                  maxWidth: 720,
+                  mx: "auto",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                    Table total
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {rounds.length} {rounds.length === 1 ? "order" : "orders"}
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
+                >
+                  {tableTotal.toLocaleString()} MMK
+                </Typography>
+              </Stack>
+            </Box>
+          )}
         </Box>
       );
     }
@@ -210,10 +195,7 @@ export default async function HistoryPage({
   const shopName = await LocationService.getShopNameForLocation(
     session.locationId,
   );
-  const total = session.orders.reduce(
-    (sum, order) => sum + order.menu.price * order.quantity,
-    0,
-  );
+  const total = orderLinesTotal(session.orders);
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
@@ -221,57 +203,26 @@ export default async function HistoryPage({
       <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
         <Stack
           direction="row"
-          spacing={0.5}
+          spacing={1.5}
           sx={{ alignItems: "center", mb: 2 }}
         >
-          <Link
+          <BackCircleButton
             href={`/menu?locationId=${session.locationId}`}
-            style={{ color: "inherit", display: "flex" }}
-          >
-            <IconButton size="small" aria-label="Back to menu">
-              <ArrowBackIcon fontSize="small" />
-            </IconButton>
-          </Link>
+            ariaLabel="Back to menu"
+          />
           <Typography variant="h6">Order history</Typography>
         </Stack>
 
-        <Card variant="outlined" sx={{ p: 1.5 }}>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", mb: 1 }}
-          >
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {session.orderNumber}
-              </Typography>
-              <Chip
-                size="small"
-                label={ROUND_STATUS_LABEL[session.status] ?? session.status}
-                color={roundChipColor(session.status)}
-              />
-            </Stack>
-            <Typography variant="body2" color="text.secondary">
-              {total.toLocaleString()} MMK
-            </Typography>
-          </Stack>
-          <Divider sx={{ mb: 1 }} />
-          <Stack spacing={0.75}>
-            {session.orders.map((order) => (
-              <Stack
-                key={order.id}
-                direction="row"
-                sx={{ justifyContent: "space-between" }}
-              >
-                <Typography variant="body2">
-                  {order.quantity} × {order.menu.name}
-                </Typography>
-                <Typography variant="body2">
-                  {(order.menu.price * order.quantity).toLocaleString()} MMK
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
-        </Card>
+        <OrderHistoryCard
+          href={`/history/${session.id}?locationId=${session.locationId}`}
+          orderNumber={session.orderNumber}
+          status={session.status}
+          items={session.orders.map((order) => ({
+            quantity: order.quantity,
+            name: order.menu.name,
+          }))}
+          total={total}
+        />
       </Box>
     </Box>
   );

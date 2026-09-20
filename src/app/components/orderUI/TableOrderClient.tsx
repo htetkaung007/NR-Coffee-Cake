@@ -2,18 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 
 import OrderTopBar from "./OrderTopBar";
+import OrderBotBar from "./OrderBotBar";
 import MenuBrowser, { MenuOption } from "./MenuBrowser";
-import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 
-import { addDraftItemAction } from "@/app/(storefront)/counter/action";
+import {
+  addDraftItemAction,
+  pollTableAction,
+} from "@/app/(storefront)/counter/action";
 import { DraftLine } from "@/app/(storefront)/cart/Cartlist";
 import { useRefreshOnVisible } from "@/app/lib/hooks/useRefreshOnVisible";
+import { usePolling } from "@/app/lib/hooks/usePolling";
+import { dismissConfirmedRound } from "@/app/lib/hooks/useConfirmedRoundDismissed";
+import { POLL_INTERVAL_MS } from "@/app/lib/hooks/usePollOrderStatus";
 import {
-  ORDER_PAGE_BACKGROUND_COLOR,
-  ORDER_PAGE_BACKGROUND_IMAGE,
+  getOrderPageBackground,
+  ORDER_PAGE_MIN_WIDTH,
 } from "@/app/lib/theme/orderPageBackground";
 
 interface TableOrderClientProps {
@@ -22,7 +28,12 @@ interface TableOrderClientProps {
   shopName: string | null;
   myContributorToken: string;
   initialDraftItems: DraftLine[];
-  initialActiveRound: ActiveRound | null;
+  /** The table's current round is waiting on counter approval — shows a
+   *  spinner beside the top bar's cart icon. */
+  initialAwaitingApproval: boolean;
+  /** The table's current (not yet finished) round, if any — adding to the
+   *  next order dismisses that round's "Order confirmed" screen. */
+  activeRoundId: number | null;
   menus: MenuOption[];
 }
 
@@ -37,7 +48,7 @@ interface TableOrderClientProps {
  * No continuous polling here — per design feedback, live sync while
  * just browsing menus felt unwanted (e.g. re-rendering under someone
  * mid-scroll), even though the draft itself is genuinely shared.
- * draftItems/activeRound below are a snapshot as of this page load,
+ * draftItems below are a snapshot as of this page load,
  * refreshed only when this tab becomes visible again (see
  * useRefreshOnVisible) — e.g. the customer switched to another app
  * and came back, which is also when a stale "this table's order was
@@ -52,29 +63,56 @@ export default function TableOrderClient({
   shopName,
   myContributorToken,
   initialDraftItems,
-  initialActiveRound,
+  initialAwaitingApproval,
+  activeRoundId,
   menus,
 }: TableOrderClientProps) {
   const router = useRouter();
+  const pageBackground = getOrderPageBackground(useTheme());
   const [draftItems, setDraftItems] = useState(initialDraftItems);
-  const [activeRound] = useState(initialActiveRound);
 
   useRefreshOnVisible(() => router.refresh());
+
+  // Polled only while a round is waiting on approval, and only to flip
+  // this flag (the draft list and menu grid aren't touched — see the
+  // no-polling note above), so the spinner clears once the round is
+  // approved, rejected or timed out.
+  const [isAwaitingApproval, setIsAwaitingApproval] = useState(
+    initialAwaitingApproval,
+  );
+  usePolling(
+    isAwaitingApproval,
+    POLL_INTERVAL_MS,
+    () => pollTableAction(tableId, locationId),
+    (result) => {
+      if (
+        !result.authorized ||
+        result.activeRound?.status !== "PENDING_APPROVAL"
+      ) {
+        setIsAwaitingApproval(false);
+      }
+    },
+  );
 
   async function handleAddToCart(
     menu: { id: number; name: string; price: number },
     quantity: number,
     addonIds: number[],
+    note: string,
   ): Promise<string | null> {
     const result = await addDraftItemAction(
       tableId,
       menu.id,
       quantity,
       addonIds,
+      note,
     );
     if (!result.success) {
       return result.error.message;
     }
+    // Starting the next order: the previous round's "Order confirmed"
+    // screen is done with, even if this item is removed again later.
+    if (activeRoundId !== null) dismissConfirmedRound(tableId, activeRoundId);
     setDraftItems((current) => [
       ...current,
       {
@@ -86,6 +124,7 @@ export default function TableOrderClient({
         contributorToken: myContributorToken,
         addonNames: [],
         addonIds,
+        note: note || null,
       },
     ]);
     return null;
@@ -94,24 +133,32 @@ export default function TableOrderClient({
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        backgroundColor: ORDER_PAGE_BACKGROUND_COLOR,
-        backgroundImage: ORDER_PAGE_BACKGROUND_IMAGE,
+        minWidth: ORDER_PAGE_MIN_WIDTH,
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: pageBackground.color,
+        backgroundImage: pageBackground.image,
         backgroundAttachment: "fixed",
       }}
     >
       <OrderTopBar
         shopName={shopName}
         cartItemCount={draftItems.length}
+        awaitingApproval={isAwaitingApproval}
         onCartClick={() =>
           router.push(`/cart?locationId=${locationId}&tableId=${tableId}`)
         }
-        onHistoryClick={() =>
-          router.push(`/history?locationId=${locationId}&tableId=${tableId}`)
-        }
       />
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: "auto" }}>
-        <ActiveRoundBanner activeRound={activeRound} />
+      <Box
+        sx={{
+          flex: 1,
+          width: "100%",
+          p: { xs: 2, sm: 3 },
+          maxWidth: 1200,
+          mx: "auto",
+        }}
+      >
         <Typography
           variant="caption"
           color="text.secondary"
@@ -124,12 +171,13 @@ export default function TableOrderClient({
           menus={menus}
           locationId={locationId}
           canOrder
-          backgroundColor={ORDER_PAGE_BACKGROUND_COLOR}
-          backgroundImage={ORDER_PAGE_BACKGROUND_IMAGE}
+          backgroundColor={pageBackground.color}
+          backgroundImage={pageBackground.image}
           backgroundAttachment="fixed"
           onAddToCart={handleAddToCart}
         />
       </Box>
+      <OrderBotBar locationId={locationId} tableId={tableId} />
     </Box>
   );
 }

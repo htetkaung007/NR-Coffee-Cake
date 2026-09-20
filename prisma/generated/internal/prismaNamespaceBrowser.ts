@@ -277,6 +277,7 @@ export const OrderScalarFieldEnum = {
   tableId: 'tableId',
   orderSessionId: 'orderSessionId',
   contributorToken: 'contributorToken',
+  note: 'note',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived'

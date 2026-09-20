@@ -249,6 +249,12 @@ model Order {
   // longer per-customer (the whole round is locked together), so
   // there's nothing left to check it against.
   contributorToken String?
+  // Optional customer instruction for this one line item ("no onion",
+  // "extra spicy") — item-level, not session-level. Null (never "")
+  // when there's none. Drafts with different notes are deliberately
+  // NOT merged by TableDraftService.submitDraft, so the note survives
+  // Send to Kitchen.
+  note             String?
   menu             Menu          @relation(fields: [menuId], references: [id])
   table            Table         @relation(fields: [tableId], references: [id])
   createdAt        DateTime      @default(now())

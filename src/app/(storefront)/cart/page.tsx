@@ -8,6 +8,8 @@ import {
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
+import { toCartLine } from "@/app/lib/roundLine";
+import { orderLinesTotal } from "@/app/lib/orderTotals";
 import CartPageClient from "@/app/components/orderUI/CartPageClient";
 import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
@@ -57,7 +59,7 @@ export default async function CartPage({
       const locationId = Number(locationIdParam);
       const [draftItems, activeRound, shopName, shortages] = await Promise.all([
         TableDraftService.getDraftItemsForTable(tableId),
-        OrderSessionService.getActiveRoundForTable(tableId),
+        OrderSessionService.getActiveRoundWithOrdersForTable(tableId),
         LocationService.getShopNameForLocation(locationId),
         TableDraftService.getShortagesForTable(tableId, locationId),
       ]);
@@ -77,15 +79,20 @@ export default async function CartPage({
             contributorToken: item.contributorToken ?? "",
             addonNames: item.OrdersAddons.map((link) => link.addon.name),
             addonIds: item.OrdersAddons.map((link) => link.addonId),
+            imageUrl: item.menu.assetUrl,
+            note: item.note,
           }))}
           initialActiveRound={
             activeRound
               ? {
+                  id: activeRound.id,
                   orderNumber: activeRound.orderNumber,
                   status: activeRound.status,
+                  total: orderLinesTotal(activeRound.orders),
                 }
               : null
           }
+          initialRoundItems={activeRound?.orders.map(toCartLine) ?? []}
           initialShortages={shortages}
         />
       );
@@ -136,6 +143,8 @@ export default async function CartPage({
 
   return (
     <CartPageClient
+      sessionId={session.id}
+      initialTotal={orderLinesTotal(session.orders)}
       locationId={session.locationId}
       orderNumber={session.orderNumber}
       shopName={shopName}
@@ -149,6 +158,8 @@ export default async function CartPage({
         price: order.menu.price,
         addonNames: order.OrdersAddons.map((link) => link.addon.name),
         addonIds: order.OrdersAddons.map((link) => link.addonId),
+        imageUrl: order.menu.assetUrl,
+        note: order.note,
       }))}
     />
   );
