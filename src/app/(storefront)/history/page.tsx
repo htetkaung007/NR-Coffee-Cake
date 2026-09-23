@@ -98,7 +98,7 @@ export default async function HistoryPage({
                 will show up here until the table is settled.
               </Typography>
             ) : (
-              <Stack spacing={1.5}>
+              <Stack spacing={{ xs: 1.5, sm: 2 }}>
                 {rounds.map((round) => (
                   <OrderHistoryCard
                     key={round.id}

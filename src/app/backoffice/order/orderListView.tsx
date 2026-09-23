@@ -1,52 +1,29 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Avatar,
   Badge,
   Box,
   Button,
   Card,
+  CardContent,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  IconButton,
+  Grid,
   Stack,
   Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import {
-  acceptCounterSessionAction,
-  markEntryPaidAction,
-  rejectCounterSessionAction,
-} from "./action";
-
-interface SessionOrderAddon {
-  id: number;
-  addon: { name: string };
-}
-
-interface SessionOrderLine {
-  id: number;
-  quantity: number;
-  menu: { name: string };
-  OrdersAddons: SessionOrderAddon[];
-  note?: string | null;
-}
-
-interface SessionData {
-  id: number;
-  label: string;
-  status: string;
-  total: number;
-  isCounter: boolean;
-  approvalExpiresAt: Date | string | null;
-  orders: SessionOrderLine[];
-}
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
+import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
+import { markEntryPaidAction } from "./action";
 
 interface OrderEntry {
   key: string;
@@ -54,148 +31,23 @@ interface OrderEntry {
   isTableGroup: boolean;
   hasPendingApproval: boolean;
   combinedTotal: number;
-  sessions: SessionData[];
+  /** Only ids — Mark-as-Paid settles every round together. The items
+   *  themselves are shown on the entry's detail page. */
+  sessions: { id: number }[];
 }
 
 interface OrderListViewProps {
   entries: OrderEntry[];
 }
 
-/** menu × quantity, plus each selected addon on its own line — a
- *  round's items are meaningless to a cashier/kitchen without knowing
- *  which addons were picked (a "no sugar" or "extra shot" is often
- *  the whole reason an item needs a second look), so this can't just
- *  show the menu name alone. */
-function ItemList({ orders }: { orders: SessionOrderLine[] }) {
-  return (
-    <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-      {orders.map((order) => (
-        <Box key={order.id}>
-          <Typography variant="caption" color="text.secondary">
-            {order.quantity} × {order.menu.name}
-          </Typography>
-          {order.OrdersAddons.length > 0 && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", pl: 2 }}
-            >
-              + {order.OrdersAddons.map((link) => link.addon.name).join(", ")}
-            </Typography>
-          )}
-          {order.note && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", pl: 2, overflowWrap: "anywhere" }}
-            >
-              Note: {order.note}
-            </Typography>
-          )}
-        </Box>
-      ))}
-    </Stack>
-  );
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  PENDING_APPROVAL: "Awaiting Approval",
-  PENDING: "Accepted",
-  COOKING: "Cooking",
-};
-
-/** One round (one OrderSession) within an entry — Accept/Reject only
- *  make sense while still PENDING_APPROVAL; an already-accepted round
- *  has nothing left to do here besides be visible (Mark-as-Paid now
- *  lives at the entry level — see OrderListView — so a whole table's
- *  rounds settle together, not one at a time). */
-function RoundCard({
-  session,
-  isPending,
-  onAccept,
-  onReject,
-}: {
-  session: SessionData;
-  isPending: boolean;
-  onAccept: () => void;
-  onReject: () => void;
-}) {
-  const isAwaitingApproval = session.status === "PENDING_APPROVAL";
-
-  return (
-    <Card
-      variant="outlined"
-      sx={{
-        p: 1.25,
-        borderColor: isAwaitingApproval ? "warning.main" : "divider",
-      }}
-    >
-      <Stack
-        direction="row"
-        sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
-      >
-        <Box>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {session.label}
-            </Typography>
-            <Chip
-              label={STATUS_LABEL[session.status] ?? session.status}
-              size="small"
-              color={isAwaitingApproval ? "warning" : "default"}
-            />
-          </Stack>
-          <ItemList orders={session.orders} />
-          {isAwaitingApproval && session.approvalExpiresAt && (
-            <Typography
-              variant="caption"
-              color="warning.main"
-              sx={{ display: "block", mt: 0.5 }}
-            >
-              Expires {new Date(session.approvalExpiresAt).toLocaleTimeString()}
-            </Typography>
-          )}
-        </Box>
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {session.total.toLocaleString()} MMK
-        </Typography>
-      </Stack>
-
-      {isAwaitingApproval && (
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            disabled={isPending}
-            onClick={onAccept}
-          >
-            Accept
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            color="error"
-            disabled={isPending}
-            onClick={onReject}
-          >
-            Reject
-          </Button>
-        </Stack>
-      )}
-    </Card>
-  );
-}
-
 /** One card per table (grouping every open round of that table's tab
  *  — see groupSessionsForDisplay) or per individual Counter session
- *  (never grouped with anything else). Collapsed by default: a
- *  cashier scanning the whole list only needs the combined total and
- *  whether something needs a decision (the red badge) until they
- *  choose to look closer. */
+ *  (never grouped with anything else). The card only shows the combined
+ *  total and whether something needs a decision (the red dot in the
+ *  corner); the rounds themselves — items, addons, Accept/Reject — live
+ *  on the entry's detail page ([entryKey]/page.tsx). */
 function EntryCard({ entry }: { entry: OrderEntry }) {
   const router = useRouter();
-  const [isExpanded, setIsExpanded] = useState(entry.hasPendingApproval);
   const [isPending, startTransition] = useTransition();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
@@ -214,76 +66,75 @@ function EntryCard({ entry }: { entry: OrderEntry }) {
   }
 
   return (
-    <Card variant="outlined" sx={{ p: 1.5 }}>
-      <Stack
-        direction="row"
-        sx={{ alignItems: "center", justifyContent: "space-between" }}
+    // display: block so the card fills its grid cell (Badge is inline-flex).
+    <Badge
+      color="error"
+      variant="dot"
+      overlap="rectangular"
+      invisible={!entry.hasPendingApproval}
+      sx={{ display: "block" }}
+    >
+      <Card
+        variant="outlined"
+        sx={{
+          borderColor: entry.hasPendingApproval ? "error.main" : "divider",
+        }}
       >
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Badge
-            color="error"
-            variant="dot"
-            invisible={!entry.hasPendingApproval}
-          >
-            <Typography variant="body1" sx={{ fontWeight: 700 }}>
-              {entry.title}
-            </Typography>
-          </Badge>
-          {entry.isTableGroup && (
-            <Chip label="Table" size="small" variant="outlined" />
-          )}
-          {entry.sessions.length > 1 && (
-            <Chip
-              label={`${entry.sessions.length} rounds`}
-              size="small"
+        <CardContent>
+          <Stack spacing={1} sx={{ alignItems: "center", textAlign: "center" }}>
+            <Avatar sx={{ bgcolor: "info.main", width: 56, height: 56 }}>
+              {entry.isTableGroup ? (
+                <TableRestaurantIcon />
+              ) : (
+                <StorefrontIcon />
+              )}
+            </Avatar>
+
+            <Typography variant="body1">{entry.title}</Typography>
+            {entry.sessions.length > 1 && (
+              <Chip
+                label={`${entry.sessions.length} rounds`}
+                size="small"
+                variant="outlined"
+              />
+            )}
+
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Total amount
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                {entry.combinedTotal.toLocaleString()} MMK
+              </Typography>
+            </Box>
+
+            <Button
+              component={Link}
+              href={`/backoffice/order/${entry.key}`}
               variant="outlined"
-            />
-          )}
-        </Stack>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            {entry.combinedTotal.toLocaleString()} MMK
-          </Typography>
-          <IconButton
-            size="small"
-            aria-label={isExpanded ? "Collapse" : "Expand"}
-            onClick={() => setIsExpanded((value) => !value)}
-          >
-            {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </IconButton>
-        </Stack>
-      </Stack>
-
-      {isExpanded && (
-        <Stack spacing={1} sx={{ mt: 1.5 }}>
-          {entry.sessions.map((session) => (
-            <RoundCard
-              key={session.id}
-              session={session}
-              isPending={isPending}
-              onAccept={() =>
-                runAction(() => acceptCounterSessionAction(session.id))
-              }
-              onReject={() =>
-                runAction(() => rejectCounterSessionAction(session.id))
-              }
-            />
-          ))}
-        </Stack>
-      )}
-
-      <Button
-        variant="contained"
-        size="small"
-        fullWidth
-        disabled={isPending || entry.hasPendingApproval}
-        onClick={() => setIsConfirmOpen(true)}
-        sx={{ mt: 1.5 }}
-      >
-        {entry.hasPendingApproval
-          ? "Resolve the pending round first"
-          : "Mark as Paid"}
-      </Button>
+              size="small"
+              fullWidth
+            >
+              View order details
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              fullWidth
+              disabled={isPending || entry.hasPendingApproval}
+              onClick={() => setIsConfirmOpen(true)}
+            >
+              Paid
+            </Button>
+            {entry.hasPendingApproval && (
+              <Typography variant="body2" color="warning.main">
+                Needs approval
+              </Typography>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
 
       <Dialog open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
         <DialogTitle>Mark {entry.title} as paid?</DialogTitle>
@@ -302,11 +153,15 @@ function EntryCard({ entry }: { entry: OrderEntry }) {
           </Button>
         </DialogActions>
       </Dialog>
-    </Card>
+    </Badge>
   );
 }
 
 export default function OrderListView({ entries }: OrderListViewProps) {
+  // So a newly submitted table/counter order shows its red dot without
+  // the cashier reloading.
+  useAutoRefresh();
+
   return (
     <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -318,11 +173,13 @@ export default function OrderListView({ entries }: OrderListViewProps) {
           Nothing open right now.
         </Typography>
       ) : (
-        <Stack spacing={1.5}>
+        <Grid container spacing={1.5}>
           {entries.map((entry) => (
-            <EntryCard key={entry.key} entry={entry} />
+            <Grid key={entry.key} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <EntryCard entry={entry} />
+            </Grid>
           ))}
-        </Stack>
+        </Grid>
       )}
     </Box>
   );

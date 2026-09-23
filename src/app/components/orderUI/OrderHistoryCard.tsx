@@ -46,13 +46,27 @@ export default function OrderHistoryCard({
     <Card
       component={Link}
       href={href}
-      variant="outlined"
+      elevation={0}
       sx={{
         display: "block",
-        p: 1.5,
+        p: { xs: 1.5, sm: 2 },
         color: "inherit",
         textDecoration: "none",
-        "&:hover": { borderColor: "primary.main" },
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 3,
+        overflow: "hidden",
+        mx: "auto",
+        minWidth: { xs: "100%", sm: 320 },
+        maxWidth: { xs: "100%", sm: 720 },
+        minHeight: { xs: 88, sm: 104 },
+        maxHeight: { xs: 168, sm: 200 },
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+        "&:hover": {
+          borderColor: "primary.main",
+          transform: "translateY(-2px)",
+          boxShadow: 2,
+        },
       }}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>

@@ -26,15 +26,21 @@ export default async function OrderPage() {
     );
   }
 
-  // Reflect any timed-out approvals before rendering — see
-  // OrderSessionApprovalService.expireStaleApprovals.
-  await OrderSessionApprovalService.expireStaleApprovals(
+  const entries = await OrderSessionApprovalService.getOpenEntries(
     selectedLocation.locationId,
   );
-  const sessions = await OrderSessionApprovalService.getSessionsForLocation(
-    selectedLocation.locationId,
-  );
-  const entries = OrderSessionApprovalService.groupSessionsForDisplay(sessions);
 
-  return <OrderListView entries={entries} />;
+  // The list only needs each round's id (Mark-as-Paid settles them
+  // together) — the items live on the entry's detail page — so don't
+  // ship every order line to the browser on each 5-second refresh.
+  const listEntries = entries.map((entry) => ({
+    key: entry.key,
+    title: entry.title,
+    isTableGroup: entry.isTableGroup,
+    hasPendingApproval: entry.hasPendingApproval,
+    combinedTotal: entry.combinedTotal,
+    sessions: entry.sessions.map((session) => ({ id: session.id })),
+  }));
+
+  return <OrderListView entries={listEntries} />;
 }

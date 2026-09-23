@@ -272,4 +272,15 @@ export class OrderSessionApprovalService {
       (a, b) => Number(b.hasPendingApproval) - Number(a.hasPendingApproval),
     );
   }
+
+  /** What the Order List page and an entry's detail page both render
+   *  from — expire timed-out approvals, then load and group. One place
+   *  so neither page can forget the expiry sweep and show a decision
+   *  the customer's own polling has already resolved. */
+  static async getOpenEntries(locationId: number) {
+    await OrderSessionApprovalService.expireStaleApprovals(locationId);
+    const sessions =
+      await OrderSessionApprovalService.getSessionsForLocation(locationId);
+    return OrderSessionApprovalService.groupSessionsForDisplay(sessions);
+  }
 }
