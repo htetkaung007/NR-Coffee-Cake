@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OrderSessionService } from "@/app/services";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
+import {
+  COUNTER_SESSION_COOKIE,
+  counterSessionCookieOptions,
+} from "@/app/lib/orderSessionCookie";
 
 /**
  * Design doc "Step 1: QR Scan & URL Validation". A GET here is the
@@ -55,11 +58,10 @@ export async function GET(request: NextRequest) {
   // the cookie and land on /menu, which now shows the order UI itself
   // once it sees a valid session cookie (see menu/page.tsx).
   const response = NextResponse.redirect(menuUrl);
-  response.cookies.set(COUNTER_SESSION_COOKIE, result.session.token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  response.cookies.set(
+    COUNTER_SESSION_COOKIE,
+    result.session.token,
+    counterSessionCookieOptions,
+  );
   return response;
 }

@@ -187,18 +187,24 @@ export default function MenuBrowser({
       <Box
         sx={{
           minWidth: 320,
+          // Don't let cards balloon on very wide screens.
+          maxWidth: 1400,
+          mx: "auto",
           display: "grid",
+          // 2 columns on phones, then 3 / 4 at sm / md (600 / 900) —
+          // 4 is the most.
           gridTemplateColumns: {
             xs: "repeat(2, 1fr)",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(3, 1fr)",
-            lg: "repeat(4, 1fr)",
+            sm: "repeat(3, 1fr)",
+            md: "repeat(4, 1fr)",
           },
           // xs: 14px gap + 4px side padding → with the page's 16px, a
           // 390px phone gets (390 - 40 - 14) / 2 = 168px cards.
           gap: { xs: 1.75, sm: 2, md: 2.5 },
           p: { xs: 0.5, sm: 1, md: 3 },
-          alignItems: "start",
+          // Cards fill their cell height (see OdMenuCard) so every card
+          // in a row lines up.
+          alignItems: "stretch",
         }}
       >
         {visibleMenus.map((menu) => (

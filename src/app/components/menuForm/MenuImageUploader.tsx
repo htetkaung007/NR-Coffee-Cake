@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -133,7 +134,9 @@ export default function MenuImageUploader({
                       minWidth: { xs: 80, sm: 120 },
                       flex: 1,
                       minHeight: { xs: 36, sm: 42 },
-                      "&:hover": { transform: "scale(1.05)" },
+                      [hoverCapableMedia]: {
+                        "&:hover": { transform: "scale(1.05)" },
+                      },
                     }}
                   >
                     Replace
@@ -149,7 +152,9 @@ export default function MenuImageUploader({
                       flex: 1,
                       py: { xs: 0.8, sm: 1 },
                       minHeight: { xs: 36, sm: 42 },
-                      "&:hover": { transform: "scale(1.05)" },
+                      [hoverCapableMedia]: {
+                        "&:hover": { transform: "scale(1.05)" },
+                      },
                     }}
                   >
                     Remove

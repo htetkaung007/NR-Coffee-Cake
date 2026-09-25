@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { IconButton, type SxProps, type Theme } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 interface BackCircleButtonProps {
   ariaLabel: string;
@@ -31,7 +32,9 @@ export default function BackCircleButton({
       bgcolor: "background.paper",
       border: "1px solid",
       borderColor: "divider",
-      "&:hover": { bgcolor: "action.hover" },
+      [hoverCapableMedia]: {
+        "&:hover": { bgcolor: "action.hover" },
+      },
     },
     ...(Array.isArray(sx) ? sx : [sx]),
   ];

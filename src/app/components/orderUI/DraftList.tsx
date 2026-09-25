@@ -5,7 +5,7 @@ import {
   CartLineRow,
   DraftLine,
   Shortage,
-} from "@/app/(storefront)/cart/Cartlist";
+} from "@/app/(storefront)/cart/CartList";
 
 interface DraftListProps {
   draftItems: DraftLine[];

@@ -18,6 +18,7 @@ import FastfoodIcon from "@mui/icons-material/Fastfood";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import SettingsIcon from "@mui/icons-material/Settings";
 
@@ -77,7 +78,9 @@ function SidebarContent() {
                   mb: 0.5,
                   color: isActive ? "primary.main" : "text.primary",
                   bgcolor: isActive ? "background.default" : "transparent",
-                  "&:hover": { bgcolor: "background.default" },
+                  [hoverCapableMedia]: {
+                    "&:hover": { bgcolor: "background.default" },
+                  },
                 }}
               >
                 <ListItemIcon

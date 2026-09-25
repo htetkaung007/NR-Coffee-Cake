@@ -12,14 +12,14 @@ import {
 } from "@mui/material";
 
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 import {
   removeFromCartAction,
-  startNextRoundAction,
   submitOrderAction,
   updateCartItemAction,
 } from "@/app/(storefront)/counter/action";
-import CartList, { CartLine, Shortage } from "@/app/(storefront)/cart/Cartlist";
+import CartList, { CartLine, Shortage } from "@/app/(storefront)/cart/CartList";
 import CartButton, { CartButtonStatus } from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";
 import BackCircleButton from "./BackCircleButton";
@@ -37,9 +37,16 @@ interface CartPageClientProps {
   shopName: string | null;
   initialStatus: CartButtonStatus;
   initialCart: CartLine[];
+  /** True when this bill already has an earlier round with the
+   *  kitchen (see OrderSessionService.getOrStartCartRound) — only
+   *  possible while initialStatus is CART, since that's the only
+   *  status this page shows the editable cart for. Drives a one-line
+   *  notice near the top so the customer knows these items are a NEW
+   *  order, not additions to what's already cooking. */
+  hasEarlierRound?: boolean;
   /** Snapshot taken at page load — there's no polling pre-submit here
    *  (a lone Counter customer's own cart can't change from anyone but
-   *  them — see counterorderclient.tsx), so this can go stale between
+   *  them — see CounterOrderClient.tsx), so this can go stale between
    *  load and submit; the real enforcement is still the atomic
    *  decrementStock inside submitOrderForApproval, same as it always
    *  was. Shown dimmed with a warning, and Edit/Cancel let the
@@ -66,6 +73,7 @@ export default function CartPageClient({
   shopName,
   initialStatus,
   initialCart,
+  hasEarlierRound = false,
   initialShortages,
 }: CartPageClientProps) {
   const router = useRouter();
@@ -86,7 +94,7 @@ export default function CartPageClient({
   // there's nothing server-side that could change without this
   // customer's own action (unlike /menu's browsing view, which polls
   // even pre-submit for shared Table sessions — see
-  // counterorderclient.tsx's isTableSession).
+  // CounterOrderClient.tsx's isTableSession).
   usePollOrderStatus(
     status === "PENDING_APPROVAL",
     (result) => {
@@ -144,21 +152,14 @@ export default function CartPageClient({
     });
   }
 
-  // Only shown once the current round is PENDING/COOKING (see
-  // startNextRoundAction / OrderSessionService.startNextRound for the
-  // gate) — a fresh round means a fresh cart, so this navigates back
-  // to /menu rather than staying here once it succeeds.
+  // Only shown once the current round is PENDING/COOKING. No server
+  // call here anymore — the next round is started LAZILY, on the menu
+  // page, the moment the customer actually adds an item (see
+  // OrderSessionService.getOrStartCartRound) — so this is just
+  // navigation, same as goBackToMenu below.
   function handleOrderMore() {
-    setError(null);
-    startTransition(async () => {
-      const result = await startNextRoundAction();
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-      router.push(`/menu?locationId=${locationId}`);
-      router.refresh();
-    });
+    router.push(`/menu?locationId=${locationId}`);
+    router.refresh();
   }
 
   // router.push + refresh (not a plain <Link>) — a soft <Link> nav here
@@ -226,6 +227,13 @@ export default function CartPageClient({
           </Stack>
         </Stack>
 
+        {hasEarlierRound && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Your earlier order is with the kitchen — these items will be
+            sent as a new order.
+          </Alert>
+        )}
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -280,9 +288,11 @@ export default function CartPageClient({
                       whiteSpace: "nowrap",
                       transition:
                         "transform 0.15s ease, background-color 0.15s ease",
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        bgcolor: "action.hover",
+                      [hoverCapableMedia]: {
+                        "&:hover": {
+                          transform: "translateY(-1px)",
+                          bgcolor: "action.hover",
+                        },
                       },
                     }}
                     onClick={goBackToMenu}

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+
 import { ORDER_STATUS_CHIP } from "./OrderReceipt";
 
 interface OrderHistoryCardProps {
@@ -62,10 +64,12 @@ export default function OrderHistoryCard({
         minHeight: { xs: 88, sm: 104 },
         maxHeight: { xs: 168, sm: 200 },
         transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": {
-          borderColor: "primary.main",
-          transform: "translateY(-2px)",
-          boxShadow: 2,
+        [hoverCapableMedia]: {
+          "&:hover": {
+            borderColor: "primary.main",
+            transform: "translateY(-2px)",
+            boxShadow: 2,
+          },
         },
       }}
     >

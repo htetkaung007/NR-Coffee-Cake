@@ -2,6 +2,7 @@
 
 import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 export type CartButtonStatus =
   | "CART"
@@ -74,7 +75,9 @@ export default function CartButton({
       sx={{
         transition: "transform 0.15s ease, box-shadow 0.15s ease",
         whiteSpace: "nowrap",
-        "&:hover": { transform: "translateY(-1px)", boxShadow: 4 },
+        [hoverCapableMedia]: {
+          "&:hover": { transform: "translateY(-1px)", boxShadow: 4 },
+        },
       }}
     >
       <Typography component="span" sx={{ fontWeight: 700 }}>

@@ -2,6 +2,7 @@ import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 import { MenuStockService } from "../menuStock.service";
+import { orderLinesTotal } from "@/app/lib/orderTotals";
 
 type Tx = Prisma.TransactionClient;
 
@@ -226,26 +227,35 @@ export class OrderSessionService {
   }
 
   /**
-   * "Order More" (design discussion) — Counter QR only: a Counter
-   * customer whose current round has already been Accepted (PENDING/
-   * COOKING) can start a brand-new round for the same table without
-   * touching the round already in the kitchen. Table QR doesn't need
-   * this anymore — with drafts decoupled from any session
-   * (TableDraftService), "Order More" there is just adding more
-   * drafts and calling submitDraft again; see that method's own
-   * comment.
+   * Counter QR only: a Counter customer whose current round has
+   * already been Accepted (PENDING/COOKING) can start a brand-new
+   * round for the same table without touching the round already in
+   * the kitchen. Table QR doesn't need this anymore — with drafts
+   * decoupled from any session (TableDraftService), "Order More"
+   * there is just adding more drafts and calling submitDraft again;
+   * see that method's own comment.
+   *
+   * Not called directly by "Order More" itself anymore — the round is
+   * created lazily, on the first item actually added (see
+   * getOrStartCartRound, this method's only caller now).
    *
    * Only PENDING/COOKING may start a next round: CART has nothing to
    * "confirm" yet (just keep adding to the current one), and
    * PENDING_APPROVAL must be Accepted or Rejected first — starting a
    * second round while the first is still awaiting a decision would
    * let a customer route around a pending Reject.
+   *
+   * Links the new round to the bill via billSessionId: `session.billSessionId
+   * ?? session.id` so round 3 points at round 1 (the bill's root), not
+   * round 2 — see OrderSession.billSessionId's own schema comment.
    */
   static async startNextRound(session: {
+    id: number;
     locationId: number;
     tableId: number | null;
     isCounter: boolean;
     status: string;
+    billSessionId: number | null;
   }) {
     if (session.status !== "PENDING" && session.status !== "COOKING") {
       throw new ValidationError(
@@ -265,6 +275,7 @@ export class OrderSessionService {
           isCounter: session.isCounter,
           status: "CART",
           orderNumber: "",
+          billSessionId: session.billSessionId ?? session.id,
         },
       });
 
@@ -275,6 +286,111 @@ export class OrderSessionService {
 
       return numbered;
     });
+  }
+
+  /**
+   * Counter QR only (throws if !session.isCounter) — "Add to cart"
+   * while the current round is already PENDING/COOKING (accepted)
+   * needs somewhere to add to. Creates that somewhere LAZILY: only
+   * the first item actually added ever creates a round, never a page
+   * load or "Order More" tap on their own — otherwise empty CART
+   * rounds would pile up every time a customer opened the menu again
+   * without adding anything.
+   *
+   * CART — nothing to resolve, return the session unchanged.
+   *
+   * PENDING_APPROVAL — refused outright, the same rule startNextRound
+   * already enforced: a customer must not be able to route around a
+   * pending Reject by starting a fresh round while the current one is
+   * still awaiting a decision.
+   *
+   * PENDING/COOKING — looks for a CART round already on this bill
+   * (newest first) before creating one. This find-first is exactly
+   * what stops a second "Add to cart" tap from creating a second CART
+   * round: the first add's own startNextRound call already created
+   * one, so every add after that just reuses it. isAbandonedCart
+   * still applies the same as any other CART round, in case that
+   * round sat untouched long enough to count as abandoned. Falls
+   * through to OrderSessionService.startNextRound (Rule 4: called by
+   * class name, not `this`) — the exact creation path "Order More"
+   * used to call directly.
+   *
+   * Honest note on a race: two truly simultaneous first-adds (e.g.
+   * two browser tabs) could both miss the find-first and each start a
+   * round. That's harmless, not a correctness bug — both rounds still
+   * land on the SAME bill (billSessionId ?? id is derived from the
+   * session passed in here, not from whichever round wins the race),
+   * so the cashier still sees ONE card, and cleanUpAfterPayment
+   * already cancels any leftover CART round once the bill is paid
+   * either way.
+   */
+  static async getOrStartCartRound(session: {
+    id: number;
+    token: string;
+    locationId: number;
+    tableId: number | null;
+    isCounter: boolean;
+    status: string;
+    billSessionId: number | null;
+  }) {
+    if (!session.isCounter) {
+      throw new ValidationError("This is a Table QR session.");
+    }
+
+    if (session.status === "CART") {
+      return session;
+    }
+
+    if (session.status === "PENDING_APPROVAL") {
+      throw new ValidationError(
+        "Your order is waiting for the counter to confirm. You can add more once it's accepted.",
+      );
+    }
+
+    if (session.status !== "PENDING" && session.status !== "COOKING") {
+      throw new ValidationError("This order can no longer be edited.");
+    }
+
+    const rootId = session.billSessionId ?? session.id;
+    const existing = await prisma.orderSession.findFirst({
+      where: {
+        isCounter: true,
+        isArchived: false,
+        status: "CART",
+        OR: [{ id: rootId }, { billSessionId: rootId }],
+      },
+      orderBy: { id: "desc" },
+    });
+    if (existing && !isAbandonedCart(existing)) {
+      return existing;
+    }
+
+    return OrderSessionService.startNextRound(session);
+  }
+
+  /** For a session whose bill was split into multiple rounds
+   *  (billSessionId set) — the bill's first round ("root"), but only
+   *  if it's still open. Used the moment THIS session has just gone
+   *  terminal (rejected, timed out, or paid) to decide whether the
+   *  customer's cookie/scan should recover onto a still-open sibling
+   *  round instead of being treated as "nothing left" (see
+   *  pollOrderStatusAction and resolveCounterSession, both of which
+   *  call this before clearing a cookie or locking a scan).
+   *
+   *  Returns null in two cases: billSessionId is null (this session
+   *  IS the bill's own first round — there's nothing before it to
+   *  recover onto), or the root itself is also terminal (e.g. the
+   *  whole bill was just paid together — see cleanUpAfterPayment,
+   *  which is exactly what keeps this from ever finding a stale
+   *  "open" root after a payment). */
+  static async getOpenBillRoot(session: { billSessionId: number | null }) {
+    if (session.billSessionId === null) return null;
+
+    const root = await prisma.orderSession.findFirst({
+      where: { id: session.billSessionId, isArchived: false },
+    });
+    if (!root || isSessionTerminal(root.status)) return null;
+    return root;
   }
 
   /** Counter QR — the printed URL carries a rotating `key`
@@ -356,6 +472,17 @@ export class OrderSessionService {
       return { status: "active" as const, session: current };
     }
 
+    // Terminal, but this might just be one round of a still-open bill
+    // going terminal on its own (Rejected/timed-out "Order More"
+    // round — see getOpenBillRoot) rather than the whole bill being
+    // settled — recover onto the bill's still-open first round
+    // instead of locking the customer out of a bill that was never
+    // actually paid.
+    const root = await OrderSessionService.getOpenBillRoot(current);
+    if (root) {
+      return { status: "active" as const, session: root };
+    }
+
     // Terminal and no way back for this browser — see the method
     // comment above. The caller should clear the cookie (Max-Age=0)
     // and render/redirect to the read-only menu view.
@@ -394,6 +521,63 @@ export class OrderSessionService {
         },
       },
     });
+  }
+
+  /** Counter QR's counterpart to getRoundHistoryForTable — "Order
+   *  More" splits one bill into several OrderSession rounds (see
+   *  billSessionId's own schema comment), but the customer should see
+   *  ONE bill number and ONE running total throughout, the same way
+   *  the cashier's Order List card already does (see
+   *  OrderSessionApprovalService.groupSessionsForDisplay). Every
+   *  Counter customer screen that used to show a round's own
+   *  orderNumber calls this instead.
+   *
+   *  billNumber is the root round's orderNumber — the session ITSELF
+   *  if billSessionId is null (it IS the bill's first round), looked
+   *  up fresh rather than trusted from the caller so this stays
+   *  correct even if the caller only has a stale/partial session row.
+   *
+   *  rounds mirrors getRoundHistoryForTable exactly (same status
+   *  filter, same orders include, oldest first) so the same history
+   *  UI (OrderHistoryCard) can render either one — root plus every
+   *  round whose billSessionId equals the root's id, excluding CART
+   *  (nothing submitted yet) and every terminal status.
+   *
+   *  combinedTotal reuses orderLinesTotal per round — no separate
+   *  total math (Rule: reuse orderTotals helpers). */
+  static async getBillForSession(session: {
+    id: number;
+    billSessionId: number | null;
+  }) {
+    const rootId = session.billSessionId ?? session.id;
+
+    const [root, rounds] = await Promise.all([
+      prisma.orderSession.findFirst({
+        where: { id: rootId, isArchived: false },
+      }),
+      prisma.orderSession.findMany({
+        where: {
+          OR: [{ id: rootId }, { billSessionId: rootId }],
+          isArchived: false,
+          status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
+        },
+        orderBy: { id: "asc" },
+        include: {
+          orders: {
+            where: { isArchived: false },
+            include: { menu: true, OrdersAddons: { include: { addon: true } } },
+          },
+        },
+      }),
+    ]);
+
+    const billNumber = root?.orderNumber ?? generateOrderNumber(rootId);
+    const combinedTotal = rounds.reduce(
+      (sum, round) => sum + orderLinesTotal(round.orders),
+      0,
+    );
+
+    return { billNumber, rounds, combinedTotal };
   }
 
   /** Read-only lookup for a page load that already has a cookie (i.e.

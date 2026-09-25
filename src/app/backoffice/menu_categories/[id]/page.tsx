@@ -10,7 +10,7 @@ import MenuCategoryCard, {
 } from "@/app/components/MenuCategoryCard";
 import EditMenuCategoryDialog, {
   EditableMenuCategory,
-} from "@/app/components/Editmenucategorydialog ";
+} from "@/app/components/EditMenuCategoryDialog";
 
 interface MenuCategoriesGridProps {
   categories: MenuCategoryCardData[];

@@ -13,6 +13,9 @@ export async function getSessionContext() {
   return {
     companyId: session?.user?.companyId ?? null,
     userId: session?.user?.id ?? null,
-    role: session?.user?.role ?? "ADMIN",
+    // Least-privilege fallback — only fires when the role is missing
+    // (no session, stale pre-role cookie, lookup failure); real roles
+    // come from the DB via the jwt callback.
+    role: session?.user?.role ?? "MANAGER",
   };
 }

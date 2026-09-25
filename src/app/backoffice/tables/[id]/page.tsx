@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { TableService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import EditTable from "./editTable";
+import EditTable from "./EditTable";
 
 export default async function EditTablePage({
   params,

@@ -1937,7 +1937,8 @@ export const OrderSessionScalarFieldEnum = {
   approvalExpiresAt: 'approvalExpiresAt',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
-  isArchived: 'isArchived'
+  isArchived: 'isArchived',
+  billSessionId: 'billSessionId'
 } as const
 
 export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]

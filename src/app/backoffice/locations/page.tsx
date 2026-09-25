@@ -3,7 +3,7 @@ import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { LocationService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import LocationCard from "@/app/components/locationCard";
+import LocationCard from "@/app/components/LocationCard";
 
 export default async function LocationsPage() {
   const { companyId, userId, role } = await getSessionContext();

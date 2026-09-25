@@ -122,16 +122,20 @@ export default async function MenuPage({
   // customer က ကိုယ်တိုင် ပြောင်းလို့ရလို့) — မရှိမှသာ query param ကို သုံး.
   const effectiveLocationId = session ? session.locationId : locationId;
 
-  const [menus, shopName] = await Promise.all([
+  const [menus, shopName, bill] = await Promise.all([
     MenuService.getMenusForLocation(effectiveLocationId),
     LocationService.getShopNameForLocation(effectiveLocationId),
+    // "Order More" can split one bill into several rounds — the
+    // header shows the BILL's number (matches the cashier's Order
+    // List card), never this particular round's own number.
+    session ? OrderSessionService.getBillForSession(session) : null,
   ]);
 
   return (
     <CounterOrderClient
       hasSession={session !== null}
       locationId={effectiveLocationId}
-      orderNumber={session?.orderNumber ?? ""}
+      orderNumber={bill?.billNumber ?? ""}
       shopName={shopName}
       initialStatus={session?.status ?? "CART"}
       initialCart={

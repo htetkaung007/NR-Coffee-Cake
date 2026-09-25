@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionContext } from "@/app/lib/session";
 import { LocationService, MenuService, TableService } from "@/app/services";
-import StaffOrderClient from "./staffOrderClient";
+import StaffOrderClient from "./StaffOrderClient";
 
 /**
  * Design doc section 7. Reuses the SAME "which location is this user

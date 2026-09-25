@@ -10,6 +10,7 @@ import {
   Button,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 /** Shape returned by MenuService.getMenusWithDetails — the only fields
  *  that actually exist across Menu + MenuCategory + MenuStock. */
@@ -191,10 +192,12 @@ export default function BOMenuCard({ item }: MenuCardProps) {
               color: "text.primary",
               py: { xs: 0.25, sm: 0.5 },
               px: { xs: 1, sm: 1.5 },
-              "&:hover": {
-                borderColor: "primary.main",
-                bgcolor: "primary.main",
-                color: "#fff",
+              [hoverCapableMedia]: {
+                "&:hover": {
+                  borderColor: "primary.main",
+                  bgcolor: "primary.main",
+                  color: "#fff",
+                },
               },
             }}
           >

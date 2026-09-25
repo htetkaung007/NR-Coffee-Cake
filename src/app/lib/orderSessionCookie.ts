@@ -5,6 +5,23 @@
  *  never drifts between the two. */
 export const COUNTER_SESSION_COOKIE = "counter_session_token";
 
+/** Shared Set-Cookie options for COUNTER_SESSION_COOKIE — every write
+ *  site (the scan Route Handler, startNextRound's cookie move in
+ *  pollOrderStatusAction, and getOrStartCartRound's cookie move in
+ *  addToCartAction) used to repeat this object literal; one canonical
+ *  copy means they can't drift out of sync (e.g. one write site
+ *  missing `secure` in production). No Max-Age here, for the same
+ *  reason the comment below gives — only ever spread into a
+ *  `store.set(name, value, counterSessionCookieOptions)` call to SET
+ *  the cookie, never used to clear one (that's always its own
+ *  explicit `{ maxAge: 0 }`). */
+export const counterSessionCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+};
+
 // TABLE_SESSION_COOKIE was removed — the per-customer draft redesign
 // (see CONTRIBUTOR_TOKEN_COOKIE below) moved everything Table-QR
 // related onto tableId as the shared key instead: drafts before Send

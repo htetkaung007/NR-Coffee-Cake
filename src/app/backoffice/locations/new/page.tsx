@@ -1,6 +1,6 @@
 import { getSessionContext } from "@/app/lib/session";
 import { Box, Typography } from "@mui/material";
-import NewLocation from "./newLocation";
+import NewLocation from "./NewLocation";
 
 export default async function NewLocationPage() {
   const { role } = await getSessionContext();

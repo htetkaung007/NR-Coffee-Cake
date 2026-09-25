@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 import DraftList from "./DraftList";
 import CartButton, { CartButtonStatus } from "./CartButton";
@@ -33,7 +34,7 @@ import CartList, {
   CartLine,
   DraftLine,
   Shortage,
-} from "@/app/(storefront)/cart/Cartlist";
+} from "@/app/(storefront)/cart/CartList";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -329,9 +330,11 @@ export default function TableCartPageClient({
                     whiteSpace: "nowrap",
                     transition:
                       "transform 0.15s ease, background-color 0.15s ease",
-                    "&:hover": {
-                      transform: "translateY(-1px)",
-                      bgcolor: "action.hover",
+                    [hoverCapableMedia]: {
+                      "&:hover": {
+                        transform: "translateY(-1px)",
+                        bgcolor: "action.hover",
+                      },
                     },
                   }}
                   onClick={goBackToMenu}

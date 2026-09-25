@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
  * A visitor with neither a session nor a table draft to look at
  * (someone just browsing online — never scanned a table/counter QR)
  * is NOT an error case: the cart icon is always visible in the top
- * bar regardless of hasSession (see counterorderclient.tsx), so this
+ * bar regardless of hasSession (see CounterOrderClient.tsx), so this
  * page has to make sense for that visitor too. It gets a plain "No
  * order yet" message here instead of redirecting — a redirect back to
  * /menu with no locationId to carry over previously produced a broken
@@ -133,22 +133,30 @@ export default async function CartPage({
     );
   }
 
-  const shopName = await LocationService.getShopNameForLocation(
-    session.locationId,
-  );
-  const shortages = await OrderSessionService.getShortagesForSession(
-    session.id,
-    session.locationId,
-  );
+  const [shopName, shortages, bill] = await Promise.all([
+    LocationService.getShopNameForLocation(session.locationId),
+    OrderSessionService.getShortagesForSession(session.id, session.locationId),
+    // "Order More" can split one bill into several rounds — the
+    // header (and the Order-confirmed screen it feeds) shows the
+    // BILL's number, matching the cashier's Order List card, never
+    // this particular round's own number.
+    OrderSessionService.getBillForSession(session),
+  ]);
 
   return (
     <CartPageClient
       sessionId={session.id}
       initialTotal={orderLinesTotal(session.orders)}
       locationId={session.locationId}
-      orderNumber={session.orderNumber}
+      orderNumber={bill.billNumber}
       shopName={shopName}
       initialStatus={session.status as CartButtonStatus}
+      // getBillForSession's rounds filter excludes CART, so while this
+      // round IS the CART round, any round still in `bill.rounds` is
+      // an earlier one already with the kitchen (see
+      // OrderSessionService.getOrStartCartRound — this only happens
+      // once the accepted round's next round has been started).
+      hasEarlierRound={session.status === "CART" && bill.rounds.length > 0}
       initialShortages={shortages}
       initialCart={session.orders.map((order) => ({
         id: order.id,

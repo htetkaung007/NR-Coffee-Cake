@@ -14,6 +14,7 @@ import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 
 import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 export interface CartLine {
   id: number;
@@ -111,7 +112,9 @@ export function CartLineRow({
         py: 1.5,
         opacity: shortage ? 0.5 : 1,
         cursor: canEdit ? "pointer" : "default",
-        ...(canEdit && { "&:hover": { bgcolor: "action.hover" } }),
+        ...(canEdit && {
+          [hoverCapableMedia]: { "&:hover": { bgcolor: "action.hover" } },
+        }),
       }}
     >
       <Avatar
@@ -241,7 +244,9 @@ export function CartLineRow({
               bgcolor: "background.paper",
               border: "1px solid",
               borderColor: "divider",
-              "&:hover": { color: "error.main", bgcolor: "action.hover" },
+              [hoverCapableMedia]: {
+                "&:hover": { color: "error.main", bgcolor: "action.hover" },
+              },
             }}
           >
             <CloseIcon sx={{ fontSize: 16 }} />

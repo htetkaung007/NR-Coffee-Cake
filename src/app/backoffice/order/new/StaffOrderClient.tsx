@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import MenuDetailDialog from "@/app/components/orderUI/MenuDetailDialog";
 import {
   startStaffOrderAction,
@@ -312,9 +313,11 @@ export default function StaffOrderClient({
                     whiteSpace: "nowrap",
                     transition:
                       "transform 0.15s ease, background-color 0.15s ease",
-                    "&:hover": {
-                      transform: "translateY(-1px)",
-                      bgcolor: "action.hover",
+                    [hoverCapableMedia]: {
+                      "&:hover": {
+                        transform: "translateY(-1px)",
+                        bgcolor: "action.hover",
+                      },
                     },
                   }}
                   onClick={() =>
@@ -329,7 +332,9 @@ export default function StaffOrderClient({
                     flex: 2,
                     whiteSpace: "nowrap",
                     transition: "transform 0.15s ease, box-shadow 0.15s ease",
-                    "&:hover": { transform: "translateY(-1px)", boxShadow: 4 },
+                    [hoverCapableMedia]: {
+                      "&:hover": { transform: "translateY(-1px)", boxShadow: 4 },
+                    },
                   }}
                   disabled={submitting || cart.length === 0}
                   onClick={handleSubmit}

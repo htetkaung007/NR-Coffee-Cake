@@ -21,3 +21,16 @@ export function orderLineTotal(order: PricedOrderLine) {
 export function orderLinesTotal(orders: PricedOrderLine[]) {
   return orders.reduce((sum, order) => sum + orderLineTotal(order), 0);
 }
+
+/** How many lines the customer's cart badge should count. A Counter
+ *  session keeps its order lines after Submit (status moves on to
+ *  PENDING_APPROVAL/PENDING/COOKING), so only a CART session's lines
+ *  are still "in the cart" — anything else counts 0 (MUI's Badge hides
+ *  itself at 0). The one place this rule lives; every Counter screen
+ *  that feeds OrderTopBar's cartItemCount goes through it. */
+export function countUnsubmittedItems(
+  status: string,
+  cart: readonly unknown[],
+) {
+  return status === "CART" ? cart.length : 0;
+}

@@ -1,6 +1,6 @@
 import { getSessionContext } from "@/app/lib/session";
 import { Box, Typography } from "@mui/material";
-import NewTable from "./newTable";
+import NewTable from "./NewTable";
 
 export default async function NewTablePage() {
   const { companyId } = await getSessionContext();

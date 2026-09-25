@@ -1,20 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Alert, Button } from "@mui/material";
-
-import { startNextRoundAction } from "@/app/(storefront)/counter/action";
+import { Button } from "@mui/material";
 
 interface OrderMoreButtonProps {
   /** Where "Order more" lands — the menu, with the same locationId /
    *  tableId the page was opened with. */
   menuHref: string;
-  /** Counter QR only: the current round is already in the kitchen, so
-   *  ordering more means starting a new round first (same call as
-   *  CartPageClient's "Order More"). Table QR just goes back to the menu
-   *  — drafts for the next round are added there. */
+  /** Counter QR only: used to be "the current round is already in the
+   *  kitchen, so ordering more means starting a new round first" — now
+   *  the next round is started LAZILY, on the first item actually
+   *  added on the menu page (see OrderSessionService.
+   *  getOrStartCartRound), not by this button, so both branches below
+   *  render the exact same thing. Table QR's own branch (startNewRound
+   *  false/omitted) is untouched — kept as its own branch rather than
+   *  collapsing the two, so this diff can't be read as touching
+   *  Table's path at all. */
   startNewRound?: boolean;
 }
 
@@ -22,10 +23,6 @@ export default function OrderMoreButton({
   menuHref,
   startNewRound = false,
 }: OrderMoreButtonProps) {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
   if (!startNewRound) {
     return (
       <Button
@@ -40,35 +37,17 @@ export default function OrderMoreButton({
     );
   }
 
-  function handleClick() {
-    setError(null);
-    startTransition(async () => {
-      const result = await startNextRoundAction();
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-      router.push(menuHref);
-      router.refresh();
-    });
-  }
-
+  // Counter QR: no server call anymore (see the prop comment above) —
+  // just navigate, same as Table's branch above.
   return (
-    <>
-      {error && (
-        <Alert severity="error" sx={{ mb: 1 }}>
-          {error}
-        </Alert>
-      )}
-      <Button
-        variant="contained"
-        fullWidth
-        disabled={isPending}
-        onClick={handleClick}
-        sx={{ borderRadius: 999, py: 1.25 }}
-      >
-        Order more
-      </Button>
-    </>
+    <Button
+      component={Link}
+      href={menuHref}
+      variant="contained"
+      fullWidth
+      sx={{ borderRadius: 999, py: 1.25 }}
+    >
+      Order more
+    </Button>
   );
 }

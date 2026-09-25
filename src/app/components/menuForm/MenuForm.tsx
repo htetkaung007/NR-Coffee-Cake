@@ -23,10 +23,10 @@ import {
 import { AddonGroupOption } from "../ConnectAddonGroupDialog";
 import OdMenuCard, { OdMenuCardData } from "../OdMenuCard";
 import { SurfaceThemeScope } from "@/app/lib/theme/ThemeModeProvider";
-import ConnectedAddonsSection from "./Connectedaddonssection";
-import MenuCategoryChips, { MenuCategoryOption } from "./Menucategorychips";
-import MenuImageUploader from "./Menuimageuploader";
-import StockQuantityStepper from "./Stockquantitystepper";
+import ConnectedAddonsSection from "./ConnectedAddonsSection";
+import MenuCategoryChips, { MenuCategoryOption } from "./MenuCategoryChips";
+import MenuImageUploader from "./MenuImageUploader";
+import StockQuantityStepper from "./StockQuantityStepper";
 
 interface MenuFormInitialData {
   id: number;
@@ -353,7 +353,11 @@ export default function MenuForm({
           {/* Backoffice runs the Bo theme, but this card must look exactly
               like the customer's — render it under the Od theme. */}
           <SurfaceThemeScope surface="od">
-            <OdMenuCard item={previewData} />
+            {/* The card fills whatever width it's given; the preview
+                keeps the customer grid's typical card size. */}
+            <Box sx={{ maxWidth: 360, mx: "auto" }}>
+              <OdMenuCard item={previewData} />
+            </Box>
           </SurfaceThemeScope>
         </Box>
       </Box>

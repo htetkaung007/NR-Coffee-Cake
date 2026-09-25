@@ -1,4 +1,4 @@
-import type { CartLine } from "@/app/(storefront)/cart/Cartlist";
+import type { CartLine } from "@/app/(storefront)/cart/CartList";
 
 /** An Order row (fetched with its menu + addon links) as the cart-line
  *  shape the customer screens render — see CartLine. */

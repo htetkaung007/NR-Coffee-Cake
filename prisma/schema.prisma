@@ -309,6 +309,18 @@ model OrderSession {
   createdAt   DateTime    @default(now())
   updateTime  DateTime    @updatedAt
   isArchived  Boolean     @default(false)
+  // Bill grouping for "Order More" rounds — null means this session IS
+  // the first round of its own bill; otherwise this holds the id of
+  // that bill's first round (the "root"), so round 3 points at round
+  // 1, not round 2. Set only by OrderSessionService.startNextRound.
+  // Plain scalar, same style as Table.activeSessionId — no formal
+  // relation. Counter QR only for now. Grouping
+  // (groupSessionsForDisplay) uses this numeric id, NEVER `token` — a
+  // secret session credential that must never appear in a group key
+  // or URL.
+  billSessionId Int?
+
+  @@index([billSessionId])
 }
 
 enum ORDERSTATUS {

@@ -27,10 +27,10 @@ export const dynamic = "force-dynamic";
  * OrderSessionService.getRoundHistoryForTable — that's exactly the set
  * markSessionsPaid later settles together in one bill, so this is the
  * customer's own running total so far). Everything else falls through
- * to Counter QR, where "Order More" rounds are deliberately never
- * merged into one bill (see groupSessionsForDisplay's own comment) —
- * the browser's cookie only ever points at the one round it's
- * currently in, so that's the only round there is to show.
+ * to Counter QR, where "Order More" can split one bill into several
+ * rounds too (see OrderSession.billSessionId's own schema comment) —
+ * OrderSessionService.getBillForSession is Counter's counterpart to
+ * getRoundHistoryForTable, walking billSessionId instead of tableId.
  */
 export default async function HistoryPage({
   searchParams,
@@ -192,15 +192,25 @@ export default async function HistoryPage({
     );
   }
 
-  const shopName = await LocationService.getShopNameForLocation(
-    session.locationId,
-  );
-  const total = orderLinesTotal(session.orders);
+  const [shopName, bill] = await Promise.all([
+    LocationService.getShopNameForLocation(session.locationId),
+    OrderSessionService.getBillForSession(session),
+  ]);
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
+    <Box
+      sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}
+    >
       <OrderTopBar shopName={shopName} cartItemCount={0} />
-      <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
+      <Box
+        sx={{
+          flex: 1,
+          width: "100%",
+          p: { xs: 2, sm: 3 },
+          maxWidth: 720,
+          mx: "auto",
+        }}
+      >
         <Stack
           direction="row"
           spacing={1.5}
@@ -210,20 +220,79 @@ export default async function HistoryPage({
             href={`/menu?locationId=${session.locationId}`}
             ariaLabel="Back to menu"
           />
-          <Typography variant="h6">Order history</Typography>
+          <Box>
+            <Typography variant="h6">Order history</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {bill.billNumber}
+            </Typography>
+          </Box>
         </Stack>
 
-        <OrderHistoryCard
-          href={`/history/${session.id}?locationId=${session.locationId}`}
-          orderNumber={session.orderNumber}
-          status={session.status}
-          items={session.orders.map((order) => ({
-            quantity: order.quantity,
-            name: order.menu.name,
-          }))}
-          total={total}
-        />
+        {bill.rounds.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            Nothing sent to the kitchen yet — items you send to the kitchen
+            will show up here until your order is settled.
+          </Typography>
+        ) : (
+          <Stack spacing={{ xs: 1.5, sm: 2 }}>
+            {bill.rounds.map((round, index) => (
+              <OrderHistoryCard
+                key={round.id}
+                href={`/history/${round.id}?locationId=${round.locationId}`}
+                orderNumber={`Round ${index + 1}`}
+                status={round.status}
+                items={round.orders.map((order) => ({
+                  quantity: order.quantity,
+                  name: order.menu.name,
+                }))}
+                total={orderLinesTotal(round.orders)}
+              />
+            ))}
+          </Stack>
+        )}
       </Box>
+
+      {bill.rounds.length > 0 && (
+        <Box
+          sx={{
+            position: "sticky",
+            bottom: 0,
+            zIndex: 1,
+            bgcolor: "background.paper",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            px: { xs: 2, sm: 3 },
+            pt: 1.5,
+            pb: "calc(12px + env(safe-area-inset-bottom, 0px))",
+          }}
+        >
+          <Stack
+            direction="row"
+            sx={{
+              maxWidth: 720,
+              mx: "auto",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 800 }}>
+                {bill.billNumber}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {bill.rounds.length}{" "}
+                {bill.rounds.length === 1 ? "round" : "rounds"}
+              </Typography>
+            </Box>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
+            >
+              {bill.combinedTotal.toLocaleString()} MMK
+            </Typography>
+          </Stack>
+        </Box>
+      )}
     </Box>
   );
 }

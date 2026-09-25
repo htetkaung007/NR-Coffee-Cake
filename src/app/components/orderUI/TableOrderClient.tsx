@@ -12,7 +12,7 @@ import {
   addDraftItemAction,
   pollTableAction,
 } from "@/app/(storefront)/counter/action";
-import { DraftLine } from "@/app/(storefront)/cart/Cartlist";
+import { DraftLine } from "@/app/(storefront)/cart/CartList";
 import { useRefreshOnVisible } from "@/app/lib/hooks/useRefreshOnVisible";
 import { usePolling } from "@/app/lib/hooks/usePolling";
 import { dismissConfirmedRound } from "@/app/lib/hooks/useConfirmedRoundDismissed";

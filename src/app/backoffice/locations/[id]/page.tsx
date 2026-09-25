@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { LocationService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import EditLocation from "./editLocation";
+import EditLocation from "./EditLocation";
 
 export default async function EditLocationPage({
   params,

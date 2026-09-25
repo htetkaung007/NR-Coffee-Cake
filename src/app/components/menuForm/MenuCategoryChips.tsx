@@ -2,6 +2,7 @@
 
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import Link from "next/link";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 export interface MenuCategoryOption {
   id: number;
@@ -42,7 +43,9 @@ export default function MenuCategoryChips({
           sx={{
             color: "primary.main",
             textDecoration: "none",
-            "&:hover": { textDecoration: "underline" },
+            [hoverCapableMedia]: {
+              "&:hover": { textDecoration: "underline" },
+            },
           }}
         >
           + Add Category

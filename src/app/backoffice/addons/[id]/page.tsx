@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { AddonService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import NewAddon from "../new/newAddon";
+import NewAddon from "../new/NewAddon";
 
 export default async function EditAddonGroupPage({
   params,

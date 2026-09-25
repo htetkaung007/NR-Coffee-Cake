@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Chip, Stack, Typography } from "@mui/material";
+import { countUnsubmittedItems } from "@/app/lib/orderTotals";
 import OrderTopBar from "./OrderTopBar";
 
 interface OrderStatusScreenCartLine {
@@ -34,7 +35,10 @@ export default function OrderStatusScreen({
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
-      <OrderTopBar shopName={shopName} cartItemCount={cart.length} />
+      <OrderTopBar
+        shopName={shopName}
+        cartItemCount={countUnsubmittedItems(status, cart)}
+      />
       <Box sx={{ p: 3, maxWidth: 480, mx: "auto", textAlign: "center" }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
           {orderNumber}

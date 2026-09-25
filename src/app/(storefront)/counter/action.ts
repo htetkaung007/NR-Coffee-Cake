@@ -14,7 +14,10 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
+import {
+  COUNTER_SESSION_COOKIE,
+  counterSessionCookieOptions,
+} from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
 import { toCartLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
@@ -79,11 +82,28 @@ async function requireSessionFromCookie() {
   return session;
 }
 
+/** If the counter has already Accepted this session (PENDING/COOKING),
+ *  there's nowhere left in it to add — getOrStartCartRound finds (or
+ *  lazily starts) the bill's next CART round instead, and this moves
+ *  the cookie onto it so the customer's very next request (this same
+ *  page's revalidated reload, or a poll) resolves to the round they
+ *  actually just added to, not the one already with the kitchen. A
+ *  plain CART session round-trips through getOrStartCartRound
+ *  unchanged (same token), so the cookie is never rewritten needlessly. */
 const safeAddToCart = toSafeResult(async (input: AddToCartInput) => {
   const session = await requireSessionFromCookie();
+  const cartRound = await OrderSessionService.getOrStartCartRound(session);
+
+  if (cartRound.token !== session.token) {
+    const { store, cookieName } = await getCookieToken();
+    if (cookieName) {
+      store.set(cookieName, cartRound.token, counterSessionCookieOptions);
+    }
+  }
+
   return OrderSessionCartService.addItemToCart(
-    session.id,
-    session.tableId as number,
+    cartRound.id,
+    cartRound.tableId as number,
     input.menuId,
     input.quantity,
     input.addonIds,
@@ -105,7 +125,10 @@ export async function addToCartAction(
   }).asyncAndThen(safeAddToCart);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
+    // Both — an add here can lazily start a new round, which /cart
+    // needs to reflect (see CartPageClient), not just /menu.
     revalidatePath(`${url}/menu`);
+    revalidatePath(`${url}/cart`);
   }
   return actionResult;
 }
@@ -191,40 +214,6 @@ export async function submitOrderAction() {
   return actionResult;
 }
 
-const safeStartNextRound = toSafeResult(async () => {
-  const session = await requireSessionFromCookie();
-  return OrderSessionService.startNextRound(session);
-});
-
-/**
- * "Order More" — Counter QR only now (see
- * OrderSessionService.startNextRound's own comment for why Table QR
- * doesn't need this anymore). Besides the PENDING/COOKING gate itself,
- * this also has to move the customer's cookie onto the new round's
- * token, the same way customer/route.ts's scan does — this IS the
- * customer's own browser making the request (unlike the cashier's
- * Accept/Reject/Paid actions in Backoffice), so a Server Action here
- * can set that response cookie directly.
- */
-export async function startNextRoundAction() {
-  const { store, cookieName } = await getCookieToken();
-  const result = await safeStartNextRound();
-  const actionResult = toActionResult(result);
-
-  if (actionResult.success && cookieName) {
-    store.set(cookieName, actionResult.data.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
-    revalidatePath(`${url}/menu`);
-    revalidatePath(`${url}/cart`);
-  }
-
-  return actionResult;
-}
-
 /**
  * Design doc "Step 3: Polling". Called every few seconds from a client
  * component — Counter QR only now (Table QR's own round-status
@@ -260,7 +249,20 @@ export async function pollOrderStatusAction() {
   const refreshed = await OrderSessionService.getSessionStatus(session.id);
 
   if (isSessionTerminal(refreshed.status)) {
-    store.set(cookieName, "", { maxAge: 0 });
+    // This round is done (rejected, timed out, or paid), but it might
+    // belong to a bill that split into multiple rounds ("Order More")
+    // and still has another one open (e.g. round 1 still PENDING/
+    // COOKING while this was round 2, just Rejected) — move the
+    // cookie onto that root round instead of clearing it, so the
+    // customer isn't locked out of a bill that isn't actually settled
+    // yet. The status/cart/total returned below still describe THIS
+    // round, so the existing terminal handling for it is unchanged.
+    const root = await OrderSessionService.getOpenBillRoot(session);
+    if (root) {
+      store.set(cookieName, root.token, counterSessionCookieOptions);
+    } else {
+      store.set(cookieName, "", { maxAge: 0 });
+    }
   }
 
   // session.orders (from getSessionByToken, above) reflects the cart
@@ -418,9 +420,10 @@ const safeSubmitDraft = toSafeResult(async (input: SubmitDraftInput) => {
 
 /** "Send to Kitchen" — see TableDraftService.submitDraft for the
  *  merge itself. No cookie to set afterward (unlike Counter's
- *  startNextRoundAction): the new round's status is tableId-keyed,
- *  not session-token-keyed, so every phone at the table picks it up
- *  on its next pollTableAction tick without anything needing to be
+ *  addToCartAction, which sometimes moves the cookie — see
+ *  safeAddToCart): the new round's status is tableId-keyed, not
+ *  session-token-keyed, so every phone at the table picks it up on
+ *  its next pollTableAction tick without anything needing to be
  *  written to this particular browser's cookie. */
 export async function submitDraftAction(tableId: number, locationId: number) {
   const result = await validateWith(submitDraftSchema, {

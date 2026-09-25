@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import NewAddon from "./newAddon";
+import NewAddon from "./NewAddon";
 
 export default async function NewAddonPage() {
   const { companyId } = await getSessionContext();

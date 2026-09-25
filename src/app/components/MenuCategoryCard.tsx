@@ -1,4 +1,5 @@
 import { Card, Box, Chip, Typography } from "@mui/material";
+import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 export interface MenuCategoryCardData {
   id: number;
@@ -30,7 +31,11 @@ export default function MenuCategoryCard({
         cursor: onClick ? "pointer" : "default",
         opacity: category.isEnabledAtLocation ? 1 : 0.6,
         transition: "border-color 0.15s ease",
-        "&:hover": onClick ? { borderColor: "primary.main" } : undefined,
+        ...(onClick && {
+          [hoverCapableMedia]: {
+            "&:hover": { borderColor: "primary.main" },
+          },
+        }),
       }}
     >
       <Typography variant="body1" sx={{ color: "text.primary" }}>

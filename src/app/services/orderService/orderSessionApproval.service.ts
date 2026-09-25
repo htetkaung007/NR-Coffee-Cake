@@ -1,6 +1,9 @@
 import { prisma } from "../../utils/prisma";
 import { NotFoundError, ValidationError } from "../../lib/errors";
 import { orderLinesTotal } from "../../lib/orderTotals";
+import { Prisma } from "../../../../prisma/generated/browser";
+
+type Tx = Prisma.TransactionClient;
 
 /**
  * The cashier-approval / kitchen-facing half of the OrderSession
@@ -58,6 +61,90 @@ export class OrderSessionApprovalService {
     });
   }
 
+  /** Everything that has to happen once a session (or a batch of them)
+   *  is written to PAID, inside the SAME transaction as that status
+   *  write — both markSessionPaid and markSessionsPaid call this
+   *  last, so the post-payment cleanup lives in exactly one place
+   *  instead of drifting between the single- and bulk-pay paths.
+   *
+   *  No stock changes here: drafts (Table QR) and a CART round
+   *  (Counter "Order More") were never decremented in the first place
+   *  — that only happens at submit (decrementStockForSession /
+   *  TableDraftService.submitDraft) — so there's nothing to restore.
+   *
+   *  a) Table QR — bumps Table.contributorEpoch per distinct tableId
+   *     (unchanged logic, moved here from markSessionPaid/
+   *     markSessionsPaid — see the epoch bump's own reasoning below),
+   *     then deletes that table's leftover drafts (Order rows with
+   *     orderSessionId: null), same delete-addons-then-orders pattern
+   *     TableDraftService.submitDraft uses. Without this, the NEXT
+   *     group seated at this table would see — and could submit —
+   *     the previous group's unsent picks (Problem B).
+   *
+   *     Epoch bump: every contributor's CONTRIBUTOR_TOKEN_COOKIE entry
+   *     was minted under the table's epoch at scan time, so bumping it
+   *     is what makes their old tokens read as stale and forces a
+   *     fresh QR scan before anyone can start a new draft at this
+   *     table. Counter sessions never carry a contributor token to
+   *     begin with, so there's nothing to invalidate for them even if
+   *     tableId happens to be set.
+   *
+   *  b) Counter — a round still sitting in CART belongs to a bill
+   *     whose OTHER round just got paid (e.g. "Order More" started a
+   *     fresh round the customer never touched again — Problem A).
+   *     Cancels every CART round on the same bill (root id via
+   *     billSessionId ?? id, across both this batch's own sessions and
+   *     any sibling round the Order List never even showed) so the
+   *     customer's cookie — which may still point at that CART round
+   *     — reads as terminal on their next poll/scan instead of
+   *     silently staying open for more orders after payment. */
+  private static async cleanUpAfterPayment(
+    tx: Tx,
+    sessions: {
+      id: number;
+      tableId: number | null;
+      isCounter: boolean;
+      billSessionId: number | null;
+    }[],
+  ) {
+    const tableIds = [
+      ...new Set(
+        sessions
+          .filter((session) => !session.isCounter && session.tableId)
+          .map((session) => session.tableId as number),
+      ),
+    ];
+    for (const tableId of tableIds) {
+      await tx.table.update({
+        where: { id: tableId },
+        data: { contributorEpoch: { increment: 1 } },
+      });
+      await tx.ordersAddon.deleteMany({
+        where: { order: { tableId, orderSessionId: null } },
+      });
+      await tx.order.deleteMany({ where: { tableId, orderSessionId: null } });
+    }
+
+    const billIds = [
+      ...new Set(
+        sessions
+          .filter((session) => session.isCounter)
+          .map((session) => session.billSessionId ?? session.id),
+      ),
+    ];
+    if (billIds.length > 0) {
+      await tx.orderSession.updateMany({
+        where: {
+          isCounter: true,
+          status: "CART",
+          isArchived: false,
+          OR: [{ id: { in: billIds } }, { billSessionId: { in: billIds } }],
+        },
+        data: { status: "CANCELLED" },
+      });
+    }
+  }
+
   /** Marks a session PAID — the single trigger that (a) frees its
    *  table for the next group, since getActiveRoundForTable treats any
    *  terminal session as "no active round" without needing an extra
@@ -71,14 +158,10 @@ export class OrderSessionApprovalService {
    *  principle; the customer-facing endpoint is what reacts to PAID
    *  the next time that browser is heard from.
    *
-   *  Table QR only — also bumps Table.contributorEpoch (see its own
-   *  comment): every contributor's CONTRIBUTOR_TOKEN_COOKIE entry was
-   *  minted under the table's epoch at scan time, so this is what
-   *  makes their old tokens read as stale and forces a fresh QR scan
-   *  before anyone can start a new draft at this table. Counter
-   *  sessions never carry a contributor token to begin with, so
-   *  there's nothing to invalidate for them even if tableId happens
-   *  to be set. */
+   *  Everything else this needs cleaned up (contributorEpoch bump,
+   *  leftover drafts, sibling CART rounds on the same Counter bill)
+   *  lives in cleanUpAfterPayment, called last, inside this same
+   *  transaction. */
   static async markSessionPaid(sessionId: number) {
     const session = await prisma.orderSession.findFirst({
       where: { id: sessionId, isArchived: false },
@@ -90,12 +173,7 @@ export class OrderSessionApprovalService {
         where: { id: sessionId },
         data: { status: "PAID" },
       });
-      if (!session.isCounter && session.tableId) {
-        await tx.table.update({
-          where: { id: session.tableId },
-          data: { contributorEpoch: { increment: 1 } },
-        });
-      }
+      await OrderSessionApprovalService.cleanUpAfterPayment(tx, [session]);
       return paid;
     });
   }
@@ -104,15 +182,16 @@ export class OrderSessionApprovalService {
    *  of a table's tab (see the "Order More" design discussion:
    *  multiple OrderSession rows can now represent multiple rounds for
    *  the same table, so settling a table means paying all of them at
-   *  once, not one at a time). A Counter entry only ever has one
-   *  session, so this is also just what a single Mark-as-Paid does
-   *  there — same action, same code path either way.
+   *  once, not one at a time). A Counter entry's own sessions here are
+   *  just whichever rounds the Order List had already surfaced
+   *  (PENDING_APPROVAL/PENDING/COOKING) — cleanUpAfterPayment is what
+   *  reaches the bill's own CART round(s) that never made it into this
+   *  list at all (Problem A).
    *
-   *  Bumps Table.contributorEpoch once per distinct Table-QR tableId
-   *  among these sessions (see markSessionPaid's own comment for why)
-   *  — normally exactly one table, since an entry here is already
-   *  grouped by table (see groupSessionsForDisplay), but this stays
-   *  correct even if that ever changes. */
+   *  All post-payment cleanup (contributorEpoch bump, leftover drafts,
+   *  sibling CART rounds on the same Counter bill) lives in
+   *  cleanUpAfterPayment, called last, inside this same transaction —
+   *  see its own comment. */
   static async markSessionsPaid(sessionIds: number[]) {
     if (sessionIds.length === 0) {
       throw new ValidationError("No sessions to mark as paid.");
@@ -120,27 +199,15 @@ export class OrderSessionApprovalService {
 
     const sessions = await prisma.orderSession.findMany({
       where: { id: { in: sessionIds }, isArchived: false },
-      select: { tableId: true, isCounter: true },
+      select: { id: true, tableId: true, isCounter: true, billSessionId: true },
     });
-    const tableIdsToInvalidate = [
-      ...new Set(
-        sessions
-          .filter((session) => !session.isCounter && session.tableId)
-          .map((session) => session.tableId as number),
-      ),
-    ];
 
     return prisma.$transaction(async (tx) => {
       const result = await tx.orderSession.updateMany({
         where: { id: { in: sessionIds }, isArchived: false },
         data: { status: "PAID" },
       });
-      for (const tableId of tableIdsToInvalidate) {
-        await tx.table.update({
-          where: { id: tableId },
-          data: { contributorEpoch: { increment: 1 } },
-        });
-      }
+      await OrderSessionApprovalService.cleanUpAfterPayment(tx, sessions);
       return result;
     });
   }
@@ -212,11 +279,13 @@ export class OrderSessionApprovalService {
    *
    * Table QR sessions sharing a tableId are the SAME group (one tab,
    * multiple rounds — "Order More" is what creates a second round for
-   * an existing table). Counter QR sessions are deliberately NEVER
-   * grouped with each other even if they happen to share a tableId —
-   * each Counter session is one customer's own phone/own order, and
-   * two different customers who picked the same table number at
-   * checkout must never have their bills merged.
+   * an existing table). Counter QR sessions group per BILL — every
+   * round sharing a root id (billSessionId ?? id) is the same group —
+   * still never with a different customer's session, including one
+   * that happens to share a tableId (the Counter's own table row):
+   * each bill is one customer's own phone/own order, so two different
+   * customers who picked the same counter must never have their bills
+   * merged.
    */
   static groupSessionsForDisplay<
     T extends {
@@ -226,6 +295,9 @@ export class OrderSessionApprovalService {
       status: string;
       label: string;
       total: number;
+      billSessionId: number | null;
+      orderNumber: string;
+      approvalExpiresAt: Date | null;
     },
   >(sessions: T[]) {
     const groups = new Map<
@@ -235,6 +307,10 @@ export class OrderSessionApprovalService {
         title: string;
         isTableGroup: boolean;
         hasPendingApproval: boolean;
+        /** Earliest approvalExpiresAt among this group's
+         *  PENDING_APPROVAL sessions — when the group's most urgent
+         *  round times out and auto-cancels. Null if none is pending. */
+        earliestApprovalExpiresAt: Date | null;
         combinedTotal: number;
         sessions: T[];
       }
@@ -242,8 +318,11 @@ export class OrderSessionApprovalService {
 
     for (const session of sessions) {
       const key = session.isCounter
-        ? `counter-${session.id}`
+        ? `counter-${session.billSessionId ?? session.id}`
         : `table-${session.tableId}`;
+
+      const pendingExpiry =
+        session.status === "PENDING_APPROVAL" ? session.approvalExpiresAt : null;
 
       const existing = groups.get(key);
       if (existing) {
@@ -251,6 +330,13 @@ export class OrderSessionApprovalService {
         existing.combinedTotal += session.total;
         if (session.status === "PENDING_APPROVAL") {
           existing.hasPendingApproval = true;
+        }
+        if (
+          pendingExpiry &&
+          (!existing.earliestApprovalExpiresAt ||
+            pendingExpiry < existing.earliestApprovalExpiresAt)
+        ) {
+          existing.earliestApprovalExpiresAt = pendingExpiry;
         }
         continue;
       }
@@ -260,17 +346,43 @@ export class OrderSessionApprovalService {
         title: session.label,
         isTableGroup: !session.isCounter,
         hasPendingApproval: session.status === "PENDING_APPROVAL",
+        earliestApprovalExpiresAt: pendingExpiry,
         combinedTotal: session.total,
         sessions: [session],
       });
     }
 
+    // A Counter group's title must be the BILL's first round's
+    // orderNumber, not whichever round happened to create the group
+    // above — sessions arrive newest-first (getSessionsForLocation
+    // orders id "desc"), so the session that creates a group is
+    // always that group's NEWEST round. Table titles are just the
+    // table name (already correct from session.label above,
+    // independent of round order).
+    for (const group of groups.values()) {
+      if (group.isTableGroup) continue;
+      const firstRound = group.sessions.reduce((oldest, session) =>
+        session.id < oldest.id ? session : oldest,
+      );
+      group.title = firstRound.orderNumber;
+    }
+
     // Entries with something awaiting a decision surface first — a
     // cashier's most urgent work (Accept/Reject) shouldn't be buried
-    // below tables that only need eventual payment.
-    return Array.from(groups.values()).sort(
-      (a, b) => Number(b.hasPendingApproval) - Number(a.hasPendingApproval),
-    );
+    // below tables that only need eventual payment. Among those, the
+    // one closest to timing out (5-minute auto-cancel) comes first;
+    // a pending group with no expiry recorded sorts last of them.
+    // Every other group keeps its existing order.
+    const allGroups = Array.from(groups.values());
+    const waiting = allGroups
+      .filter((group) => group.hasPendingApproval)
+      .sort(
+        (a, b) =>
+          (a.earliestApprovalExpiresAt?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+          (b.earliestApprovalExpiresAt?.getTime() ?? Number.MAX_SAFE_INTEGER),
+      );
+    const rest = allGroups.filter((group) => !group.hasPendingApproval);
+    return [...waiting, ...rest];
   }
 
   /** What the Order List page and an entry's detail page both render

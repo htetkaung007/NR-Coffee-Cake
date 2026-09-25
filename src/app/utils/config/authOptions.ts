@@ -72,8 +72,11 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.companyId = (token.companyId as number | null) ?? null;
         session.user.id = (token.userId as number | null) ?? null;
+        // Least-privilege fallback — only fires when the role is missing
+        // (no session, stale pre-role cookie, lookup failure); real roles
+        // come from the DB via the jwt callback.
         session.user.role =
-          (token.role as "ADMIN" | "MANAGER" | undefined) ?? "ADMIN";
+          (token.role as "ADMIN" | "MANAGER" | undefined) ?? "MANAGER";
       }
       return session;
     },

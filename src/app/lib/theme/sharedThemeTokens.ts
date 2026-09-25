@@ -19,6 +19,11 @@ import type { ThemeOptions } from "@mui/material/styles";
 // `theme.breakpoints` ကို self-reference လုပ်လို့ မရလို့ပါ (circular).
 export const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
 
+// Gates `&:hover` styles to devices that actually have a real hover +
+// precise pointer, so touch devices never get stuck showing a hover state
+// after a tap.
+export const hoverCapableMedia = "@media (hover: hover) and (pointer: fine)";
+
 export const FONT_BODY = "var(--font-english), var(--font-myanmar), sans-serif";
 
 export const FONT_DISPLAY =

@@ -33,12 +33,14 @@ export type OrderSessionAvgAggregateOutputType = {
   id: number | null
   locationId: number | null
   tableId: number | null
+  billSessionId: number | null
 }
 
 export type OrderSessionSumAggregateOutputType = {
   id: number | null
   locationId: number | null
   tableId: number | null
+  billSessionId: number | null
 }
 
 export type OrderSessionMinAggregateOutputType = {
@@ -53,6 +55,7 @@ export type OrderSessionMinAggregateOutputType = {
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
+  billSessionId: number | null
 }
 
 export type OrderSessionMaxAggregateOutputType = {
@@ -67,6 +70,7 @@ export type OrderSessionMaxAggregateOutputType = {
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
+  billSessionId: number | null
 }
 
 export type OrderSessionCountAggregateOutputType = {
@@ -81,6 +85,7 @@ export type OrderSessionCountAggregateOutputType = {
   createdAt: number
   updateTime: number
   isArchived: number
+  billSessionId: number
   _all: number
 }
 
@@ -89,12 +94,14 @@ export type OrderSessionAvgAggregateInputType = {
   id?: true
   locationId?: true
   tableId?: true
+  billSessionId?: true
 }
 
 export type OrderSessionSumAggregateInputType = {
   id?: true
   locationId?: true
   tableId?: true
+  billSessionId?: true
 }
 
 export type OrderSessionMinAggregateInputType = {
@@ -109,6 +116,7 @@ export type OrderSessionMinAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  billSessionId?: true
 }
 
 export type OrderSessionMaxAggregateInputType = {
@@ -123,6 +131,7 @@ export type OrderSessionMaxAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  billSessionId?: true
 }
 
 export type OrderSessionCountAggregateInputType = {
@@ -137,6 +146,7 @@ export type OrderSessionCountAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  billSessionId?: true
   _all?: true
 }
 
@@ -238,6 +248,7 @@ export type OrderSessionGroupByOutputType = {
   createdAt: Date
   updateTime: Date
   isArchived: boolean
+  billSessionId: number | null
   _count: OrderSessionCountAggregateOutputType | null
   _avg: OrderSessionAvgAggregateOutputType | null
   _sum: OrderSessionSumAggregateOutputType | null
@@ -275,6 +286,7 @@ export type OrderSessionWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolFilter<"OrderSession"> | boolean
+  billSessionId?: Prisma.IntNullableFilter<"OrderSession"> | number | null
   location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   table?: Prisma.XOR<Prisma.TableNullableScalarRelationFilter, Prisma.TableWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
@@ -292,6 +304,7 @@ export type OrderSessionOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  billSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.LocationOrderByWithRelationInput
   table?: Prisma.TableOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
@@ -312,6 +325,7 @@ export type OrderSessionWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolFilter<"OrderSession"> | boolean
+  billSessionId?: Prisma.IntNullableFilter<"OrderSession"> | number | null
   location?: Prisma.XOR<Prisma.LocationScalarRelationFilter, Prisma.LocationWhereInput>
   table?: Prisma.XOR<Prisma.TableNullableScalarRelationFilter, Prisma.TableWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
@@ -329,6 +343,7 @@ export type OrderSessionOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  billSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.OrderSessionCountOrderByAggregateInput
   _avg?: Prisma.OrderSessionAvgOrderByAggregateInput
   _max?: Prisma.OrderSessionMaxOrderByAggregateInput
@@ -351,6 +366,7 @@ export type OrderSessionScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"OrderSession"> | boolean
+  billSessionId?: Prisma.IntNullableWithAggregatesFilter<"OrderSession"> | number | null
 }
 
 export type OrderSessionCreateInput = {
@@ -362,6 +378,7 @@ export type OrderSessionCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
   location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
@@ -379,6 +396,7 @@ export type OrderSessionUncheckedCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
 }
 
@@ -391,6 +409,7 @@ export type OrderSessionUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
@@ -408,6 +427,7 @@ export type OrderSessionUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
 }
 
@@ -423,6 +443,7 @@ export type OrderSessionCreateManyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
 }
 
 export type OrderSessionUpdateManyMutationInput = {
@@ -434,6 +455,7 @@ export type OrderSessionUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type OrderSessionUncheckedUpdateManyInput = {
@@ -448,6 +470,7 @@ export type OrderSessionUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type OrderSessionListRelationFilter = {
@@ -477,12 +500,14 @@ export type OrderSessionCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  billSessionId?: Prisma.SortOrder
 }
 
 export type OrderSessionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  billSessionId?: Prisma.SortOrder
 }
 
 export type OrderSessionMaxOrderByAggregateInput = {
@@ -497,6 +522,7 @@ export type OrderSessionMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  billSessionId?: Prisma.SortOrder
 }
 
 export type OrderSessionMinOrderByAggregateInput = {
@@ -511,12 +537,14 @@ export type OrderSessionMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  billSessionId?: Prisma.SortOrder
 }
 
 export type OrderSessionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
+  billSessionId?: Prisma.SortOrder
 }
 
 export type OrderSessionCreateNestedManyWithoutTableInput = {
@@ -632,6 +660,7 @@ export type OrderSessionCreateWithoutTableInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
   location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
 }
@@ -647,6 +676,7 @@ export type OrderSessionUncheckedCreateWithoutTableInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
 }
 
@@ -691,6 +721,7 @@ export type OrderSessionScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"OrderSession"> | Date | string
   isArchived?: Prisma.BoolFilter<"OrderSession"> | boolean
+  billSessionId?: Prisma.IntNullableFilter<"OrderSession"> | number | null
 }
 
 export type OrderSessionCreateWithoutLocationInput = {
@@ -702,6 +733,7 @@ export type OrderSessionCreateWithoutLocationInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
 }
@@ -717,6 +749,7 @@ export type OrderSessionUncheckedCreateWithoutLocationInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
 }
 
@@ -755,6 +788,7 @@ export type OrderSessionCreateWithoutOrdersInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
   location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
 }
@@ -771,6 +805,7 @@ export type OrderSessionUncheckedCreateWithoutOrdersInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
 }
 
 export type OrderSessionCreateOrConnectWithoutOrdersInput = {
@@ -798,6 +833,7 @@ export type OrderSessionUpdateWithoutOrdersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
 }
@@ -814,6 +850,7 @@ export type OrderSessionUncheckedUpdateWithoutOrdersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type OrderSessionCreateManyTableInput = {
@@ -827,6 +864,7 @@ export type OrderSessionCreateManyTableInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
 }
 
 export type OrderSessionUpdateWithoutTableInput = {
@@ -838,6 +876,7 @@ export type OrderSessionUpdateWithoutTableInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
 }
@@ -853,6 +892,7 @@ export type OrderSessionUncheckedUpdateWithoutTableInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
 }
 
@@ -867,6 +907,7 @@ export type OrderSessionUncheckedUpdateManyWithoutTableInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type OrderSessionCreateManyLocationInput = {
@@ -880,6 +921,7 @@ export type OrderSessionCreateManyLocationInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  billSessionId?: number | null
 }
 
 export type OrderSessionUpdateWithoutLocationInput = {
@@ -891,6 +933,7 @@ export type OrderSessionUpdateWithoutLocationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
 }
@@ -906,6 +949,7 @@ export type OrderSessionUncheckedUpdateWithoutLocationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
 }
 
@@ -920,6 +964,7 @@ export type OrderSessionUncheckedUpdateManyWithoutLocationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 
@@ -965,6 +1010,7 @@ export type OrderSessionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  billSessionId?: boolean
   location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
   orders?: boolean | Prisma.OrderSession$ordersArgs<ExtArgs>
@@ -983,6 +1029,7 @@ export type OrderSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  billSessionId?: boolean
   location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
 }, ExtArgs["result"]["orderSession"]>
@@ -999,6 +1046,7 @@ export type OrderSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  billSessionId?: boolean
   location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
 }, ExtArgs["result"]["orderSession"]>
@@ -1015,9 +1063,10 @@ export type OrderSessionSelectScalar = {
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  billSessionId?: boolean
 }
 
-export type OrderSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "token" | "orderNumber" | "locationId" | "tableId" | "isCounter" | "status" | "approvalExpiresAt" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["orderSession"]>
+export type OrderSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "token" | "orderNumber" | "locationId" | "tableId" | "isCounter" | "status" | "approvalExpiresAt" | "createdAt" | "updateTime" | "isArchived" | "billSessionId", ExtArgs["result"]["orderSession"]>
 export type OrderSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
@@ -1052,6 +1101,7 @@ export type $OrderSessionPayload<ExtArgs extends runtime.Types.Extensions.Intern
     createdAt: Date
     updateTime: Date
     isArchived: boolean
+    billSessionId: number | null
   }, ExtArgs["result"]["orderSession"]>
   composites: {}
 }
@@ -1489,6 +1539,7 @@ export interface OrderSessionFieldRefs {
   readonly createdAt: Prisma.FieldRef<"OrderSession", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"OrderSession", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"OrderSession", 'Boolean'>
+  readonly billSessionId: Prisma.FieldRef<"OrderSession", 'Int'>
 }
     
 

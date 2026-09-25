@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { LocationService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import AddManagerForm from "./addManager";
+import AddManagerForm from "./AddManagerForm";
 
 export default async function SettingsPage() {
   const { companyId, role } = await getSessionContext();

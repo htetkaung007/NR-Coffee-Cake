@@ -157,6 +157,10 @@ to our own variables/functions, not established library idioms.
 - The jwt callback runs identically for both the Credentials and
   Google OAuth sign-up paths (same user.email shape either way) — a
   fix made there covers both without a provider check.
+- `src/app/backoffice/layout.tsx` is an allowed exception that calls
+  getServerSession directly instead of getSessionContext() — it needs
+  the session's email to load the company and redirect unauthenticated
+  users, and getSessionContext() doesn't return email.
 
 ## 10. Theming — no hardcoded hex colors, no hardcoded breakpoint objects
 
@@ -193,10 +197,12 @@ to our own variables/functions, not established library idioms.
   the size in sx.
 - A few form-specific input/button sizes don't map to any Typography
   variant (label font size, button min-height, image-action-button
-  sizing) — these live in theme.formTokens (a custom
+  sizing) — **planned pattern, not yet built**: no formTokens.ts exists
+  in src/ as of now. The intended design is a theme.formTokens custom
   `declare module "@mui/material/styles"` augmentation in
-  formTokens.ts), read via `sx={(theme) => ({ fontSize:
-theme.formTokens.xxx })}`.
+  formTokens.ts, read via `sx={(theme) => ({ fontSize:
+theme.formTokens.xxx })}`. Until it lands, these sizes are set ad hoc
+  in each component's own sx.
 
 ## 11. Standing instruction for Claude
 
@@ -221,6 +227,12 @@ MINIO_ENDPOINT/keys), not a code change. All config values are read
 through the centralized config object in utils/config/index.tsx —
 never process.env.X directly in a Service or component; add new env
 vars to the Config interface and object there first.
+
+Two exceptions read `process.env` directly, outside that object:
+`process.env.NODE_ENV` checks (e.g. cookie `secure` flags), and
+`src/app/utils/prisma.ts` (the Prisma client bootstrap runs before/
+independently of the app config). Everything else still goes through
+`utils/config`.
 
 ## 13. Known project gaps / TODOs
 
@@ -288,6 +300,9 @@ business reason?"
   spaces, no invented abbreviation-style prefixes for new files (avoid
   new Bo-/Od-prefixed names going forward — prefer a clear full word,
   or put the file in a folder that already signals the surface).
+  Existing Od-/Bo-prefixed files keep their names; for new files, the
+  surface is signaled by folder (e.g. `components/orderUI/`) instead
+  of a prefix.
 - No file should have a trailing space or other stray whitespace in its
   name — this has caused a real fragile-import bug once already.
 - Don't leave empty/dead scratch files in the repo — delete them once

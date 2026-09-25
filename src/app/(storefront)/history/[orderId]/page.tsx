@@ -41,6 +41,10 @@ export default async function OrderReceiptPage({
     ReturnType<typeof OrderSessionService.getRoundDetailForTable>
   > = null;
   let isCounterRound = false;
+  // Table QR still shows each round's own number (unchanged) — Counter
+  // QR overrides this to the BILL's number below, matching the
+  // cashier's Order List card and every other Counter customer screen.
+  let orderNumber: string | null = null;
 
   if (tableId) {
     const contributorToken = await getContributorToken(tableId);
@@ -65,11 +69,23 @@ export default async function OrderReceiptPage({
     const session = token
       ? await OrderSessionService.getActiveSessionByToken(token)
       : null;
-    if (!session || session.id !== roundId || session.status === "CART") {
+    if (!session) {
       notFound();
     }
-    round = session;
+
+    // Any round of THIS browser's current bill is viewable, not just
+    // the one the cookie currently points at — "Order More" can split
+    // one bill into several rounds (see OrderSession.billSessionId's
+    // own schema comment), and /history now links to every one of
+    // them (see getBillForSession), not just the newest.
+    const bill = await OrderSessionService.getBillForSession(session);
+    const billRound = bill.rounds.find((candidate) => candidate.id === roundId);
+    if (!billRound) {
+      notFound();
+    }
+    round = billRound;
     isCounterRound = true;
+    orderNumber = bill.billNumber;
   }
 
   // locationId comes from the round itself, not the URL, so the links
@@ -91,7 +107,7 @@ export default async function OrderReceiptPage({
 
   return (
     <OrderReceipt
-      orderNumber={round.orderNumber}
+      orderNumber={orderNumber ?? round.orderNumber}
       status={round.status}
       lines={lines}
       total={orderLinesTotal(round.orders)}
