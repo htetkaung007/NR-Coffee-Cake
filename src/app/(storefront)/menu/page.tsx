@@ -97,7 +97,7 @@ export default async function MenuPage({
             menuId: item.menuId,
             menuName: item.menu.name,
             quantity: item.quantity,
-            price: item.menu.price,
+            price: item.unitPrice,
             contributorToken: item.contributorToken ?? "",
             addonNames: item.OrdersAddons.map((link) => link.addon.name),
             addonIds: item.OrdersAddons.map((link) => link.addonId),
@@ -144,7 +144,7 @@ export default async function MenuPage({
           menuId: order.menuId,
           menuName: order.menu.name,
           quantity: order.quantity,
-          price: order.menu.price,
+          price: order.unitPrice,
           note: order.note,
         })) ?? []
       }

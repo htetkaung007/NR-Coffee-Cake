@@ -67,7 +67,8 @@ export const ModelName = {
   DisableLocationMenuCategories: 'DisableLocationMenuCategories',
   Order: 'Order',
   OrdersAddon: 'OrdersAddon',
-  OrderSession: 'OrderSession'
+  OrderSession: 'OrderSession',
+  Bill: 'Bill'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -274,6 +275,7 @@ export const OrderScalarFieldEnum = {
   id: 'id',
   menuId: 'menuId',
   quantity: 'quantity',
+  unitPrice: 'unitPrice',
   tableId: 'tableId',
   orderSessionId: 'orderSessionId',
   contributorToken: 'contributorToken',
@@ -289,7 +291,8 @@ export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof Or
 export const OrdersAddonScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
-  addonId: 'addonId'
+  addonId: 'addonId',
+  unitPrice: 'unitPrice'
 } as const
 
 export type OrdersAddonScalarFieldEnum = (typeof OrdersAddonScalarFieldEnum)[keyof typeof OrdersAddonScalarFieldEnum]
@@ -307,10 +310,24 @@ export const OrderSessionScalarFieldEnum = {
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived',
-  billSessionId: 'billSessionId'
+  billSessionId: 'billSessionId',
+  billId: 'billId',
+  cancelReason: 'cancelReason'
 } as const
 
 export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]
+
+
+export const BillScalarFieldEnum = {
+  id: 'id',
+  billNumber: 'billNumber',
+  locationId: 'locationId',
+  total: 'total',
+  paidAt: 'paidAt',
+  createdAt: 'createdAt'
+} as const
+
+export type BillScalarFieldEnum = (typeof BillScalarFieldEnum)[keyof typeof BillScalarFieldEnum]
 
 
 export const SortOrder = {

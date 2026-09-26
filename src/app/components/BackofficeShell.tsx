@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Box, Toolbar } from "@mui/material";
 import { BackofficeTopBar } from "./BackofficeTopBar";
-import { BackofficeSideBar, SIDEBAR_WIDTH } from "./BackofficeSideBar";
+import { BackofficeSideBar } from "./BackofficeSideBar";
 
 interface Props {
   children?: React.ReactNode;

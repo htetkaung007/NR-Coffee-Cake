@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { applyAddedLine } from "@/app/lib/orderTotals";
 import MenuDetailDialog from "@/app/components/orderUI/MenuDetailDialog";
 import {
   startStaffOrderAction,
@@ -118,15 +119,17 @@ export default function StaffOrderClient({
     if (!result.success) {
       return result.error.message;
     }
-    setCart((current) => [
-      ...current,
-      {
+    // An identical line may have been merged into (see addItemToCart).
+    setCart((current) =>
+      applyAddedLine(current, {
         id: result.data.id,
         menuName: menu.name,
-        quantity,
-        price: menu.price,
-      },
-    ]);
+        quantity: result.data.quantity,
+        // The server's own snapshot, not this component's (possibly
+        // stale) menu prop — see Order.unitPrice's own schema comment.
+        price: result.data.unitPrice,
+      }),
+    );
     return null;
   }
 

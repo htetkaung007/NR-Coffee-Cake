@@ -105,3 +105,15 @@ export type OrdersAddon = Prisma.OrdersAddonModel
  *  * PAID/CANCELLED/etc. status is decided for the whole order.
  */
 export type OrderSession = Prisma.OrderSessionModel
+/**
+ * Model Bill
+ * *
+ *  * One row per PAID bill — created at payment time, grouping the one or
+ *  * more OrderSession rounds (see OrderSession.billSessionId/billId) that
+ *  * were settled together. A Bill is an immutable money record: once
+ *  * written it is never updated, so it deliberately has no updateTime/
+ *  * isArchived, and no tableId/isCounter — table and channel are derived
+ *  * by following bill.sessions back to their OrderSession(s) instead of
+ *  * being duplicated here.
+ */
+export type Bill = Prisma.BillModel

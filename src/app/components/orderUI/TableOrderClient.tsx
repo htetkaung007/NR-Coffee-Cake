@@ -13,6 +13,7 @@ import {
   pollTableAction,
 } from "@/app/(storefront)/counter/action";
 import { DraftLine } from "@/app/(storefront)/cart/CartList";
+import { applyAddedLine, sumQuantities } from "@/app/lib/orderTotals";
 import { useRefreshOnVisible } from "@/app/lib/hooks/useRefreshOnVisible";
 import { usePolling } from "@/app/lib/hooks/usePolling";
 import { dismissConfirmedRound } from "@/app/lib/hooks/useConfirmedRoundDismissed";
@@ -113,20 +114,24 @@ export default function TableOrderClient({
     // Starting the next order: the previous round's "Order confirmed"
     // screen is done with, even if this item is removed again later.
     if (activeRoundId !== null) dismissConfirmedRound(tableId, activeRoundId);
-    setDraftItems((current) => [
-      ...current,
-      {
+    // An identical pick of this customer's own may have been merged
+    // into (see TableDraftService.addDraftItem) — the returned row then
+    // carries that line's new total quantity.
+    setDraftItems((current) =>
+      applyAddedLine(current, {
         id: result.data.id,
         menuId: menu.id,
         menuName: menu.name,
-        quantity,
-        price: menu.price,
+        quantity: result.data.quantity,
+        // The server's own snapshot, not this component's (possibly
+        // stale) menu prop — see Order.unitPrice's own schema comment.
+        price: result.data.unitPrice,
         contributorToken: myContributorToken,
         addonNames: [],
         addonIds,
         note: note || null,
-      },
-    ]);
+      }),
+    );
     return null;
   }
 
@@ -144,7 +149,7 @@ export default function TableOrderClient({
     >
       <OrderTopBar
         shopName={shopName}
-        cartItemCount={draftItems.length}
+        cartItemCount={sumQuantities(draftItems)}
         awaitingApproval={isAwaitingApproval}
         onCartClick={() =>
           router.push(`/cart?locationId=${locationId}&tableId=${tableId}`)

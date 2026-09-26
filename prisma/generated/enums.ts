@@ -22,6 +22,15 @@ export const ORDERSTATUS = {
 export type ORDERSTATUS = (typeof ORDERSTATUS)[keyof typeof ORDERSTATUS]
 
 
+export const CancelReason = {
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED',
+  UNSUBMITTED: 'UNSUBMITTED'
+} as const
+
+export type CancelReason = (typeof CancelReason)[keyof typeof CancelReason]
+
+
 export const UserRole = {
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER'

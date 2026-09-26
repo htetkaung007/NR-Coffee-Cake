@@ -1,9 +1,11 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { normalizeOrderNote } from "@/app/lib/orderNote";
+import { lineMergeKey } from "@/app/lib/orderLineMerge";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../prisma/generated/client";
 import { getTokenEpoch } from "../lib/contributorToken";
 import { MenuStockService } from "./menuStock.service";
+import { PriceSnapshotService } from "./priceSnapshot.service";
 import { generateOrderNumber } from "./orderService/orderSession.service";
 import { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 
@@ -51,7 +53,18 @@ export class TableDraftService {
    *  OrderSessionCartService's required-addon validation rather than a
    *  second copy — the rule ("every required category needs a pick")
    *  doesn't care whether the row it's about to attach to is a draft
-   *  or an already-submitted session's item. */
+   *  or an already-submitted session's item.
+   *
+   *  Identical picks merge PER CUSTOMER: if this same contributorToken
+   *  already has a draft at this table that is the same line (same
+   *  menu, add-on set and note as far as lineMergeKey — the rule
+   *  submitDraft and Counter's addItemToCart use — can tell), its
+   *  quantity goes up and that row is returned; otherwise a new draft
+   *  is created. Never into another customer's draft: each row is owned
+   *  by one token (removeDraftItem/updateDraftItem check it), so a
+   *  shared row would let one customer remove another's item. Identical
+   *  picks by different customers stay separate rows until Send to
+   *  Kitchen, where submitDraft merges them across the whole table. */
   static async addDraftItem(
     tableId: number,
     contributorToken: string,
@@ -63,6 +76,42 @@ export class TableDraftService {
     await OrderSessionCartService.validateAddonSelection(menuId, addonIds);
 
     return prisma.$transaction(async (tx: Tx) => {
+      const { menuPrice, addonPrices } =
+        await PriceSnapshotService.loadCurrentPrices(tx, menuId, addonIds);
+      const incomingAddons = addonIds.map((addonId) => ({
+        addonId,
+        unitPrice: addonPrices.get(addonId)!,
+      }));
+      const incomingKey = lineMergeKey(menuId, menuPrice, incomingAddons, note);
+      const ownSameMenuDrafts = await tx.order.findMany({
+        where: {
+          tableId,
+          orderSessionId: null,
+          contributorToken,
+          menuId,
+          isArchived: false,
+        },
+        include: { OrdersAddons: true },
+      });
+      const sameLine = ownSameMenuDrafts.find(
+        (draft) =>
+          lineMergeKey(
+            draft.menuId,
+            draft.unitPrice,
+            draft.OrdersAddons.map((link) => ({
+              addonId: link.addonId,
+              unitPrice: link.unitPrice,
+            })),
+            draft.note,
+          ) === incomingKey,
+      );
+      if (sameLine) {
+        return tx.order.update({
+          where: { id: sameLine.id },
+          data: { quantity: { increment: quantity } },
+        });
+      }
+
       const order = await tx.order.create({
         data: {
           menuId,
@@ -71,12 +120,17 @@ export class TableDraftService {
           orderSessionId: null,
           contributorToken,
           note: normalizeOrderNote(note),
+          unitPrice: menuPrice,
         },
       });
 
       if (addonIds.length > 0) {
         await tx.ordersAddon.createMany({
-          data: addonIds.map((addonId) => ({ orderId: order.id, addonId })),
+          data: incomingAddons.map(({ addonId, unitPrice }) => ({
+            orderId: order.id,
+            addonId,
+            unitPrice,
+          })),
         });
       }
 
@@ -144,8 +198,19 @@ export class TableDraftService {
         data: { quantity, note: normalizeOrderNote(note) },
       });
       if (addonIds.length > 0) {
+        // New picks get TODAY's addon price; the draft's own unitPrice
+        // above is untouched — see Order.unitPrice's own schema comment.
+        const { addonPrices } = await PriceSnapshotService.loadCurrentPrices(
+          tx,
+          order.menuId,
+          addonIds,
+        );
         await tx.ordersAddon.createMany({
-          data: addonIds.map((addonId) => ({ orderId, addonId })),
+          data: addonIds.map((addonId) => ({
+            orderId,
+            addonId,
+            unitPrice: addonPrices.get(addonId)!,
+          })),
         });
       }
       return updated;
@@ -252,16 +317,23 @@ export class TableDraftService {
         menuId: number;
         menuName: string;
         quantity: number;
-        addonIds: number[];
+        unitPrice: number;
+        addons: { addonId: number; unitPrice: number }[];
         note: string | null;
       }
     >();
     for (const item of draftItems) {
-      const addonIds = item.OrdersAddons.map((link) => link.addonId).sort(
-        (a, b) => a - b,
-      );
+      const addons = item.OrdersAddons.map((link) => ({
+        addonId: link.addonId,
+        unitPrice: link.unitPrice,
+      })).sort((a, b) => a.addonId - b.addonId);
       const note = normalizeOrderNote(item.note);
-      const key = `${item.menuId}:${addonIds.join(",")}:${note ?? ""}`;
+      // Same line = lineMergeKey's rule (shared with Counter's cart) —
+      // each draft's OWN already-snapshotted unitPrice/addon prices are
+      // used here, never re-read from Menu/Addon: a merge at submit
+      // time must not silently repaint an earlier draft's price. A
+      // merged group keeps the first draft's note exactly as typed.
+      const key = lineMergeKey(item.menuId, item.unitPrice, addons, item.note);
       const existing = groups.get(key);
       if (existing) {
         existing.quantity += item.quantity;
@@ -270,7 +342,8 @@ export class TableDraftService {
           menuId: item.menuId,
           menuName: item.menu.name,
           quantity: item.quantity,
-          addonIds,
+          unitPrice: item.unitPrice,
+          addons,
           note,
         });
       }
@@ -327,13 +400,15 @@ export class TableDraftService {
             tableId,
             orderSessionId: numbered.id,
             note: group.note,
+            unitPrice: group.unitPrice,
           },
         });
-        if (group.addonIds.length > 0) {
+        if (group.addons.length > 0) {
           await tx.ordersAddon.createMany({
-            data: group.addonIds.map((addonId) => ({
+            data: group.addons.map(({ addonId, unitPrice }) => ({
               orderId: merged.id,
               addonId,
+              unitPrice,
             })),
           });
         }

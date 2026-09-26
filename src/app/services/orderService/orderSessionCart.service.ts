@@ -1,7 +1,9 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { normalizeOrderNote } from "@/app/lib/orderNote";
+import { lineMergeKey } from "@/app/lib/orderLineMerge";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
+import { PriceSnapshotService } from "../priceSnapshot.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -23,7 +25,17 @@ export class OrderSessionCartService {
    *  client-side "Add to Cart" button being disabled until required
    *  categories are picked can be bypassed by anyone calling this
    *  action directly, so the real enforcement has to live here (same
-   *  reasoning as requireSessionFromCookie in customer/menu/action.ts). */
+   *  reasoning as requireSessionFromCookie in customer/menu/action.ts).
+   *
+   *  Identical lines merge: if THIS session's cart already has a line
+   *  that is the same line — same menu, same add-on set, same note as
+   *  far as lineMergeKey (lib/orderLineMerge.ts, the rule Table QR's
+   *  submitDraft also uses) can tell — its quantity goes up by
+   *  `quantity` and that line is returned; otherwise a new line is
+   *  created. Only ever within one session, never across customers.
+   *  The existing line keeps its note as first typed. Stock is still
+   *  only checked at submit, and editing a line (updateItemInCart)
+   *  never merges it into another. */
   static async addItemToCart(
     sessionId: number,
     tableId: number,
@@ -43,6 +55,36 @@ export class OrderSessionCartService {
     await OrderSessionCartService.validateAddonSelection(menuId, addonIds);
 
     return prisma.$transaction(async (tx: Tx) => {
+      const { menuPrice, addonPrices } =
+        await PriceSnapshotService.loadCurrentPrices(tx, menuId, addonIds);
+      const incomingAddons = addonIds.map((addonId) => ({
+        addonId,
+        unitPrice: addonPrices.get(addonId)!,
+      }));
+      const incomingKey = lineMergeKey(menuId, menuPrice, incomingAddons, note);
+      const sameMenuLines = await tx.order.findMany({
+        where: { orderSessionId: sessionId, menuId, isArchived: false },
+        include: { OrdersAddons: true },
+      });
+      const sameLine = sameMenuLines.find(
+        (line) =>
+          lineMergeKey(
+            line.menuId,
+            line.unitPrice,
+            line.OrdersAddons.map((link) => ({
+              addonId: link.addonId,
+              unitPrice: link.unitPrice,
+            })),
+            line.note,
+          ) === incomingKey,
+      );
+      if (sameLine) {
+        return tx.order.update({
+          where: { id: sameLine.id },
+          data: { quantity: { increment: quantity } },
+        });
+      }
+
       const order = await tx.order.create({
         data: {
           menuId,
@@ -50,12 +92,17 @@ export class OrderSessionCartService {
           tableId,
           orderSessionId: sessionId,
           note: normalizeOrderNote(note),
+          unitPrice: menuPrice,
         },
       });
 
       if (addonIds.length > 0) {
         await tx.ordersAddon.createMany({
-          data: addonIds.map((addonId) => ({ orderId: order.id, addonId })),
+          data: incomingAddons.map(({ addonId, unitPrice }) => ({
+            orderId: order.id,
+            addonId,
+            unitPrice,
+          })),
         });
       }
 
@@ -138,8 +185,19 @@ export class OrderSessionCartService {
         data: { quantity, note: normalizeOrderNote(note) },
       });
       if (addonIds.length > 0) {
+        // New picks get TODAY's addon price; the line's own unitPrice
+        // above is untouched — see Order.unitPrice's own schema comment.
+        const { addonPrices } = await PriceSnapshotService.loadCurrentPrices(
+          tx,
+          order.menuId,
+          addonIds,
+        );
         await tx.ordersAddon.createMany({
-          data: addonIds.map((addonId) => ({ orderId, addonId })),
+          data: addonIds.map((addonId) => ({
+            orderId,
+            addonId,
+            unitPrice: addonPrices.get(addonId)!,
+          })),
         });
       }
       return updated;

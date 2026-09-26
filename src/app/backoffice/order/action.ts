@@ -4,7 +4,29 @@ import { revalidatePath } from "next/cache";
 import { toActionResult, toSafeResult } from "@/app/lib/actionHelper";
 import { AppError } from "@/app/lib/errors";
 import { getSessionContext } from "@/app/lib/session";
-import { OrderSessionApprovalService } from "@/app/services";
+import { LocationService, OrderSessionApprovalService } from "@/app/services";
+
+const safeGetPendingApprovals = toSafeResult(async () => {
+  const { companyId, userId } = await getSessionContext();
+  if (!companyId || !userId) {
+    throw new AppError("You must be signed in.", "UNAUTHORIZED");
+  }
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
+  // No location chosen yet: nothing can be pending there — the pages
+  // themselves already tell the user to pick one.
+  if (!selectedLocation) return [];
+  return OrderSessionApprovalService.getPendingApprovalSummary(
+    selectedLocation.locationId,
+  );
+});
+
+/** Read-only poll behind the Backoffice-wide new-order alerts
+ *  (OrderAlertsProvider) — rounds awaiting approval at the user's
+ *  selected location. See getPendingApprovalSummary. */
+export async function getPendingApprovalsAction() {
+  const result = await safeGetPendingApprovals();
+  return toActionResult(result);
+}
 
 const safeAccept = toSafeResult(async (sessionId: number) => {
   const { companyId } = await getSessionContext();

@@ -30,6 +30,7 @@ export type OrderAvgAggregateOutputType = {
   id: number | null
   menuId: number | null
   quantity: number | null
+  unitPrice: number | null
   tableId: number | null
   orderSessionId: number | null
 }
@@ -38,6 +39,7 @@ export type OrderSumAggregateOutputType = {
   id: number | null
   menuId: number | null
   quantity: number | null
+  unitPrice: number | null
   tableId: number | null
   orderSessionId: number | null
 }
@@ -46,6 +48,7 @@ export type OrderMinAggregateOutputType = {
   id: number | null
   menuId: number | null
   quantity: number | null
+  unitPrice: number | null
   tableId: number | null
   orderSessionId: number | null
   contributorToken: string | null
@@ -59,6 +62,7 @@ export type OrderMaxAggregateOutputType = {
   id: number | null
   menuId: number | null
   quantity: number | null
+  unitPrice: number | null
   tableId: number | null
   orderSessionId: number | null
   contributorToken: string | null
@@ -72,6 +76,7 @@ export type OrderCountAggregateOutputType = {
   id: number
   menuId: number
   quantity: number
+  unitPrice: number
   tableId: number
   orderSessionId: number
   contributorToken: number
@@ -87,6 +92,7 @@ export type OrderAvgAggregateInputType = {
   id?: true
   menuId?: true
   quantity?: true
+  unitPrice?: true
   tableId?: true
   orderSessionId?: true
 }
@@ -95,6 +101,7 @@ export type OrderSumAggregateInputType = {
   id?: true
   menuId?: true
   quantity?: true
+  unitPrice?: true
   tableId?: true
   orderSessionId?: true
 }
@@ -103,6 +110,7 @@ export type OrderMinAggregateInputType = {
   id?: true
   menuId?: true
   quantity?: true
+  unitPrice?: true
   tableId?: true
   orderSessionId?: true
   contributorToken?: true
@@ -116,6 +124,7 @@ export type OrderMaxAggregateInputType = {
   id?: true
   menuId?: true
   quantity?: true
+  unitPrice?: true
   tableId?: true
   orderSessionId?: true
   contributorToken?: true
@@ -129,6 +138,7 @@ export type OrderCountAggregateInputType = {
   id?: true
   menuId?: true
   quantity?: true
+  unitPrice?: true
   tableId?: true
   orderSessionId?: true
   contributorToken?: true
@@ -229,6 +239,7 @@ export type OrderGroupByOutputType = {
   id: number
   menuId: number
   quantity: number
+  unitPrice: number
   tableId: number
   orderSessionId: number | null
   contributorToken: string | null
@@ -265,6 +276,7 @@ export type OrderWhereInput = {
   id?: Prisma.IntFilter<"Order"> | number
   menuId?: Prisma.IntFilter<"Order"> | number
   quantity?: Prisma.IntFilter<"Order"> | number
+  unitPrice?: Prisma.IntFilter<"Order"> | number
   tableId?: Prisma.IntFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableFilter<"Order"> | string | null
@@ -282,6 +294,7 @@ export type OrderOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  unitPrice?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   contributorToken?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -302,6 +315,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
   menuId?: Prisma.IntFilter<"Order"> | number
   quantity?: Prisma.IntFilter<"Order"> | number
+  unitPrice?: Prisma.IntFilter<"Order"> | number
   tableId?: Prisma.IntFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableFilter<"Order"> | string | null
@@ -319,6 +333,7 @@ export type OrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  unitPrice?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   contributorToken?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -340,6 +355,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Order"> | number
   menuId?: Prisma.IntWithAggregatesFilter<"Order"> | number
   quantity?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  unitPrice?: Prisma.IntWithAggregatesFilter<"Order"> | number
   tableId?: Prisma.IntWithAggregatesFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableWithAggregatesFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
@@ -351,6 +367,7 @@ export type OrderScalarWhereWithAggregatesInput = {
 
 export type OrderCreateInput = {
   quantity: number
+  unitPrice: number
   contributorToken?: string | null
   note?: string | null
   createdAt?: Date | string
@@ -366,6 +383,7 @@ export type OrderUncheckedCreateInput = {
   id?: number
   menuId: number
   quantity: number
+  unitPrice: number
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
@@ -378,6 +396,7 @@ export type OrderUncheckedCreateInput = {
 
 export type OrderUpdateInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -393,6 +412,7 @@ export type OrderUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -407,6 +427,7 @@ export type OrderCreateManyInput = {
   id?: number
   menuId: number
   quantity: number
+  unitPrice: number
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
@@ -418,6 +439,7 @@ export type OrderCreateManyInput = {
 
 export type OrderUpdateManyMutationInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -429,6 +451,7 @@ export type OrderUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -452,6 +475,7 @@ export type OrderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  unitPrice?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
   contributorToken?: Prisma.SortOrder
@@ -465,6 +489,7 @@ export type OrderAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  unitPrice?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
 }
@@ -473,6 +498,7 @@ export type OrderMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  unitPrice?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
   contributorToken?: Prisma.SortOrder
@@ -486,6 +512,7 @@ export type OrderMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  unitPrice?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
   contributorToken?: Prisma.SortOrder
@@ -499,6 +526,7 @@ export type OrderSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   menuId?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
+  unitPrice?: Prisma.SortOrder
   tableId?: Prisma.SortOrder
   orderSessionId?: Prisma.SortOrder
 }
@@ -650,6 +678,7 @@ export type OrderUncheckedUpdateManyWithoutOrderSessionNestedInput = {
 
 export type OrderCreateWithoutTableInput = {
   quantity: number
+  unitPrice: number
   contributorToken?: string | null
   note?: string | null
   createdAt?: Date | string
@@ -664,6 +693,7 @@ export type OrderUncheckedCreateWithoutTableInput = {
   id?: number
   menuId: number
   quantity: number
+  unitPrice: number
   orderSessionId?: number | null
   contributorToken?: string | null
   note?: string | null
@@ -706,6 +736,7 @@ export type OrderScalarWhereInput = {
   id?: Prisma.IntFilter<"Order"> | number
   menuId?: Prisma.IntFilter<"Order"> | number
   quantity?: Prisma.IntFilter<"Order"> | number
+  unitPrice?: Prisma.IntFilter<"Order"> | number
   tableId?: Prisma.IntFilter<"Order"> | number
   orderSessionId?: Prisma.IntNullableFilter<"Order"> | number | null
   contributorToken?: Prisma.StringNullableFilter<"Order"> | string | null
@@ -717,6 +748,7 @@ export type OrderScalarWhereInput = {
 
 export type OrderCreateWithoutMenuInput = {
   quantity: number
+  unitPrice: number
   contributorToken?: string | null
   note?: string | null
   createdAt?: Date | string
@@ -730,6 +762,7 @@ export type OrderCreateWithoutMenuInput = {
 export type OrderUncheckedCreateWithoutMenuInput = {
   id?: number
   quantity: number
+  unitPrice: number
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
@@ -768,6 +801,7 @@ export type OrderUpdateManyWithWhereWithoutMenuInput = {
 
 export type OrderCreateWithoutOrdersAddonsInput = {
   quantity: number
+  unitPrice: number
   contributorToken?: string | null
   note?: string | null
   createdAt?: Date | string
@@ -782,6 +816,7 @@ export type OrderUncheckedCreateWithoutOrdersAddonsInput = {
   id?: number
   menuId: number
   quantity: number
+  unitPrice: number
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
@@ -809,6 +844,7 @@ export type OrderUpdateToOneWithWhereWithoutOrdersAddonsInput = {
 
 export type OrderUpdateWithoutOrdersAddonsInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -823,6 +859,7 @@ export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -834,6 +871,7 @@ export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
 
 export type OrderCreateWithoutOrderSessionInput = {
   quantity: number
+  unitPrice: number
   contributorToken?: string | null
   note?: string | null
   createdAt?: Date | string
@@ -848,6 +886,7 @@ export type OrderUncheckedCreateWithoutOrderSessionInput = {
   id?: number
   menuId: number
   quantity: number
+  unitPrice: number
   tableId: number
   contributorToken?: string | null
   note?: string | null
@@ -887,6 +926,7 @@ export type OrderCreateManyTableInput = {
   id?: number
   menuId: number
   quantity: number
+  unitPrice: number
   orderSessionId?: number | null
   contributorToken?: string | null
   note?: string | null
@@ -897,6 +937,7 @@ export type OrderCreateManyTableInput = {
 
 export type OrderUpdateWithoutTableInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -911,6 +952,7 @@ export type OrderUncheckedUpdateWithoutTableInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -924,6 +966,7 @@ export type OrderUncheckedUpdateManyWithoutTableInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -935,6 +978,7 @@ export type OrderUncheckedUpdateManyWithoutTableInput = {
 export type OrderCreateManyMenuInput = {
   id?: number
   quantity: number
+  unitPrice: number
   tableId: number
   orderSessionId?: number | null
   contributorToken?: string | null
@@ -946,6 +990,7 @@ export type OrderCreateManyMenuInput = {
 
 export type OrderUpdateWithoutMenuInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -959,6 +1004,7 @@ export type OrderUpdateWithoutMenuInput = {
 export type OrderUncheckedUpdateWithoutMenuInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -972,6 +1018,7 @@ export type OrderUncheckedUpdateWithoutMenuInput = {
 export type OrderUncheckedUpdateManyWithoutMenuInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -985,6 +1032,7 @@ export type OrderCreateManyOrderSessionInput = {
   id?: number
   menuId: number
   quantity: number
+  unitPrice: number
   tableId: number
   contributorToken?: string | null
   note?: string | null
@@ -995,6 +1043,7 @@ export type OrderCreateManyOrderSessionInput = {
 
 export type OrderUpdateWithoutOrderSessionInput = {
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1009,6 +1058,7 @@ export type OrderUncheckedUpdateWithoutOrderSessionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1022,6 +1072,7 @@ export type OrderUncheckedUpdateManyWithoutOrderSessionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   menuId?: Prisma.IntFieldUpdateOperationsInput | number
   quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
   tableId?: Prisma.IntFieldUpdateOperationsInput | number
   contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1065,6 +1116,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   id?: boolean
   menuId?: boolean
   quantity?: boolean
+  unitPrice?: boolean
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
@@ -1083,6 +1135,7 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   menuId?: boolean
   quantity?: boolean
+  unitPrice?: boolean
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
@@ -1099,6 +1152,7 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   menuId?: boolean
   quantity?: boolean
+  unitPrice?: boolean
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
@@ -1115,6 +1169,7 @@ export type OrderSelectScalar = {
   id?: boolean
   menuId?: boolean
   quantity?: boolean
+  unitPrice?: boolean
   tableId?: boolean
   orderSessionId?: boolean
   contributorToken?: boolean
@@ -1124,7 +1179,7 @@ export type OrderSelectScalar = {
   isArchived?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "menuId" | "quantity" | "tableId" | "orderSessionId" | "contributorToken" | "note" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "menuId" | "quantity" | "unitPrice" | "tableId" | "orderSessionId" | "contributorToken" | "note" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orderSession?: boolean | Prisma.Order$orderSessionArgs<ExtArgs>
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
@@ -1155,6 +1210,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     id: number
     menuId: number
     quantity: number
+    unitPrice: number
     tableId: number
     orderSessionId: number | null
     contributorToken: string | null
@@ -1592,6 +1648,7 @@ export interface OrderFieldRefs {
   readonly id: Prisma.FieldRef<"Order", 'Int'>
   readonly menuId: Prisma.FieldRef<"Order", 'Int'>
   readonly quantity: Prisma.FieldRef<"Order", 'Int'>
+  readonly unitPrice: Prisma.FieldRef<"Order", 'Int'>
   readonly tableId: Prisma.FieldRef<"Order", 'Int'>
   readonly orderSessionId: Prisma.FieldRef<"Order", 'Int'>
   readonly contributorToken: Prisma.FieldRef<"Order", 'String'>

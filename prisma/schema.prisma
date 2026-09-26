@@ -104,6 +104,7 @@ model Location {
   disableLocationMenus           DisableLocationMenus[]
   disableLocationMenuCategories DisableLocationMenuCategories[]
   orderSessions                  OrderSession[]
+  bills                          Bill[]
 }
 
 model SelectedLocation {
@@ -233,6 +234,10 @@ model Order {
   id               Int           @id @default(autoincrement())
   menuId           Int
   quantity         Int
+  // Snapshot of Menu.price at the moment this line was added — never
+  // re-read from Menu for totals, since a later price change on the
+  // menu must not alter an already-placed order's line total.
+  unitPrice        Int
   tableId          Int
   // Nullable — a "draft" line item (see the Table-QR per-customer draft
   // design) has no session yet: it's owned by (tableId, contributorToken)
@@ -262,16 +267,28 @@ model Order {
   isArchived       Boolean       @default(false)
   OrdersAddons     OrdersAddon[]
 
+  // orderSessionId: serves every "lines of this session" read (Counter
+  // cart, customer polling, Backoffice order list/detail, bill totals).
+  // (tableId, orderSessionId): serves Table-QR draft reads, which filter
+  // by table AND orderSessionId = null (getDraftItemsForTable,
+  // submitDraft, the post-payment draft cleanup). tableId first so
+  // table-only lookups can use it too. PostgreSQL does not auto-index
+  // foreign keys, and this table keeps every line ever ordered.
+  @@index([orderSessionId])
+  @@index([tableId, orderSessionId])
   @@map("orders") // This fixes the Postgres "Order relation does not exist" issue by naming the table safely
 }
 
 // order id with addon id join table
 model OrdersAddon {
-  id       Int   @id @default(autoincrement())
-  orderId  Int
-  order    Order @relation(fields: [orderId], references: [id])
-  addonId  Int
-  addon    Addon @relation(fields: [addonId], references: [id])
+  id        Int   @id @default(autoincrement())
+  orderId   Int
+  order     Order @relation(fields: [orderId], references: [id])
+  addonId   Int
+  addon     Addon @relation(fields: [addonId], references: [id])
+  // Snapshot of Addon.price at the moment this line was added — never
+  // re-read from Addon for totals, same reasoning as Order.unitPrice.
+  unitPrice Int
 }
 
 /**
@@ -319,8 +336,55 @@ model OrderSession {
   // secret session credential that must never appear in a group key
   // or URL.
   billSessionId Int?
+  // Set only once this round is paid — points at the immutable Bill
+  // record created at payment time. Null for every open/unpaid round,
+  // and distinct from billSessionId above (which groups open Counter
+  // rounds before any payment happens).
+  bill          Bill?       @relation(fields: [billId], references: [id])
+  billId        Int?
+  // Why this round was cancelled — set only together with status
+  // CANCELLED (see OrderSessionService.cancelSession, the one place
+  // that writes either). Null for every non-cancelled row, and for
+  // CANCELLED rows written before this column existed (old data is
+  // left as-is, never backfilled).
+  cancelReason  CancelReason?
 
   @@index([billSessionId])
+  @@index([billId])
+  // Every Order page query filters by location first, then by status
+  // (e.g. getSessionsForLocation's PENDING_APPROVAL/PENDING/COOKING,
+  // and the pending-approval lookups). PostgreSQL does not auto-index
+  // foreign keys, so without this those reads scan the whole table,
+  // which keeps growing with PAID history. Column order matters:
+  // locationId first, so location-only lookups can use it too.
+  @@index([locationId, status])
+}
+
+/**
+ * One row per PAID bill — created at payment time, grouping the one or
+ * more OrderSession rounds (see OrderSession.billSessionId/billId) that
+ * were settled together. A Bill is an immutable money record: once
+ * written it is never updated, so it deliberately has no updateTime/
+ * isArchived, and no tableId/isCounter — table and channel are derived
+ * by following bill.sessions back to their OrderSession(s) instead of
+ * being duplicated here.
+ */
+model Bill {
+  id         Int            @id @default(autoincrement())
+  // Display/search label — the first round's orderNumber.
+  billNumber String
+  location   Location       @relation(fields: [locationId], references: [id])
+  // Filter key for history — kept on Bill on purpose (not derived via
+  // sessions) so location-scoped bill history doesn't have to join out
+  // to OrderSession just to filter by location.
+  locationId Int
+  // Snapshot of what was charged.
+  total      Int
+  paidAt     DateTime
+  createdAt  DateTime       @default(now())
+  sessions   OrderSession[]
+
+  @@index([locationId, paidAt])
 }
 
 enum ORDERSTATUS {
@@ -331,6 +395,15 @@ enum ORDERSTATUS {
   PAID
   COMPLETED
   CANCELLED
+}
+
+// Why a round ended CANCELLED — the DB can't otherwise tell these apart,
+// since orderNumber is assigned at round creation, before any of these
+// even become possible outcomes.
+enum CancelReason {
+  REJECTED // Cashier rejected a submitted round.
+  EXPIRED // Submitted, but the approval window passed before a decision.
+  UNSUBMITTED // A CART round that was never sent — abandoned, or closed at payment.
 }
 enum UserRole {
   ADMIN

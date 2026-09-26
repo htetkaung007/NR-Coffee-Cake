@@ -25,5 +25,7 @@ async function guardBackoffice(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/backoffice/:path*"],
+  // /print/... is the Backoffice's printable bill — outside the
+  // Backoffice layout, but the same staff-only access.
+  matcher: ["/backoffice/:path*", "/print/:path*"],
 };

@@ -400,7 +400,8 @@ export const ModelName = {
   DisableLocationMenuCategories: 'DisableLocationMenuCategories',
   Order: 'Order',
   OrdersAddon: 'OrdersAddon',
-  OrderSession: 'OrderSession'
+  OrderSession: 'OrderSession',
+  Bill: 'Bill'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -416,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession"
+    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1678,6 +1679,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Bill: {
+      payload: Prisma.$BillPayload<ExtArgs>
+      fields: Prisma.BillFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BillFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BillFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>
+        }
+        findFirst: {
+          args: Prisma.BillFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BillFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>
+        }
+        findMany: {
+          args: Prisma.BillFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>[]
+        }
+        create: {
+          args: Prisma.BillCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>
+        }
+        createMany: {
+          args: Prisma.BillCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BillCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>[]
+        }
+        delete: {
+          args: Prisma.BillDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>
+        }
+        update: {
+          args: Prisma.BillUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>
+        }
+        deleteMany: {
+          args: Prisma.BillDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BillUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BillUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>[]
+        }
+        upsert: {
+          args: Prisma.BillUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BillPayload>
+        }
+        aggregate: {
+          args: Prisma.BillAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBill>
+        }
+        groupBy: {
+          args: Prisma.BillGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BillGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BillCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BillCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1905,6 +1980,7 @@ export const OrderScalarFieldEnum = {
   id: 'id',
   menuId: 'menuId',
   quantity: 'quantity',
+  unitPrice: 'unitPrice',
   tableId: 'tableId',
   orderSessionId: 'orderSessionId',
   contributorToken: 'contributorToken',
@@ -1920,7 +1996,8 @@ export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof Or
 export const OrdersAddonScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
-  addonId: 'addonId'
+  addonId: 'addonId',
+  unitPrice: 'unitPrice'
 } as const
 
 export type OrdersAddonScalarFieldEnum = (typeof OrdersAddonScalarFieldEnum)[keyof typeof OrdersAddonScalarFieldEnum]
@@ -1938,10 +2015,24 @@ export const OrderSessionScalarFieldEnum = {
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived',
-  billSessionId: 'billSessionId'
+  billSessionId: 'billSessionId',
+  billId: 'billId',
+  cancelReason: 'cancelReason'
 } as const
 
 export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]
+
+
+export const BillScalarFieldEnum = {
+  id: 'id',
+  billNumber: 'billNumber',
+  locationId: 'locationId',
+  total: 'total',
+  paidAt: 'paidAt',
+  createdAt: 'createdAt'
+} as const
+
+export type BillScalarFieldEnum = (typeof BillScalarFieldEnum)[keyof typeof BillScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2048,6 +2139,20 @@ export type EnumORDERSTATUSFieldRefInput<$PrismaModel> = FieldRefInputType<$Pris
  * Reference to a field of type 'ORDERSTATUS[]'
  */
 export type ListEnumORDERSTATUSFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ORDERSTATUS[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CancelReason'
+ */
+export type EnumCancelReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CancelReason'>
+    
+
+
+/**
+ * Reference to a field of type 'CancelReason[]'
+ */
+export type ListEnumCancelReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CancelReason[]'>
     
 
 
@@ -2191,6 +2296,7 @@ export type GlobalOmitConfig = {
   order?: Prisma.OrderOmit
   ordersAddon?: Prisma.OrdersAddonOmit
   orderSession?: Prisma.OrderSessionOmit
+  bill?: Prisma.BillOmit
 }
 
 /* Types for Logging */

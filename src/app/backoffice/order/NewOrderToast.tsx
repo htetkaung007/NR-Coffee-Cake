@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button, Snackbar, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import type { NewPendingRoundsEvent } from "@/app/lib/hooks/useNewPendingRounds";
+import type { NewPendingRoundsEvent } from "../OrderAlertsProvider";
 
 export interface NewOrderNotice {
   /** Changes for every notice, so a new one restarts the toast's timer

@@ -10,11 +10,6 @@ import {
   Card,
   CardActionArea,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Grid,
   Stack,
   Typography,
@@ -22,22 +17,28 @@ import {
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import type { SvgIconComponent } from "@mui/icons-material";
 import { keyframes } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
 import { useDocumentTitle } from "@/app/lib/hooks/useDocumentTitle";
-import {
-  useNewPendingRounds,
-  type NewPendingRoundsEvent,
-} from "@/app/lib/hooks/useNewPendingRounds";
-import { useOrderAlertSound } from "@/app/lib/hooks/useOrderAlertSound";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { canPrintBill } from "@/app/lib/orderTotals";
+import {
+  useFeedPendingFromList,
+  useNewPendingRoundsListener,
+  useOrderAlerts,
+  type NewPendingRoundsEvent,
+} from "../OrderAlertsProvider";
 import { markEntryPaidAction } from "./action";
 import ApprovalCountdown from "./ApprovalCountdown";
+import MarkPaidDialog from "./MarkPaidDialog";
+import PrintBillButton from "./PrintBillButton";
 import NewOrderToast, {
   describeNewRounds,
   type NewOrderNotice,
 } from "./NewOrderToast";
 import OrderSoundToggle from "./OrderSoundToggle";
+import OrderSectionNav from "./OrderSectionNav";
 
 interface OrderEntry {
   key: string;
@@ -150,6 +151,9 @@ function EntryCard({
         }}
         sx={{
           display: "flex",
+          // On a narrow card (e.g. 320px) the Print + Paid buttons wrap
+          // under the info area instead of shrinking below 44px.
+          flexWrap: "wrap",
           alignItems: "stretch",
           position: "relative",
           borderColor: entry.hasPendingApproval ? "error.main" : "divider",
@@ -174,13 +178,20 @@ function EntryCard({
         <CardActionArea
           component={Link}
           href={`/backoffice/order/${entry.key}`}
-          sx={{ flex: "1 1 0", width: "auto", minWidth: 0, p: 1.5 }}
+          // 160px: below that the title and total get too cramped next
+          // to the two buttons, so the buttons wrap to their own row.
+          sx={{ flex: "1 1 160px", width: "auto", minWidth: 0, p: 1.5 }}
         >
           <Stack spacing={0.5}>
             <Stack
               direction="row"
               useFlexGap
-              sx={{ alignItems: "center", columnGap: 1, rowGap: 0.5, flexWrap: "wrap" }}
+              sx={{
+                alignItems: "center",
+                columnGap: 1,
+                rowGap: 0.5,
+                flexWrap: "wrap",
+              }}
             >
               <Stack
                 direction="row"
@@ -226,7 +237,9 @@ function EntryCard({
                     <Typography component="span" variant="body2" aria-hidden>
                       ·
                     </Typography>
-                    <ApprovalCountdown expiresAt={entry.earliestApprovalExpiresAt} />
+                    <ApprovalCountdown
+                      expiresAt={entry.earliestApprovalExpiresAt}
+                    />
                   </>
                 )}
               </Stack>
@@ -242,8 +255,24 @@ function EntryCard({
 
         {/* Outside the link — a button nested in an anchor is invalid
            HTML and breaks keyboard/screen-reader use. The padding keeps
-           it clear of the tappable info area. */}
-        <Box sx={{ display: "flex", alignItems: "flex-end", p: 1.5, pl: 1 }}>
+           them clear of the tappable info area; ml: auto keeps them
+           right-aligned when they've wrapped onto their own row. */}
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            alignSelf: "flex-end",
+            alignItems: "center",
+            ml: "auto",
+            p: 1.5,
+            pl: 1,
+          }}
+        >
+          <PrintBillButton
+            variant="icon"
+            entryKey={entry.key}
+            disabled={!canPrintBill(entry.sessions)}
+          />
           <Button
             variant="contained"
             color="success"
@@ -254,47 +283,65 @@ function EntryCard({
           >
             Paid
           </Button>
-        </Box>
+        </Stack>
       </Card>
 
-      <Dialog open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
-        <DialogTitle>Mark {entry.title} as paid?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This settles all {entry.sessions.length}{" "}
-            {entry.sessions.length === 1 ? "order" : "orders"} for {entry.title}{" "}
-            — {entry.combinedTotal.toLocaleString()} MMK total. This can&apos;t
-            be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsConfirmOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleMarkPaid} autoFocus>
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <MarkPaidDialog
+        open={isConfirmOpen}
+        title={entry.title}
+        orderCount={entry.sessions.length}
+        total={entry.combinedTotal}
+        onCancel={() => setIsConfirmOpen(false)}
+        onConfirm={handleMarkPaid}
+      />
     </Badge>
   );
 }
 
-/** Table or Counter column: its own heading and its own empty state. */
+/** A section with nothing open: the section's own icon, muted, and the
+ *  same two lines in every section. Just a message — nothing to tap.
+ *  The first order into the section replaces it with its card (and
+ *  that card's usual "appear" cue and toast). */
+function SectionEmptyState({ Icon }: { Icon: SvgIconComponent }) {
+  return (
+    <Stack
+      spacing={1}
+      sx={{
+        alignItems: "center",
+        textAlign: "center",
+        px: 2,
+        py: 4,
+        border: 1,
+        borderStyle: "dashed",
+        borderColor: "divider",
+        borderRadius: 2,
+      }}
+    >
+      <Icon fontSize="large" sx={{ color: "text.secondary" }} />
+      <Typography variant="body1">No orders yet</Typography>
+      <Typography variant="body2" color="text.secondary">
+        New orders appear here automatically.
+      </Typography>
+    </Stack>
+  );
+}
+
+/** Table or Counter column: its own heading (always shown, even at 0)
+ *  and its own empty state. */
 function SourceSection({
   headingId,
   label,
-  icon,
+  Icon,
   accent,
   entries,
-  emptyText,
   effects,
   onEffectEnd,
 }: {
   headingId: string;
   label: string;
-  icon: React.ReactNode;
+  Icon: SvgIconComponent;
   accent: string;
   entries: OrderEntry[];
-  emptyText: string;
   effects: Record<string, CardEffect>;
   onEffectEnd: (entryKey: string) => void;
 }) {
@@ -305,7 +352,7 @@ function SourceSection({
         spacing={1}
         sx={{ alignItems: "center", mb: 1.5, color: accent }}
       >
-        {icon}
+        <Icon />
         <Typography
           id={headingId}
           component="h2"
@@ -316,9 +363,7 @@ function SourceSection({
         </Typography>
       </Stack>
       {entries.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {emptyText}
-        </Typography>
+        <SectionEmptyState Icon={Icon} />
       ) : (
         <Stack spacing={1.5}>
           {entries.map((entry) => (
@@ -346,12 +391,13 @@ export default function OrderListView({ entries }: OrderListViewProps) {
   );
   const [notice, setNotice] = useState<NewOrderNotice | null>(null);
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
-  const sound = useOrderAlertSound();
+  const { sound } = useOrderAlerts();
 
   // Fires once per refresh that brought new rounds needing approval
-  // (never for what was already waiting when the page opened): cue the
-  // cards, show ONE toast, beep ONCE.
-  useNewPendingRounds(entries, (event: NewPendingRoundsEvent) => {
+  // (never for what was already waiting when the Backoffice opened):
+  // cue the cards and show ONE toast. The beep and the tab-title count
+  // are OrderAlertsProvider's — they work on every Backoffice page.
+  useNewPendingRoundsListener((event: NewPendingRoundsEvent) => {
     setCardEffects((current) => ({
       ...current,
       ...Object.fromEntries(
@@ -363,8 +409,11 @@ export default function OrderListView({ entries }: OrderListViewProps) {
     }));
     setNotice({ id: Date.now(), ...describeNewRounds(event) });
     setIsNoticeOpen(true);
-    void sound.play();
   });
+  // After the listener above, so it's subscribed before the first feed.
+  // This list's own refresh (useAutoRefresh) is the provider's data
+  // source while mounted — the provider pauses its own poll.
+  useFeedPendingFromList(entries);
 
   function clearCardEffect(entryKey: string) {
     setCardEffects((current) => {
@@ -375,17 +424,8 @@ export default function OrderListView({ entries }: OrderListViewProps) {
     });
   }
 
-  // Tab title carries the count so it's visible from another tab.
-  const pendingRoundCount = entries.reduce(
-    (total, entry) =>
-      total +
-      entry.sessions.filter((session) => session.status === "PENDING_APPROVAL")
-        .length,
-    0,
-  );
-  useDocumentTitle(
-    pendingRoundCount > 0 ? `(${pendingRoundCount}) Orders` : "Orders",
-  );
+  // The provider prefixes this with the pending count, e.g. "(2) Orders".
+  useDocumentTitle("Orders");
 
   // Every entry lands in exactly one of these three lists — awaiting
   // approval wins over source, so nothing is ever shown twice.
@@ -420,114 +460,120 @@ export default function OrderListView({ entries }: OrderListViewProps) {
           mb: 2,
         }}
       >
-        <Typography component="h1" variant="h6">
-          Orders
-        </Typography>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          {entries.length > 0 && (
-            <Stack
-              direction="row"
-              spacing={1}
-              role="group"
-              aria-label="Filter orders by source"
-            >
-              {filters.map(({ value, label, count }) => {
-                const selected = filter === value;
-                return (
-                  <Chip
-                    key={value}
-                    label={`${label} (${count})`}
-                    clickable
-                    aria-pressed={selected}
-                    color={selected ? "primary" : "default"}
-                    variant={selected ? "filled" : "outlined"}
-                    onClick={() => setFilter(value)}
-                  />
-                );
-              })}
-            </Stack>
-          )}
+        <Stack
+          direction="row"
+          useFlexGap
+          sx={{ alignItems: "center", flexWrap: "wrap", gap: 1.5 }}
+        >
+          <Typography component="h1" variant="h6">
+            Orders
+          </Typography>
+          <OrderSectionNav active="open" />
+        </Stack>
+        {/* Always shown — even with nothing open, the cashier can turn
+            the sound on before the first order arrives. Wraps on narrow
+            screens rather than overflowing. */}
+        <Stack
+          direction="row"
+          useFlexGap
+          sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}
+        >
+          <Stack
+            direction="row"
+            useFlexGap
+            role="group"
+            aria-label="Filter orders by source"
+            sx={{ flexWrap: "wrap", gap: 1 }}
+          >
+            {filters.map(({ value, label, count }) => {
+              const selected = filter === value;
+              return (
+                <Chip
+                  key={value}
+                  label={`${label} (${count})`}
+                  clickable
+                  aria-pressed={selected}
+                  color={selected ? "primary" : "default"}
+                  variant={selected ? "filled" : "outlined"}
+                  onClick={() => setFilter(value)}
+                />
+              );
+            })}
+          </Stack>
           <OrderSoundToggle
             enabled={sound.enabled}
             isLocked={sound.isLocked}
             onToggle={sound.toggle}
+            volume={sound.volume}
+            onVolumeChange={sound.setVolume}
+            onTestBeep={sound.playTest}
           />
         </Stack>
       </Stack>
 
-      {entries.length === 0 ? (
-        <Typography variant="caption" color="text.secondary">
-          Nothing open right now.
-        </Typography>
-      ) : (
-        <>
-          {needsApproval.length > 0 && (
-            <Box
-              component="section"
-              aria-labelledby="needs-approval-heading"
-              sx={{ mb: 3 }}
+      {needsApproval.length > 0 && (
+        <Box
+          component="section"
+          aria-labelledby="needs-approval-heading"
+          sx={{ mb: 3 }}
+        >
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: "center", mb: 1.5, color: "warning.dark" }}
+          >
+            <WarningAmberIcon />
+            <Typography
+              id="needs-approval-heading"
+              component="h2"
+              variant="body1"
+              sx={{ fontWeight: 800, color: "text.primary" }}
             >
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ alignItems: "center", mb: 1.5, color: "warning.dark" }}
-              >
-                <WarningAmberIcon />
-                <Typography
-                  id="needs-approval-heading"
-                  component="h2"
-                  variant="body1"
-                  sx={{ fontWeight: 800, color: "text.primary" }}
-                >
-                  Needs approval ({needsApproval.length})
-                </Typography>
-              </Stack>
-              <Grid container spacing={1.5}>
-                {needsApproval.map((entry) => (
-                  <Grid key={entry.key} size={{ xs: 12, md: 6, xl: 4 }}>
-                    <EntryCard
-                      entry={entry}
-                      effect={cardEffects[entry.key]}
-                      onEffectEnd={clearCardEffect}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          )}
-
-          <Grid container spacing={{ xs: 2, md: 3 }}>
-            {filter !== "counter" && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SourceSection
-                  headingId="tables-heading"
-                  label="Tables"
-                  icon={<TableRestaurantIcon />}
-                  accent={TABLE_ACCENT}
-                  entries={tableEntries}
-                  emptyText="No open table orders"
-                  effects={cardEffects}
+              Needs approval ({needsApproval.length})
+            </Typography>
+          </Stack>
+          <Grid container spacing={1.5}>
+            {needsApproval.map((entry) => (
+              <Grid key={entry.key} size={{ xs: 12, md: 6, xl: 4 }}>
+                <EntryCard
+                  entry={entry}
+                  effect={cardEffects[entry.key]}
                   onEffectEnd={clearCardEffect}
                 />
               </Grid>
-            )}
-            {filter !== "table" && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SourceSection
-                  headingId="counter-heading"
-                  label="Counter"
-                  icon={<StorefrontIcon />}
-                  accent={COUNTER_ACCENT}
-                  entries={counterEntries}
-                  emptyText="No open counter orders"
-                  effects={cardEffects}
-                  onEffectEnd={clearCardEffect}
-                />
-              </Grid>
-            )}
+            ))}
           </Grid>
-        </>
+        </Box>
       )}
+
+      <Grid container spacing={{ xs: 2, md: 3 }}>
+        {filter !== "counter" && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SourceSection
+              headingId="tables-heading"
+              label="Tables"
+              Icon={TableRestaurantIcon}
+              accent={TABLE_ACCENT}
+              entries={tableEntries}
+              effects={cardEffects}
+              onEffectEnd={clearCardEffect}
+            />
+          </Grid>
+        )}
+        {filter !== "table" && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SourceSection
+              headingId="counter-heading"
+              label="Counter"
+              Icon={StorefrontIcon}
+              accent={COUNTER_ACCENT}
+              entries={counterEntries}
+              effects={cardEffects}
+              onEffectEnd={clearCardEffect}
+            />
+          </Grid>
+        )}
+      </Grid>
 
       <NewOrderToast
         notice={notice}

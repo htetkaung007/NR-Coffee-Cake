@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import type { PaletteMode } from "@mui/material";
 import { getBoTheme } from "./theme";

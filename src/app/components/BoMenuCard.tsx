@@ -196,7 +196,7 @@ export default function BOMenuCard({ item }: MenuCardProps) {
                 "&:hover": {
                   borderColor: "primary.main",
                   bgcolor: "primary.main",
-                  color: "#fff",
+                  color: "primary.contrastText",
                 },
               },
             }}

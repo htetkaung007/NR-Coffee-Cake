@@ -10,6 +10,11 @@ export interface Config {
   minioAccessKey: string;
   minioSecretKey: string;
   minioBucket: string;
+  // IANA zone the shop operates in — the one place "what day is it for
+  // this shop right now" is decided (see lib/shopDay.ts), so a UTC-day
+  // boundary can never silently split a late-night order onto the
+  // wrong day in reports.
+  shopTimezone: string;
 }
 
 export const config: Config = {
@@ -24,4 +29,5 @@ export const config: Config = {
   minioAccessKey: process.env.MINIO_ACCESS_KEY || "",
   minioSecretKey: process.env.MINIO_SECRET_KEY || "",
   minioBucket: process.env.MINIO_BUCKET || "",
+  shopTimezone: process.env.SHOP_TIMEZONE || "Asia/Yangon",
 };

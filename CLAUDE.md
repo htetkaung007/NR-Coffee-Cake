@@ -4,6 +4,10 @@ This file is the standing reference for how this codebase is organized
 and why. Read this before making changes — it captures decisions made
 deliberately, not accidents to "clean up."
 
+@DESIGN.md covers what the user *sees and feels* (animation, UI/UX,
+accessibility, responsive layout) — read it before any UI change. This
+file covers code structure/architecture only.
+
 ---
 
 ## 1. Layered Architecture

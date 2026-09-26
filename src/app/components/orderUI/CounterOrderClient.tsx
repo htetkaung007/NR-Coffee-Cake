@@ -10,7 +10,7 @@ import MenuBrowser, { MenuOption } from "./MenuBrowser";
 
 import { addToCartAction } from "@/app/(storefront)/counter/action";
 import { CartLine } from "@/app/(storefront)/cart/CartList";
-import { countUnsubmittedItems } from "@/app/lib/orderTotals";
+import { applyAddedLine, countUnsubmittedItems } from "@/app/lib/orderTotals";
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import {
   getOrderPageBackground,
@@ -102,8 +102,11 @@ export default function CounterOrderClient({
       id: result.data.id,
       menuId: menu.id,
       menuName: menu.name,
-      quantity,
-      price: menu.price,
+      // The line's total — an identical line may have been merged into.
+      quantity: result.data.quantity,
+      // The server's own snapshot, not this component's (possibly
+      // stale) menu prop — see Order.unitPrice's own schema comment.
+      price: result.data.unitPrice,
       note: note || null,
     };
     if (cartIsSubmittedRound && !cartRoundStarted) {
@@ -114,7 +117,7 @@ export default function CounterOrderClient({
       setCart([newItem]);
       setCartRoundStarted(true);
     } else {
-      setCart((current) => [...current, newItem]);
+      setCart((current) => applyAddedLine(current, newItem));
     }
     return null;
   }

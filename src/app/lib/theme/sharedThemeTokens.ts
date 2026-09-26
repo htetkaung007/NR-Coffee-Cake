@@ -1,4 +1,4 @@
-import type { ThemeOptions } from "@mui/material/styles";
+import type { Theme, ThemeOptions } from "@mui/material/styles";
 
 /**
  * Backoffice (Bo) နဲ့ Order-app (Od) theme နှစ်ခုလုံးက ဒီ file ကို import လုပ်ပြီး
@@ -23,6 +23,19 @@ export const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
 // precise pointer, so touch devices never get stuck showing a hover state
 // after a tap.
 export const hoverCapableMedia = "@media (hover: hover) and (pointer: fine)";
+
+/** The Backoffice's fixed top bar's height at the current breakpoint
+ *  (from sm up — the only range any sticky/fixed content below it
+ *  needs to clear), read from the theme's own toolbar mixin rather
+ *  than a hardcoded number. Shared by every sticky panel/header that
+ *  positions itself just below the fixed AppBar (BillPanel, the Order
+ *  History page's sticky header). */
+export function topBarHeight(theme: Theme) {
+  const fromSm = theme.mixins.toolbar[theme.breakpoints.up("sm")] as {
+    minHeight: number;
+  };
+  return fromSm.minHeight;
+}
 
 export const FONT_BODY = "var(--font-english), var(--font-myanmar), sans-serif";
 
@@ -60,6 +73,15 @@ export const sharedThemeOptions: ThemeOptions = {
       [`@media (min-width:${BREAKPOINTS.md}px)`]: {
         fontSize: "2rem",
       },
+    },
+
+    // Big figures — the order detail page's bill total. Body font (the
+    // display serif reads poorly for numbers); same size at every width.
+    h5: {
+      fontFamily: FONT_BODY,
+      fontWeight: 800,
+      fontSize: "1.5rem",
+      lineHeight: 1.3,
     },
 
     // Section headings

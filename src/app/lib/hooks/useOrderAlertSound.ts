@@ -9,8 +9,8 @@ import {
 } from "react";
 
 /**
- * Optional beep for the Backoffice Order List when a round newly needs
- * approval. OFF by default; the choice is remembered in localStorage
+ * Optional beep when a round newly needs approval, on any Backoffice
+ * page. OFF by default; the choice is remembered in localStorage
  * (with an in-memory copy for when storage is blocked, like
  * useConfirmedRoundDismissed). No audio files — one short
  * OscillatorNode tone through the Web Audio API.
@@ -26,14 +26,24 @@ import {
  *    (callers render a "Tap anywhere to enable sound" hint) and the
  *    first pointerdown/keydown anywhere unlocks it;
  *  - play() always awaits resume() before making sound.
- * One AudioContext per page, held in a ref.
+ * Volume (10–100%, default 50) is remembered the same way, under its
+ * own key.
+ * Called only from OrderAlertsProvider (mounted in the Backoffice
+ * layout), so there's one AudioContext, held in a ref, for the whole
+ * Backoffice session.
  */
 
 const STORAGE_KEY = "orders-alert-sound";
+const VOLUME_STORAGE_KEY = "orders-alert-volume";
 const CHANGE_EVENT = "orders-alert-sound-change";
 const BEEP_SECONDS = 0.15;
 
+export const MIN_VOLUME = 10;
+export const MAX_VOLUME = 100;
+const DEFAULT_VOLUME = 50;
+
 let enabledInMemory = false;
+let volumeInMemory = DEFAULT_VOLUME;
 
 function readEnabled() {
   try {
@@ -55,6 +65,33 @@ function writeEnabled(enabled: boolean) {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
+function clampVolume(percent: number) {
+  return Math.min(MAX_VOLUME, Math.max(MIN_VOLUME, Math.round(percent)));
+}
+
+function readVolume() {
+  try {
+    const stored = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (stored !== null) {
+      const percent = Number(stored);
+      if (Number.isFinite(percent)) return clampVolume(percent);
+    }
+  } catch {
+    // storage blocked — fall through to the in-memory copy
+  }
+  return volumeInMemory;
+}
+
+function writeVolume(percent: number) {
+  volumeInMemory = clampVolume(percent);
+  try {
+    window.localStorage.setItem(VOLUME_STORAGE_KEY, String(volumeInMemory));
+  } catch {
+    // storage blocked — the in-memory copy still covers this session
+  }
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
 function subscribe(onChange: () => void) {
   window.addEventListener("storage", onChange);
   window.addEventListener(CHANGE_EVENT, onChange);
@@ -64,16 +101,22 @@ function subscribe(onChange: () => void) {
   };
 }
 
-function playBeep(context: AudioContext) {
+/** Squared, because loudness is perceived roughly logarithmically — a
+ *  linear map would make the bottom half of the slider barely differ
+ *  from the top. 50% → 0.25, 100% → 1.0 (full scale). */
+function peakGainFor(volume: number) {
+  return (volume / 100) ** 2;
+}
+
+function playBeep(context: AudioContext, volume: number) {
   const start = context.currentTime;
   const oscillator = context.createOscillator();
   const gain = context.createGain();
   oscillator.type = "sine";
   oscillator.frequency.value = 880;
-  // Quick attack and decay so the tone doesn't click at either end;
-  // 0.15 peak is clearly audible without being harsh.
+  // Quick attack and decay so the tone doesn't click at either end.
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.linearRampToValueAtTime(0.15, start + 0.01);
+  gain.gain.linearRampToValueAtTime(peakGainFor(volume), start + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + BEEP_SECONDS);
   oscillator.connect(gain).connect(context.destination);
   oscillator.start(start);
@@ -84,6 +127,11 @@ export function useOrderAlertSound() {
   // Server render and hydration always see "off" — the stored value
   // only shows up after mount, so the markup matches.
   const enabled = useSyncExternalStore(subscribe, readEnabled, () => false);
+  const volume = useSyncExternalStore(
+    subscribe,
+    readVolume,
+    () => DEFAULT_VOLUME,
+  );
   const contextRef = useRef<AudioContext | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -142,7 +190,7 @@ export function useOrderAlertSound() {
       gestures.forEach((name) => window.removeEventListener(name, onGesture));
   }, [isLocked, resumeContext]);
 
-  // One AudioContext per page — release it when the page goes away.
+  // Release the AudioContext when the Backoffice layout unmounts.
   // (contextRef is assigned in ensureContext, so this isn't the
   // DOM-ref-in-cleanup pattern the lint rule is guarding against.)
   useEffect(() => {
@@ -159,7 +207,21 @@ export function useOrderAlertSound() {
     if (!next) return;
     // Turning ON is the user gesture: unlock, then one test beep.
     void resumeContext().then((context) => {
-      if (context) playBeep(context);
+      if (context) playBeep(context, readVolume());
+    });
+  }, [resumeContext]);
+
+  const setVolume = useCallback((percent: number) => {
+    writeVolume(percent);
+  }, []);
+
+  /** One beep at the current volume — for the volume slider, called on
+   *  release (a user gesture, so resume() is allowed). Silent while the
+   *  sound is off. */
+  const playTest = useCallback(() => {
+    if (!readEnabled()) return;
+    void resumeContext().then((context) => {
+      if (context) playBeep(context, readVolume());
     });
   }, [resumeContext]);
 
@@ -170,11 +232,11 @@ export function useOrderAlertSound() {
     const context = await resumeContext();
     if (!context) return;
     try {
-      playBeep(context);
+      playBeep(context, readVolume());
     } catch {
       // never let a sound failure break the list
     }
   }, [resumeContext]);
 
-  return { enabled, isLocked, toggle, play };
+  return { enabled, isLocked, toggle, play, volume, setVolume, playTest };
 }

@@ -7,7 +7,8 @@ export function toCartLine(order: {
   menuId: number;
   quantity: number;
   note: string | null;
-  menu: { name: string; price: number; assetUrl: string | null };
+  unitPrice: number;
+  menu: { name: string; assetUrl: string | null };
   OrdersAddons: { addonId: number; addon: { name: string } }[];
 }): CartLine {
   return {
@@ -15,7 +16,9 @@ export function toCartLine(order: {
     menuId: order.menuId,
     menuName: order.menu.name,
     quantity: order.quantity,
-    price: order.menu.price,
+    // The line's own price snapshot — never Menu.price, which can have
+    // moved since this line was added (see Order.unitPrice).
+    price: order.unitPrice,
     imageUrl: order.menu.assetUrl,
     addonNames: order.OrdersAddons.map((link) => link.addon.name),
     addonIds: order.OrdersAddons.map((link) => link.addonId),

@@ -7,6 +7,7 @@ import {
   MenuService,
   OrderSessionCartService,
   TableDraftService,
+  isSessionTerminal,
 } from "@/app/services";
 import { AppError } from "@/app/lib/errors";
 import {
@@ -39,7 +40,6 @@ import {
   UpdateDraftItemInput,
   SubmitDraftInput,
 } from "@/app/lib/schemas/customerOrderSchema";
-import { isSessionTerminal } from "@/app/services/orderService/orderSession.service";
 import { config } from "@/app/utils/config";
 
 /** The one place this file reads the Counter session cookie — every
@@ -277,7 +277,7 @@ export async function pollOrderStatusAction() {
       menuId: order.menuId,
       menuName: order.menu.name,
       quantity: order.quantity,
-      price: order.menu.price,
+      price: order.unitPrice,
       imageUrl: order.menu.assetUrl,
       note: order.note,
     })),
@@ -490,7 +490,7 @@ export async function pollTableAction(tableId: number, locationId: number) {
       menuId: item.menuId,
       menuName: item.menu.name,
       quantity: item.quantity,
-      price: item.menu.price,
+      price: item.unitPrice,
       contributorToken: item.contributorToken ?? "",
       addonNames: item.OrdersAddons.map((link) => link.addon.name),
       addonIds: item.OrdersAddons.map((link) => link.addonId),
