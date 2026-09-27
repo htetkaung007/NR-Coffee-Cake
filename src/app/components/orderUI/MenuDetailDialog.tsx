@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { getMenuDetailAction } from "@/app/(storefront)/counter/action";
+import { lineTotal } from "@/app/lib/orderTotals";
 
 import MenuDetailBody from "./menuDetail/MenuDetailBody";
 import MenuDetailCenteredDialog from "./menuDetail/MenuDetailCenteredDialog";
@@ -159,18 +160,19 @@ export default function MenuDetailDialog({
   const maxQuantity = Math.max(detail?.quantity ?? 0, editing?.quantity ?? 0);
   const isSoldOut = maxQuantity <= 0 || detail?.isAvailable === false;
 
-  // Live preview of what "Add to Cart" is about to submit — base price
-  // plus whichever addons are currently selected, times quantity. Not
-  // the source of truth for billing (that's computed server-side from
-  // scratch, see OrderSessionApprovalService), just UI feedback.
+  // Live preview of what "Add to Cart" is about to submit — today's
+  // Menu/Addon prices (nothing is snapshotted until the line is saved),
+  // priced by the same lineTotal formula the cart and bill use, so the
+  // preview and the eventual line agree (add-ons counted per unit).
   const allAddons = detail?.addonCategories.flatMap((c) => c.addons) ?? [];
-  const selectedAddonsTotal = Object.values(selected)
+  const selectedAddonPrices = Object.values(selected)
     .flat()
-    .reduce((sum, addonId) => {
-      const addon = allAddons.find((a) => a.id === addonId);
-      return sum + (addon?.price ?? 0);
-    }, 0);
-  const totalPrice = ((detail?.price ?? 0) + selectedAddonsTotal) * quantity;
+    .map((addonId) => allAddons.find((a) => a.id === addonId)?.price ?? 0);
+  const totalPrice = lineTotal(
+    detail?.price ?? 0,
+    selectedAddonPrices,
+    quantity,
+  );
 
   async function handleSubmit() {
     if (!detail) return;

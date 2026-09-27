@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Stack, Typography } from "@mui/material";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
@@ -10,15 +11,17 @@ const SECTIONS = [
 ];
 
 /** [Open] [History] — links (not local state, per DESIGN.md Rule 17),
- *  shared by the Order List page and the History page so the same
- *  control switches between them either way. The sidebar's own
- *  "Orders" item already stays highlighted on both routes (its
- *  isActive check is a startsWith on "/backoffice/order"). */
-export default function OrderSectionNav({
-  active,
-}: {
-  active: "open" | "history";
-}) {
+ *  part of OrdersPageHeader on both the Order List and History pages.
+ *  The selected half follows the URL, so neither page has to say which
+ *  one it is. The sidebar's own "Orders" item already stays highlighted
+ *  on both routes (its isActive check is a startsWith on
+ *  "/backoffice/order"). */
+export default function OrderSectionNav() {
+  const pathname = usePathname();
+  const active = pathname?.startsWith("/backoffice/order/history")
+    ? "history"
+    : "open";
+
   return (
     <Stack
       direction="row"
@@ -45,7 +48,7 @@ export default function OrderSectionNav({
             <Typography
               component="span"
               variant="button"
-              sx={{
+              sx={(theme) => ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -58,10 +61,15 @@ export default function OrderSectionNav({
                 transition: "background-color 160ms ease-out, color 160ms ease-out",
                 [hoverCapableMedia]: {
                   "&:hover": {
-                    bgcolor: selected ? "primary.main" : "background.default",
+                    // action.hover, not background.default — the page
+                    // itself is background.default, so that hover
+                    // wouldn't show.
+                    bgcolor: selected
+                      ? "primary.main"
+                      : theme.palette.action.hover,
                   },
                 },
-              }}
+              })}
             >
               {section.label}
             </Typography>

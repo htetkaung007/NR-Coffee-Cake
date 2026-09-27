@@ -1,4 +1,4 @@
-import { createTheme, type PaletteMode } from "@mui/material/styles";
+import { alpha, createTheme, type PaletteMode } from "@mui/material/styles";
 import { sharedThemeOptions } from "./sharedThemeTokens";
 
 /** Decorative colors for the storefront's "watercolor & scribbles /
@@ -39,6 +39,7 @@ declare module "@mui/material/styles" {
  */
 export function getOdTheme(mode: PaletteMode) {
   const isLight = mode === "light";
+  const textPrimary = isLight ? "#2D1B10" : "#F5EFE6"; // Espresso
 
   return createTheme({
     palette: {
@@ -64,9 +65,14 @@ export function getOdTheme(mode: PaletteMode) {
         paper: isLight ? "#FFFFFF" : "#241D18",
       },
       text: {
-        primary: isLight ? "#2D1B10" : "#F5EFE6", // Espresso
+        primary: textPrimary,
       },
       divider: isLight ? "#E6DCCF" : "#3A2F27",
+      // Form-field border (see sharedThemeTokens' Palette.inputBorder) — a
+      // warm espresso tint rather than the terracotta primary, which reads
+      // as an error/alert color on an idle field. ≥ 3:1 on paper and on
+      // default in both modes (light 3.8:1 / 3.7:1, dark 5.3:1 / 5.5:1).
+      inputBorder: alpha(textPrimary, 0.55),
       decor: {
         wash: isLight ? "#D7CCC8" : "#3A2F27",
         scribble: isLight ? "#8D6E63" : "#B79C90",

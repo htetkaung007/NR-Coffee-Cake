@@ -77,9 +77,12 @@ function SidebarContent() {
                   borderRadius: 2,
                   mb: 0.5,
                   color: isActive ? "primary.main" : "text.primary",
-                  bgcolor: isActive ? "background.default" : "transparent",
+                  // Selected fill: MUI's own .Mui-selected tint (derived
+                  // from primary). Hover: action.hover — background.default
+                  // is the page's cream and wouldn't show on the white
+                  // (paper) sidebar.
                   [hoverCapableMedia]: {
-                    "&:hover": { bgcolor: "background.default" },
+                    "&:hover": { bgcolor: "action.hover" },
                   },
                 }}
               >

@@ -1,6 +1,6 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { prisma } from "@/app/utils/prisma";
-import { Prisma } from "../../../../prisma/generated/browser";
+import { Prisma, CancelReason } from "../../../../prisma/generated/browser";
 import { MenuStockService } from "../menuStock.service";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 
@@ -105,6 +105,58 @@ export function generateOrderNumber(sessionId: number) {
  * shared scan function still wouldn't make sense even now.
  */
 export class OrderSessionService {
+  /** The one place a session is written CANCELLED — every cancel path
+   *  (abandoned cart, reject, lazy/batch approval expiry, a leftover
+   *  CART round closed at payment) goes through here so the status,
+   *  cancelReason and stock give-back can't drift apart.
+   *
+   *  REJECTED / EXPIRED: the round was submitted, so stock was
+   *  decremented at submit (decrementStockForSession /
+   *  TableDraftService.submitDraft) — every line's quantity goes back.
+   *  The round's own Order rows ARE what submit decremented (Counter
+   *  decrements per row; Table submit creates exactly the merged rows
+   *  it decremented), so they're the source here too.
+   *  UNSUBMITTED: a CART round never touched stock — nothing to restore.
+   *
+   *  The write is conditional on the status the reason implies
+   *  (PENDING_APPROVAL for REJECTED/EXPIRED, CART for UNSUBMITTED), so:
+   *  an already-CANCELLED round matches nothing and stock is never given
+   *  back twice; and a round that moved on concurrently (e.g. the
+   *  cashier Accepted it a moment before a lazy expiry ran) is left
+   *  alone rather than cancelled out from under the kitchen. Returns
+   *  whether THIS call cancelled it. Must run inside the caller's
+   *  transaction (Rule 7: status write + stock give-back are one unit). */
+  static async cancelSession(tx: Tx, sessionId: number, reason: CancelReason) {
+    const wasSubmitted = reason !== "UNSUBMITTED";
+    const cancelled = await tx.orderSession.updateMany({
+      where: {
+        id: sessionId,
+        status: wasSubmitted ? "PENDING_APPROVAL" : "CART",
+      },
+      data: {
+        status: "CANCELLED",
+        cancelReason: reason,
+        approvalExpiresAt: null,
+      },
+    });
+    if (cancelled.count === 0) return false;
+    if (!wasSubmitted) return true;
+
+    const session = await tx.orderSession.findUniqueOrThrow({
+      where: { id: sessionId },
+      include: { orders: { where: { isArchived: false } } },
+    });
+    for (const order of session.orders) {
+      await MenuStockService.incrementStock(
+        tx,
+        order.menuId,
+        session.locationId,
+        order.quantity,
+      );
+    }
+    return true;
+  }
+
   /** Used by startStaffSession (a staff-placed order, no scan/cookie
    *  involved) to create a Table-QR-shaped session directly. No longer
    *  called from the customer-facing scan flow (see
@@ -613,10 +665,9 @@ export class OrderSessionService {
     if (!session) return null;
 
     if (isAbandonedCart(session)) {
-      await prisma.orderSession.update({
-        where: { id: session.id },
-        data: { status: "CANCELLED" },
-      });
+      await prisma.$transaction((tx: Tx) =>
+        OrderSessionService.cancelSession(tx, session.id, "UNSUBMITTED"),
+      );
       return null;
     }
 
@@ -759,9 +810,12 @@ export class OrderSessionService {
       session.approvalExpiresAt < new Date();
 
     if (isPastApprovalWindow) {
-      return prisma.orderSession.update({
-        where: { id: sessionId },
-        data: { status: "CANCELLED", approvalExpiresAt: null },
+      // Re-read after cancelling: if the cashier decided in the
+      // meantime, cancelSession left the round alone and this returns
+      // what actually happened instead.
+      return prisma.$transaction(async (tx: Tx) => {
+        await OrderSessionService.cancelSession(tx, sessionId, "EXPIRED");
+        return tx.orderSession.findUniqueOrThrow({ where: { id: sessionId } });
       });
     }
 

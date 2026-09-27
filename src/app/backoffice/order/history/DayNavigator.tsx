@@ -98,7 +98,7 @@ export default function DayNavigator({
           },
         })}
       >
-        <Typography variant="body1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+        <Typography variant="body1" sx={{ lineHeight: 1.2 }}>
           {primary}
         </Typography>
         <Typography variant="body2" color="text.secondary">

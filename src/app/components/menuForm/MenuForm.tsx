@@ -166,8 +166,6 @@ export default function MenuForm({
           width: "100%",
           justifyContent: "center",
           p: { xs: 2, sm: 3, md: 4 },
-          "& .MuiInputBase-input": { fontSize: { xs: "0.875rem", sm: "1rem" } },
-          "& .MuiInputLabel-root": { fontSize: { xs: "0.8rem", sm: "0.9rem" } },
           "& .MuiButton-root": {
             fontSize: { xs: "0.72rem", sm: "0.8rem" },
             minHeight: { xs: 34, sm: 36 },
@@ -231,12 +229,6 @@ export default function MenuForm({
                 htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH },
               }}
               helperText={`${description.length}/${MAX_DESCRIPTION_LENGTH} characters`}
-              sx={{
-                "& .MuiInputBase-input": {
-                  fontSize: "0.775rem",
-                  fontWeight: 560,
-                },
-              }}
             />
 
             <MenuCategoryChips

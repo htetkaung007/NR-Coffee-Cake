@@ -13,6 +13,8 @@ import {
 
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { cartLinesTotal } from "@/app/lib/orderTotals";
+import { toLineAddons } from "@/app/lib/roundLine";
 
 import {
   removeFromCartAction,
@@ -86,7 +88,7 @@ export default function CartPageClient({
   const hasShortage = initialShortages.length > 0;
 
   const cartTotal = useMemo(
-    () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
+    () => cartLinesTotal(cart),
     [cart],
   );
 
@@ -125,7 +127,7 @@ export default function CartPageClient({
       const result = await updateCartItemAction(
         line.id,
         next,
-        line.addonIds ?? [],
+        line.addons.map((addon) => addon.id),
         line.note ?? undefined,
       );
       if (!result.success) {
@@ -341,7 +343,7 @@ export default function CartPageClient({
           editingItem
             ? {
                 quantity: editingItem.quantity,
-                addonIds: editingItem.addonIds ?? [],
+                addonIds: editingItem.addons.map((addon) => addon.id),
                 note: editingItem.note ?? undefined,
               }
             : undefined
@@ -357,10 +359,18 @@ export default function CartPageClient({
           if (!result.success) {
             return result.error.message;
           }
+          // The server's saved line — its add-ons carry their own
+          // price snapshots, which the line total needs.
+          const saved = result.data;
           setCart((current) =>
             current.map((line) =>
-              line.id === editingItem.id
-                ? { ...line, quantity, addonIds, note: note || null }
+              line.id === saved.id
+                ? {
+                    ...line,
+                    quantity: saved.quantity,
+                    addons: toLineAddons(saved.OrdersAddons),
+                    note: saved.note,
+                  }
                 : line,
             ),
           );

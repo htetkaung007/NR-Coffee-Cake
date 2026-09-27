@@ -2,6 +2,7 @@ import { prisma } from "../../utils/prisma";
 import { NotFoundError, ValidationError } from "../../lib/errors";
 import { orderLinesTotal } from "../../lib/orderTotals";
 import { BillService } from "../bill.service";
+import { OrderSessionService } from "./orderSession.service";
 import { Prisma } from "../../../../prisma/generated/browser";
 
 type Tx = Prisma.TransactionClient;
@@ -44,9 +45,10 @@ export class OrderSessionApprovalService {
     });
   }
 
-  /** Cashier taps Reject — PENDING_APPROVAL -> CANCELLED. Same
-   *  terminal outcome as a timeout (OrderSessionService.getSessionStatus),
-   *  just cashier-initiated instead of time-initiated. */
+  /** Cashier taps Reject — PENDING_APPROVAL -> CANCELLED (reason
+   *  REJECTED, stock given back — see OrderSessionService.cancelSession).
+   *  Same terminal outcome as a timeout (getSessionStatus), just
+   *  cashier-initiated instead of time-initiated. */
   static async rejectCounterSession(sessionId: number) {
     const session = await prisma.orderSession.findFirst({
       where: { id: sessionId, isArchived: false },
@@ -56,9 +58,18 @@ export class OrderSessionApprovalService {
       throw new ValidationError("This order is not awaiting approval.");
     }
 
-    return prisma.orderSession.update({
-      where: { id: sessionId },
-      data: { status: "CANCELLED", approvalExpiresAt: null },
+    return prisma.$transaction(async (tx: Tx) => {
+      const rejected = await OrderSessionService.cancelSession(
+        tx,
+        sessionId,
+        "REJECTED",
+      );
+      // Lost a race with Accept or the timeout between the check above
+      // and this write — same answer the check itself would give now.
+      if (!rejected) {
+        throw new ValidationError("This order is not awaiting approval.");
+      }
+      return tx.orderSession.findUniqueOrThrow({ where: { id: sessionId } });
     });
   }
 
@@ -93,9 +104,11 @@ export class OrderSessionApprovalService {
    *  b) Counter — a round still sitting in CART belongs to a bill
    *     whose OTHER round just got paid (e.g. "Order More" started a
    *     fresh round the customer never touched again — Problem A).
-   *     Cancels every CART round on the same bill (root id via
-   *     billSessionId ?? id, across both this batch's own sessions and
-   *     any sibling round the Order List never even showed) so the
+   *     Cancels every CART round on the same bill through
+   *     OrderSessionService.cancelSession (reason UNSUBMITTED — no
+   *     stock to give back) — root id via billSessionId ?? id, across
+   *     both this batch's own sessions and any sibling round the Order
+   *     List never even showed — so the
    *     customer's cookie — which may still point at that CART round
    *     — reads as terminal on their next poll/scan instead of
    *     silently staying open for more orders after payment. */
@@ -134,15 +147,18 @@ export class OrderSessionApprovalService {
       ),
     ];
     if (billIds.length > 0) {
-      await tx.orderSession.updateMany({
+      const leftoverCartRounds = await tx.orderSession.findMany({
         where: {
           isCounter: true,
           status: "CART",
           isArchived: false,
           OR: [{ id: { in: billIds } }, { billSessionId: { in: billIds } }],
         },
-        data: { status: "CANCELLED" },
+        select: { id: true },
       });
+      for (const round of leftoverCartRounds) {
+        await OrderSessionService.cancelSession(tx, round.id, "UNSUBMITTED");
+      }
     }
   }
 
@@ -228,17 +244,29 @@ export class OrderSessionApprovalService {
    *  Backoffice Order List page load so a timed-out PENDING_APPROVAL
    *  session doesn't still show up asking for a decision the
    *  customer's own polling has already resolved (CANCELLED) on their
-   *  end. */
+   *  end.
+   *
+   *  Loads the stale ids first, then cancels each through
+   *  OrderSessionService.cancelSession (reason EXPIRED, stock given
+   *  back) in its own transaction — each round's cancel is a
+   *  self-contained unit, so one failing doesn't hold back the rest.
+   *  A round the customer's own poll already expired is skipped by
+   *  cancelSession itself, never restocked twice. */
   static async expireStaleApprovals(locationId: number) {
-    return prisma.orderSession.updateMany({
+    const stale = await prisma.orderSession.findMany({
       where: {
         locationId,
         status: "PENDING_APPROVAL",
         approvalExpiresAt: { lt: new Date() },
         isArchived: false,
       },
-      data: { status: "CANCELLED", approvalExpiresAt: null },
+      select: { id: true },
     });
+    for (const session of stale) {
+      await prisma.$transaction((tx: Tx) =>
+        OrderSessionService.cancelSession(tx, session.id, "EXPIRED"),
+      );
+    }
   }
 
   /** For the Backoffice Order List page (design doc section 5) — every

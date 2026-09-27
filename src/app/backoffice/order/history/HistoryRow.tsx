@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Box, Chip, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
@@ -12,6 +13,7 @@ import {
   formatTimeRange,
 } from "./historyFormat";
 import type { CancelledRoundListItem, PaidBillListItem } from "./action";
+import { entryTitleSx, moneySx } from "../orderTypography";
 
 const BADGE_SIZE = 40;
 
@@ -23,7 +25,7 @@ function TableBadgeContent({ title }: { title: string }) {
   const match = /\d+/.exec(title);
   if (match) {
     return (
-      <Typography variant="body1" sx={{ fontWeight: 800 }}>
+      <Typography variant="body1" sx={entryTitleSx}>
         {match[0]}
       </Typography>
     );
@@ -41,18 +43,23 @@ function RowBadge({
   return (
     <Box
       aria-hidden
-      sx={{
-        flexShrink: 0,
-        width: BADGE_SIZE,
-        height: BADGE_SIZE,
-        borderRadius: 1.5,
-        border: 1,
-        borderColor: "divider",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: isCounter ? "secondary.main" : "info.main",
-        bgcolor: "background.default",
+      sx={(theme) => {
+        // Counter vs Table accent; the pale fill is derived from it.
+        // Light mode draws the number/icon in the role's dark shade —
+        // info.main on its own tint is only ~3.4:1, under 4.5:1 for text.
+        const role = isCounter ? theme.palette.secondary : theme.palette.info;
+        const accent = role.main;
+        return {
+          flexShrink: 0,
+          width: BADGE_SIZE,
+          height: BADGE_SIZE,
+          borderRadius: 1.5,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: theme.palette.mode === "light" ? role.dark : role.main,
+          bgcolor: alpha(accent, 0.1),
+        };
       }}
     >
       {isCounter ? (
@@ -105,6 +112,8 @@ function RowShell({
         py: 1.5,
         textDecoration: "none",
         color: "inherit",
+        // A white card on the cream page (background.default).
+        bgcolor: "background.paper",
         borderRadius: 2,
         border: 1,
         borderColor: selected ? "primary.main" : "divider",
@@ -116,7 +125,7 @@ function RowShell({
         [hoverCapableMedia]: {
           "&:hover": {
             backgroundColor: selected
-              ? "transparent"
+              ? theme.palette.background.paper
               : theme.palette.action.hover,
           },
         },
@@ -124,7 +133,7 @@ function RowShell({
     >
       {badge}
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        <Typography variant="body1" noWrap sx={{ fontWeight: 700 }}>
+        <Typography variant="body1" noWrap sx={entryTitleSx}>
           {title}
         </Typography>
         <Box
@@ -137,9 +146,11 @@ function RowShell({
           {secondaryLine}
         </Box>
       </Box>
+      {/* The Order List's money style, same as the summary values;
+         never truncated (no noWrap, doesn't shrink). */}
       <Typography
         variant="body1"
-        sx={{ flexShrink: 0, fontWeight: 700, color: "text.primary" }}
+        sx={{ ...moneySx, flexShrink: 0, color: "text.primary" }}
       >
         {formatAmount(amount)}
       </Typography>

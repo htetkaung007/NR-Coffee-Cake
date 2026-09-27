@@ -9,6 +9,7 @@ import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
 import CounterOrderClient from "@/app/components/orderUI/CounterOrderClient";
 import TableOrderClient from "@/app/components/orderUI/TableOrderClient";
+import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
 
 // Session/cart state can change between one visit and the next (a
 // customer's own submit, or another contributor's draft add) —
@@ -92,17 +93,7 @@ export default async function MenuPage({
           locationId={locationId}
           shopName={shopName}
           myContributorToken={contributorToken}
-          initialDraftItems={draftItems.map((item) => ({
-            id: item.id,
-            menuId: item.menuId,
-            menuName: item.menu.name,
-            quantity: item.quantity,
-            price: item.unitPrice,
-            contributorToken: item.contributorToken ?? "",
-            addonNames: item.OrdersAddons.map((link) => link.addon.name),
-            addonIds: item.OrdersAddons.map((link) => link.addonId),
-            note: item.note,
-          }))}
+          initialDraftItems={draftItems.map(toDraftLine)}
           initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
           activeRoundId={activeRound?.id ?? null}
           menus={buildMenuOptions(menus)}
@@ -139,14 +130,7 @@ export default async function MenuPage({
       shopName={shopName}
       initialStatus={session?.status ?? "CART"}
       initialCart={
-        session?.orders.map((order) => ({
-          id: order.id,
-          menuId: order.menuId,
-          menuName: order.menu.name,
-          quantity: order.quantity,
-          price: order.unitPrice,
-          note: order.note,
-        })) ?? []
+        session?.orders.map(toCartLine) ?? []
       }
       menus={buildMenuOptions(menus)}
     />

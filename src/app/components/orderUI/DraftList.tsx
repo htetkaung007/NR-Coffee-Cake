@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, Divider, Stack, Typography } from "@mui/material";
+import { cartLinesTotal } from "@/app/lib/orderTotals";
 import {
   CartLineRow,
   DraftLine,
@@ -64,10 +65,7 @@ export default function DraftList({
       {contributors.map((token, index) => {
         const isMine = token === myContributorToken;
         const items = byContributor.get(token)!;
-        const subtotal = items.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0,
-        );
+        const subtotal = cartLinesTotal(items);
 
         return (
           <Card key={token} variant="outlined" sx={{ p: 1.5 }}>
@@ -92,7 +90,6 @@ export default function DraftList({
                   key={item.id}
                   line={item}
                   shortage={shortageByMenuId.get(item.menuId)}
-                  addons={item.addonNames}
                   actionable={isMine}
                   disabled={isPending}
                   onEdit={() => onEdit(item)}

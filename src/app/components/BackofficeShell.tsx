@@ -36,7 +36,13 @@ export function BackofficeShell({ children, companyName }: Props) {
         component="main"
         sx={{
           flexGrow: 1,
+          // Lets wide content (e.g. a long amount) wrap instead of
+          // stretching the page past a phone's width.
+          minWidth: 0,
           p: 3,
+          // Phones: the one horizontal gutter (12px) for every Backoffice
+          // page — the content wrapper in backoffice/layout.tsx adds none.
+          px: { xs: 1.5, sm: 3 },
           /* width: { sm: `calc(100% - ${SIDEBAR_WIDTH}px)` }, */
         }}
       >

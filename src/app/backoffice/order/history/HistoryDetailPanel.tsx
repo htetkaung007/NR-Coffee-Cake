@@ -8,10 +8,11 @@ const PANEL_WIDTH = 420;
 /**
  * lg+ only: the selected row's detail as the page's right-hand column,
  * full height of the content area (from right below the fixed top bar
- * to the bottom of the viewport) — a plain left divider, not a
- * floating card with its own border/radius/shadow (the left column,
- * a flex sibling, determines the row's actual height; this just
- * stretches to match it and stays pinned while that column scrolls).
+ * to the bottom of the viewport) — a white (background.paper) panel
+ * with a 1px divider border on the cream page, like the summary card
+ * and the list rows (the left column, a flex sibling, determines the
+ * row's actual height; this just stretches to match it and stays
+ * pinned while that column scrolls).
  */
 export default function HistoryDetailPanel({
   children,
@@ -33,8 +34,10 @@ export default function HistoryDetailPanel({
           top,
           maxHeight: `calc(100vh - ${top}px)`,
           overflow: "hidden",
-          borderLeft: 1,
+          bgcolor: "background.paper",
+          border: 1,
           borderColor: "divider",
+          borderRadius: 2,
         };
       }}
     >

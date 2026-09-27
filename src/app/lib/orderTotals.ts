@@ -8,18 +8,66 @@ interface PricedOrderLine {
   OrdersAddons: { unitPrice: number }[];
 }
 
-/** The one definition of what a line costs: its snapshot unit price ×
- *  quantity plus the sum of its selected addons' snapshot prices
- *  (addons are counted once per line, not per unit — this is the
- *  billing formula the cashier's total is built from). Shared so the
- *  cashier list, the customer's receipt, the order-confirmed screen
- *  and history can't disagree. */
+/** THE line-total rule — the only place it lives. Every line amount
+ *  anywhere (bill, receipt, customer/staff carts, the menu dialog's live
+ *  preview) comes out of here, via orderLineTotal / cartLineTotal or
+ *  directly.
+ *
+ *  Add-ons belong to ONE unit of the menu item, so the whole set is
+ *  multiplied by quantity:
+ *    lineTotal = (menu unitPrice + sum of the line's add-on unitPrices) × quantity
+ *  e.g. Latte 2,000 + Extra shot 500, ×2 → 5,000 (not 4,500). */
+export function lineTotal(
+  unitPrice: number,
+  addonUnitPrices: readonly number[],
+  quantity: number,
+) {
+  const addonsPerUnit = addonUnitPrices.reduce((sum, price) => sum + price, 0);
+  return (unitPrice + addonsPerUnit) * quantity;
+}
+
+/** What an Order row costs, from its own price snapshots (Order.unitPrice
+ *  and each OrdersAddon.unitPrice), by the rule in lineTotal:
+ *  (menu unitPrice + add-ons) × quantity — e.g. Latte 2,000 + Extra shot
+ *  500, ×2 → 5,000. Add-ons used to be counted once per line (4,500),
+ *  which under-charged every multi-quantity line with add-ons. Shared so
+ *  the cashier list, the bill, the customer's receipt, the
+ *  order-confirmed screen and history can't disagree. */
 export function orderLineTotal(order: PricedOrderLine) {
-  const addonsTotal = order.OrdersAddons.reduce(
-    (sum, link) => sum + link.unitPrice,
-    0,
+  return lineTotal(
+    order.unitPrice,
+    order.OrdersAddons.map((link) => link.unitPrice),
+    order.quantity,
   );
-  return order.unitPrice * order.quantity + addonsTotal;
+}
+
+/** A picked add-on on a client-side line, with its own price snapshot
+ *  (OrdersAddon.unitPrice — see toLineAddons). */
+export interface LineAddon {
+  id: number;
+  name: string;
+  unitPrice: number;
+}
+
+/** A client-side cart/draft line (CartLine, DraftLine, the staff cart)
+ *  — the same snapshot prices as the Order row it came from, so it
+ *  prices through the same formula as the bill. */
+interface PricedCartLine {
+  price: number;
+  quantity: number;
+  addons: readonly Pick<LineAddon, "unitPrice">[];
+}
+
+export function cartLineTotal(line: PricedCartLine) {
+  return lineTotal(
+    line.price,
+    line.addons.map((addon) => addon.unitPrice),
+    line.quantity,
+  );
+}
+
+export function cartLinesTotal(lines: readonly PricedCartLine[]) {
+  return lines.reduce((sum, line) => sum + cartLineTotal(line), 0);
 }
 
 export function orderLinesTotal(orders: PricedOrderLine[]) {

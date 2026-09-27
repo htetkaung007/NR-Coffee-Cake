@@ -11,6 +11,7 @@ import MenuBrowser, { MenuOption } from "./MenuBrowser";
 import { addToCartAction } from "@/app/(storefront)/counter/action";
 import { CartLine } from "@/app/(storefront)/cart/CartList";
 import { applyAddedLine, countUnsubmittedItems } from "@/app/lib/orderTotals";
+import { toLineAddons } from "@/app/lib/roundLine";
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import {
   getOrderPageBackground,
@@ -107,7 +108,9 @@ export default function CounterOrderClient({
       // The server's own snapshot, not this component's (possibly
       // stale) menu prop — see Order.unitPrice's own schema comment.
       price: result.data.unitPrice,
-      note: note || null,
+      // With their own price snapshots — part of the line's total.
+      addons: toLineAddons(result.data.OrdersAddons),
+      note: result.data.note,
     };
     if (cartIsSubmittedRound && !cartRoundStarted) {
       // First add while the page loaded showing a submitted round —

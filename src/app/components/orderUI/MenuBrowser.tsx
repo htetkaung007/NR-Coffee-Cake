@@ -129,14 +129,7 @@ export default function MenuBrowser({
           placeholder="Search Menus"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{
-            mb: 2,
-            borderRadius: 3,
-            "& .MuiOutlinedInput-root": { borderRadius: 3 },
-            "& .MuiOutlinedInput-input": {
-              py: { xs: 0.75, sm: 1, md: 1.25, lg: 1.25 },
-            },
-          }}
+          sx={{ mb: 2 }}
           slotProps={{
             input: {
               startAdornment: (

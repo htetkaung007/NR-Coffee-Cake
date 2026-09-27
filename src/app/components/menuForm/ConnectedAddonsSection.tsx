@@ -161,7 +161,8 @@ export default function ConnectedAddonsSection({
                           ? addon.name
                           : `${addon.name} (+${addon.price.toLocaleString()} MMK)`
                       }
-                      sx={{ bgcolor: "background.default" }}
+                      variant="outlined"
+                      sx={{ bgcolor: "background.paper", borderColor: "divider" }}
                     />
                   ))}
                 </Stack>

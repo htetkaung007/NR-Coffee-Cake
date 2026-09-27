@@ -138,7 +138,6 @@ export function SignUpForm() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
           />
           <TextField
             fullWidth
@@ -149,7 +148,6 @@ export function SignUpForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
           />
           <TextField
             fullWidth
@@ -160,7 +158,6 @@ export function SignUpForm() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
           />
 
           {errorMessage && (

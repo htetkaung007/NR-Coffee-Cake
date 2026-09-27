@@ -1,4 +1,4 @@
-import { createTheme, type PaletteMode } from "@mui/material/styles";
+import { alpha, createTheme, type PaletteMode } from "@mui/material/styles";
 import { sharedThemeOptions } from "./sharedThemeTokens";
 
 /**
@@ -11,13 +11,20 @@ import { sharedThemeOptions } from "./sharedThemeTokens";
  */
 export function getBoTheme(mode: PaletteMode) {
   const isLight = mode === "light";
+  // Coffee brown / caramel — see primary below. The two border strengths
+  // (divider, inputBorder) are derived from it, so they follow the brand.
+  const primaryMain = isLight ? "#4A2E22" : "#D4A373";
 
   return createTheme({
     palette: {
       mode,
       primary: {
-        // Accent & Buttons — design ထဲက main action color
-        main: "#F14647",
+        // Accent & Buttons — coffee brown. light/dark are derived by MUI.
+        // Dark mode swaps to a caramel: #4A2E22 on a dark background is
+        // under 2:1. Caramel on the dark default is 8.2:1, and the dark
+        // contrastText on it 8.0:1. Light: white on #4A2E22 is 12.3:1.
+        main: primaryMain,
+        contrastText: isLight ? "#FFFFFF" : "#1F1410",
       },
       success: {
         // Free Badge Background
@@ -55,15 +62,23 @@ export function getBoTheme(mode: PaletteMode) {
         contrastText: isLight ? "#fff" : "rgba(0, 0, 0, 0.87)",
       },
       background: {
-        default: isLight ? "#FFFFFF" : "#121212", // Secondary Background
-        paper: isLight ? "#F7F7F7" : "#1E1E1E", // Main Background (card/drawer/appbar)
+        // Page background — warm off-white / warm near-black
+        default: isLight ? "#FAF6F0" : "#17120F",
+        // Cards, panels, drawer, app bar — white on the cream page
+        paper: isLight ? "#FFFFFF" : "#211A16",
       },
       text: {
         primary: isLight ? "#1F272D" : "#F5F5F5", // Main Text Color
         // Supporting text — times, sublines, captions, column headers
         secondary: isLight ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.7)",
       },
-      divider: isLight ? "#E5E7EB" : "#333333", // Border / Line Color
+      // Two border strengths, both tints of primary:
+      // divider — soft separators and card/list borders (~1.45:1 on
+      // paper and on the page: visible on the cream, but calm).
+      divider: alpha(primaryMain, 0.2),
+      // inputBorder — form-field boundaries: ≥ 3:1 against both paper
+      // and default in both modes (light 3.7:1 / 3.6:1, dark 3.6:1 / 3.7:1).
+      inputBorder: alpha(primaryMain, 0.6),
     },
     ...sharedThemeOptions,
   });

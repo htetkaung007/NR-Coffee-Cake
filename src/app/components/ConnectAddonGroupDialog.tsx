@@ -17,6 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
@@ -207,17 +208,22 @@ export default function ConnectAddonGroupDialog({
               return (
                 <Box
                   key={category.id}
-                  sx={{
+                  sx={(theme) => ({
                     border: "1px solid",
                     borderColor: isSelected ? "primary.main" : "divider",
-                    bgcolor: isSelected ? "primary.50" : "background.default",
+                    // Selected: a pale tint derived from primary (the old
+                    // "primary.50" isn't a palette shade, so it painted
+                    // nothing).
+                    bgcolor: isSelected
+                      ? alpha(theme.palette.primary.main, 0.08)
+                      : "background.paper",
                     borderRadius: 2,
                     p: 1.5,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 1,
-                  }}
+                  })}
                 >
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -285,11 +291,6 @@ export default function ConnectAddonGroupDialog({
           onChange={(event) => setGroupName(event.target.value)}
           sx={{
             mb: 2,
-            "& .MuiOutlinedInput-root": {
-              bgcolor: "background.default",
-              borderRadius: 2.5,
-            },
-            "& .MuiOutlinedInput-notchedOutline": { border: "none" },
           }}
         />
 
@@ -332,11 +333,6 @@ export default function ConnectAddonGroupDialog({
                 }
                 sx={{
                   flex: 2,
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    borderRadius: 2.5,
-                  },
-                  "& .MuiOutlinedInput-notchedOutline": { border: "none" },
                 }}
               />
               <TextField
@@ -353,11 +349,6 @@ export default function ConnectAddonGroupDialog({
                 sx={{
                   flex: 1,
                   minWidth: 120,
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
-                    borderRadius: 2.5,
-                  },
-                  "& .MuiOutlinedInput-notchedOutline": { border: "none" },
                 }}
               />
               <IconButton

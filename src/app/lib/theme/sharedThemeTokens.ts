@@ -1,4 +1,19 @@
-import type { Theme, ThemeOptions } from "@mui/material/styles";
+import { alpha, type Theme, type ThemeOptions } from "@mui/material/styles";
+import { inputLabelClasses } from "@mui/material/InputLabel";
+import { outlinedInputClasses } from "@mui/material/OutlinedInput";
+
+declare module "@mui/material/styles" {
+  // The form-field border — stronger than `divider` (≥ 3:1 against both
+  // background.paper and background.default, WCAG non-text contrast for
+  // an input's boundary). Both getBoTheme and getOdTheme define it; the
+  // shared input look below reads it.
+  interface Palette {
+    inputBorder: string;
+  }
+  interface PaletteOptions {
+    inputBorder?: string;
+  }
+}
 
 /**
  * Backoffice (Bo) နဲ့ Order-app (Od) theme နှစ်ခုလုံးက ဒီ file ကို import လုပ်ပြီး
@@ -44,6 +59,10 @@ export const FONT_DISPLAY =
 
 const BORDER_RADIUS = 8;
 
+// Every input state rule below skips these, so hover never paints over
+// the focused / error / disabled look.
+const inputIsIdle = `:not(.${outlinedInputClasses.focused}):not(.${outlinedInputClasses.error}):not(.${outlinedInputClasses.disabled})`;
+
 /** `createTheme({ palette, ...sharedThemeOptions })` ပုံစံနဲ့ spread လုပ်ပြီး သုံးရန် */
 export const sharedThemeOptions: ThemeOptions = {
   shape: {
@@ -84,6 +103,19 @@ export const sharedThemeOptions: ThemeOptions = {
       lineHeight: 1.3,
     },
 
+    // Page/panel titles — the sans counterpart of h6 (bold, FONT_BODY),
+    // e.g. the Order History page's title.
+    subtitle1: {
+      fontFamily: FONT_BODY,
+      fontWeight: 700,
+      fontSize: "1.05rem",
+      lineHeight: 1.4,
+
+      [`@media (min-width:${BREAKPOINTS.md}px)`]: {
+        fontSize: "1.2rem",
+      },
+    },
+
     // Section headings
     h6: {
       fontFamily: FONT_DISPLAY,
@@ -112,10 +144,11 @@ export const sharedThemeOptions: ThemeOptions = {
       },
     },
 
-    // Field labels / helper text
+    // Field labels / helper text / secondary lines (dates, add-on
+    // summaries) — regular weight, so secondary text never reads bold.
     body2: {
       fontFamily: FONT_BODY,
-      fontWeight: 600,
+      fontWeight: 400,
       fontSize: "0.75rem",
       lineHeight: 1.7,
 
@@ -174,11 +207,92 @@ export const sharedThemeOptions: ThemeOptions = {
       },
     },
 
+    // ── The one input look for the whole app (Backoffice + storefront) ──
+    // Components must not restyle inputs (fill, border, radius, padding,
+    // font) — only layout props (width, margins, size). See CLAUDE.md
+    // Rule 10.
     MuiInputBase: {
       styleOverrides: {
         root: {
           fontFamily: FONT_BODY,
         },
+        input: ({ theme }) => ({
+          "&::placeholder": {
+            color: theme.palette.text.secondary,
+            opacity: 1,
+          },
+        }),
+      },
+    },
+
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          backgroundColor: theme.palette.background.paper,
+          borderRadius: BORDER_RADIUS,
+          [`& .${outlinedInputClasses.notchedOutline}`]: {
+            borderColor: theme.palette.inputBorder,
+            borderWidth: 1,
+          },
+          // MUI darkens the border on any :hover (only undone for
+          // `hover: none`) — reset it, then darken only where hover is real.
+          [`&:hover${inputIsIdle} .${outlinedInputClasses.notchedOutline}`]: {
+            borderColor: theme.palette.inputBorder,
+          },
+          [hoverCapableMedia]: {
+            [`&:hover${inputIsIdle} .${outlinedInputClasses.notchedOutline}`]: {
+              borderColor: alpha(theme.palette.text.primary, 0.7),
+            },
+          },
+          // Focus always uses primary (whatever the `color` prop), 2px, on
+          // the notched outline so the floating label's notch still works.
+          [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]:
+            {
+              borderColor: theme.palette.primary.main,
+              borderWidth: 2,
+            },
+          [`&.${outlinedInputClasses.error} .${outlinedInputClasses.notchedOutline}`]:
+            {
+              borderColor: theme.palette.error.main,
+            },
+          [`&.${outlinedInputClasses.disabled}`]: {
+            backgroundColor: alpha(theme.palette.text.primary, 0.04),
+            color: theme.palette.text.disabled,
+          },
+          [`&.${outlinedInputClasses.disabled} .${outlinedInputClasses.notchedOutline}`]:
+            {
+              borderColor: theme.palette.action.disabled,
+            },
+          [`&.${outlinedInputClasses.adornedStart}`]: {
+            paddingLeft: theme.spacing(1.5),
+          },
+          [`&.${outlinedInputClasses.adornedEnd}`]: {
+            paddingRight: theme.spacing(1.5),
+          },
+          [`&.${outlinedInputClasses.multiline}`]: {
+            padding: theme.spacing(2, 1.5),
+          },
+          [`&.${outlinedInputClasses.multiline}.${outlinedInputClasses.sizeSmall}`]:
+            {
+              padding: theme.spacing(1.5),
+            },
+        }),
+        // 8px grid: 16px/12px (medium), 12px/12px (small — 47px tall,
+        // over the 44px touch minimum; MUI's own small is 40px). Padding
+        // sits on the input, except multiline (the root pads, the
+        // textarea doesn't) and the adorned side (the root pads there).
+        input: ({ theme }) => ({
+          padding: theme.spacing(2, 1.5),
+          [`.${outlinedInputClasses.sizeSmall} &`]: {
+            padding: theme.spacing(1.5),
+          },
+          [`.${outlinedInputClasses.adornedStart} &`]: { paddingLeft: 0 },
+          [`.${outlinedInputClasses.adornedEnd} &`]: { paddingRight: 0 },
+          [`.${outlinedInputClasses.multiline} &`]: { padding: 0 },
+          [`&.${outlinedInputClasses.disabled}`]: {
+            WebkitTextFillColor: theme.palette.text.disabled,
+          },
+        }),
       },
     },
 
@@ -187,6 +301,18 @@ export const sharedThemeOptions: ThemeOptions = {
         root: {
           fontFamily: FONT_BODY,
         },
+        // Lines the resting label up with the input text above (12px in,
+        // 16px / 12px down); the shrunk label keeps MUI's -9px notch
+        // offset. Nested so `shrink` wins over the resting transform.
+        outlined: ({ theme }) => ({
+          transform: `translate(${theme.spacing(1.5)}, ${theme.spacing(2)}) scale(1)`,
+          [`&.${inputLabelClasses.sizeSmall}`]: {
+            transform: `translate(${theme.spacing(1.5)}, ${theme.spacing(1.5)}) scale(1)`,
+          },
+          [`&.${inputLabelClasses.shrink}`]: {
+            transform: `translate(${theme.spacing(1.5)}, -9px) scale(0.75)`,
+          },
+        }),
       },
     },
   },

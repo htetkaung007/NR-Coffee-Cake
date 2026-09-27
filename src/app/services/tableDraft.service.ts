@@ -106,10 +106,11 @@ export class TableDraftService {
           ) === incomingKey,
       );
       if (sameLine) {
-        return tx.order.update({
+        await tx.order.update({
           where: { id: sameLine.id },
           data: { quantity: { increment: quantity } },
         });
+        return OrderSessionCartService.getLineWithAddons(tx, sameLine.id);
       }
 
       const order = await tx.order.create({
@@ -134,7 +135,7 @@ export class TableDraftService {
         });
       }
 
-      return order;
+      return OrderSessionCartService.getLineWithAddons(tx, order.id);
     });
   }
 
@@ -193,7 +194,7 @@ export class TableDraftService {
 
     return prisma.$transaction(async (tx: Tx) => {
       await tx.ordersAddon.deleteMany({ where: { orderId } });
-      const updated = await tx.order.update({
+      await tx.order.update({
         where: { id: orderId },
         data: { quantity, note: normalizeOrderNote(note) },
       });
@@ -213,7 +214,7 @@ export class TableDraftService {
           })),
         });
       }
-      return updated;
+      return OrderSessionCartService.getLineWithAddons(tx, orderId);
     });
   }
 

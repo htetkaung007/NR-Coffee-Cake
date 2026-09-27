@@ -79,10 +79,11 @@ export class OrderSessionCartService {
           ) === incomingKey,
       );
       if (sameLine) {
-        return tx.order.update({
+        await tx.order.update({
           where: { id: sameLine.id },
           data: { quantity: { increment: quantity } },
         });
+        return OrderSessionCartService.getLineWithAddons(tx, sameLine.id);
       }
 
       const order = await tx.order.create({
@@ -106,7 +107,19 @@ export class OrderSessionCartService {
         });
       }
 
-      return order;
+      return OrderSessionCartService.getLineWithAddons(tx, order.id);
+    });
+  }
+
+  /** A cart/draft line as the client needs it after an add or edit —
+   *  with its addon links and their own price snapshots, so the
+   *  client's line total (cartLineTotal) prices the add-ons exactly as
+   *  the bill will. Shared by the add/update methods here and their
+   *  TableDraftService twins. */
+  static async getLineWithAddons(tx: Tx, orderId: number) {
+    return tx.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: { OrdersAddons: { include: { addon: true } } },
     });
   }
 
@@ -180,7 +193,7 @@ export class OrderSessionCartService {
 
     return prisma.$transaction(async (tx: Tx) => {
       await tx.ordersAddon.deleteMany({ where: { orderId } });
-      const updated = await tx.order.update({
+      await tx.order.update({
         where: { id: orderId },
         data: { quantity, note: normalizeOrderNote(note) },
       });
@@ -200,7 +213,7 @@ export class OrderSessionCartService {
           })),
         });
       }
-      return updated;
+      return OrderSessionCartService.getLineWithAddons(tx, orderId);
     });
   }
 

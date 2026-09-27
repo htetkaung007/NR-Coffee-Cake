@@ -36,7 +36,7 @@ export default function BillDrawer({
           sx: {
             display: "flex",
             flexDirection: "column",
-            bgcolor: "background.default",
+            bgcolor: "background.paper",
             ...(isPhone
               ? {
                   maxHeight: "85vh",

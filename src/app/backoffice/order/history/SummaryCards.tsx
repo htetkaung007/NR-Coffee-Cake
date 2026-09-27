@@ -2,6 +2,7 @@
 
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
 import { formatAmount } from "@/app/lib/orderFormat";
+import { moneySx } from "../orderTypography";
 
 function SummaryCell({
   label,
@@ -11,13 +12,24 @@ function SummaryCell({
   value: React.ReactNode;
 }) {
   return (
-    <Box sx={{ flex: 1, minWidth: 0, px: 2, py: 1.5 }}>
-      <Typography variant="overline" color="text.secondary" noWrap>
+    <Box sx={{ flex: 1, minWidth: 0, px: { xs: 1.5, sm: 2 }, py: 1.5 }}>
+      <Typography
+        variant="caption"
+        component="p"
+        color="text.secondary"
+        noWrap
+        sx={{ textTransform: "uppercase" }}
+      >
         {label}
       </Typography>
-      {/* Money is never red (DESIGN.md Rule 13) — text.primary, bold
-         sans (h5 — see HistoryHeader's own comment on why not h6). */}
-      <Typography variant="h5" noWrap sx={{ color: "text.primary" }}>
+      {/* The Order List's money style. Never red (DESIGN.md Rule 13) and
+         never cut off — no noWrap: a value too wide for its cell wraps
+         to a second line. */}
+      <Typography
+        variant="body1"
+        component="p"
+        sx={{ ...moneySx, color: "text.primary" }}
+      >
         {value}
       </Typography>
     </Box>

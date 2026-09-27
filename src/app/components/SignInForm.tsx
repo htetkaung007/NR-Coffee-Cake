@@ -135,7 +135,6 @@ export default function SignInForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
           />
           <TextField
             fullWidth
@@ -146,7 +145,6 @@ export default function SignInForm() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
           />
 
           {error && (

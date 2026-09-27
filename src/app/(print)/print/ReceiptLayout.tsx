@@ -31,13 +31,31 @@ function useIsClient() {
   );
 }
 
-interface PrintReceiptProps {
-  entryKey: string;
+/** "Sep 26, 2026, 11:30 PM" in the till's local time — the print time
+ *  and a paid bill's paid time. */
+function formatLocalDateTime(date: Date) {
+  return date.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+}
+
+type ReceiptRound = EntryBill["acceptedRounds"][number];
+
+interface ReceiptLayoutProps {
+  /** Screen-only "back" link (e.g. to the order, or to History). */
+  backHref: string;
+  backLabel: string;
   shopName: string;
   locationName: string | null;
   /** Table name or Counter bill number. */
   title: string;
-  bill: EntryBill;
+  rounds: ReceiptRound[];
+  /** Printed as the total — the open bill's computed total, or a paid
+   *  bill's stored Bill.total snapshot. */
+  total: number;
+  /** Open bill only: rounds awaiting approval, left off the receipt. */
+  pendingCount?: number;
+  /** The line under the total: "BILL — NOT PAID" for an open bill,
+   *  "PAID · <paid date/time>" for a settled one (ISO time). */
+  status: { paid: false } | { paid: true; paidAt: string };
 }
 
 /** Dashed rule between receipt sections. */
@@ -51,25 +69,32 @@ function Rule() {
 }
 
 /**
- * The bill on thermal-receipt paper: accepted rounds line by line, the
- * total, "BILL — NOT PAID" (printing never settles anything — Mark as
- * paid does). Black on white whatever the app's light/dark mode, no
- * tints, shadows, rounded corners or images.
+ * A bill on thermal-receipt paper — the ONE receipt layout behind both
+ * the open bill (/print/order/[entryKey]) and a paid bill's reprint
+ * (/print/bill/[billId]), so the two can't look different: rounds line
+ * by line, the total, then the status line ("BILL — NOT PAID" — printing
+ * never settles anything, Mark as paid does — or "PAID · <when>"). Black
+ * on white whatever the app's light/dark mode, no tints, shadows,
+ * rounded corners or images.
  *
  * Prints itself once, after rendering and after web fonts load. The
  * page is exactly as long as the receipt: `@page { size: 80mm auto }`
  * isn't valid CSS (size takes one or two lengths, and browsers drop the
  * whole rule), so the receipt's rendered height is measured and used
- * as the page height instead. After printing, a tab opened by the
- * detail page's "Print bill" button (window.opener) closes itself.
+ * as the page height instead. After printing, a tab opened by a Print
+ * button (PrintBillButton — window.opener) closes itself.
  */
-export default function PrintReceipt({
-  entryKey,
+export default function ReceiptLayout({
+  backHref,
+  backLabel,
   shopName,
   locationName,
   title,
-  bill,
-}: PrintReceiptProps) {
+  rounds,
+  total,
+  pendingCount = 0,
+  status,
+}: ReceiptLayoutProps) {
   const isClient = useIsClient();
   const [printedAt] = useState(() => new Date());
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -106,8 +131,6 @@ export default function PrintReceipt({
       window.removeEventListener("afterprint", closeIfOpenedByButton);
   }, []);
 
-  const pendingCount = bill.pendingRounds.length;
-
   return (
     <>
       <GlobalStyles
@@ -137,12 +160,12 @@ export default function PrintReceipt({
       >
         <Button
           component={Link}
-          href={`/backoffice/order/${entryKey}`}
+          href={backHref}
           variant="outlined"
           color="inherit"
           sx={{ minHeight: 44 }}
         >
-          Back to order
+          {backLabel}
         </Button>
         <Button
           variant="contained"
@@ -183,19 +206,15 @@ export default function PrintReceipt({
           {title}
         </Typography>
         <Typography variant="caption" component="p" align="center">
-          {isClient &&
-            printedAt.toLocaleString([], {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
+          {isClient && formatLocalDateTime(printedAt)}
         </Typography>
 
         <Rule />
 
-        {bill.acceptedRounds.length === 0 && (
+        {rounds.length === 0 && (
           <Typography variant="body2">No accepted orders yet.</Typography>
         )}
-        {bill.acceptedRounds.map((round) => (
+        {rounds.map((round) => (
           <Box key={round.orderNumber} component="section" sx={{ mb: 1 }}>
             <Typography
               component="h2"
@@ -239,7 +258,7 @@ export default function PrintReceipt({
         >
           <Typography variant="body1">Total</Typography>
           <Typography component="p" variant="h5">
-            {formatAmount(bill.total)}
+            {formatAmount(total)}
           </Typography>
         </Stack>
         {pendingCount > 0 && (
@@ -252,7 +271,10 @@ export default function PrintReceipt({
         <Rule />
 
         <Typography variant="overline" component="p" align="center">
-          BILL — NOT PAID
+          {status.paid ? "PAID" : "BILL — NOT PAID"}
+          {status.paid &&
+            isClient &&
+            ` · ${formatLocalDateTime(new Date(status.paidAt))}`}
         </Typography>
         <Typography variant="body2" align="center">
           Thank you

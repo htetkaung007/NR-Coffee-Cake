@@ -15,6 +15,7 @@ import {
   formatTimeRange,
 } from "./historyFormat";
 import type { CancelledRoundDetail, PaidBillDetail } from "./action";
+import PrintBillButton from "../PrintBillButton";
 
 interface HistoryDetailProps {
   tab: "paid" | "cancelled";
@@ -113,7 +114,8 @@ export default function HistoryDetail({
       >
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Typography component="h2" variant="h5" noWrap>
+            {/* Same as the Order detail page's bill title (BillContent). */}
+            <Typography component="h2" variant="h6" noWrap>
               {title}
             </Typography>
             {paid ? (
@@ -183,6 +185,13 @@ export default function HistoryDetail({
             {formatAmount(paid ? paid.total : cancelled?.amount ?? 0)}
           </Typography>
         </Stack>
+        {/* Paid bills only — a cancelled round was never a bill. Under
+           the total, the same spacing as BillContent's footer. */}
+        {paid && (
+          <Box sx={{ mt: 2 }}>
+            <PrintBillButton variant="full" billId={paid.id} />
+          </Box>
+        )}
       </Box>
     </Box>
   );

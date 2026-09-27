@@ -15,6 +15,7 @@ import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 
 import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { cartLineTotal, type LineAddon } from "@/app/lib/orderTotals";
 
 export interface CartLine {
   id: number;
@@ -24,13 +25,13 @@ export interface CartLine {
   price: number;
   /** The menu's photo (Menu.assetUrl); null/absent falls back to an icon. */
   imageUrl?: string | null;
-  /** Populated when the caller fetched addon links alongside the order
-   *  (both Counter's own cart and Table's draft do on initial load) —
-   *  optional because a couple of read paths (e.g. CartButton's status-
-   *  poll result) don't bother re-fetching addons for a cart the
-   *  customer can no longer edit anyway. */
-  addonNames?: string[];
-  addonIds?: number[];
+  /** The line's picked add-ons with their own price snapshots
+   *  (OrdersAddon.unitPrice) — always populated: the ids re-open
+   *  MenuDetailDialog with the previous selection pre-checked (names
+   *  aren't unique across categories the way ids are), the names show
+   *  under the item, and the prices are part of what the line costs
+   *  (see cartLineTotal — leaving them out under-charges the total). */
+  addons: LineAddon[];
   /** Customer's per-item instruction ("no onion"); null/absent = none. */
   note?: string | null;
 }
@@ -42,22 +43,11 @@ export interface Shortage {
   available: number;
 }
 
-/** Table QR's draft line shape (see TableDraftService) — the same
- *  fields as CartLine, but addonNames/addonIds are always populated
- *  (narrowed from optional to required) since the draft review screen
- *  (see DraftList.tsx) always needs both: contributorToken to decide
- *  whose card an item belongs to, addonNames because "no sugar" or
- *  "extra shot" is often the whole reason an item needs a second look
- *  before Send to Kitchen. */
+/** Table QR's draft line shape (see TableDraftService) — CartLine
+ *  plus contributorToken, which the draft review screen (see
+ *  DraftList.tsx) uses to decide whose card an item belongs to. */
 export interface DraftLine extends CartLine {
   contributorToken: string;
-  addonNames: string[];
-  /** Needed (not just addonNames) so tapping a line can re-open
-   *  MenuDetailDialog with the actual previous selection pre-checked —
-   *  addonNames alone can't tell the dialog WHICH addon ids to
-   *  pre-select, since names aren't guaranteed unique across categories
-   *  the way ids are. */
-  addonIds: number[];
 }
 
 /** Highest quantity a line can be raised to — the same cap the server's
@@ -71,7 +61,6 @@ const mutedTextSx = (theme: { palette: { decor: { mutedText: string } } }) => ({
 interface CartLineRowProps {
   line: CartLine;
   shortage?: Shortage;
-  addons?: string[];
   /** Whether the viewer can change this line: tap it to edit, the − / +
    *  stepper, and the ✕ to remove. A read-only row (someone else's item
    *  on a shared Table draft, or a cart that's already submitted) shows
@@ -91,7 +80,6 @@ interface CartLineRowProps {
 export function CartLineRow({
   line,
   shortage,
-  addons = [],
   actionable = false,
   disabled = false,
   onEdit,
@@ -165,9 +153,9 @@ export function CartLineRow({
           <Typography variant="body1" sx={{ fontWeight: 700, lineHeight: 1.35 }}>
             {line.menuName}
           </Typography>
-          {addons.length > 0 && (
+          {line.addons.length > 0 && (
             <Typography variant="body2" sx={mutedTextSx}>
-              + {addons.join(", ")}
+              + {line.addons.map((addon) => addon.name).join(", ")}
             </Typography>
           )}
           {line.note && (
@@ -226,7 +214,7 @@ export function CartLineRow({
           variant="body1"
           sx={{ fontWeight: 700, color: "error.main", whiteSpace: "nowrap" }}
         >
-          {(line.price * line.quantity).toLocaleString()} MMK
+          {cartLineTotal(line).toLocaleString()} MMK
         </Typography>
         {canRemove && (
           <IconButton
@@ -314,7 +302,6 @@ const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
             key={line.id}
             line={line}
             shortage={shortageByMenuId.get(line.menuId)}
-            addons={line.addonNames}
             actionable={editable}
             disabled={isPending}
             onEdit={onEdit ? () => onEdit(line) : undefined}

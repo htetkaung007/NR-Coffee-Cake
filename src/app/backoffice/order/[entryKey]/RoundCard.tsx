@@ -75,7 +75,7 @@ function Thumbnail({ imageUrl }: { imageUrl: string | null }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "background.default",
+        bgcolor: "background.paper",
         color: "text.secondary",
       }}
     >

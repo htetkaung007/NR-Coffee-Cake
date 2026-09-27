@@ -87,7 +87,9 @@ export default function MenuDetailHeader({
         </Typography>
       </Box>
 
-      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+      {/* subtitle2, not subtitle1: subtitle1 is now a bold title size
+         (1.2rem from md) and would rival the item name above it. */}
+      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
         {detail.price.toLocaleString()} MMK
       </Typography>
       {detail.description && (

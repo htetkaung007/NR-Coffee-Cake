@@ -176,13 +176,6 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
             fullWidth
             value={groupName}
             onChange={(event) => setGroupName(event.target.value)}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                bgcolor: "background.default",
-                borderRadius: 2.5,
-              },
-              "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-            }}
           />
           <Typography
             variant="caption"
@@ -230,11 +223,6 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
                   }
                   sx={{
                     flex: 2,
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "background.default",
-                      borderRadius: 2.5,
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
                   }}
                 />
                 <TextField
@@ -256,11 +244,6 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
                   sx={{
                     flex: 1,
                     minWidth: 140,
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "background.default",
-                      borderRadius: 2.5,
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
                   }}
                 />
                 <IconButton

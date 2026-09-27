@@ -16,7 +16,13 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { applyAddedLine } from "@/app/lib/orderTotals";
+import {
+  applyAddedLine,
+  cartLineTotal,
+  cartLinesTotal,
+  type LineAddon,
+} from "@/app/lib/orderTotals";
+import { toLineAddons } from "@/app/lib/roundLine";
 import MenuDetailDialog from "@/app/components/orderUI/MenuDetailDialog";
 import {
   startStaffOrderAction,
@@ -43,6 +49,9 @@ interface CartLine {
   menuName: string;
   quantity: number;
   price: number;
+  /** The line's add-ons with their own price snapshots — part of what
+   *  the line costs (see cartLineTotal). */
+  addons: LineAddon[];
 }
 
 interface StaffOrderClientProps {
@@ -78,7 +87,7 @@ export default function StaffOrderClient({
   >(null);
 
   const cartTotal = useMemo(
-    () => cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
+    () => cartLinesTotal(cart),
     [cart],
   );
   const menuListRef = useRef<HTMLDivElement>(null);
@@ -128,6 +137,7 @@ export default function StaffOrderClient({
         // The server's own snapshot, not this component's (possibly
         // stale) menu prop — see Order.unitPrice's own schema comment.
         price: result.data.unitPrice,
+        addons: toLineAddons(result.data.OrdersAddons),
       }),
     );
     return null;
@@ -278,7 +288,7 @@ export default function StaffOrderClient({
                         sx={{ alignItems: "center" }}
                       >
                         <Typography variant="body2">
-                          {(line.price * line.quantity).toLocaleString()} MMK
+                          {cartLineTotal(line).toLocaleString()} MMK
                         </Typography>
                         <IconButton
                           size="small"

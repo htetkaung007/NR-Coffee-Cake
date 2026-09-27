@@ -8,7 +8,7 @@ import {
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import { toCartLine } from "@/app/lib/roundLine";
+import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import CartPageClient from "@/app/components/orderUI/CartPageClient";
 import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
@@ -70,18 +70,7 @@ export default async function CartPage({
           locationId={locationId}
           shopName={shopName}
           myContributorToken={contributorToken}
-          initialDraftItems={draftItems.map((item) => ({
-            id: item.id,
-            menuId: item.menuId,
-            menuName: item.menu.name,
-            quantity: item.quantity,
-            price: item.unitPrice,
-            contributorToken: item.contributorToken ?? "",
-            addonNames: item.OrdersAddons.map((link) => link.addon.name),
-            addonIds: item.OrdersAddons.map((link) => link.addonId),
-            imageUrl: item.menu.assetUrl,
-            note: item.note,
-          }))}
+          initialDraftItems={draftItems.map(toDraftLine)}
           initialActiveRound={
             activeRound
               ? {
@@ -158,17 +147,7 @@ export default async function CartPage({
       // once the accepted round's next round has been started).
       hasEarlierRound={session.status === "CART" && bill.rounds.length > 0}
       initialShortages={shortages}
-      initialCart={session.orders.map((order) => ({
-        id: order.id,
-        menuId: order.menuId,
-        menuName: order.menu.name,
-        quantity: order.quantity,
-        price: order.unitPrice,
-        addonNames: order.OrdersAddons.map((link) => link.addon.name),
-        addonIds: order.OrdersAddons.map((link) => link.addonId),
-        imageUrl: order.menu.assetUrl,
-        note: order.note,
-      }))}
+      initialCart={session.orders.map(toCartLine)}
     />
   );
 }

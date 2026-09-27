@@ -45,7 +45,7 @@ export default function QuantityStepper({
           borderRadius: 999,
           border: "1px solid",
           borderColor: "divider",
-          bgcolor: "background.default",
+          bgcolor: "background.paper",
         }),
       }}
     >

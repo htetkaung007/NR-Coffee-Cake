@@ -55,7 +55,6 @@ export default function HistoryDetailOverlay({
             flexDirection: "column",
             width: SIDE_DRAWER_WIDTH,
             maxWidth: "100vw",
-            bgcolor: "background.default",
           },
         },
       }}

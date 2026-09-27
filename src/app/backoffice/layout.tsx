@@ -33,10 +33,15 @@ export default async function BackOfficeLayout({ children }: Props) {
             <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
               <Box
                 sx={{
-                  bgcolor: "background.paper",
+                  // The page surface — cards/panels on it use
+                  // background.paper (see getBoTheme's background roles).
+                  // Phones get no card at all (no fill, corners or
+                  // padding) — BackofficeShell's 12px gutter is the only
+                  // horizontal padding there.
+                  bgcolor: { xs: "transparent", sm: "background.default" },
                   width: "100%",
                   padding: { xs: 0, sm: 0, md: 3 },
-                  borderRadius: 3,
+                  borderRadius: { xs: 0, sm: 3 },
                 }}
               >
                 {children}

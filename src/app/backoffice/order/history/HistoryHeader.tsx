@@ -9,16 +9,15 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { alpha, type SxProps, type Theme } from "@mui/material/styles";
 import ClearIcon from "@mui/icons-material/Clear";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
 import { hoverCapableMedia, topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
 import DayNavigator from "./DayNavigator";
+import OrdersPageHeader from "../OrdersPageHeader";
 
 interface HistoryHeaderProps {
-  locationName: string | null;
   day: string;
   minDay: string;
   maxDay: string;
@@ -36,18 +35,40 @@ interface HistoryHeaderProps {
   isRefreshing: boolean;
 }
 
+/** Reloads the summary and the list (HistoryView's handleRefresh). */
+function RefreshButton({
+  onRefresh,
+  isRefreshing,
+  sx,
+}: {
+  onRefresh: () => void;
+  isRefreshing: boolean;
+  sx?: SxProps<Theme>;
+}) {
+  return (
+    <IconButton
+      aria-label="Refresh"
+      onClick={onRefresh}
+      disabled={isRefreshing}
+      sx={[{ width: 44, height: 44 }, ...(Array.isArray(sx) ? sx : [sx])]}
+    >
+      <RefreshIcon />
+    </IconButton>
+  );
+}
+
 const TABS: { value: "paid" | "cancelled"; label: string }[] = [
   { value: "paid", label: "Paid" },
   { value: "cancelled", label: "Cancelled" },
 ];
 
-/** Sticky (back+title+refresh, day navigator+search, Paid/Cancelled
- *  switch) — the summary cards and the list scroll away underneath it
- *  (DESIGN.md Rule 23: sticky filters, page scroll, no nested scroll
- *  box). Lives inside the left column of the lg+ two-column layout, so
- *  it only ever spans that column's own width, not the whole page. */
+/** Sticky (the shared Orders header with Refresh, day navigator+search,
+ *  Paid/Cancelled switch) — the summary cards and the list scroll away
+ *  underneath it (DESIGN.md Rule 23: sticky filters, page scroll, no
+ *  nested scroll box). Lives inside the left column of the lg+
+ *  two-column layout, so it only ever spans that column's own width,
+ *  not the whole page. */
 export default function HistoryHeader({
-  locationName,
   day,
   minDay,
   maxDay,
@@ -76,54 +97,35 @@ export default function HistoryHeader({
         position: "sticky",
         top: topBarHeight(theme),
         zIndex: 2,
-        bgcolor: "background.paper",
+        // Page surface (cream), so the white cards below read as cards.
+        bgcolor: "background.default",
         borderBottom: 1,
         borderColor: "divider",
-        pt: 1.5,
+        // Same top offset as the Order List's page padding, so the shared
+        // header sits in the same place on both routes.
+        pt: { xs: 1.5, sm: 2, md: 3 },
         pb: 1.5,
-        px: { xs: 1.5, sm: 2, md: 3 },
+        // xs: none of its own — BackofficeShell's gutter already applies.
+        px: { xs: 0, sm: 2, md: 3 },
       })}
     >
-      {/* Row 1 — back, title + subline, refresh. */}
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-        <IconButton
-          component={Link}
-          href="/backoffice/order"
-          aria-label="Back to orders"
-          sx={{ width: 44, height: 44 }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          {/* Sans (FONT_BODY) on purpose — h6 on this page would render
-             the theme's serif display font, meant for section headings
-             elsewhere, not this page's own title. h5 is bold+sans and
-             already used for money totals below/in the detail panel. */}
-          <Typography component="h1" variant="h5" noWrap>
-            Order history
-          </Typography>
-          <Typography variant="body2" color="text.secondary" noWrap>
-            Closed bills{locationName ? ` · ${locationName}` : ""}
-          </Typography>
-        </Box>
-        <IconButton
-          aria-label="Refresh"
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          sx={{ width: 44, height: 44 }}
-        >
-          <RefreshIcon />
-        </IconButton>
-      </Stack>
+      {/* Row 1 — the Orders header shared with the Order List. */}
+      <Box sx={{ mb: 2 }}>
+        <OrdersPageHeader />
+      </Box>
 
-      {/* Row 2 — day navigator and search side by side; search wraps to
-         its own full-width line below sm. */}
+      {/* Row 2 — the data controls: day navigator … search, refresh.
+         Phones: search takes its own full-width line below, and Refresh
+         stays on the day navigator's line, right-aligned. Refresh is
+         rendered once per layout (the other one display:none, so it
+         leaves the tab order — DESIGN.md Rule 10) instead of reordered
+         with CSS `order`, so keyboard order always matches what's on
+         screen. */}
       <Stack
         direction="row"
         useFlexGap
         sx={{
           alignItems: "center",
-          justifyContent: "space-between",
           flexWrap: "wrap",
           gap: 1.5,
           mb: 1.5,
@@ -139,12 +141,18 @@ export default function HistoryHeader({
           buildHref={buildDayHref}
         />
 
+        <RefreshButton
+          onRefresh={onRefresh}
+          isRefreshing={isRefreshing}
+          sx={{ ml: "auto", display: { xs: "inline-flex", sm: "none" } }}
+        />
+
         <TextField
           size="small"
           label="Table or order #"
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          sx={{ width: { xs: "100%", sm: 260 } }}
+          sx={{ width: { xs: "100%", sm: 260 }, ml: { sm: "auto" } }}
           slotProps={{
             input: {
               startAdornment: (
@@ -166,18 +174,32 @@ export default function HistoryHeader({
             },
           }}
         />
+
+        <RefreshButton
+          onRefresh={onRefresh}
+          isRefreshing={isRefreshing}
+          sx={{ display: { xs: "none", sm: "inline-flex" } }}
+        />
       </Stack>
 
       {/* Row 3 — Paid/Cancelled as one two-halved segmented control
-         (not underline Tabs), each half with its own count pill. */}
+         (not underline Tabs), each half with its own count pill. Full
+         width on phones (easier to tap); from sm only as wide as its
+         content and pushed to the right edge, lining up with the search
+         field above. A two-column 1fr grid keeps both halves the same
+         width — the wider label's — at either size. */}
       <Box
         role="tablist"
         aria-label="Order history tabs"
         sx={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          width: { xs: "100%", sm: "fit-content" },
+          ml: { sm: "auto" },
           border: 1,
           borderColor: "divider",
           borderRadius: 2,
+          bgcolor: "background.paper",
           p: 0.5,
           gap: 0.5,
         }}
@@ -192,12 +214,12 @@ export default function HistoryHeader({
               role="tab"
               aria-selected={selected}
               sx={(theme) => ({
-                flex: 1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 1,
                 minHeight: 44,
+                px: 1.5,
                 borderRadius: 1.5,
                 textDecoration: "none",
                 color: selected ? "primary.contrastText" : "text.primary",
@@ -211,9 +233,14 @@ export default function HistoryHeader({
                       : theme.palette.action.hover,
                   },
                 },
+                "&:focus-visible": {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
               })}
             >
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>
+              {/* Same variant as the Order List's [Open] [History]. */}
+              <Typography component="span" variant="button">
                 {item.label}
               </Typography>
               <Box
@@ -223,16 +250,19 @@ export default function HistoryHeader({
                   alignItems: "center",
                   justifyContent: "center",
                   minWidth: 22,
-                  height: 22,
+                  minHeight: 22,
                   px: 0.5,
                   borderRadius: "999px",
-                  bgcolor: selected
-                    ? alpha(theme.palette.primary.contrastText, 0.2)
-                    : theme.palette.action.selected,
+                  bgcolor: alpha(
+                    selected
+                      ? theme.palette.primary.contrastText
+                      : theme.palette.primary.main,
+                    selected ? 0.2 : 0.08,
+                  ),
                 })}
               >
                 <Typography
-                  variant="caption"
+                  variant="button"
                   component="span"
                   sx={{
                     color: selected ? "primary.contrastText" : "text.secondary",

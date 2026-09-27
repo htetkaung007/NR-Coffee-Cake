@@ -20,7 +20,7 @@ import {
   counterSessionCookieOptions,
 } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import { toCartLine } from "@/app/lib/roundLine";
+import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import {
   addToCartSchema,
@@ -272,15 +272,7 @@ export async function pollOrderStatusAction() {
   return {
     status: refreshed.status,
     total: orderLinesTotal(session.orders),
-    cart: session.orders.map((order: (typeof session.orders)[0]) => ({
-      id: order.id,
-      menuId: order.menuId,
-      menuName: order.menu.name,
-      quantity: order.quantity,
-      price: order.unitPrice,
-      imageUrl: order.menu.assetUrl,
-      note: order.note,
-    })),
+    cart: session.orders.map(toCartLine),
   };
 }
 
@@ -485,18 +477,7 @@ export async function pollTableAction(tableId: number, locationId: number) {
   return {
     authorized: true as const,
     myContributorToken: contributorToken,
-    draftItems: draftItems.map((item) => ({
-      id: item.id,
-      menuId: item.menuId,
-      menuName: item.menu.name,
-      quantity: item.quantity,
-      price: item.unitPrice,
-      contributorToken: item.contributorToken ?? "",
-      addonNames: item.OrdersAddons.map((link) => link.addon.name),
-      addonIds: item.OrdersAddons.map((link) => link.addonId),
-      imageUrl: item.menu.assetUrl,
-      note: item.note,
-    })),
+    draftItems: draftItems.map(toDraftLine),
     activeRound: activeRound
       ? {
           id: activeRound.id,

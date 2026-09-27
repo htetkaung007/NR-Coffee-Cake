@@ -78,7 +78,7 @@ export default function MenuImageUploader({
           border: "2px dashed",
           borderColor: imagePreviewUrl ? "divider" : "primary.main",
           borderRadius: { xs: 2.5, sm: 3 },
-          bgcolor: "background.default",
+          bgcolor: "background.paper",
         }}
       >
         {imagePreviewUrl ? (

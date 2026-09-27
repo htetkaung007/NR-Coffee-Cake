@@ -36,7 +36,7 @@ export default function BillBottomBar({
         px: 2,
         pt: 1,
         pb: `calc(${theme.spacing(1)} + env(safe-area-inset-bottom, 0px))`,
-        bgcolor: "background.default",
+        bgcolor: "background.paper",
         borderTop: 1,
         borderColor: "divider",
       })}

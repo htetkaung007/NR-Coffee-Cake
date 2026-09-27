@@ -90,10 +90,7 @@ export default async function OrderHistoryPage({
   const { locationId } = selectedLocation;
 
   const today = todayInShop();
-  const [location, firstOrderDay] = await Promise.all([
-    LocationService.getLocationById(locationId),
-    OrderHistoryService.getFirstOrderDay(locationId),
-  ]);
+  const firstOrderDay = await OrderHistoryService.getFirstOrderDay(locationId);
   const minDay = firstOrderDay ?? today;
   const day = resolveDay(dayParam, today, minDay);
   const tab = resolveTab(tabParam);
@@ -116,7 +113,6 @@ export default async function OrderHistoryPage({
       maxDay={today}
       today={today}
       shopTimezone={config.shopTimezone}
-      locationName={location?.name ?? null}
       initialSummary={{ paid: paidSummary, cancelled: cancelledSummary }}
       initialItems={firstPage.items}
       initialNextCursor={firstPage.nextCursor}

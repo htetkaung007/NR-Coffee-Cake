@@ -199,14 +199,24 @@ to our own variables/functions, not established library idioms.
   typography) get it by wrapping the label in
   `<Typography variant="..." component="span">`, not by duplicating
   the size in sx.
-- A few form-specific input/button sizes don't map to any Typography
-  variant (label font size, button min-height, image-action-button
-  sizing) — **planned pattern, not yet built**: no formTokens.ts exists
-  in src/ as of now. The intended design is a theme.formTokens custom
-  `declare module "@mui/material/styles"` augmentation in
-  formTokens.ts, read via `sx={(theme) => ({ fontSize:
-theme.formTokens.xxx })}`. Until it lands, these sizes are set ad hoc
-  in each component's own sx.
+- **Form fields have ONE look, defined in the theme — components must
+  not restyle inputs.** It lives in sharedThemeTokens.ts `components`
+  (MuiOutlinedInput / MuiInputBase / MuiInputLabel styleOverrides):
+  background.paper fill, 1px `palette.inputBorder`, theme shape radius,
+  8px-grid padding, a darker border on hover (gated with
+  hoverCapableMedia), a 2px primary.main focus ring on the notched
+  outline, error.main on error, a faint alpha(text.primary) fill when
+  disabled, text.secondary placeholders. `palette.inputBorder` is a
+  custom palette key (module augmentation in sharedThemeTokens.ts) that
+  BOTH getBoTheme and getOdTheme define, tuned to ≥ 3:1 against
+  background.paper and background.default in both modes. A TextField
+  or Select may set layout only (width, margins, flex, `size`) — never
+  its fill, border, radius, padding or font via `.MuiOutlinedInput-*`
+  / `.MuiInputBase-*` selectors. If a field genuinely needs a different
+  look, change the theme (or raise it), don't override locally.
+- Two border strengths: `divider` (soft separators, card/list borders)
+  and `inputBorder` (form-field boundaries). In the Backoffice both
+  are alpha() tints of primary, set in theme.ts.
 
 ## 11. Standing instruction for Claude
 

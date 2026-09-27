@@ -38,7 +38,8 @@ import NewOrderToast, {
   type NewOrderNotice,
 } from "./NewOrderToast";
 import OrderSoundToggle from "./OrderSoundToggle";
-import OrderSectionNav from "./OrderSectionNav";
+import OrdersPageHeader from "./OrdersPageHeader";
+import { entryTitleSx, moneySx, sectionHeadingSx } from "./orderTypography";
 
 interface OrderEntry {
   key: string;
@@ -202,7 +203,7 @@ function EntryCard({
                   fontSize="medium"
                   sx={{ color: sourceAccent, flexShrink: 0 }}
                 />
-                <Typography variant="body1" noWrap sx={{ fontWeight: 700 }}>
+                <Typography variant="body1" noWrap sx={entryTitleSx}>
                   {entry.title}
                 </Typography>
               </Stack>
@@ -246,7 +247,7 @@ function EntryCard({
             )}
 
             <Box sx={{ minHeight: 44, display: "flex", alignItems: "center" }}>
-              <Typography variant="body1" sx={{ fontWeight: 800 }}>
+              <Typography variant="body1" sx={moneySx}>
                 {entry.combinedTotal.toLocaleString()} MMK
               </Typography>
             </Box>
@@ -357,7 +358,7 @@ function SourceSection({
           id={headingId}
           component="h2"
           variant="body1"
-          sx={{ fontWeight: 800, color: "text.primary" }}
+          sx={{ ...sectionHeadingSx, color: "text.primary" }}
         >
           {label} ({entries.length})
         </Typography>
@@ -448,68 +449,49 @@ export default function OrderListView({ entries }: OrderListViewProps) {
   ];
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
-      <Stack
-        direction="row"
-        useFlexGap
-        sx={{
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 1.5,
-          mb: 2,
-        }}
-      >
-        <Stack
-          direction="row"
-          useFlexGap
-          sx={{ alignItems: "center", flexWrap: "wrap", gap: 1.5 }}
-        >
-          <Typography component="h1" variant="h6">
-            Orders
-          </Typography>
-          <OrderSectionNav active="open" />
-        </Stack>
-        {/* Always shown — even with nothing open, the cashier can turn
-            the sound on before the first order arrives. Wraps on narrow
-            screens rather than overflowing. */}
-        <Stack
-          direction="row"
-          useFlexGap
-          sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}
-        >
-          <Stack
-            direction="row"
-            useFlexGap
-            role="group"
-            aria-label="Filter orders by source"
-            sx={{ flexWrap: "wrap", gap: 1 }}
-          >
-            {filters.map(({ value, label, count }) => {
-              const selected = filter === value;
-              return (
-                <Chip
-                  key={value}
-                  label={`${label} (${count})`}
-                  clickable
-                  aria-pressed={selected}
-                  color={selected ? "primary" : "default"}
-                  variant={selected ? "filled" : "outlined"}
-                  onClick={() => setFilter(value)}
-                />
-              );
-            })}
-          </Stack>
-          <OrderSoundToggle
-            enabled={sound.enabled}
-            isLocked={sound.isLocked}
-            onToggle={sound.toggle}
-            volume={sound.volume}
-            onVolumeChange={sound.setVolume}
-            onTestBeep={sound.playTest}
-          />
-        </Stack>
-      </Stack>
+    // xs: no horizontal padding of its own — BackofficeShell's 12px
+    // gutter is the only one on phones (same as the History page).
+    <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2, md: 3 } }}>
+      <Box sx={{ mb: 2 }}>
+        {/* Actions always shown — even with nothing open, the cashier
+            can turn the sound on before the first order arrives. */}
+        <OrdersPageHeader
+          actions={
+            <>
+              <Stack
+                direction="row"
+                useFlexGap
+                role="group"
+                aria-label="Filter orders by source"
+                sx={{ flexWrap: "wrap", gap: 1 }}
+              >
+                {filters.map(({ value, label, count }) => {
+                  const selected = filter === value;
+                  return (
+                    <Chip
+                      key={value}
+                      label={`${label} (${count})`}
+                      clickable
+                      aria-pressed={selected}
+                      color={selected ? "primary" : "default"}
+                      variant={selected ? "filled" : "outlined"}
+                      onClick={() => setFilter(value)}
+                    />
+                  );
+                })}
+              </Stack>
+              <OrderSoundToggle
+                enabled={sound.enabled}
+                isLocked={sound.isLocked}
+                onToggle={sound.toggle}
+                volume={sound.volume}
+                onVolumeChange={sound.setVolume}
+                onTestBeep={sound.playTest}
+              />
+            </>
+          }
+        />
+      </Box>
 
       {needsApproval.length > 0 && (
         <Box
@@ -527,7 +509,7 @@ export default function OrderListView({ entries }: OrderListViewProps) {
               id="needs-approval-heading"
               component="h2"
               variant="body1"
-              sx={{ fontWeight: 800, color: "text.primary" }}
+              sx={{ ...sectionHeadingSx, color: "text.primary" }}
             >
               Needs approval ({needsApproval.length})
             </Typography>

@@ -30,7 +30,7 @@ export default function BillPanel({ children }: { children: React.ReactNode }) {
           border: 1,
           borderColor: "divider",
           borderRadius: 2,
-          bgcolor: "background.default",
+          bgcolor: "background.paper",
         };
       }}
     >

@@ -161,13 +161,18 @@ export class MenuStockService {
       .filter((shortage) => shortage.requested > shortage.available);
   }
 
-  /** Restock — plain increment, no race condition risk (no lower bound to race against). */
+  /** Restock — plain increment, no race condition risk (no lower bound
+   *  to race against). Takes a transaction client for the same reason
+   *  decrementStock does: its only caller (OrderSessionService.
+   *  cancelSession) gives stock back as part of cancelling a round, and
+   *  the two must commit or roll back together. */
   static async incrementStock(
+    tx: Prisma.TransactionClient,
     menuId: number,
     locationId: number,
     amount: number,
   ) {
-    return prisma.menuStock.upsert({
+    return tx.menuStock.upsert({
       where: { menuId_locationId: { menuId, locationId } },
       update: { quantity: { increment: amount } },
       create: { menuId, locationId, quantity: amount },

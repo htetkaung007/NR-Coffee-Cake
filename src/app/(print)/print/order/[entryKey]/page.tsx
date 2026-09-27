@@ -7,7 +7,7 @@ import {
 } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
 import { buildEntryBillFromSessions } from "@/app/lib/orderTotals";
-import PrintReceipt from "./PrintReceipt";
+import ReceiptLayout from "../../ReceiptLayout";
 
 function Message({ children }: { children: React.ReactNode }) {
   return (
@@ -50,13 +50,19 @@ export default async function PrintOrderPage({
     LocationService.getLocationById(selectedLocation.locationId),
   ]);
 
+  const bill = buildEntryBillFromSessions(entry.sessions);
+
   return (
-    <PrintReceipt
-      entryKey={entry.key}
+    <ReceiptLayout
+      backHref={`/backoffice/order/${entry.key}`}
+      backLabel="Back to order"
       shopName={shopName}
       locationName={location?.name ?? null}
       title={entry.title}
-      bill={buildEntryBillFromSessions(entry.sessions)}
+      rounds={bill.acceptedRounds}
+      total={bill.total}
+      pendingCount={bill.pendingRounds.length}
+      status={{ paid: false }}
     />
   );
 }

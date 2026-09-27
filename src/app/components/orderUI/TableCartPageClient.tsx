@@ -12,6 +12,8 @@ import {
 } from "@mui/material";
 
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { cartLinesTotal } from "@/app/lib/orderTotals";
+import { toLineAddons } from "@/app/lib/roundLine";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 import DraftList from "./DraftList";
 import CartButton, { CartButtonStatus } from "./CartButton";
@@ -112,10 +114,7 @@ export default function TableCartPageClient({
   // way the Counter cart does after Submit — rather than an empty page
   // with just a status chip.
   const showingRound = draftItems.length === 0 && activeRound !== null;
-  const roundTotal = roundItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
+  const roundTotal = cartLinesTotal(roundItems);
   // CartButton doubles as the status indicator (spinner while waiting,
   // a check once confirmed): the round's own status when one is in
   // flight, "waiting" from the moment Send to Kitchen is tapped, else
@@ -127,7 +126,7 @@ export default function TableCartPageClient({
       : "CART";
 
   const draftTotal = useMemo(
-    () => draftItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    () => cartLinesTotal(draftItems),
     [draftItems],
   );
   const hasShortage = shortages.length > 0;
@@ -141,7 +140,7 @@ export default function TableCartPageClient({
         tableId,
         line.id,
         next,
-        line.addonIds,
+        line.addons.map((addon) => addon.id),
         line.note ?? undefined,
       );
       if (!result.success) {
@@ -380,7 +379,7 @@ export default function TableCartPageClient({
           editingItem
             ? {
                 quantity: editingItem.quantity,
-                addonIds: editingItem.addonIds,
+                addonIds: editingItem.addons.map((addon) => addon.id),
                 note: editingItem.note ?? undefined,
               }
             : undefined
@@ -397,10 +396,18 @@ export default function TableCartPageClient({
           if (!result.success) {
             return result.error.message;
           }
+          // The server's saved line — its add-ons carry their own
+          // price snapshots, which the line total needs.
+          const saved = result.data;
           setDraftItems((current) =>
             current.map((item) =>
-              item.id === editingItem.id
-                ? { ...item, quantity, addonIds, note: note || null }
+              item.id === saved.id
+                ? {
+                    ...item,
+                    quantity: saved.quantity,
+                    addons: toLineAddons(saved.OrdersAddons),
+                    note: saved.note,
+                  }
                 : item,
             ),
           );

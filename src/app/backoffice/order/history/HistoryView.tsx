@@ -40,7 +40,6 @@ interface HistoryViewProps {
   maxDay: string;
   today: string;
   shopTimezone: string;
-  locationName: string | null;
   initialSummary: Summary;
   initialItems: (PaidBillListItem | CancelledRoundListItem)[];
   initialNextCursor: string | null;
@@ -67,7 +66,6 @@ export default function HistoryView({
   maxDay,
   today,
   shopTimezone,
-  locationName,
   initialSummary,
   initialItems,
   initialNextCursor,
@@ -230,7 +228,6 @@ export default function HistoryView({
         <Box sx={{ display: { lg: "flex" } }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <HistoryHeader
-              locationName={locationName}
               day={day}
               minDay={minDay}
               maxDay={maxDay}
@@ -248,7 +245,7 @@ export default function HistoryView({
               isRefreshing={isRefreshing}
             />
 
-            <Box sx={{ px: { xs: 1.5, sm: 2, md: 3 }, pt: 2 }}>
+            <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, pt: 2 }}>
               <SummaryCards
                 tab={tab}
                 paid={summary.paid}
