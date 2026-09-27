@@ -21,7 +21,7 @@ import {
   createMenuAction,
 } from "@/app/backoffice/menus/action";
 import { AddonGroupOption } from "../ConnectAddonGroupDialog";
-import OdMenuCard, { OdMenuCardData } from "../OdMenuCard";
+import MenuCard, { MenuCardData } from "../MenuCard";
 import { SurfaceThemeScope } from "@/app/lib/theme/ThemeModeProvider";
 import ConnectedAddonsSection from "./ConnectedAddonsSection";
 import MenuCategoryChips, { MenuCategoryOption } from "./MenuCategoryChips";
@@ -142,7 +142,7 @@ export default function MenuForm({
     });
   }
 
-  const previewData: OdMenuCardData = {
+  const previewData: MenuCardData = {
     name: name || "Dish name",
     description: description || "",
     price: Number(price) || 0,
@@ -348,7 +348,7 @@ export default function MenuForm({
             {/* The card fills whatever width it's given; the preview
                 keeps the customer grid's typical card size. */}
             <Box sx={{ maxWidth: 360, mx: "auto" }}>
-              <OdMenuCard item={previewData} />
+              <MenuCard item={previewData} />
             </Box>
           </SurfaceThemeScope>
         </Box>

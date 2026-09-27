@@ -5,7 +5,7 @@ import { Box, InputAdornment, Tab, Tabs, TextField } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 import MenuDetailDialog from "./MenuDetailDialog";
-import OdMenuCard from "../OdMenuCard";
+import MenuCard from "../MenuCard";
 
 export interface MenuOption {
   id: number;
@@ -64,7 +64,7 @@ interface MenuBrowserProps {
 const TOPBAR_HEIGHT = { xs: 56, sm: 64 };
 
 /**
- * Browsing surface only: search box, category tabs, the OdMenuCard
+ * Browsing surface only: search box, category tabs, the MenuCard
  * grid, and the detail dialog a card click opens. Cart contents and
  * the order-submit flow live outside this component (on their own
  * /cart route — see cart/page.tsx) — this is "pick something to add",
@@ -197,13 +197,13 @@ export default function MenuBrowser({
           // 390px phone gets (390 - 40 - 14) / 2 = 168px cards.
           gap: { xs: 1.75, sm: 2, md: 2.5 },
           p: { xs: 0.5, sm: 1, md: 3 },
-          // Cards fill their cell height (see OdMenuCard) so every card
+          // Cards fill their cell height (see MenuCard) so every card
           // in a row lines up.
           alignItems: "stretch",
         }}
       >
         {visibleMenus.map((menu) => (
-          <OdMenuCard
+          <MenuCard
             key={menu.id}
             item={{
               name: menu.name,

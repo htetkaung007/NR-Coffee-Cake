@@ -2,6 +2,26 @@ import { alpha, type Theme, type ThemeOptions } from "@mui/material/styles";
 import { inputLabelClasses } from "@mui/material/InputLabel";
 import { outlinedInputClasses } from "@mui/material/OutlinedInput";
 
+/** MenuCard's decorative colors — the storefront's "watercolor &
+ *  scribbles / printed paper" look. Both themes define them: the Od
+ *  theme with the storefront's colors, the Bo theme with calm values
+ *  (no watercolor, money in text.primary) for the staff New Order page,
+ *  so the one MenuCard follows whichever theme it renders under. */
+export interface DecorPalette {
+  /** Soft neutral blob behind the page and menu-card images. */
+  wash: string;
+  /** The second, colored blob on a menu-card image. */
+  blob: string;
+  /** Hand-drawn scribble line over menu-card images. */
+  scribble: string;
+  /** "Ink" outline + offset shadow on printed-style buttons. */
+  ink: string;
+  /** Muted warm text — the menu card's description. */
+  mutedText: string;
+  /** The menu card's price. */
+  price: string;
+}
+
 declare module "@mui/material/styles" {
   // The form-field border — stronger than `divider` (≥ 3:1 against both
   // background.paper and background.default, WCAG non-text contrast for
@@ -9,9 +29,11 @@ declare module "@mui/material/styles" {
   // shared input look below reads it.
   interface Palette {
     inputBorder: string;
+    decor: DecorPalette;
   }
   interface PaletteOptions {
     inputBorder?: string;
+    decor?: DecorPalette;
   }
 }
 
@@ -170,7 +192,7 @@ export const sharedThemeOptions: ThemeOptions = {
     },
 
     // Compact emphasized text — 14px / 600. Used by the menu card's name
-    // and price on mobile (OdMenuCard).
+    // and price on mobile (MenuCard).
     subtitle2: {
       fontFamily: FONT_BODY,
       fontWeight: 600,

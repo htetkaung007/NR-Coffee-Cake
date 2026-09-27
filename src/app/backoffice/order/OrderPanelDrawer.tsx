@@ -6,19 +6,22 @@ import { useTheme } from "@mui/material/styles";
 const SIDE_DRAWER_WIDTH = 400;
 
 /**
- * Below lg, "View bill" opens the bill here: a right-hand drawer on
- * tablets, a bottom sheet on phones (rounded top, grab handle, capped
- * at 85vh). The close (×) button is BillContent's own; Escape and a tap
- * outside close it too (MUI's defaults). MUI's own slide transition
- * only — nothing extra.
+ * Where OrderSidePanel's content opens below its breakpoint (from
+ * OrderBottomBar): a right-hand drawer on tablets, a bottom sheet on
+ * phones (rounded top, grab handle, capped at 85vh). The close (×)
+ * button is the content's own; Escape and a tap outside close it too
+ * (MUI's defaults). MUI's own slide transition only — nothing extra.
  */
-export default function BillDrawer({
+export default function OrderPanelDrawer({
   open,
   onClose,
+  label,
   children,
 }: {
   open: boolean;
   onClose: () => void;
+  /** Accessible name of the dialog, e.g. "Bill", "Current order". */
+  label: string;
   children: React.ReactNode;
 }) {
   const theme = useTheme();
@@ -32,7 +35,7 @@ export default function BillDrawer({
       slotProps={{
         paper: {
           role: "dialog",
-          "aria-label": "Bill",
+          "aria-label": label,
           sx: {
             display: "flex",
             flexDirection: "column",

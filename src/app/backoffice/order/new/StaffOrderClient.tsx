@@ -4,171 +4,379 @@ import { useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
-  Button,
-  Card,
-  CardActionArea,
-  Divider,
-  IconButton,
-  MenuItem,
-  Select,
+  Snackbar,
   Stack,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import {
-  applyAddedLine,
-  cartLineTotal,
-  cartLinesTotal,
-  type LineAddon,
-} from "@/app/lib/orderTotals";
+import { useTheme } from "@mui/material/styles";
+import { applyAddedLine, cartLinesTotal, sumQuantities } from "@/app/lib/orderTotals";
+import { countLabel, formatAmount } from "@/app/lib/orderFormat";
 import { toLineAddons } from "@/app/lib/roundLine";
-import MenuDetailDialog from "@/app/components/orderUI/MenuDetailDialog";
+import MenuDetailDialog, {
+  type MenuDetailEditingSelection,
+} from "@/app/components/orderUI/MenuDetailDialog";
+import OrderBottomBar from "../OrderBottomBar";
+import OrderPanelDrawer from "../OrderPanelDrawer";
+import OrderSidePanel from "../OrderSidePanel";
+import { moneySx } from "../orderTypography";
 import {
-  startStaffOrderAction,
   addStaffCartItemAction,
   removeStaffCartItemAction,
+  startStaffOrderAction,
   submitStaffOrderAction,
+  updateStaffCartItemAction,
 } from "./action";
-
-interface TableOption {
-  id: number;
-  name: string;
-  isCounter: boolean;
-}
-
-interface MenuOption {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-}
-
-interface CartLine {
-  id: number;
-  menuName: string;
-  quantity: number;
-  price: number;
-  /** The line's add-ons with their own price snapshots — part of what
-   *  the line costs (see cartLineTotal). */
-  addons: LineAddon[];
-}
+import StaffMenuGrid, { type StaffCategory, type StaffMenu } from "./StaffMenuGrid";
+import StaffOrderPanel, {
+  type StaffCartLine,
+  type StaffTable,
+} from "./StaffOrderPanel";
 
 interface StaffOrderClientProps {
   locationId: number | null;
-  tables: TableOption[];
-  menus: MenuOption[];
+  tables: StaffTable[];
+  menus: StaffMenu[];
+  /** Tabs after "All", in the server's order — never re-sorted. */
+  categories: StaffCategory[];
+}
+
+/** A saved line as the add / update actions return it. */
+interface SavedLine {
+  id: number;
+  menuId: number;
+  quantity: number;
+  unitPrice: number;
+  note: string | null;
+  OrdersAddons: { addonId: number; unitPrice: number; addon: { name: string } }[];
+}
+
+type Line = Omit<StaffCartLine, "isBusy">;
+
+/** A quick add (no add-ons, no note) merges into this line on the
+ *  server — the shared line-merge rule — so it's where a pending quick
+ *  add is shown while the request is in flight. */
+function isPlainLine(line: Line, menuId: number) {
+  return line.menuId === menuId && line.addons.length === 0 && !line.note;
 }
 
 /**
- * Reuses MenuDetailDialog as-is (same required-radio / optional-
- * checkbox addon UI a customer sees) — only the "what happens after
- * Add to Cart" wiring differs, via the onSubmit callback prop, so
- * the dialog itself needed zero changes for this second caller. Cart
- * state lives here (not in a cookie/OrderSession the way
- * CounterOrderClient's does at first) until a table is picked and
- * startStaffOrderAction creates the real session — a Manager
- * browsing the menu before choosing a table has nothing to attach a
- * session to yet.
+ * POS-style New Order page: the menu on the left, the current order
+ * always in view on the right from md up (a bottom bar + drawer / sheet
+ * below md — the same OrderSidePanel / OrderBottomBar / OrderPanelDrawer
+ * pieces as the order detail page's bill).
+ *
+ * Sessions: picking a table starts a staff session right away (as
+ * before). After "Send to kitchen" the table stays picked, and the next
+ * session starts with the next add — starting one straight away would
+ * point the table's active round at an empty cart.
+ *
+ * Every add reuses MenuDetailDialog for menus with add-on groups; a menu
+ * without any is added with one tap, optimistically (pendingAdds).
  */
 export default function StaffOrderClient({
   locationId,
   tables,
   menus,
+  categories,
 }: StaffOrderClientProps) {
-  const [tableId, setTableId] = useState<number | "">("");
-  const [sessionId, setSessionId] = useState<number | null>(null);
-  const [cart, setCart] = useState<CartLine[]>([]);
-  const [detailMenuId, setDetailMenuId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submittedOrderNumber, setSubmittedOrderNumber] = useState<
-    string | null
-  >(null);
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
-  const cartTotal = useMemo(
-    () => cartLinesTotal(cart),
-    [cart],
+  // Counter (takeaway) is picked when the page opens; its session starts
+  // with the first add (see ensureSession), like after a send.
+  const [tableId, setTableId] = useState<number | "">(
+    () => tables.find((table) => table.isCounter)?.id ?? "",
   );
-  const menuListRef = useRef<HTMLDivElement>(null);
+  const [cart, setCart] = useState<Line[]>([]);
+  // Quick adds still in flight, per menu id — shown right away.
+  const [pendingAdds, setPendingAdds] = useState<Record<number, number>>({});
+  const [busyLineIds, setBusyLineIds] = useState<Set<number>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [tablePrompt, setTablePrompt] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [sentMessage, setSentMessage] = useState<string | null>(null);
+  const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [dialog, setDialog] = useState<{
+    menuId: number;
+    lineId?: number;
+    editing?: MenuDetailEditingSelection;
+  } | null>(null);
 
-  async function handleTableChange(newTableId: number) {
-    setError(null);
-    setTableId(newTableId);
-    setCart([]);
-    setSubmittedOrderNumber(null);
+  const menuById = useMemo(
+    () => new Map(menus.map((menu) => [menu.id, menu])),
+    [menus],
+  );
+  const pickerRef = useRef<HTMLDivElement>(null);
 
-    const result = await startStaffOrderAction(newTableId);
-    if (!result.success) {
-      setError(result.error.message);
-      setSessionId(null);
-      return;
+  // The current staff session — a ref, so async flows started before a
+  // re-render (e.g. two quick taps) share it instead of racing.
+  const sessionIdRef = useRef<number | null>(null);
+  const sessionStart = useRef<{
+    tableId: number;
+    promise: Promise<number | null>;
+  } | null>(null);
+
+  /** The session to add to — started now if there isn't one yet (the
+   *  first add after a send). Null when it couldn't be started. */
+  function ensureSession(forTableId: number): Promise<number | null> {
+    if (sessionIdRef.current !== null) {
+      return Promise.resolve(sessionIdRef.current);
     }
-    setSessionId(result.data.id);
+    if (sessionStart.current?.tableId !== forTableId) {
+      const promise = startStaffOrderAction(forTableId).then((result) => {
+        // A different table was picked while this was starting.
+        if (sessionStart.current?.tableId !== forTableId) return null;
+        sessionStart.current = null;
+        if (!result.success) {
+          setError(result.error.message);
+          return null;
+        }
+        sessionIdRef.current = result.data.id;
+        return result.data.id;
+      });
+      sessionStart.current = { tableId: forTableId, promise };
+    }
+    return sessionStart.current.promise;
   }
 
-  async function handleAddToCart(
+  function toLine(saved: SavedLine): Line {
+    return {
+      id: saved.id,
+      menuId: saved.menuId,
+      menuName: menuById.get(saved.menuId)?.name ?? "Item",
+      quantity: saved.quantity,
+      // The server's own snapshot, not the (possibly stale) menu price.
+      price: saved.unitPrice,
+      addons: toLineAddons(saved.OrdersAddons),
+      note: saved.note,
+    };
+  }
+
+  function setBusy(lineId: number, busy: boolean) {
+    setBusyLineIds((current) => {
+      const next = new Set(current);
+      if (busy) next.add(lineId);
+      else next.delete(lineId);
+      return next;
+    });
+  }
+
+  function changePending(menuId: number, delta: number) {
+    setPendingAdds((current) => ({
+      ...current,
+      [menuId]: Math.max(0, (current[menuId] ?? 0) + delta),
+    }));
+  }
+
+  // What the panel shows: saved lines, plus quick adds still in flight —
+  // on top of the line they'll merge into, or as a temporary line.
+  const lines: StaffCartLine[] = useMemo(() => {
+    const shown: StaffCartLine[] = cart.map((line) => ({
+      ...line,
+      isBusy: busyLineIds.has(line.id),
+    }));
+    for (const [key, count] of Object.entries(pendingAdds)) {
+      if (count === 0) continue;
+      const menuId = Number(key);
+      const target = shown.find((line) => isPlainLine(line, menuId));
+      if (target) {
+        target.quantity += count;
+        target.isBusy = true;
+      } else {
+        const menu = menuById.get(menuId);
+        shown.push({
+          id: -menuId,
+          menuId,
+          menuName: menu?.name ?? "Item",
+          quantity: count,
+          price: menu?.price ?? 0,
+          addons: [],
+          note: null,
+          isBusy: true,
+        });
+      }
+    }
+    return shown;
+  }, [cart, pendingAdds, busyLineIds, menuById]);
+
+  const total = cartLinesTotal(lines);
+  const itemCount = sumQuantities(lines);
+  const isSaving =
+    busyLineIds.size > 0 || Object.values(pendingAdds).some((count) => count > 0);
+
+  function promptForTable() {
+    setTablePrompt(true);
+    if (isDesktop) {
+      pickerRef.current?.querySelector<HTMLElement>("[role=combobox]")?.focus();
+    } else {
+      setIsOrderOpen(true);
+    }
+  }
+
+  /** Same as before: picking a table clears the order and starts a new
+   *  staff session for that table. */
+  function handleTableChange(nextTableId: number) {
+    setError(null);
+    setTablePrompt(false);
+    setTableId(nextTableId);
+    setCart([]);
+    setPendingAdds({});
+    setBusyLineIds(new Set());
+    sessionIdRef.current = null;
+    sessionStart.current = null;
+    void ensureSession(nextTableId);
+  }
+
+  async function quickAdd(menu: StaffMenu) {
+    if (tableId === "") return promptForTable();
+    setError(null);
+    changePending(menu.id, 1);
+    const sessionId = await ensureSession(tableId);
+    if (sessionId === null) {
+      changePending(menu.id, -1);
+      return;
+    }
+    const result = await addStaffCartItemAction(sessionId, tableId, menu.id, 1);
+    changePending(menu.id, -1);
+    if (!result.success) {
+      setError(result.error.message);
+      return;
+    }
+    // Merged into an existing line, or a new one (see addItemToCart).
+    setCart((current) => applyAddedLine(current, toLine(result.data)));
+  }
+
+  function handleSelectMenu(menu: StaffMenu) {
+    if (menu.hasAddonGroups) {
+      if (tableId === "") return promptForTable();
+      setDialog({ menuId: menu.id });
+    } else {
+      void quickAdd(menu);
+    }
+  }
+
+  /** MenuDetailDialog's Add / Save: returns an error message or null. */
+  async function handleDialogSubmit(
     menuId: number,
     quantity: number,
     addonIds: number[],
+    note: string,
   ): Promise<string | null> {
-    if (!sessionId || tableId === "") {
-      return "Choose a table first.";
-    }
-    const menu = menus.find((item) => item.id === menuId);
-    if (!menu) return "This item is no longer available.";
+    if (tableId === "") return "Choose a table or Counter first.";
+    const sessionId = await ensureSession(tableId);
+    if (sessionId === null) return "Couldn't start the order. Try again.";
 
-    const result = await addStaffCartItemAction(
-      sessionId,
-      tableId,
-      menuId,
-      quantity,
-      addonIds,
-    );
-    if (!result.success) {
-      return result.error.message;
-    }
-    // An identical line may have been merged into (see addItemToCart).
+    const lineId = dialog?.lineId;
+    const result =
+      lineId === undefined
+        ? await addStaffCartItemAction(
+            sessionId,
+            tableId,
+            menuId,
+            quantity,
+            addonIds,
+            note,
+          )
+        : await updateStaffCartItemAction(
+            sessionId,
+            lineId,
+            quantity,
+            addonIds,
+            note,
+          );
+    if (!result.success) return result.error.message;
+
+    const saved = toLine(result.data);
     setCart((current) =>
-      applyAddedLine(current, {
-        id: result.data.id,
-        menuName: menu.name,
-        quantity: result.data.quantity,
-        // The server's own snapshot, not this component's (possibly
-        // stale) menu prop — see Order.unitPrice's own schema comment.
-        price: result.data.unitPrice,
-        addons: toLineAddons(result.data.OrdersAddons),
-      }),
+      lineId === undefined
+        ? applyAddedLine(current, saved)
+        : current.map((line) => (line.id === lineId ? saved : line)),
     );
     return null;
   }
 
-  async function handleRemove(orderId: number) {
-    if (!sessionId) return;
+  async function handleChangeQuantity(line: StaffCartLine, next: number) {
+    const sessionId = sessionIdRef.current;
+    if (sessionId === null || line.id < 0) return;
     setError(null);
-    const result = await removeStaffCartItemAction(sessionId, orderId);
+    setBusy(line.id, true);
+    setCart((current) =>
+      current.map((item) =>
+        item.id === line.id ? { ...item, quantity: next } : item,
+      ),
+    );
+    const result = await updateStaffCartItemAction(
+      sessionId,
+      line.id,
+      next,
+      line.addons.map((addon) => addon.id),
+      line.note ?? undefined,
+    );
+    setBusy(line.id, false);
     if (!result.success) {
+      setCart((current) =>
+        current.map((item) =>
+          item.id === line.id ? { ...item, quantity: line.quantity } : item,
+        ),
+      );
       setError(result.error.message);
-      return;
     }
-    setCart((current) => current.filter((line) => line.id !== orderId));
   }
 
-  async function handleSubmit() {
-    if (!sessionId) return;
-    setSubmitting(true);
+  async function handleRemove(line: StaffCartLine) {
+    const sessionId = sessionIdRef.current;
+    if (sessionId === null || line.id < 0) return;
+    setError(null);
+    const previous = cart;
+    setCart((current) => current.filter((item) => item.id !== line.id));
+    const result = await removeStaffCartItemAction(sessionId, line.id);
+    if (!result.success) {
+      setCart(previous);
+      setError(result.error.message);
+    }
+  }
+
+  function handleEdit(line: StaffCartLine) {
+    if (line.id < 0) return;
+    setDialog({
+      menuId: line.menuId,
+      lineId: line.id,
+      editing: {
+        quantity: line.quantity,
+        addonIds: line.addons.map((addon) => addon.id),
+        note: line.note ?? undefined,
+      },
+    });
+  }
+
+  async function handleSend() {
+    const sessionId = sessionIdRef.current;
+    if (sessionId === null) return;
+    setIsSending(true);
     setError(null);
     const result = await submitStaffOrderAction(sessionId);
-    setSubmitting(false);
+    setIsSending(false);
     if (!result.success) {
       setError(result.error.message);
       return;
     }
-    setSubmittedOrderNumber(result.data.orderNumber);
-    setSessionId(null);
+    setSentMessage(`Order ${result.data.orderNumber} sent to the kitchen`);
     setCart([]);
-    setTableId("");
+    // Keep the table picked for the next order; its session starts with
+    // the next add (see ensureSession).
+    sessionIdRef.current = null;
+    setIsOrderOpen(false);
   }
+
+  const sendBlockedReason =
+    tableId === ""
+      ? "Choose a table or Counter first"
+      : lines.length === 0
+        ? "Add items to start an order"
+        : isSaving
+          ? "Saving items…"
+          : null;
 
   if (locationId === null) {
     return (
@@ -180,196 +388,95 @@ export default function StaffOrderClient({
     );
   }
 
+  const renderPanel = (inDrawer: boolean) => (
+    <StaffOrderPanel
+      tables={tables}
+      tableId={tableId}
+      onTableChange={handleTableChange}
+      tablePrompt={tablePrompt}
+      pickerRef={inDrawer ? undefined : pickerRef}
+      autoFocusPicker={inDrawer && tablePrompt}
+      lines={lines}
+      total={total}
+      onEdit={handleEdit}
+      onChangeQuantity={(line, next) => void handleChangeQuantity(line, next)}
+      onRemove={(line) => void handleRemove(line)}
+      error={error}
+      onDismissError={() => setError(null)}
+      sendBlockedReason={sendBlockedReason}
+      isSending={isSending}
+      onSend={() => void handleSend()}
+      onClose={inDrawer ? () => setIsOrderOpen(false) : undefined}
+    />
+  );
+
   return (
-    <Box
-      sx={{
-        p: 3,
-        maxWidth: 560,
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        New Order
-      </Typography>
-
-      <Select
-        value={tableId}
-        displayEmpty
-        onChange={(event) => handleTableChange(Number(event.target.value))}
-        sx={{ mb: 3, minWidth: 240 }}
-      >
-        <MenuItem value="" disabled>
-          Choose a table
-        </MenuItem>
-        {tables.map((table) => (
-          <MenuItem key={table.id} value={table.id}>
-            {table.name}
-            {table.isCounter ? " (Counter)" : ""}
-          </MenuItem>
-        ))}
-      </Select>
-
-      {submittedOrderNumber && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Order {submittedOrderNumber} sent to the kitchen.
-        </Alert>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {sessionId && (
-        <Box
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
-        >
-          <Box ref={menuListRef} sx={{ flex: 1, overflowY: "auto", minHeight: 0, mb: 1.5 }}>
-            <Stack spacing={1.5}>
-              {menus.map((menu) => (
-                <Card key={menu.id} variant="outlined">
-                  <CardActionArea
-                    onClick={() => setDetailMenuId(menu.id)}
-                    sx={{
-                      p: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 2,
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body1">{menu.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {menu.price.toLocaleString()} MMK
-                      </Typography>
-                    </Box>
-                    <Button size="small" variant="outlined" component="span">
-                      Add
-                    </Button>
-                  </CardActionArea>
-                </Card>
-              ))}
-            </Stack>
-          </Box>
-
-          <Box
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 3,
-              p: 1.5,
-            }}
-          >
-            {cart.length > 0 && (
-              <Box sx={{ mb: 1.5 }}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 700 }}>
-                  This order
-                </Typography>
-                <Stack spacing={0.5}>
-                  {cart.map((line) => (
-                    <Stack
-                      key={line.id}
-                      direction="row"
-                      sx={{
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {line.quantity} × {line.menuName}
-                      </Typography>
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ alignItems: "center" }}
-                      >
-                        <Typography variant="body2">
-                          {cartLineTotal(line).toLocaleString()} MMK
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          aria-label="Remove item"
-                          onClick={() => handleRemove(line.id)}
-                        >
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    </Stack>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-
-            <Box>
-              <Divider sx={{ mb: 1.5 }} />
-              <Stack
-                direction="row"
-                sx={{ justifyContent: "space-between", mb: 1.5 }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Total Price ({cart.length}{" "}
-                  {cart.length === 1 ? "item" : "items"})
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {cartTotal.toLocaleString()} MMK
-                </Typography>
-              </Stack>
-              <Stack direction="row" spacing={1}>
-                <Button
-                  variant="outlined"
-                  sx={{
-                    flex: 1,
-                    whiteSpace: "nowrap",
-                    transition:
-                      "transform 0.15s ease, background-color 0.15s ease",
-                    [hoverCapableMedia]: {
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        bgcolor: "action.hover",
-                      },
-                    },
-                  }}
-                  onClick={() =>
-                    menuListRef.current?.scrollTo({ top: 0, behavior: "smooth" })
-                  }
-                >
-                  Add More
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{
-                    flex: 2,
-                    whiteSpace: "nowrap",
-                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
-                    [hoverCapableMedia]: {
-                      "&:hover": { transform: "translateY(-1px)", boxShadow: 4 },
-                    },
-                  }}
-                  disabled={submitting || cart.length === 0}
-                  onClick={handleSubmit}
-                >
-                  Send to Kitchen
-                </Button>
-              </Stack>
-            </Box>
-          </Box>
+    <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, pt: { xs: 1.5, sm: 2, md: 3 } }}>
+      <Stack direction="row" useFlexGap sx={{ gap: 3, alignItems: "flex-start" }}>
+        <Box sx={{ flex: 1, minWidth: 0, pb: { md: 3 } }}>
+          <Typography component="h1" variant="h6" sx={{ mb: 2 }}>
+            New Order
+          </Typography>
+          <StaffMenuGrid
+            menus={menus}
+            categories={categories}
+            onSelect={handleSelectMenu}
+          />
         </Box>
-      )}
+
+        <OrderSidePanel
+          label="Current order"
+          showFrom="md"
+          width={{ md: 360, lg: 400 }}
+          fullHeight
+        >
+          {renderPanel(false)}
+        </OrderSidePanel>
+      </Stack>
+
+      <OrderBottomBar
+        hideFrom="md"
+        actionLabel="View order"
+        onAction={() => setIsOrderOpen(true)}
+      >
+        {/* Two lines, never truncated — money is never cut off. */}
+        <Typography variant="body2" color="text.secondary">
+          {countLabel(itemCount, "item", "items")}
+        </Typography>
+        <Typography variant="body1" sx={{ ...moneySx, color: "text.primary" }}>
+          {formatAmount(total)}
+        </Typography>
+      </OrderBottomBar>
+
+      <OrderPanelDrawer
+        label="Current order"
+        // Never over the side panel if the window widens while it's open.
+        open={isOrderOpen && !isDesktop}
+        onClose={() => setIsOrderOpen(false)}
+      >
+        {renderPanel(true)}
+      </OrderPanelDrawer>
 
       <MenuDetailDialog
-        open={detailMenuId !== null}
-        menuId={detailMenuId}
+        open={dialog !== null}
+        menuId={dialog?.menuId ?? null}
         locationId={locationId}
-        canOrder={sessionId !== null}
-        onClose={() => setDetailMenuId(null)}
-        onSubmit={handleAddToCart}
-        // addStaffCartItemAction has no note parameter (yet) — hide the
-        // field rather than let a typed note be silently dropped.
-        allowNote={false}
+        canOrder={tableId !== ""}
+        editing={dialog?.editing}
+        onClose={() => setDialog(null)}
+        onSubmit={handleDialogSubmit}
+      />
+
+      <Snackbar
+        open={sentMessage !== null}
+        autoHideDuration={4000}
+        onClose={() => setSentMessage(null)}
+        message={sentMessage}
+        anchorOrigin={
+          isDesktop
+            ? { vertical: "bottom", horizontal: "left" }
+            : { vertical: "top", horizontal: "center" }
+        }
       />
     </Box>
   );

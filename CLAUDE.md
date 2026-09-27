@@ -176,8 +176,11 @@ to our own variables/functions, not established library idioms.
   folder path.** "Customer-facing" means anything under
   (storefront)/, anything under components/orderUI/, AND any other
   component serving the customer-facing order flow even outside those
-  folders (the clearest signal is an "Od"-prefixed name, e.g.
-  OdMenuCard.tsx — trace actual usage, don't assume by directory).
+  folders (an "Od"-prefixed name is one signal, but trace actual
+  usage, don't assume by directory). A component
+  shared by both surfaces (e.g. components/MenuCard.tsx, the menu card
+  on the customer menu AND the staff New Order page) gets no prefix and
+  takes its colors from whichever theme it renders under.
   Backoffice-only code uses getBoTheme().
 - Components read colors via MUI's useTheme() / the sx callback's
   theme argument — never a literal hex string, and never

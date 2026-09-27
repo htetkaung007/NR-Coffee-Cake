@@ -38,11 +38,6 @@ interface MenuDetailDialogProps {
     note: string,
   ) => Promise<string | null>;
   editing?: MenuDetailEditingSelection;
-  /** Show the "Special instructions" field. On by default; a caller
-   *  whose onSubmit can't store a note (e.g. the staff order flow, whose
-   *  actions don't take one yet) turns it off so the field isn't
-   *  offered only to have what's typed silently dropped. */
-  allowNote?: boolean;
 }
 
 /**
@@ -76,7 +71,6 @@ export default function MenuDetailDialog({
   onClose,
   onSubmit,
   editing,
-  allowNote = true,
 }: MenuDetailDialogProps) {
   const [fetchedForMenuId, setFetchedForMenuId] = useState<number | null>(null);
   const [detail, setDetail] = useState<MenuDetail | null>(null);
@@ -239,7 +233,7 @@ export default function MenuDetailDialog({
         onToggleOptional={toggleOptional}
         quantity={quantityControl}
         isSoldOut={isSoldOut}
-        showNote={allowNote && canOrder && !isSoldOut}
+        showNote={canOrder && !isSoldOut}
         note={note}
         onNoteChange={setNote}
         error={error}

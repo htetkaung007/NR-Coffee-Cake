@@ -12,7 +12,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import CheckIcon from "@mui/icons-material/Check";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
+import MenuThumb from "@/app/components/MenuThumb";
 import StatusChip, { StatusDot } from "./StatusChip";
 import { countLabel, formatClockTime } from "@/app/lib/orderFormat";
 
@@ -45,41 +45,24 @@ const QTY_COLUMN = "48px";
 const WIDE_COLUMNS = `minmax(0, 3fr) minmax(0, 2fr) ${QTY_COLUMN}`;
 const THUMBNAIL_SIZE = 40;
 
-/** The menu item's own photo, or one neutral icon when it has none. */
-function Thumbnail({ imageUrl }: { imageUrl: string | null }) {
-  const frame = {
-    width: THUMBNAIL_SIZE,
-    height: THUMBNAIL_SIZE,
-    flexShrink: 0,
-    borderRadius: 1,
-    border: 1,
-    borderColor: "divider",
-  };
-  if (imageUrl) {
-    // Decorative: the item's name is right next to it.
-    return (
-      <Box
-        component="img"
-        src={imageUrl}
-        alt=""
-        loading="lazy"
-        sx={{ ...frame, display: "block", objectFit: "cover" }}
-      />
-    );
-  }
+/** The menu item's own photo, or a first-letter tile when it has none
+ *  or it fails to load (MenuThumb). Decorative: the item's name is right
+ *  next to it. */
+function Thumbnail({ name, imageUrl }: { name: string; imageUrl: string | null }) {
   return (
     <Box
-      aria-hidden
       sx={{
-        ...frame,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        width: THUMBNAIL_SIZE,
+        height: THUMBNAIL_SIZE,
+        flexShrink: 0,
+        overflow: "hidden",
+        borderRadius: 1,
+        border: 1,
+        borderColor: "divider",
         bgcolor: "background.paper",
-        color: "text.secondary",
       }}
     >
-      <RestaurantMenuIcon fontSize="small" />
+      <MenuThumb name={name} imageUrl={imageUrl} />
     </Box>
   );
 }
@@ -110,7 +93,7 @@ function LineRow({ line }: { line: RoundLine }) {
         spacing={{ xs: 1, sm: 2 }}
         sx={{ gridArea: "item", alignItems: "center", minWidth: 0 }}
       >
-        <Thumbnail imageUrl={line.imageUrl} />
+        <Thumbnail name={line.menuName} imageUrl={line.imageUrl} />
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="body1">{line.menuName}</Typography>
           {line.variantText && (

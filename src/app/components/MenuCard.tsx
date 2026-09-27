@@ -10,8 +10,9 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import MenuThumb from "./MenuThumb";
 
-export interface OdMenuCardData {
+export interface MenuCardData {
   name: string;
   description: string;
   price: number;
@@ -21,14 +22,18 @@ export interface OdMenuCardData {
   isAvailable: boolean;
 }
 
-interface OdMenuCardProps {
-  item: OdMenuCardData;
+interface MenuCardProps {
+  item: MenuCardData;
   /** Optional — tapping the card opens the caller's own flow (e.g.
    *  MenuDetailDialog for addon selection). Left undefined in MenuForm's
    *  live-preview usage, where the card is just a static preview: with
    *  no handler it renders as a plain, non-interactive card (no button
    *  semantics, no hover or pressed effects). */
   onAddToCart?: () => void;
+  /** Show the description + "See more" row (default). The staff New
+   *  Order page turns it off for a denser grid; the price + "+" row
+   *  stays either way. */
+  showDescription?: boolean;
 }
 
 /** How faded an unavailable (out-of-stock) card's photo and text are. */
@@ -37,12 +42,10 @@ const OUT_OF_STOCK_OPACITY = 0.5;
 /** A card shows the low-stock chip once this few (or fewer) are left. */
 const LOW_STOCK_THRESHOLD = 5;
 
-const FALLBACK_IMAGE =
-  "http://localhost:9000/nrrestaurant/menu/2-1785697412707.webp";
-
 /** Watercolor & Scribbles aesthetic — a couple of soft, blurred color
  *  blobs plus a light scribble line sitting behind the image, with colors
- *  read from the Od theme (secondary + palette.decor). Purely decorative:
+ *  read from palette.decor (the Bo theme sets them transparent, so the
+ *  staff page gets a plain image). Purely decorative:
  *  pointerEvents "none" and z-indexed under the real content so it never
  *  blocks clicks. */
 function WatercolorScribbleOverlay() {
@@ -61,7 +64,7 @@ function WatercolorScribbleOverlay() {
         opacity: 0.55,
         mixBlendMode: "multiply",
         background: `
-          radial-gradient(circle at 12% 18%, ${palette.secondary.main} 0%, transparent 40%),
+          radial-gradient(circle at 12% 18%, ${palette.decor.blob} 0%, transparent 40%),
           radial-gradient(circle at 88% 78%, ${palette.decor.wash} 0%, transparent 45%)
         `,
       }}
@@ -81,12 +84,14 @@ function WatercolorScribbleOverlay() {
 }
 
 /**
- * Customer-facing menu card — ONE compact layout at every width, top to
- * bottom: image (1.45:1, space always reserved) → name (one line) →
- * description + "See more" on one line → price with a round "+" on the
- * right. Used both for the backoffice's new-menu live preview (no
- * onAddToCart — a static, non-interactive card) and the customer-facing
- * order grid (the whole card is ONE button that opens MenuDetailDialog).
+ * The menu card — ONE compact layout at every width, top to bottom:
+ * image (1.45:1, space always reserved; a first-letter tile when there's
+ * no image or it fails to load) → name (one line) → description + "See
+ * more" on one line → price with a round "+" on the right. Used by the
+ * customer order grid and the staff New Order page (the whole card is
+ * ONE button — onAddToCart) and by the backoffice's new-menu live
+ * preview (no onAddToCart — a static, non-interactive card). Its colors
+ * come from whichever theme it renders under (see DecorPalette).
  *
  * The card fills its grid cell's height and its text area grows to
  * fill, so the price row sits at the bottom and lines up across a row.
@@ -94,7 +99,11 @@ function WatercolorScribbleOverlay() {
  * markup stays valid, and the "+" is decoration only — never a second
  * interactive element inside the card's own.
  */
-export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
+export default function MenuCard({
+  item,
+  onAddToCart,
+  showDescription = true,
+}: MenuCardProps) {
   const { palette } = useTheme();
   const isAvailable = item.stockQuantity > 0 && item.isAvailable;
   // Only worth saying "Only 3 left" about something that can still be
@@ -132,15 +141,12 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
             opacity: isAvailable ? 1 : OUT_OF_STOCK_OPACITY,
           }}
         >
-          <Box
-            component="img"
-            className="odmenucard-image"
-            src={item.imageUrl || FALLBACK_IMAGE}
+          <MenuThumb
+            name={item.name}
+            imageUrl={item.imageUrl}
             alt={item.name}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
+            imageClassName="menucard-image"
+            imageSx={{
               transition: "transform 0.3s ease",
               position: "relative",
               zIndex: 0,
@@ -229,46 +235,49 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
            description shrinks and gets the ellipsis; "See more" can't
            shrink, so it's always fully visible. The row is rendered
            even with no description, so every card is the same height. */}
-        <Box
-          component="span"
-          sx={{ display: "flex", alignItems: "baseline", columnGap: 0.5 }}
-        >
-          <Typography
+        {showDescription && (
+          <Box
             component="span"
-            variant="body2"
-            sx={{
-              flex: 1,
-              minWidth: 0,
-              // Muted warm brown (softer than the neutral grey
-              // text.secondary), regular weight.
-              color: palette.decor.mutedText,
-              fontWeight: 400,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
+            sx={{ display: "flex", alignItems: "baseline", columnGap: 0.5 }}
           >
-            {item.description}
-          </Typography>
-          {/* A hint only — plain text, the whole card is the one
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                // Muted warm brown (softer than the neutral grey
+                // text.secondary), regular weight.
+                color: palette.decor.mutedText,
+                fontWeight: 400,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {item.description}
+            </Typography>
+            {/* A hint only — plain text, the whole card is the one
              button. Nothing more to see without a description, and
              nothing to open for an item that can't be ordered — in
              either case it's invisible but still takes its space, so
              the row is the same on every card. */}
-          <Typography
-            component="span"
-            variant="body2"
-            aria-hidden
-            sx={{
-              flexShrink: 0,
-              color: "primary.main",
-              fontWeight: 600,
-              visibility: isAvailable && hasDescription ? "visible" : "hidden",
-            }}
-          >
-            See more
-          </Typography>
-        </Box>
+            <Typography
+              component="span"
+              variant="body2"
+              aria-hidden
+              sx={{
+                flexShrink: 0,
+                color: "primary.main",
+                fontWeight: 600,
+                visibility:
+                  isAvailable && hasDescription ? "visible" : "hidden",
+              }}
+            >
+              See more
+            </Typography>
+          </Box>
+        )}
 
         <Box
           component="span"
@@ -290,7 +299,7 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
             sx={{
               minWidth: 0,
               fontWeight: 700,
-              color: "error.main",
+              color: palette.decor.price,
               // A freak-long price gives way (ellipsis) before the "+"
               // could be pushed out of a narrow card.
               whiteSpace: "nowrap",
@@ -308,7 +317,7 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
             <Box
               component="span"
               aria-hidden="true"
-              className="odmenucard-plus"
+              className="menucard-plus"
               sx={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -357,7 +366,7 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
         borderColor: "divider",
         borderRadius: 3,
         // Rule 10 — no hardcoded hex in sx; every color here comes from
-        // the Od theme (see odTheme.ts).
+        // the theme it renders under (odTheme.ts / theme.ts).
         ...(isInteractive && {
           // Explicit properties only. Pressed feedback is quick and
           // applies on touch too; the hover lift (and the "+" reacting
@@ -365,8 +374,8 @@ export default function OdMenuCard({ item, onAddToCart }: OdMenuCardProps) {
           transition: "transform 120ms ease-out, box-shadow 200ms ease-out",
           [hoverCapableMedia]: {
             "&:hover": { transform: "translateY(-2px)", boxShadow: 3 },
-            "&:hover .odmenucard-image": { transform: "scale(1.08)" },
-            "&:hover .odmenucard-plus": {
+            "&:hover .menucard-image": { transform: "scale(1.08)" },
+            "&:hover .menucard-plus": {
               bgcolor: "primary.dark",
               boxShadow: `1px 1px 0 ${palette.decor.ink}`,
               transform: "translate(1px, 1px)",

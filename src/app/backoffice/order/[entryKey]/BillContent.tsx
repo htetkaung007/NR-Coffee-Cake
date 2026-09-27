@@ -7,6 +7,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import type { EntryBill } from "@/app/lib/orderTotals";
 import { countLabel, formatAmount } from "@/app/lib/orderFormat";
+import BillTotal from "../BillTotal";
 import PrintBillButton from "../PrintBillButton";
 import RoundSection from "./RoundSection";
 
@@ -119,20 +120,7 @@ export default function BillContent({
       </Box>
 
       <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            mb: 2,
-          }}
-        >
-          <Typography variant="body1">Total</Typography>
-          <Typography component="p" variant="h5">
-            {formatAmount(bill.total)}
-          </Typography>
-        </Stack>
+        <BillTotal label="Total" amount={bill.total} sx={{ mb: 2 }} />
         {/* Print beside Mark as paid from sm up, above it on phones.
             Printing never settles anything — Mark as paid stays the
             primary (and only) payment action. */}

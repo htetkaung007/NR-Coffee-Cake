@@ -31,7 +31,7 @@ function buildMenuOptions(
     imageUrl: menu.imageUrl,
     stockQuantity: menu.stockQuantity,
     // getMenusForLocation exposes isManuallyDisabled (staff toggle),
-    // not isAvailable directly — OdMenuCard's own isAvailable check
+    // not isAvailable directly — MenuCard's own isAvailable check
     // ANDs this with stockQuantity > 0, matching
     // getMenuDetailForCustomer's `!isManuallyDisabled` definition.
     isAvailable: !menu.isManuallyDisabled,
@@ -97,7 +97,7 @@ export default async function MenuPage({
           initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
           activeRoundId={activeRound?.id ?? null}
           menus={buildMenuOptions(menuData.menus)}
-          categories={menuData.categories}
+          categories={menuData.categories.map((category) => category.name)}
         />
       );
     }
@@ -134,7 +134,7 @@ export default async function MenuPage({
         session?.orders.map(toCartLine) ?? []
       }
       menus={buildMenuOptions(menuData.menus)}
-      categories={menuData.categories}
+      categories={menuData.categories.map((category) => category.name)}
     />
   );
 }

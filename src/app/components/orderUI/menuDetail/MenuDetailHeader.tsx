@@ -1,4 +1,5 @@
 import { Box, Typography } from "@mui/material";
+import MenuThumb from "@/app/components/MenuThumb";
 
 import { SHEET_TEXT } from "./sheetText";
 import type { MenuDetail, MenuDetailVariant } from "./types";
@@ -22,18 +23,20 @@ export default function MenuDetailHeader({
       <Box>
         {detail.imageUrl && (
           <Box
-            component="img"
-            src={detail.imageUrl}
-            alt={detail.name}
             sx={{
-              display: "block",
               width: "100%",
               height: 160,
               borderRadius: 3,
-              objectFit: "cover",
+              overflow: "hidden",
               mb: 1.5,
             }}
-          />
+          >
+            <MenuThumb
+              name={detail.name}
+              imageUrl={detail.imageUrl}
+              alt={detail.name}
+            />
+          </Box>
         )}
         <Typography
           variant="h6"
@@ -46,7 +49,9 @@ export default function MenuDetailHeader({
           sx={{
             fontWeight: 700,
             fontSize: SHEET_TEXT.price,
-            color: "error.main",
+            // The theme's menu price color: the storefront's red, or
+            // text.primary under the Backoffice theme (staff New Order).
+            color: "decor.price",
           }}
         >
           {detail.price.toLocaleString()} MMK
@@ -69,18 +74,21 @@ export default function MenuDetailHeader({
       <Box sx={{ textAlign: "center" }}>
         {detail.imageUrl && (
           <Box
-            component="img"
-            src={detail.imageUrl}
-            alt={detail.name}
             sx={{
               width: 120,
               height: 120,
               borderRadius: 2,
-              objectFit: "cover",
+              overflow: "hidden",
               mx: "auto",
               mb: 1,
             }}
-          />
+          >
+            <MenuThumb
+              name={detail.name}
+              imageUrl={detail.imageUrl}
+              alt={detail.name}
+            />
+          </Box>
         )}
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
           {detail.name}

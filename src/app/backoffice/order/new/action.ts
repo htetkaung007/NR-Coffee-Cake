@@ -1,9 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { toActionResult, toSafeResult } from "@/app/lib/actionHelper";
+import {
+  toActionResult,
+  toSafeResult,
+  validateWith,
+} from "@/app/lib/actionHelper";
 import { AppError } from "@/app/lib/errors";
 import { getSessionContext } from "@/app/lib/session";
+import {
+  staffAddCartItemSchema,
+  staffUpdateCartItemSchema,
+  type StaffAddCartItemInput,
+  type StaffUpdateCartItemInput,
+} from "@/app/lib/schemas/staffOrderSchema";
 import {
   OrderSessionCartService,
   OrderSessionService,
@@ -39,24 +49,21 @@ export async function startStaffOrderAction(tableId: number) {
 }
 
 const safeAddStaffCartItem = toSafeResult(
-  async (input: {
-    sessionId: number;
-    tableId: number;
-    menuId: number;
-    quantity: number;
-    addonIds: number[];
-  }) => {
+  async (input: StaffAddCartItemInput) => {
     const { userId } = await getSessionContext();
     if (!userId) {
       throw new AppError("You must be signed in.", "UNAUTHORIZED");
     }
 
+    // The same cart method (and so the same note handling and line-merge
+    // rule) the customer flow uses.
     return OrderSessionCartService.addItemToCart(
       input.sessionId,
       input.tableId,
       input.menuId,
       input.quantity,
       input.addonIds,
+      input.note,
     );
   },
 );
@@ -67,14 +74,53 @@ export async function addStaffCartItemAction(
   menuId: number,
   quantity: number,
   addonIds: number[] = [],
+  note?: string,
 ) {
-  const result = await safeAddStaffCartItem({
+  const result = await validateWith(staffAddCartItemSchema, {
     sessionId,
     tableId,
     menuId,
     quantity,
     addonIds,
-  });
+    note,
+  }).asyncAndThen(safeAddStaffCartItem);
+  return toActionResult(result);
+}
+
+const safeUpdateStaffCartItem = toSafeResult(
+  async (input: StaffUpdateCartItemInput) => {
+    const { userId } = await getSessionContext();
+    if (!userId) {
+      throw new AppError("You must be signed in.", "UNAUTHORIZED");
+    }
+
+    return OrderSessionCartService.updateItemInCart(
+      input.sessionId,
+      input.orderId,
+      input.quantity,
+      input.addonIds,
+      input.note,
+    );
+  },
+);
+
+/** A line's quantity (the − / + stepper) or its add-ons and note (the
+ *  edit dialog) — the staff twin of the customer's updateCartItemAction,
+ *  which reads the customer's session cookie instead. */
+export async function updateStaffCartItemAction(
+  sessionId: number,
+  orderId: number,
+  quantity: number,
+  addonIds: number[] = [],
+  note?: string,
+) {
+  const result = await validateWith(staffUpdateCartItemSchema, {
+    sessionId,
+    orderId,
+    quantity,
+    addonIds,
+    note,
+  }).asyncAndThen(safeUpdateStaffCartItem);
   return toActionResult(result);
 }
 

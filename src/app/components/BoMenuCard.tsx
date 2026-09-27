@@ -2,7 +2,6 @@
 import Link from "next/link";
 import {
   Card,
-  CardMedia,
   CardContent,
   Box,
   Typography,
@@ -11,6 +10,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import MenuThumb from "./MenuThumb";
 
 /** Shape returned by MenuService.getMenusWithDetails — the only fields
  *  that actually exist across Menu + MenuCategory + MenuStock. */
@@ -28,9 +28,6 @@ export interface MenuCardData {
 interface MenuCardProps {
   item: MenuCardData;
 }
-
-const FALLBACK_IMAGE =
-  "http://localhost:9001/api/v1/download-shared-object/aHR0cDovLzEyNy4wLjAuMTo5MDAwL25ycmVzdGF1cmFudC9tZW51L1VwbG9hZCUyMGltYWdlLndlYnA_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1DMlg4UTVaVURPMzJHUDBLU1dLNiUyRjIwMjYwODAyJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDgwMlQwNzQ0NTNaJlgtQW16LUV4cGlyZXM9NDMyMDAmWC1BbXotU2VjdXJpdHktVG9rZW49ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmhZMk5sYzNOTFpYa2lPaUpETWxnNFVUVmFWVVJQTXpKSFVEQkxVMWRMTmlJc0ltVjRjQ0k2TVRjNE5UWTVOREkxTnl3aWNHRnlaVzUwSWpvaVlXUnRhVzRpZlEuOHNyMFdVZ2tyOUljcDhfQlUtYW9JeHgxYjB0N2U1TC1TdW9vTGRNNGRZSVFfVDd4RTRzMlg0Z0EzdDYyanBhTlRtZDFPTXJ4WGFMN3E1YkEzbU9FdFEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnZlcnNpb25JZD1udWxsJlgtQW16LVNpZ25hdHVyZT0wZGY1N2Y0ZmJlNDZlZDUxMDAwOGY1NWNhMmYyNDhiYjM0NjEwMmZiOTg5NTY4NjI2NGNkZTJiMTMxNWU0YmVl";
 
 const DESCRIPTION_PREVIEW_LENGTH = 40;
 
@@ -70,19 +67,17 @@ export default function BOMenuCard({ item }: MenuCardProps) {
           bgcolor: "background.default",
         }}
       >
-        <CardMedia
-          component="img"
-          image={item.imageUrl || FALLBACK_IMAGE}
-          alt={item.name}
+        {/* The photo, or a first-letter tile when there's none or it
+            fails to load. */}
+        <Box
           sx={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
             filter: isAvailable ? "none" : "grayscale(60%)",
           }}
-        />
+        >
+          <MenuThumb name={item.name} imageUrl={item.imageUrl} alt={item.name} />
+        </Box>
         <Chip
           label={
             <Typography variant="caption" component="span">

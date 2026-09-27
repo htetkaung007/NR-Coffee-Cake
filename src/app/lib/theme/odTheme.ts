@@ -1,33 +1,6 @@
 import { alpha, createTheme, type PaletteMode } from "@mui/material/styles";
 import { sharedThemeOptions } from "./sharedThemeTokens";
 
-/** Decorative colors for the storefront's "watercolor & scribbles /
- *  printed paper" look — they don't play a primary/secondary/background/
- *  text role, so they get their own palette key instead of being
- *  hardcoded in components. */
-export interface DecorPalette {
-  /** Soft neutral blob behind the page and menu-card images. */
-  wash: string;
-  /** Hand-drawn scribble line over menu-card images. */
-  scribble: string;
-  /** "Ink" outline + offset shadow on printed-style buttons. */
-  ink: string;
-  /** Muted warm text — the menu card's description on mobile; softer
-   *  than the neutral grey text.secondary. */
-  mutedText: string;
-}
-
-declare module "@mui/material/styles" {
-  // Only getOdTheme defines this — components reading palette.decor must
-  // render under the Od theme (see SurfaceThemeScope), never the Bo one.
-  interface Palette {
-    decor: DecorPalette;
-  }
-  interface PaletteOptions {
-    decor?: DecorPalette;
-  }
-}
-
 /**
  * Order-app (Od) theme — customer-facing storefront. Warm terracotta / cream
  * palette (appetite appeal). Customer-facing components read every color from
@@ -40,6 +13,9 @@ declare module "@mui/material/styles" {
 export function getOdTheme(mode: PaletteMode) {
   const isLight = mode === "light";
   const textPrimary = isLight ? "#2D1B10" : "#F5EFE6"; // Espresso
+  const caramel = "#D2A172";
+  // Red — menu prices, out-of-stock, addon prices, cart badge.
+  const red = isLight ? "#C62828" : "#EF5350";
 
   return createTheme({
     palette: {
@@ -50,15 +26,14 @@ export function getOdTheme(mode: PaletteMode) {
         contrastText: isLight ? "#FFF9ED" : "#2D1B10",
       },
       secondary: {
-        main: "#D2A172", // Caramel accent
+        main: caramel, // Caramel accent
         contrastText: "#2D1B10",
       },
       success: {
         main: "#10B981", // Free Badge Background (Bo နဲ့ တူ)
       },
       error: {
-        // Red — menu prices, out-of-stock, addon prices, cart badge.
-        main: isLight ? "#C62828" : "#EF5350",
+        main: red,
       },
       background: {
         default: isLight ? "#FAF7F2" : "#1A1512", // Brand cream
@@ -78,6 +53,9 @@ export function getOdTheme(mode: PaletteMode) {
         scribble: isLight ? "#8D6E63" : "#B79C90",
         ink: isLight ? "#59402F" : "#120D0A",
         mutedText: isLight ? "#7D6E62" : "#B8A99C",
+        // The storefront's look: a caramel blob, red prices.
+        blob: caramel,
+        price: red,
       },
     },
     ...sharedThemeOptions,

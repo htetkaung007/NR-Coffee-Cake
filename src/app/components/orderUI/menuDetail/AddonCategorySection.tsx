@@ -153,8 +153,10 @@ function AddonLabel({
         sx={{
           fontWeight: 600,
           ...(variant === "sheet" && { fontSize: SHEET_TEXT.small }),
+          // The theme's menu price color (the storefront's red; never red
+          // under the Backoffice theme) — "Free" stays success.
+          color: addon.price > 0 ? "decor.price" : "success.main",
         }}
-        color={addon.price > 0 ? "error" : "success"}
       >
         {addon.price > 0 ? `+${addon.price.toLocaleString()} MMK` : "Free"}
       </Typography>

@@ -6,14 +6,15 @@ import { countWords, MAX_ORDER_NOTE_WORDS } from "@/app/lib/orderNote";
 // the same thing (how many of one menu item) regardless of which
 // action it shows up in. One definition each so a future tightening
 // (e.g. a lower max on quantity) can't apply to only some actions by
-// accident.
-const positiveInt = z.number().int().positive();
-const quantity = z.number().int().min(1).max(99);
-const addonIds = z.array(positiveInt).default([]);
+// accident. Exported so the staff order schemas (staffOrderSchema.ts)
+// enforce exactly the same rules.
+export const positiveInt = z.number().int().positive();
+export const quantity = z.number().int().min(1).max(99);
+export const addonIds = z.array(positiveInt).default([]);
 // Optional per-item instruction ("no onion"). Limited by WORDS, not
 // characters — see countWords for what counts as a word. Defined once
 // so all four add/update schemas below enforce the same rule.
-const orderNoteSchema = z
+export const orderNoteSchema = z
   .string()
   .trim()
   .optional()

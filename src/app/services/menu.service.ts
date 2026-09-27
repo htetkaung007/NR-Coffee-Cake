@@ -113,6 +113,19 @@ export class MenuService {
     });
     const stockByMenuId = new Map(stocks.map((stock) => [stock.menuId, stock]));
 
+    // Same rule getMenuDetailForCustomer uses to list a menu's add-on
+    // groups (active link, group not archived) — so "has add-on groups"
+    // here means "MenuDetailDialog would show at least one group".
+    const addonLinks = await prisma.menuAddonCategories.findMany({
+      where: {
+        menuId: { in: menuIds },
+        isArchived: false,
+        addonCategory: { isArchived: false },
+      },
+      select: { menuId: true },
+    });
+    const menuIdsWithAddons = new Set(addonLinks.map((link) => link.menuId));
+
     return menus.map((menu) => {
       const stock = stockByMenuId.get(menu.id);
       const categoryRefs = categoriesByMenuId.get(menu.id) ?? [];
@@ -129,6 +142,7 @@ export class MenuService {
         imageUrl: menu.assetUrl || null,
         stockQuantity: stock?.quantity ?? 0,
         isManuallyDisabled: stock?.isManuallyDisabled ?? false,
+        hasAddonGroups: menuIdsWithAddons.has(menu.id),
       };
     });
   }
@@ -144,7 +158,8 @@ export class MenuService {
    *  left is dropped. Menus come back in category order (their first
    *  visible category's position, then id), and `categories` is the tab
    *  list in company order — the visible categories that hold at least
-   *  one of these menus — so clients render it as-is, never re-sorted. */
+   *  one of these menus — so clients render it as-is, never re-sorted.
+   *  Each menu's `categoryRefs` / `categories` are its visible ones only. */
   static async getMenusForLocation(locationId: number) {
     const location = await prisma.location.findFirst({
       where: { id: locationId, isArchived: false },
@@ -167,6 +182,7 @@ export class MenuService {
         return {
           menu: {
             ...menu,
+            categoryRefs: visibleRefs,
             categories: visibleRefs.map((category) => category.name),
           },
           // categoryRefs is already in company order, so the first one
@@ -179,12 +195,14 @@ export class MenuService {
       .sort((a, b) => a.position - b.position || a.menu.id - b.menu.id)
       .map((entry) => entry.menu);
 
-    const usedNames = new Set(orderable.flatMap((menu) => menu.categories));
+    const usedIds = new Set(
+      orderable.flatMap((menu) => menu.categoryRefs.map((ref) => ref.id)),
+    );
     return {
       menus: orderable,
       categories: visibleCategories
-        .map((category) => category.name)
-        .filter((name) => usedNames.has(name)),
+        .filter((category) => usedIds.has(category.id))
+        .map((category) => ({ id: category.id, name: category.name })),
     };
   }
 

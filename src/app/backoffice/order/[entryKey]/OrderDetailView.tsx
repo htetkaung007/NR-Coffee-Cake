@@ -2,20 +2,22 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Stack, useMediaQuery } from "@mui/material";
+import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useTheme } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
 import { canPrintBill, type EntryBill } from "@/app/lib/orderTotals";
+import { formatAmount } from "@/app/lib/orderFormat";
 import {
   acceptCounterSessionAction,
   markEntryPaidAction,
   rejectCounterSessionAction,
 } from "../action";
 import MarkPaidDialog from "../MarkPaidDialog";
-import BillBottomBar from "./BillBottomBar";
+import OrderBottomBar from "../OrderBottomBar";
+import OrderPanelDrawer from "../OrderPanelDrawer";
+import OrderSidePanel from "../OrderSidePanel";
 import BillContent from "./BillContent";
-import BillDrawer from "./BillDrawer";
-import BillPanel from "./BillPanel";
 import EntryHeader from "./EntryHeader";
 import type { Round } from "./RoundCard";
 import RoundTimeline from "./RoundTimeline";
@@ -131,23 +133,45 @@ export default function OrderDetailView({
               }
             />
           </Box>
-          <BillPanel>{renderBill()}</BillPanel>
+          <OrderSidePanel label="Bill" showFrom="lg" width={360}>
+            {renderBill()}
+          </OrderSidePanel>
         </Stack>
       </Box>
 
-      <BillBottomBar
-        total={bill.total}
-        pendingAmount={bill.pendingAmount}
-        onViewBill={() => setIsBillOpen(true)}
-      />
+      <OrderBottomBar
+        hideFrom="lg"
+        actionLabel="View bill"
+        onAction={() => setIsBillOpen(true)}
+      >
+        <Typography variant="body2" color="text.secondary">
+          Total to pay
+        </Typography>
+        <Typography component="p" variant="h5">
+          {formatAmount(bill.total)}
+        </Typography>
+        {bill.pendingAmount > 0 && (
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <HourglassEmptyIcon
+              fontSize="small"
+              aria-hidden
+              sx={{ color: "warning.main" }}
+            />
+            <Typography variant="body2" color="text.secondary">
+              +{formatAmount(bill.pendingAmount)} waiting approval
+            </Typography>
+          </Stack>
+        )}
+      </OrderBottomBar>
 
-      <BillDrawer
+      <OrderPanelDrawer
+        label="Bill"
         // Never over the side panel if the window widens while it's open.
         open={isBillOpen && !isWide}
         onClose={() => setIsBillOpen(false)}
       >
         {renderBill(() => setIsBillOpen(false))}
-      </BillDrawer>
+      </OrderPanelDrawer>
 
       <MarkPaidDialog
         open={isConfirmOpen}

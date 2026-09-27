@@ -7,7 +7,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import StatusChip from "../[entryKey]/StatusChip";
 import RoundSection from "../[entryKey]/RoundSection";
-import { formatAmount, formatClockTime } from "@/app/lib/orderFormat";
+import { formatClockTime } from "@/app/lib/orderFormat";
 import {
   formatCancelReasonLabel,
   formatDurationMinutes,
@@ -15,6 +15,7 @@ import {
   formatTimeRange,
 } from "./historyFormat";
 import type { CancelledRoundDetail, PaidBillDetail } from "./action";
+import BillTotal from "../BillTotal";
 import PrintBillButton from "../PrintBillButton";
 
 interface HistoryDetailProps {
@@ -173,18 +174,10 @@ export default function HistoryDetail({
             </Typography>
           </Box>
         )}
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{ justifyContent: "space-between", alignItems: "baseline" }}
-        >
-          <Typography variant="body1">
-            {paid ? "Total paid" : "Not charged"}
-          </Typography>
-          <Typography component="p" variant="h5">
-            {formatAmount(paid ? paid.total : cancelled?.amount ?? 0)}
-          </Typography>
-        </Stack>
+        <BillTotal
+          label={paid ? "Total paid" : "Not charged"}
+          amount={paid ? paid.total : (cancelled?.amount ?? 0)}
+        />
         {/* Paid bills only — a cancelled round was never a bill. Under
            the total, the same spacing as BillContent's footer. */}
         {paid && (

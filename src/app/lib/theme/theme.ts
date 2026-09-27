@@ -14,6 +14,10 @@ export function getBoTheme(mode: PaletteMode) {
   // Coffee brown / caramel — see primary below. The two border strengths
   // (divider, inputBorder) are derived from it, so they follow the brand.
   const primaryMain = isLight ? "#4A2E22" : "#D4A373";
+  const textPrimary = isLight ? "#1F272D" : "#F5F5F5"; // Main Text Color
+  const textSecondary = isLight
+    ? "rgba(0, 0, 0, 0.6)"
+    : "rgba(255, 255, 255, 0.7)";
 
   return createTheme({
     palette: {
@@ -68,9 +72,20 @@ export function getBoTheme(mode: PaletteMode) {
         paper: isLight ? "#FFFFFF" : "#211A16",
       },
       text: {
-        primary: isLight ? "#1F272D" : "#F5F5F5", // Main Text Color
+        primary: textPrimary,
         // Supporting text — times, sublines, captions, column headers
-        secondary: isLight ? "rgba(0, 0, 0, 0.6)" : "rgba(255, 255, 255, 0.7)",
+        secondary: textSecondary,
+      },
+      // MenuCard on the staff New Order page: no watercolor (transparent
+      // wash / blob / scribble), the "+" outlined in primary, and money
+      // in text.primary — never red (DESIGN.md Rule 13).
+      decor: {
+        wash: "transparent",
+        blob: "transparent",
+        scribble: "transparent",
+        ink: primaryMain,
+        mutedText: textSecondary,
+        price: textPrimary,
       },
       // Two border strengths, both tints of primary:
       // divider — soft separators and card/list borders (~1.45:1 on
