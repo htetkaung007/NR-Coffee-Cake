@@ -9,6 +9,8 @@ import { AppError } from "@/app/lib/errors";
 import {
   CreateMenuCategoryInput,
   createMenuCategorySchema,
+  ReorderMenuCategoriesInput,
+  reorderMenuCategoriesSchema,
   UpdateMenuCategoryInput,
   updateMenuCategorySchema,
 } from "@/app/lib/schemas/menu_menuCategorySchema";
@@ -103,5 +105,72 @@ export async function updateMenuCategoryAction(
     revalidatePath("/backoffice/menu_categories");
   }
 
+  return actionResult;
+}
+
+/** The signed-in user's company and currently selected location — the
+ *  category order is company-wide, but which categories are being
+ *  reordered depends on the location (see MenuCategoryService.reorder). */
+async function resolveCompanyAndLocation() {
+  const { companyId, userId } = await getSessionContext();
+  if (!companyId || !userId) {
+    throw new AppError(
+      "You must be signed in to reorder categories.",
+      "UNAUTHORIZED",
+    );
+  }
+
+  const selectedLocation = await LocationService.getSelectedLocation(userId);
+  if (!selectedLocation) {
+    throw new AppError(
+      "No location selected. Please choose a location first.",
+      "VALIDATION",
+    );
+  }
+  return { companyId, locationId: selectedLocation.locationId };
+}
+
+/** Everywhere the category order shows: this page, the menu list and
+ *  menu form chips, the customer menu, and the staff New Order screen. */
+function revalidateCategoryOrder() {
+  revalidatePath("/backoffice/menu_categories");
+  revalidatePath("/backoffice/menus");
+  revalidatePath("/backoffice/menus/new");
+  revalidatePath("/menu");
+  revalidatePath("/backoffice/order/new");
+}
+
+const ReorderMenuCategories = toSafeResult(
+  async (input: ReorderMenuCategoriesInput) => {
+    const { companyId, locationId } = await resolveCompanyAndLocation();
+    return MenuCategoryService.reorder(companyId, locationId, input.orderedIds);
+  },
+);
+
+/** Saves the new order of the categories visible at the selected
+ *  location (drag-and-drop or the ↑/↓ buttons). */
+export async function reorderMenuCategoriesAction(input: {
+  orderedIds: number[];
+}) {
+  const result = await validateWith(
+    reorderMenuCategoriesSchema,
+    input,
+  ).asyncAndThen(ReorderMenuCategories);
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) revalidateCategoryOrder();
+  return actionResult;
+}
+
+const SortMenuCategoriesAlphabetically = toSafeResult(async () => {
+  const { companyId, locationId } = await resolveCompanyAndLocation();
+  return MenuCategoryService.sortAlphabetically(companyId, locationId);
+});
+
+/** "Sort A → Z" — replaces the custom order of the categories visible at
+ *  the selected location. No input to validate. Returns the new order. */
+export async function sortMenuCategoriesAlphabeticallyAction() {
+  const actionResult = toActionResult(await SortMenuCategoriesAlphabetically());
+  if (actionResult.success) revalidateCategoryOrder();
   return actionResult;
 }

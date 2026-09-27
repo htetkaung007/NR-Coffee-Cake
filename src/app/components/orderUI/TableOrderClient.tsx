@@ -37,6 +37,9 @@ interface TableOrderClientProps {
    *  next order dismisses that round's "Order confirmed" screen. */
   activeRoundId: number | null;
   menus: MenuOption[];
+  /** The category tabs, in the server's order (see
+   *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
+  categories: string[];
 }
 
 /**
@@ -68,6 +71,7 @@ export default function TableOrderClient({
   initialAwaitingApproval,
   activeRoundId,
   menus,
+  categories,
 }: TableOrderClientProps) {
   const router = useRouter();
   const pageBackground = getOrderPageBackground(useTheme());
@@ -175,6 +179,7 @@ export default function TableOrderClient({
 
         <MenuBrowser
           menus={menus}
+          categories={categories}
           locationId={locationId}
           canOrder
           backgroundColor={pageBackground.color}

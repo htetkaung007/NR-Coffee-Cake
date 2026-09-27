@@ -2,14 +2,13 @@ import {
   Box,
   Button,
   Chip,
-  Fab,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import Link from "next/link";
-import AddIcon from "@mui/icons-material/Add";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
 import { AddonService } from "@/app/services";
 
 export default async function AddonsPage() {
@@ -33,21 +32,11 @@ export default async function AddonsPage() {
         </Link>
       </Stack>
 
-      <Link href="/backoffice/addons/new">
-        <Fab
-          color="primary"
-          aria-label="New add-on group"
-          sx={{
-            display: { xs: "flex", sm: "none" },
-            position: "fixed",
-            bottom: 24,
-            right: 24,
-            zIndex: 1050,
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      </Link>
+      <NewItemFab
+        href="/backoffice/addons/new"
+        label="New add-on group"
+        hideFrom="sm"
+      />
 
       {categories.length === 0 ? (
         <Typography color="text.secondary">No addon groups yet.</Typography>
@@ -144,6 +133,8 @@ export default async function AddonsPage() {
           ))}
         </Stack>
       )}
+
+      <NewItemFabSpacer hideFrom="sm" />
     </Box>
   );
 }

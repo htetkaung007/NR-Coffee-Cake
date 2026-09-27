@@ -1,6 +1,9 @@
 import { prisma } from "../utils/prisma";
 import type { Prisma } from "../../../prisma/generated/client";
-import { MenuCategoryService } from "./menuCategory.service";
+import {
+  MENU_CATEGORY_ORDER,
+  MenuCategoryService,
+} from "./menuCategory.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -83,19 +86,26 @@ export class MenuService {
     const menus = await MenuService.getMenus(companyId);
     const menuIds = menus.map((menu) => menu.id);
 
+    // In the company category order, so each menu's own category list
+    // (and anything derived from it) follows MENU_CATEGORY_ORDER too.
     const categoryLinks = await prisma.menuMenuCategory.findMany({
-      where: { menuId: { in: menuIds }, isArchived: false },
-      include: { menuCategory: true },
+      where: {
+        menuId: { in: menuIds },
+        isArchived: false,
+        menuCategory: { isArchived: false },
+      },
+      include: { menuCategory: { select: { id: true, name: true } } },
+      orderBy: MENU_CATEGORY_ORDER.map((order) => ({ menuCategory: order })),
     });
     // A menu can be linked to more than one category (see createMenu/
-    // updateMenu's categoryIds array) — collect every name per menu
+    // updateMenu's categoryIds array) — collect every one per menu
     // instead of a Map keyed by menuId, which would silently keep only
     // the last link and drop the rest.
-    const categoryNamesByMenuId = new Map<number, string[]>();
+    const categoriesByMenuId = new Map<number, { id: number; name: string }[]>();
     for (const link of categoryLinks) {
-      const names = categoryNamesByMenuId.get(link.menuId) ?? [];
-      names.push(link.menuCategory.name);
-      categoryNamesByMenuId.set(link.menuId, names);
+      const categories = categoriesByMenuId.get(link.menuId) ?? [];
+      categories.push(link.menuCategory);
+      categoriesByMenuId.set(link.menuId, categories);
     }
 
     const stocks = await prisma.menuStock.findMany({
@@ -105,13 +115,17 @@ export class MenuService {
 
     return menus.map((menu) => {
       const stock = stockByMenuId.get(menu.id);
-      const categories = categoryNamesByMenuId.get(menu.id) ?? [];
+      const categoryRefs = categoriesByMenuId.get(menu.id) ?? [];
       return {
         id: menu.id,
         name: menu.name,
         description: menu.description || "",
         price: menu.price,
-        categories: categories.length > 0 ? categories : ["Uncategorized"],
+        categoryRefs,
+        categories:
+          categoryRefs.length > 0
+            ? categoryRefs.map((category) => category.name)
+            : ["Uncategorized"],
         imageUrl: menu.assetUrl || null,
         stockQuantity: stock?.quantity ?? 0,
         isManuallyDisabled: stock?.isManuallyDisabled ?? false,
@@ -119,17 +133,59 @@ export class MenuService {
     });
   }
 
-  /** Customer-facing entry point (QR scan, view-only menu) — these
-   *  callers only ever have a locationId (from the URL), never a
-   *  companyId, so this looks the company up first rather than asking
-   *  every caller to do that join themselves. */
+  /** What customers (QR scan, view-only menu) and staff (New Order)
+   *  can order from at this location — the same list for both. These
+   *  callers only ever have a locationId (from the URL / the selected
+   *  location), never a companyId, so this looks the company up first.
+   *
+   *  Categories hidden at this location are applied via
+   *  MenuCategoryService.getVisibleCategories (the one visibility rule):
+   *  each menu keeps only its visible categories, and a menu with none
+   *  left is dropped. Menus come back in category order (their first
+   *  visible category's position, then id), and `categories` is the tab
+   *  list in company order — the visible categories that hold at least
+   *  one of these menus — so clients render it as-is, never re-sorted. */
   static async getMenusForLocation(locationId: number) {
     const location = await prisma.location.findFirst({
       where: { id: locationId, isArchived: false },
     });
-    if (!location) return [];
+    if (!location) return { menus: [], categories: [] };
 
-    return MenuService.getMenusWithDetails(location.companyId, locationId);
+    const [menus, visibleCategories] = await Promise.all([
+      MenuService.getMenusWithDetails(location.companyId, locationId),
+      MenuCategoryService.getVisibleCategories(location.companyId, locationId),
+    ]);
+    const positionById = new Map(
+      visibleCategories.map((category, index) => [category.id, index]),
+    );
+
+    const orderable = menus
+      .map((menu) => {
+        const visibleRefs = menu.categoryRefs.filter((category) =>
+          positionById.has(category.id),
+        );
+        return {
+          menu: {
+            ...menu,
+            categories: visibleRefs.map((category) => category.name),
+          },
+          // categoryRefs is already in company order, so the first one
+          // is the menu's earliest visible category.
+          position:
+            visibleRefs.length > 0 ? positionById.get(visibleRefs[0].id)! : -1,
+        };
+      })
+      .filter((entry) => entry.position >= 0)
+      .sort((a, b) => a.position - b.position || a.menu.id - b.menu.id)
+      .map((entry) => entry.menu);
+
+    const usedNames = new Set(orderable.flatMap((menu) => menu.categories));
+    return {
+      menus: orderable,
+      categories: visibleCategories
+        .map((category) => category.name)
+        .filter((name) => usedNames.has(name)),
+    };
   }
 
   /** Customer-facing detail view — full nested addon data (category

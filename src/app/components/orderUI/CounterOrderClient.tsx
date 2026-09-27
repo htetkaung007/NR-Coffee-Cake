@@ -25,6 +25,9 @@ interface CounterOrderClientProps {
   initialStatus: string;
   initialCart: CartLine[];
   menus: MenuOption[];
+  /** The category tabs, in the server's order (see
+   *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
+  categories: string[];
   shopName: string | null;
 }
 
@@ -35,6 +38,7 @@ export default function CounterOrderClient({
 
   initialCart,
   menus,
+  categories,
   shopName,
   initialStatus,
 }: CounterOrderClientProps) {
@@ -186,6 +190,7 @@ export default function CounterOrderClient({
 
         <MenuBrowser
           menus={menus}
+          categories={categories}
           locationId={locationId}
           canOrder={hasSession && !isAwaitingApproval}
           backgroundColor={pageBackground.color}

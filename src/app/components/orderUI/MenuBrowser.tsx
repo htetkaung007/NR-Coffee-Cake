@@ -25,6 +25,10 @@ const ALL_CATEGORIES = "All";
 
 interface MenuBrowserProps {
   menus: MenuOption[];
+  /** The category tabs after "All", in the server's order — the visible
+   *  categories that hold at least one of `menus` (see
+   *  MenuService.getMenusForLocation). Rendered as-is, never re-sorted. */
+  categories: string[];
   locationId: number;
   canOrder: boolean;
   /** Matches the caller page's own background so the sticky search/
@@ -68,6 +72,7 @@ const TOPBAR_HEIGHT = { xs: 56, sm: 64 };
  */
 export default function MenuBrowser({
   menus,
+  categories: categoryNames,
   locationId,
   canOrder,
   backgroundColor,
@@ -80,11 +85,8 @@ export default function MenuBrowser({
   const [detailMenuId, setDetailMenuId] = useState<number | null>(null);
 
   const categories = useMemo(
-    () => [
-      ALL_CATEGORIES,
-      ...Array.from(new Set(menus.flatMap((m) => m.categories))),
-    ],
-    [menus],
+    () => [ALL_CATEGORIES, ...categoryNames],
+    [categoryNames],
   );
 
   // MUI's scrollable Tabs only nudges the newly-selected tab just far

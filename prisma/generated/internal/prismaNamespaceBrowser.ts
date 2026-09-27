@@ -191,7 +191,8 @@ export const MenuCategoryScalarFieldEnum = {
   companyId: 'companyId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
-  isArchived: 'isArchived'
+  isArchived: 'isArchived',
+  sortOrder: 'sortOrder'
 } as const
 
 export type MenuCategoryScalarFieldEnum = (typeof MenuCategoryScalarFieldEnum)[keyof typeof MenuCategoryScalarFieldEnum]

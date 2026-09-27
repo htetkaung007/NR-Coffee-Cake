@@ -21,7 +21,10 @@ export default async function NewStaffOrderPage() {
     return <StaffOrderClient locationId={null} tables={[]} menus={[]} />;
   }
 
-  const [tables, menus] = await Promise.all([
+  // Same list, and the same category order, as the customer menu —
+  // categories hidden at this location are left out (see
+  // MenuService.getMenusForLocation).
+  const [tables, { menus }] = await Promise.all([
     TableService.getTablesByLocation(selectedLocation.locationId),
     MenuService.getMenusForLocation(selectedLocation.locationId),
   ]);

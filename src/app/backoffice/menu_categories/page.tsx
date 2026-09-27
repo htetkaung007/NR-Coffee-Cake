@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { LocationService, MenuCategoryService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import MenuCategoriesGrid from "./[id]/page";
+import MenuCategoryOrderView from "./MenuCategoryOrderView";
 
 export default async function MenuCategoriesPage() {
   const { companyId, userId } = await getSessionContext();
@@ -27,19 +27,24 @@ export default async function MenuCategoriesPage() {
     );
   }
 
-  const categories = await MenuCategoryService.getMenuCategoriesWithCounts(
-    companyId,
-    selectedLocation.locationId,
-  );
+  const { locationId } = selectedLocation;
+  const [visible, hidden, shopName] = await Promise.all([
+    MenuCategoryService.getVisibleCategories(companyId, locationId),
+    MenuCategoryService.getHiddenCategories(companyId, locationId),
+    LocationService.getShopNameForLocation(locationId),
+  ]);
+
+  const toItem = (category: (typeof visible)[number]) => ({
+    id: category.id,
+    name: category.name,
+    itemCount: category._count.menuMenuCategory,
+  });
 
   return (
-    <MenuCategoriesGrid
-      categories={categories.map((category) => ({
-        id: category.id,
-        name: category.name,
-        menuCount: category._count.menuMenuCategory,
-        isEnabledAtLocation: category.isEnabledAtLocation,
-      }))}
+    <MenuCategoryOrderView
+      categories={visible.map(toItem)}
+      hiddenCategories={hidden.map(toItem)}
+      shopName={shopName}
     />
   );
 }

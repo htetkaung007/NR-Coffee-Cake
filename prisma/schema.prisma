@@ -159,6 +159,12 @@ model MenuCategory {
   createdAt                     DateTime                        @default(now())
   updateTime                    DateTime                        @updatedAt
   isArchived                    Boolean                         @default(false)
+  // Company-wide display order, used everywhere categories are listed
+  // (customer menu tabs, staff order screen, menu form, Backoffice list).
+  // Lower = first; ties broken by id.
+  sortOrder                     Int                             @default(0)
+
+  @@index([companyId, sortOrder])
 }
 
 // join Table

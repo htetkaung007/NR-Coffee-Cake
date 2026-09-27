@@ -58,3 +58,13 @@ export const updateMenuCategorySchema = z.object({
 });
 
 export type UpdateMenuCategoryInput = z.infer<typeof updateMenuCategorySchema>;
+
+/** The new order of the categories visible at the selected location —
+ *  the Service checks it's exactly that set (MenuCategoryService.reorder). */
+export const reorderMenuCategoriesSchema = z.object({
+  orderedIds: z.array(z.number().int().positive()).min(1).max(500),
+});
+
+export type ReorderMenuCategoriesInput = z.infer<
+  typeof reorderMenuCategoriesSchema
+>;

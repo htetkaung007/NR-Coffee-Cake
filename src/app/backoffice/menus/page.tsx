@@ -1,8 +1,8 @@
 import { LocationService, MenuService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/session";
-import { Box, Button, Typography, Fab } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import { Box, Button, Typography } from "@mui/material";
 import BOMenuCard from "@/app/components/BoMenuCard";
+import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
 
 export default async function MenusPage() {
   const { companyId, userId } = await getSessionContext();
@@ -80,21 +80,13 @@ export default async function MenusPage() {
         </Box>
       )}
 
-      {/* Mobile: floating action button, bottom-right */}
-      <Fab
-        color="primary"
+      {/* Below lg: the floating "+" (and room for it under the grid). */}
+      <NewItemFabSpacer hideFrom="lg" />
+      <NewItemFab
         href="/backoffice/menus/new"
-        aria-label="create menu"
-        sx={{
-          display: { xs: "flex", sm: "flex", lg: "none" },
-          position: "fixed",
-          bottom: 26,
-          right: 26,
-          zIndex: 1000,
-        }}
-      >
-        <AddIcon />
-      </Fab>
+        label="Create menu"
+        hideFrom="lg"
+      />
     </Box>
   );
 }

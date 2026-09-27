@@ -20,7 +20,7 @@ import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
 export const dynamic = "force-dynamic";
 
 function buildMenuOptions(
-  menus: Awaited<ReturnType<typeof MenuService.getMenusForLocation>>,
+  menus: Awaited<ReturnType<typeof MenuService.getMenusForLocation>>["menus"],
 ) {
   return menus.map((menu) => ({
     id: menu.id,
@@ -80,7 +80,7 @@ export default async function MenuPage({
         contributorToken,
       ));
     if (contributorToken && isTokenCurrent) {
-      const [menus, shopName, draftItems, activeRound] = await Promise.all([
+      const [menuData, shopName, draftItems, activeRound] = await Promise.all([
         MenuService.getMenusForLocation(locationId),
         LocationService.getShopNameForLocation(locationId),
         TableDraftService.getDraftItemsForTable(tableId),
@@ -96,7 +96,8 @@ export default async function MenuPage({
           initialDraftItems={draftItems.map(toDraftLine)}
           initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
           activeRoundId={activeRound?.id ?? null}
-          menus={buildMenuOptions(menus)}
+          menus={buildMenuOptions(menuData.menus)}
+          categories={menuData.categories}
         />
       );
     }
@@ -113,7 +114,7 @@ export default async function MenuPage({
   // customer က ကိုယ်တိုင် ပြောင်းလို့ရလို့) — မရှိမှသာ query param ကို သုံး.
   const effectiveLocationId = session ? session.locationId : locationId;
 
-  const [menus, shopName, bill] = await Promise.all([
+  const [menuData, shopName, bill] = await Promise.all([
     MenuService.getMenusForLocation(effectiveLocationId),
     LocationService.getShopNameForLocation(effectiveLocationId),
     // "Order More" can split one bill into several rounds — the
@@ -132,7 +133,8 @@ export default async function MenuPage({
       initialCart={
         session?.orders.map(toCartLine) ?? []
       }
-      menus={buildMenuOptions(menus)}
+      menus={buildMenuOptions(menuData.menus)}
+      categories={menuData.categories}
     />
   );
 }

@@ -29,11 +29,13 @@ export type AggregateMenuCategory = {
 export type MenuCategoryAvgAggregateOutputType = {
   id: number | null
   companyId: number | null
+  sortOrder: number | null
 }
 
 export type MenuCategorySumAggregateOutputType = {
   id: number | null
   companyId: number | null
+  sortOrder: number | null
 }
 
 export type MenuCategoryMinAggregateOutputType = {
@@ -43,6 +45,7 @@ export type MenuCategoryMinAggregateOutputType = {
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
+  sortOrder: number | null
 }
 
 export type MenuCategoryMaxAggregateOutputType = {
@@ -52,6 +55,7 @@ export type MenuCategoryMaxAggregateOutputType = {
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
+  sortOrder: number | null
 }
 
 export type MenuCategoryCountAggregateOutputType = {
@@ -61,6 +65,7 @@ export type MenuCategoryCountAggregateOutputType = {
   createdAt: number
   updateTime: number
   isArchived: number
+  sortOrder: number
   _all: number
 }
 
@@ -68,11 +73,13 @@ export type MenuCategoryCountAggregateOutputType = {
 export type MenuCategoryAvgAggregateInputType = {
   id?: true
   companyId?: true
+  sortOrder?: true
 }
 
 export type MenuCategorySumAggregateInputType = {
   id?: true
   companyId?: true
+  sortOrder?: true
 }
 
 export type MenuCategoryMinAggregateInputType = {
@@ -82,6 +89,7 @@ export type MenuCategoryMinAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  sortOrder?: true
 }
 
 export type MenuCategoryMaxAggregateInputType = {
@@ -91,6 +99,7 @@ export type MenuCategoryMaxAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  sortOrder?: true
 }
 
 export type MenuCategoryCountAggregateInputType = {
@@ -100,6 +109,7 @@ export type MenuCategoryCountAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  sortOrder?: true
   _all?: true
 }
 
@@ -196,6 +206,7 @@ export type MenuCategoryGroupByOutputType = {
   createdAt: Date
   updateTime: Date
   isArchived: boolean
+  sortOrder: number
   _count: MenuCategoryCountAggregateOutputType | null
   _avg: MenuCategoryAvgAggregateOutputType | null
   _sum: MenuCategorySumAggregateOutputType | null
@@ -228,6 +239,7 @@ export type MenuCategoryWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   isArchived?: Prisma.BoolFilter<"MenuCategory"> | boolean
+  sortOrder?: Prisma.IntFilter<"MenuCategory"> | number
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   menuMenuCategory?: Prisma.MenuMenuCategoryListRelationFilter
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesListRelationFilter
@@ -240,6 +252,7 @@ export type MenuCategoryOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   menuMenuCategory?: Prisma.MenuMenuCategoryOrderByRelationAggregateInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesOrderByRelationAggregateInput
@@ -255,6 +268,7 @@ export type MenuCategoryWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   isArchived?: Prisma.BoolFilter<"MenuCategory"> | boolean
+  sortOrder?: Prisma.IntFilter<"MenuCategory"> | number
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   menuMenuCategory?: Prisma.MenuMenuCategoryListRelationFilter
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesListRelationFilter
@@ -267,6 +281,7 @@ export type MenuCategoryOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   _count?: Prisma.MenuCategoryCountOrderByAggregateInput
   _avg?: Prisma.MenuCategoryAvgOrderByAggregateInput
   _max?: Prisma.MenuCategoryMaxOrderByAggregateInput
@@ -284,6 +299,7 @@ export type MenuCategoryScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"MenuCategory"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"MenuCategory"> | boolean
+  sortOrder?: Prisma.IntWithAggregatesFilter<"MenuCategory"> | number
 }
 
 export type MenuCategoryCreateInput = {
@@ -291,6 +307,7 @@ export type MenuCategoryCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   company: Prisma.CompanyCreateNestedOneWithoutMenuCategoriesInput
   menuMenuCategory?: Prisma.MenuMenuCategoryCreateNestedManyWithoutMenuCategoryInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutMenuCategoryInput
@@ -303,6 +320,7 @@ export type MenuCategoryUncheckedCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   menuMenuCategory?: Prisma.MenuMenuCategoryUncheckedCreateNestedManyWithoutMenuCategoryInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutMenuCategoryInput
 }
@@ -312,6 +330,7 @@ export type MenuCategoryUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   company?: Prisma.CompanyUpdateOneRequiredWithoutMenuCategoriesNestedInput
   menuMenuCategory?: Prisma.MenuMenuCategoryUpdateManyWithoutMenuCategoryNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutMenuCategoryNestedInput
@@ -324,6 +343,7 @@ export type MenuCategoryUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   menuMenuCategory?: Prisma.MenuMenuCategoryUncheckedUpdateManyWithoutMenuCategoryNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutMenuCategoryNestedInput
 }
@@ -335,6 +355,7 @@ export type MenuCategoryCreateManyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
 }
 
 export type MenuCategoryUpdateManyMutationInput = {
@@ -342,6 +363,7 @@ export type MenuCategoryUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type MenuCategoryUncheckedUpdateManyInput = {
@@ -351,6 +373,7 @@ export type MenuCategoryUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type MenuCategoryListRelationFilter = {
@@ -370,11 +393,13 @@ export type MenuCategoryCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type MenuCategoryAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type MenuCategoryMaxOrderByAggregateInput = {
@@ -384,6 +409,7 @@ export type MenuCategoryMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type MenuCategoryMinOrderByAggregateInput = {
@@ -393,11 +419,13 @@ export type MenuCategoryMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type MenuCategorySumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type MenuCategoryScalarRelationFilter = {
@@ -480,6 +508,7 @@ export type MenuCategoryCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   menuMenuCategory?: Prisma.MenuMenuCategoryCreateNestedManyWithoutMenuCategoryInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutMenuCategoryInput
 }
@@ -490,6 +519,7 @@ export type MenuCategoryUncheckedCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   menuMenuCategory?: Prisma.MenuMenuCategoryUncheckedCreateNestedManyWithoutMenuCategoryInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutMenuCategoryInput
 }
@@ -530,6 +560,7 @@ export type MenuCategoryScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   isArchived?: Prisma.BoolFilter<"MenuCategory"> | boolean
+  sortOrder?: Prisma.IntFilter<"MenuCategory"> | number
 }
 
 export type MenuCategoryCreateWithoutMenuMenuCategoryInput = {
@@ -537,6 +568,7 @@ export type MenuCategoryCreateWithoutMenuMenuCategoryInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   company: Prisma.CompanyCreateNestedOneWithoutMenuCategoriesInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesCreateNestedManyWithoutMenuCategoryInput
 }
@@ -548,6 +580,7 @@ export type MenuCategoryUncheckedCreateWithoutMenuMenuCategoryInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedCreateNestedManyWithoutMenuCategoryInput
 }
 
@@ -572,6 +605,7 @@ export type MenuCategoryUpdateWithoutMenuMenuCategoryInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   company?: Prisma.CompanyUpdateOneRequiredWithoutMenuCategoriesNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutMenuCategoryNestedInput
 }
@@ -583,6 +617,7 @@ export type MenuCategoryUncheckedUpdateWithoutMenuMenuCategoryInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutMenuCategoryNestedInput
 }
 
@@ -591,6 +626,7 @@ export type MenuCategoryCreateWithoutDisableLocationMenuCategoriesInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   company: Prisma.CompanyCreateNestedOneWithoutMenuCategoriesInput
   menuMenuCategory?: Prisma.MenuMenuCategoryCreateNestedManyWithoutMenuCategoryInput
 }
@@ -602,6 +638,7 @@ export type MenuCategoryUncheckedCreateWithoutDisableLocationMenuCategoriesInput
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
   menuMenuCategory?: Prisma.MenuMenuCategoryUncheckedCreateNestedManyWithoutMenuCategoryInput
 }
 
@@ -626,6 +663,7 @@ export type MenuCategoryUpdateWithoutDisableLocationMenuCategoriesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   company?: Prisma.CompanyUpdateOneRequiredWithoutMenuCategoriesNestedInput
   menuMenuCategory?: Prisma.MenuMenuCategoryUpdateManyWithoutMenuCategoryNestedInput
 }
@@ -637,6 +675,7 @@ export type MenuCategoryUncheckedUpdateWithoutDisableLocationMenuCategoriesInput
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   menuMenuCategory?: Prisma.MenuMenuCategoryUncheckedUpdateManyWithoutMenuCategoryNestedInput
 }
 
@@ -646,6 +685,7 @@ export type MenuCategoryCreateManyCompanyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  sortOrder?: number
 }
 
 export type MenuCategoryUpdateWithoutCompanyInput = {
@@ -653,6 +693,7 @@ export type MenuCategoryUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   menuMenuCategory?: Prisma.MenuMenuCategoryUpdateManyWithoutMenuCategoryNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUpdateManyWithoutMenuCategoryNestedInput
 }
@@ -663,6 +704,7 @@ export type MenuCategoryUncheckedUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   menuMenuCategory?: Prisma.MenuMenuCategoryUncheckedUpdateManyWithoutMenuCategoryNestedInput
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesUncheckedUpdateManyWithoutMenuCategoryNestedInput
 }
@@ -673,6 +715,7 @@ export type MenuCategoryUncheckedUpdateManyWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
@@ -722,6 +765,7 @@ export type MenuCategorySelect<ExtArgs extends runtime.Types.Extensions.Internal
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  sortOrder?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   menuMenuCategory?: boolean | Prisma.MenuCategory$menuMenuCategoryArgs<ExtArgs>
   disableLocationMenuCategories?: boolean | Prisma.MenuCategory$disableLocationMenuCategoriesArgs<ExtArgs>
@@ -735,6 +779,7 @@ export type MenuCategorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  sortOrder?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["menuCategory"]>
 
@@ -745,6 +790,7 @@ export type MenuCategorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  sortOrder?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["menuCategory"]>
 
@@ -755,9 +801,10 @@ export type MenuCategorySelectScalar = {
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  sortOrder?: boolean
 }
 
-export type MenuCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "companyId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["menuCategory"]>
+export type MenuCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "companyId" | "createdAt" | "updateTime" | "isArchived" | "sortOrder", ExtArgs["result"]["menuCategory"]>
 export type MenuCategoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   menuMenuCategory?: boolean | Prisma.MenuCategory$menuMenuCategoryArgs<ExtArgs>
@@ -785,6 +832,7 @@ export type $MenuCategoryPayload<ExtArgs extends runtime.Types.Extensions.Intern
     createdAt: Date
     updateTime: Date
     isArchived: boolean
+    sortOrder: number
   }, ExtArgs["result"]["menuCategory"]>
   composites: {}
 }
@@ -1217,6 +1265,7 @@ export interface MenuCategoryFieldRefs {
   readonly createdAt: Prisma.FieldRef<"MenuCategory", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"MenuCategory", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"MenuCategory", 'Boolean'>
+  readonly sortOrder: Prisma.FieldRef<"MenuCategory", 'Int'>
 }
     
 
