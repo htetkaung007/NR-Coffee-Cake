@@ -59,8 +59,8 @@ export class BillService {
   }
 
   /** Creates the ONE Bill row for a set of sessions being paid together
-   *  — called from inside OrderSessionApprovalService's markSessionsPaid/
-   *  markSessionPaid transaction, before those sessions are written to
+   *  — called from inside OrderSessionApprovalService's markSessionsPaid
+   *  transaction, before those sessions are written to
    *  PAID, so a Bill-creation failure rolls back the whole payment (no
    *  session ends up PAID without a bill). billNumber/locationId/total
    *  are each their own pure static method above so the bill-math can

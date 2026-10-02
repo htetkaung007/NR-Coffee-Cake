@@ -77,6 +77,21 @@ function isAbandonedCart(session: { status: string; createdAt: Date }) {
   return ageMs > CART_ABANDON_MINUTES * 60_000;
 }
 
+/** A PENDING_APPROVAL round whose approval window has run out — it
+ *  counts as timed out even before anything has written EXPIRED (that
+ *  happens lazily, see getSessionStatus). The one definition, shared by
+ *  that lazy expiry and the read-only checks that must not write. */
+export function isPastApprovalWindow(
+  session: { status: string; approvalExpiresAt: Date | null },
+  now: Date = new Date(),
+) {
+  return (
+    session.status === "PENDING_APPROVAL" &&
+    session.approvalExpiresAt !== null &&
+    session.approvalExpiresAt < now
+  );
+}
+
 /** Placeholder scheme — see design doc section 9 ("orderNumber
  *  generation strategy not yet decided"). Swap this one function for a
  *  per-location daily counter later; nothing else needs to change.
@@ -220,7 +235,7 @@ export class OrderSessionService {
    *  show "Round 1 — confirmed, cooking" alongside the draft-adding
    *  UI for whatever round comes next. A terminal session (PAID/
    *  CANCELLED/COMPLETED) is treated the same as "no active round" —
-   *  same reasoning markSessionPaid's own comment describes: the
+   *  same reasoning markSessionsPaid's own comment describes: the
    *  table's activeSessionId pointer is left as-is on payment, and
    *  every reader is expected to treat a terminal session behind it
    *  as stale rather than requiring a second write to clear it. */
@@ -675,6 +690,20 @@ export class OrderSessionService {
     return session;
   }
 
+  /** getActiveSessionByToken's answer WITHOUT its write: an abandoned
+   *  CART session reads as null here but is left for
+   *  getActiveSessionByToken to cancel. For read-only checks (e.g. the
+   *  cart page's "can this browser send?"), which must never change
+   *  anything. */
+  static async peekActiveSessionByToken(token: string) {
+    const session = await OrderSessionService.getSessionByToken(token);
+    if (!session) return null;
+    if (isAbandonedCart(session) || isSessionTerminal(session.status)) {
+      return null;
+    }
+    return session;
+  }
+
   /** Adds one line item to a session's cart — only while the session
    *  is still CART (i.e. before "Submit Order"); refuses once it's
    *  PENDING_APPROVAL or beyond, since editing an order the cashier
@@ -718,7 +747,7 @@ export class OrderSessionService {
    *  (they ARE the person who'd be approving it), so the 2-minute
    *  approval window would just be a pointless wait before the
    *  kitchen sees it. Everything downstream (kitchen sees it in
-   *  PENDING, gets marked COOKING, eventually markSessionPaid) is
+   *  PENDING, gets marked COOKING, eventually markSessionsPaid) is
    *  unchanged and identical to a normal accepted order — this only
    *  removes the approval STEP, not any of the states after it. */
   static async submitStaffOrder(sessionId: number) {
@@ -779,16 +808,30 @@ export class OrderSessionService {
       );
     }
 
+    return prisma.$transaction((tx: Tx) =>
+      OrderSessionService.submitCartRoundForApproval(tx, session),
+    );
+  }
+
+  /** The CART -> PENDING_APPROVAL step itself, inside the CALLER's
+   *  transaction: decrements stock for every line of the round (the
+   *  atomic guard — a shortage throws InsufficientStockError and rolls
+   *  the whole caller back) and starts the approval window. The caller
+   *  has already made sure the round is CART. Shared by
+   *  submitOrderForApproval (server-held cart) and CartSubmitService
+   *  (browser-held cart, which inserts the lines in the same
+   *  transaction first) so the two submits can't drift apart. */
+  static async submitCartRoundForApproval(
+    tx: Tx,
+    round: { id: number; locationId: number },
+  ) {
     const approvalExpiresAt = new Date(
       Date.now() + APPROVAL_WINDOW_MINUTES * 60_000,
     );
-
-    return prisma.$transaction(async (tx: Tx) => {
-      await decrementStockForSession(tx, sessionId, session.locationId);
-      return tx.orderSession.update({
-        where: { id: sessionId },
-        data: { status: "PENDING_APPROVAL", approvalExpiresAt },
-      });
+    await decrementStockForSession(tx, round.id, round.locationId);
+    return tx.orderSession.update({
+      where: { id: round.id },
+      data: { status: "PENDING_APPROVAL", approvalExpiresAt },
     });
   }
 
@@ -804,12 +847,7 @@ export class OrderSessionService {
     });
     if (!session) throw new NotFoundError("OrderSession", sessionId);
 
-    const isPastApprovalWindow =
-      session.status === "PENDING_APPROVAL" &&
-      session.approvalExpiresAt !== null &&
-      session.approvalExpiresAt < new Date();
-
-    if (isPastApprovalWindow) {
+    if (isPastApprovalWindow(session)) {
       // Re-read after cancelling: if the cashier decided in the
       // meantime, cancelSession left the round alone and this returns
       // what actually happened instead.

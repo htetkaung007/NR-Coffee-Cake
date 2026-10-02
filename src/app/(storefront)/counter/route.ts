@@ -55,9 +55,15 @@ export async function GET(request: NextRequest) {
   }
 
   // status === "active" — reused or freshly-started session. Set/renew
-  // the cookie and land on /menu, which now shows the order UI itself
-  // once it sees a valid session cookie (see menu/page.tsx).
-  const response = NextResponse.redirect(menuUrl);
+  // the cookie and land on /counter/continue, which opens the cart if
+  // this browser already has one for the location (built while
+  // browsing Online) and the menu otherwise.
+  const continueUrl = new URL("/counter/continue", request.url);
+  continueUrl.searchParams.set(
+    "locationId",
+    String(result.session.locationId),
+  );
+  const response = NextResponse.redirect(continueUrl);
   response.cookies.set(
     COUNTER_SESSION_COOKIE,
     result.session.token,

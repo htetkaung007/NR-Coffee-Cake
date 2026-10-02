@@ -73,29 +73,6 @@ export async function rejectCounterSessionAction(sessionId: number) {
   return actionResult;
 }
 
-const safeMarkPaid = toSafeResult(async (sessionId: number) => {
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
-  return OrderSessionApprovalService.markSessionPaid(sessionId);
-});
-
-/** Cashier marks a session PAID — see OrderSessionApprovalService.markSessionPaid
- *  for why the customer's cookie isn't (and can't be) touched from here;
- *  their next poll/page-load is what clears it. For a Table QR session
- *  this is also what frees the table for the next group on its very
- *  next scan (design doc section 3, rule 3) — no separate "Clear Table"
- *  action needed. */
-export async function markSessionPaidAction(sessionId: number) {
-  const result = await safeMarkPaid(sessionId);
-  const actionResult = toActionResult(result);
-  if (actionResult.success) {
-    revalidatePath("/backoffice/order");
-  }
-  return actionResult;
-}
-
 const safeMarkEntryPaid = toSafeResult(async (sessionIds: number[]) => {
   const { companyId } = await getSessionContext();
   if (!companyId) {

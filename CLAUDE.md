@@ -311,6 +311,24 @@ business reason?"
   before in this project and is a correctness risk, not just
   untidiness.
 
+## 15. Testing
+
+- **Vitest** (`vitest.config.mts` at the repo root). Run `npm test` once,
+  or `npm run test:watch` while working.
+- Test files sit **next to the module they test**, named `*.test.ts`
+  (e.g. `lib/orderTotals.test.ts` beside `lib/orderTotals.ts`). Import
+  `describe`/`it`/`expect` from `"vitest"` explicitly — no globals.
+- For now only **pure logic** is unit-tested: no database, Prisma,
+  network or React. If a pure function lives in a module that imports
+  Prisma, stub that import with `vi.mock` (see
+  `services/menuCategory.service.test.ts`).
+- One behaviour per `it`, named like a rule ("multiplies the whole set
+  (menu + add-ons) by quantity") — test behaviour, not implementation.
+- **New pure business logic — money, line merging, validation, dates —
+  comes with tests**, ideally written first (TDD). If a test shows a
+  bug, keep the test as the correct rule and fix the code, never the
+  other way round.
+
 ## Coding conventions to just follow, not re-litigate
 
 - Filenames: PascalCase for components (MenuCategoryCard.tsx), no

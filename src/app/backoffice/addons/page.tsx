@@ -10,6 +10,7 @@ import Link from "next/link";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
 import { AddonService } from "@/app/services";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 export default async function AddonsPage() {
   const categories = await AddonService.getAddonCategoriesWithAddonsList();
@@ -122,7 +123,7 @@ export default async function AddonsPage() {
                         <Chip label="Free" size="small" color="success" />
                       ) : (
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                          {addon.price.toLocaleString()} MMK
+                          {formatAmount(addon.price)}
                         </Typography>
                       )}
                     </Box>

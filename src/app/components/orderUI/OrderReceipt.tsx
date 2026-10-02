@@ -3,6 +3,7 @@
 import { Avatar, Box, Chip, Stack, Typography } from "@mui/material";
 import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 import BackCircleButton from "./BackCircleButton";
 
@@ -150,7 +151,7 @@ export default function OrderReceipt({
                 variant="body1"
                 sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
               >
-                {line.total.toLocaleString()} MMK
+                {formatAmount(line.total)}
               </Typography>
             </Stack>
           ))}
@@ -175,7 +176,7 @@ export default function OrderReceipt({
               Subtotal
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {total.toLocaleString()} MMK
+              {formatAmount(total)}
             </Typography>
           </Stack>
           <Stack
@@ -186,7 +187,7 @@ export default function OrderReceipt({
               Total
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 800 }}>
-              {total.toLocaleString()} MMK
+              {formatAmount(total)}
             </Typography>
           </Stack>
           {orderMore}

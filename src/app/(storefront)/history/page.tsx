@@ -9,6 +9,7 @@ import {
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
+import { formatAmount } from "@/app/lib/orderFormat";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
 import BackCircleButton from "@/app/components/orderUI/BackCircleButton";
@@ -151,7 +152,7 @@ export default async function HistoryPage({
                   variant="body1"
                   sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
                 >
-                  {tableTotal.toLocaleString()} MMK
+                  {formatAmount(tableTotal)}
                 </Typography>
               </Stack>
             </Box>
@@ -288,7 +289,7 @@ export default async function HistoryPage({
               variant="body1"
               sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
             >
-              {bill.combinedTotal.toLocaleString()} MMK
+              {formatAmount(bill.combinedTotal)}
             </Typography>
           </Stack>
         </Box>

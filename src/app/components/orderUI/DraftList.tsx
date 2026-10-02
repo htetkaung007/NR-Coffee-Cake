@@ -2,6 +2,7 @@
 
 import { Card, Divider, Stack, Typography } from "@mui/material";
 import { cartLinesTotal } from "@/app/lib/orderTotals";
+import { formatAmount } from "@/app/lib/orderFormat";
 import {
   CartLineRow,
   DraftLine,
@@ -77,7 +78,7 @@ export default function DraftList({
                 {isMine ? "Your order" : `Customer ${index + 1} order`}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {subtotal.toLocaleString()} MMK
+                {formatAmount(subtotal)}
               </Typography>
             </Stack>
 

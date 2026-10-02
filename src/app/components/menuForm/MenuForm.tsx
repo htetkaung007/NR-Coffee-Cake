@@ -27,6 +27,7 @@ import ConnectedAddonsSection from "./ConnectedAddonsSection";
 import MenuCategoryChips, { MenuCategoryOption } from "./MenuCategoryChips";
 import MenuImageUploader from "./MenuImageUploader";
 import StockQuantityStepper from "./StockQuantityStepper";
+import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 
 interface MenuFormInitialData {
   id: number;
@@ -254,7 +255,9 @@ export default function MenuForm({
                   htmlInput: { min: 1, step: 1 },
                   input: {
                     endAdornment: (
-                      <InputAdornment position="end">MMK</InputAdornment>
+                      <InputAdornment position="end">
+                        {CURRENCY_LABEL}
+                      </InputAdornment>
                     ),
                   },
                 }}

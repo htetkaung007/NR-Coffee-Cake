@@ -1,11 +1,6 @@
 import { Box, Typography } from "@mui/material";
-import {
-  AddonService,
-  LocationService,
-  MenuCategoryService,
-  MenuService,
-} from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { AddonService, MenuCategoryService, MenuService } from "@/app/services";
+import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 import MenuForm from "@/app/components/menuForm/MenuForm";
 
 export default async function EditMenuPage({
@@ -16,32 +11,16 @@ export default async function EditMenuPage({
   const { id } = await params;
   const menuId = Number(id);
 
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to edit a menu.
-        </Typography>
-      </Box>
-    );
-  }
-
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          No location selected. Please choose a location first.
-        </Typography>
-      </Box>
-    );
-  }
+  const { context, fallback } = await requireBackofficeContext({
+    signedOut: "Please sign in to edit a menu.",
+  });
+  if (!context) return fallback;
+  const { companyId, location } = context;
 
   const [categories, addonCategories, menu] = await Promise.all([
     MenuCategoryService.getMenuCategories(companyId),
     AddonService.getAddonCategoriesWithAddonsList(),
-    MenuService.getMenuById(menuId, selectedLocation.locationId),
+    MenuService.getMenuById(menuId, location.locationId),
   ]);
 
   if (!menu) {

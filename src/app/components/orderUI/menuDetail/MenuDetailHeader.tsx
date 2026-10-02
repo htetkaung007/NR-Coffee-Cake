@@ -2,6 +2,7 @@ import { Box, Typography } from "@mui/material";
 import MenuThumb from "@/app/components/MenuThumb";
 
 import { SHEET_TEXT } from "./sheetText";
+import { formatAmount } from "@/app/lib/orderFormat";
 import type { MenuDetail, MenuDetailVariant } from "./types";
 
 interface MenuDetailHeaderProps {
@@ -54,7 +55,7 @@ export default function MenuDetailHeader({
             color: "decor.price",
           }}
         >
-          {detail.price.toLocaleString()} MMK
+          {formatAmount(detail.price)}
         </Typography>
         {detail.description && (
           <Typography
@@ -98,7 +99,7 @@ export default function MenuDetailHeader({
       {/* subtitle2, not subtitle1: subtitle1 is now a bold title size
          (1.2rem from md) and would rival the item name above it. */}
       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-        {detail.price.toLocaleString()} MMK
+        {formatAmount(detail.price)}
       </Typography>
       {detail.description && (
         <Typography variant="body2" color="text.secondary">

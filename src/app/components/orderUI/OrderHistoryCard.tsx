@@ -5,6 +5,7 @@ import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 import { ORDER_STATUS_CHIP } from "./OrderReceipt";
 
@@ -102,7 +103,7 @@ export default function OrderHistoryCard({
               variant="body2"
               sx={{ fontWeight: 700, color: "primary.main" }}
             >
-              {total.toLocaleString()} MMK
+              {formatAmount(total)}
             </Typography>
           </Stack>
         </Box>

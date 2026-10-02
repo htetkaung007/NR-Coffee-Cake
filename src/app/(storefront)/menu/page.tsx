@@ -9,7 +9,7 @@ import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
 import CounterOrderClient from "@/app/components/orderUI/CounterOrderClient";
 import TableOrderClient from "@/app/components/orderUI/TableOrderClient";
-import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
+import { toDraftLine } from "@/app/lib/roundLine";
 
 // Session/cart state can change between one visit and the next (a
 // customer's own submit, or another contributor's draft add) —
@@ -64,10 +64,17 @@ function buildMenuOptions(
 export default async function MenuPage({
   searchParams,
 }: {
-  searchParams: Promise<{ locationId?: string; tableId?: string }>;
+  searchParams: Promise<{
+    locationId?: string;
+    tableId?: string;
+    scanned?: string;
+  }>;
 }) {
-  const { locationId: locationIdParam, tableId: tableIdParam } =
-    await searchParams;
+  const {
+    locationId: locationIdParam,
+    tableId: tableIdParam,
+    scanned,
+  } = await searchParams;
   const locationId = Number(locationIdParam);
   const tableId = tableIdParam ? Number(tableIdParam) : null;
 
@@ -130,9 +137,7 @@ export default async function MenuPage({
       orderNumber={bill?.billNumber ?? ""}
       shopName={shopName}
       initialStatus={session?.status ?? "CART"}
-      initialCart={
-        session?.orders.map(toCartLine) ?? []
-      }
+      justScanned={scanned === "1"}
       menus={buildMenuOptions(menuData.menus)}
       categories={menuData.categories.map((category) => category.name)}
     />

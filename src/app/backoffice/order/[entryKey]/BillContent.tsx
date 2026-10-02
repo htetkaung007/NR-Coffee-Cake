@@ -6,7 +6,7 @@ import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import type { EntryBill } from "@/app/lib/orderTotals";
-import { countLabel, formatAmount } from "@/app/lib/orderFormat";
+import { countLabel, formatMoneyDelta } from "@/app/lib/orderFormat";
 import BillTotal from "../BillTotal";
 import PrintBillButton from "../PrintBillButton";
 import RoundSection from "./RoundSection";
@@ -113,7 +113,7 @@ export default function BillContent({
               Waiting approval {round.orderNumber}
             </Typography>
             <Typography variant="body2" sx={{ flexShrink: 0 }}>
-              +{formatAmount(round.amount)}
+              {formatMoneyDelta(round.amount)}
             </Typography>
           </Stack>
         ))}

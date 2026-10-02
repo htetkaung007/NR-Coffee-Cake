@@ -1,33 +1,19 @@
-import { LocationService, MenuService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { MenuService } from "@/app/services";
+import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 import { Box, Button, Typography } from "@mui/material";
 import BOMenuCard from "@/app/components/BoMenuCard";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
 
 export default async function MenusPage() {
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to view menus.
-        </Typography>
-      </Box>
-    );
-  }
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          No location selected. Please choose a location first.
-        </Typography>
-      </Box>
-    );
-  }
+  const { context, fallback } = await requireBackofficeContext({
+    signedOut: "Please sign in to view menus.",
+  });
+  if (!context) return fallback;
+  const { companyId, location } = context;
+
   const menus = await MenuService.getMenusWithDetails(
     companyId,
-    selectedLocation.locationId,
+    location.locationId,
   );
 
   return (

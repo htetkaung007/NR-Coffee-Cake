@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, type ReactNode } from "react";
 import {
   Avatar,
   Box,
@@ -16,6 +16,7 @@ import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLineTotal, type LineAddon } from "@/app/lib/orderTotals";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 export interface CartLine {
   id: number;
@@ -71,6 +72,15 @@ interface CartLineRowProps {
   onEdit?: () => void;
   onRemove?: () => void;
   onQuantityChange?: (next: number) => void;
+  /** Replaces the default price (this line's own snapshot total) — for a
+   *  caller that shows the server's current numbers instead (the
+   *  Counter's browser cart). */
+  priceLabel?: ReactNode;
+  /** Extra notice under the quantity (e.g. "Price updated"). */
+  status?: ReactNode;
+  /** Fades the photo and text (not the controls) — a line that can't be
+   *  ordered as it is. */
+  dimmed?: boolean;
 }
 
 /** One cart/draft line: photo, name, addons, note and quantity on the
@@ -85,6 +95,9 @@ export function CartLineRow({
   onEdit,
   onRemove,
   onQuantityChange,
+  priceLabel,
+  status,
+  dimmed = false,
 }: CartLineRowProps) {
   const canEdit = actionable && !!onEdit && !disabled;
   const canRemove = actionable && !!onRemove;
@@ -118,6 +131,7 @@ export function CartLineRow({
           color: "text.secondary",
           border: "1px solid",
           borderColor: "divider",
+          opacity: dimmed ? 0.5 : 1,
         }}
       >
         <RestaurantOutlinedIcon fontSize="small" />
@@ -142,6 +156,7 @@ export function CartLineRow({
           }
           sx={{
             outline: "none",
+            opacity: dimmed ? 0.5 : 1,
             "&:focus-visible": {
               outline: "2px solid",
               outlineColor: "primary.main",
@@ -207,15 +222,18 @@ export function CartLineRow({
             {actionable ? " — change the quantity or remove it." : "."}
           </Typography>
         )}
+        {status}
       </Box>
 
       <Stack sx={{ alignItems: "flex-end", flexShrink: 0, gap: 1 }}>
-        <Typography
-          variant="body1"
-          sx={{ fontWeight: 700, color: "error.main", whiteSpace: "nowrap" }}
-        >
-          {cartLineTotal(line).toLocaleString()} MMK
-        </Typography>
+        {priceLabel ?? (
+          <Typography
+            variant="body1"
+            sx={{ fontWeight: 700, color: "error.main", whiteSpace: "nowrap" }}
+          >
+            {formatAmount(cartLineTotal(line))}
+          </Typography>
+        )}
         {canRemove && (
           <IconButton
             aria-label={`Remove ${line.menuName}`}

@@ -38,7 +38,7 @@ interface DayNavigatorProps {
 
 /** [<] "Today" / "Fri, Sep 25" [>] — the label opens a Popover with a
  *  full calendar (DESIGN.md Rule 24). Arrows disable at the day range's
- *  edges (minDay/maxDay from getHistoryBoundsAction). */
+ *  edges (minDay/maxDay, which history/page.tsx reads on the server). */
 export default function DayNavigator({
   day,
   minDay,

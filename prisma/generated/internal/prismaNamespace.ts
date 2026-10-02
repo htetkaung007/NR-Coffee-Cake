@@ -2018,7 +2018,8 @@ export const OrderSessionScalarFieldEnum = {
   isArchived: 'isArchived',
   billSessionId: 'billSessionId',
   billId: 'billId',
-  cancelReason: 'cancelReason'
+  cancelReason: 'cancelReason',
+  clientRequestId: 'clientRequestId'
 } as const
 
 export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]

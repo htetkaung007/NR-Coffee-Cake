@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Alert, Box, Snackbar, Typography, useTheme } from "@mui/material";
 
 import OrderTopBar from "./OrderTopBar";
 import OrderBotBar from "./OrderBotBar";
 import MenuBrowser, { MenuOption } from "./MenuBrowser";
+import type { MenuDetail } from "./menuDetail/types";
 
-import { addToCartAction } from "@/app/(storefront)/counter/action";
-import { CartLine } from "@/app/(storefront)/cart/CartList";
-import { applyAddedLine, countUnsubmittedItems } from "@/app/lib/orderTotals";
-import { toLineAddons } from "@/app/lib/roundLine";
+import { toBrowserCartLine } from "@/app/lib/browserCart";
+import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import {
   getOrderPageBackground,
@@ -23,41 +22,35 @@ interface CounterOrderClientProps {
   locationId: number;
   orderNumber: string;
   initialStatus: string;
-  initialCart: CartLine[];
   menus: MenuOption[];
   /** The category tabs, in the server's order (see
    *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
   categories: string[];
   shopName: string | null;
+  /** Arrived from scanning the counter QR with an empty cart (see
+   *  /counter/continue) — shows a one-time note. */
+  justScanned?: boolean;
 }
 
 export default function CounterOrderClient({
   hasSession,
   locationId,
   orderNumber,
-
-  initialCart,
   menus,
   categories,
   shopName,
   initialStatus,
+  justScanned = false,
 }: CounterOrderClientProps) {
   const router = useRouter();
   const pageBackground = getOrderPageBackground(useTheme());
 
-  const [cart, setCart] = useState(initialCart);
-  // Whether the cart shown above belongs to a round that was already
-  // submitted when the page loaded (anything but CART — including
-  // PENDING_APPROVAL, which may get approved while the customer sits
-  // on this page). Any successful add after that goes to a DIFFERENT
-  // OrderSession than the one initialCart came from (see
-  // OrderSessionService.getOrStartCartRound), so the submitted round's
-  // items must be dropped, not merged with the new round's — otherwise
-  // this page would keep showing (and the cart badge counting) a mix
-  // of two different orders until the next full reload.
-  const cartIsSubmittedRound = hasSession && initialStatus !== "CART";
-  // Flips on the first successful add to that new CART round.
-  const [cartRoundStarted, setCartRoundStarted] = useState(false);
+  // The cart lives in this browser (see useBrowserCart) — adding never
+  // calls the server; the cart page checks and submits it.
+  const browserCart = useBrowserCart(locationId);
+  // Instant feedback for an add (DESIGN.md Rule 15): the dialog closes,
+  // the badge counts up, and this names what was added.
+  const [addedName, setAddedName] = useState<string | null>(null);
   // A submitted order still waiting on the counter: drives the spinner
   // beside the top bar's cart icon, AND disables Add-to-cart below
   // (see canOrder) — a customer must not be able to route around a
@@ -85,47 +78,28 @@ export default function CounterOrderClient({
   // poll for. Post-submit status polling lives on /cart instead (see
   // CartPageClient).
 
-  // Every Add always goes through MenuDetailDialog now, even for a
-  // menu with no addon categories at all — that keeps a single code
-  // path for "attempt to add to cart" instead of a quick-add button
-  // that would need its own copy of the required-addon error handling
-  // MenuDetailDialog already has. The dialog itself just skips
-  // rendering any category UI when addonCategories is empty. Errors
-  // are shown inline inside the dialog (see its own error state) —
-  // not surfaced again here.
+  // One-time, like the cart page's "Scanned" banner: drop the marker so
+  // a reload doesn't show the note again.
+  useEffect(() => {
+    if (!justScanned) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("scanned");
+    window.history.replaceState(null, "", url);
+  }, [justScanned]);
+
+  // Every Add goes through MenuDetailDialog, which has already checked
+  // the required add-ons; the line keeps what the dialog showed (name,
+  // prices, photo) for display only — the server re-prices everything
+  // when the cart is checked and submitted.
   async function addToCart(
-    menu: { id: number; name: string; price: number },
+    _menu: { id: number; name: string; price: number },
     quantity: number,
     addonIds: number[],
     note: string,
+    detail: MenuDetail,
   ): Promise<string | null> {
-    const result = await addToCartAction(menu.id, quantity, addonIds, note);
-    if (!result.success) {
-      return result.error.message;
-    }
-    const newItem = {
-      id: result.data.id,
-      menuId: menu.id,
-      menuName: menu.name,
-      // The line's total — an identical line may have been merged into.
-      quantity: result.data.quantity,
-      // The server's own snapshot, not this component's (possibly
-      // stale) menu prop — see Order.unitPrice's own schema comment.
-      price: result.data.unitPrice,
-      // With their own price snapshots — part of the line's total.
-      addons: toLineAddons(result.data.OrdersAddons),
-      note: result.data.note,
-    };
-    if (cartIsSubmittedRound && !cartRoundStarted) {
-      // First add while the page loaded showing a submitted round —
-      // this just started (or reused) a brand-new CART round (see
-      // OrderSessionService.getOrStartCartRound), so the submitted
-      // round's own items no longer belong in this cart.
-      setCart([newItem]);
-      setCartRoundStarted(true);
-    } else {
-      setCart((current) => applyAddedLine(current, newItem));
-    }
+    browserCart.addLine(toBrowserCartLine(detail, quantity, addonIds, note));
+    setAddedName(detail.name);
     return null;
   }
 
@@ -148,14 +122,7 @@ export default function CounterOrderClient({
     >
       <OrderTopBar
         shopName={shopName}
-        // `cart` keeps its lines after Submit, so count them only while
-        // they're still un-submitted: the round the page loaded with
-        // (initialStatus), or — once the first add after an Accept has
-        // started a new round — that fresh CART round.
-        cartItemCount={countUnsubmittedItems(
-          cartRoundStarted ? "CART" : initialStatus,
-          cart,
-        )}
+        cartItemCount={browserCart.itemCount}
         awaitingApproval={isAwaitingApproval}
         onCartClick={() => {
           router.push(`/cart?locationId=${locationId}`);
@@ -182,17 +149,26 @@ export default function CounterOrderClient({
           sx={{ display: "block", mb: 2 }}
         >
           {!hasSession
-            ? "Browse the menu. Scan the table or counter QR to place an order."
+            ? "Add items to your cart — scan the QR at the counter to send your order."
             : isAwaitingApproval
               ? "Your order is waiting for the counter to confirm. You can add more once it's accepted."
               : "Add items, then check your cart to submit for counter approval."}
         </Typography>
 
+        {justScanned && (
+          <Alert severity="success" role="status" sx={{ mb: 2 }}>
+            Scanned ✓ — add items to order. Items added in another browser
+            won&apos;t show here.
+          </Alert>
+        )}
+
         <MenuBrowser
           menus={menus}
           categories={categories}
           locationId={locationId}
-          canOrder={hasSession && !isAwaitingApproval}
+          // The cart lives in this browser, so it can be built before any
+          // scan (Online browsing); sending is what needs the counter QR.
+          canOrder={locationId > 0 && !isAwaitingApproval}
           backgroundColor={pageBackground.color}
           backgroundImage={pageBackground.image}
           backgroundAttachment="fixed"
@@ -200,6 +176,16 @@ export default function CounterOrderClient({
         />
       </Box>
       <OrderBotBar locationId={locationId} />
+      <Snackbar
+        open={addedName !== null}
+        autoHideDuration={2000}
+        onClose={() => setAddedName(null)}
+        message={addedName ? `Added ${addedName} to your cart` : ""}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        // Below the sticky top bar, clear of the notch.
+        sx={{ top: "calc(72px + env(safe-area-inset-top, 0px))" }}
+        slotProps={{ content: { role: "status", "aria-live": "polite" } }}
+      />
     </Box>
   );
 }

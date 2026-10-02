@@ -6,6 +6,7 @@ import SearchIcon from "@mui/icons-material/Search";
 
 import MenuDetailDialog from "./MenuDetailDialog";
 import MenuCard from "../MenuCard";
+import type { MenuDetail } from "./menuDetail/types";
 
 export interface MenuOption {
   id: number;
@@ -54,6 +55,8 @@ interface MenuBrowserProps {
     quantity: number,
     addonIds: number[],
     note: string,
+    /** The item as the dialog showed it — see MenuDetailDialog's onSubmit. */
+    detail: MenuDetail,
   ) => Promise<string | null>;
 }
 
@@ -225,10 +228,10 @@ export default function MenuBrowser({
         locationId={locationId}
         canOrder={canOrder}
         onClose={() => setDetailMenuId(null)}
-        onSubmit={async (menuId, quantity, addonIds, note) => {
+        onSubmit={async (menuId, quantity, addonIds, note, detail) => {
           const menu = menus.find((item) => item.id === menuId);
           if (!menu) return "This item is no longer available.";
-          return onAddToCart(menu, quantity, addonIds, note);
+          return onAddToCart(menu, quantity, addonIds, note, detail);
         }}
       />
     </>

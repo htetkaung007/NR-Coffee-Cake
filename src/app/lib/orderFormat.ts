@@ -1,10 +1,21 @@
-/** Display formatting shared by the Backoffice order detail page and
- *  the printable bill. */
+/** Display formatting shared across the app — customer order flow,
+ *  Backoffice and the printable bill. */
 
-/** "1,234 MMK" — the same money format the Order List and the Mark-as-
- *  paid dialog use. */
+/** The ONE place the currency label lives. Every money string goes
+ *  through formatAmount/formatMoneyDelta below; the few spots that need
+ *  the bare label (a price input's adornment, a validation message)
+ *  import this instead of writing it out. */
+export const CURRENCY_LABEL = "MMK";
+
+/** "1,234 MMK" — every price and total on screen and on paper. */
 export function formatAmount(amount: number) {
-  return `${amount.toLocaleString()} MMK`;
+  return `${amount.toLocaleString()} ${CURRENCY_LABEL}`;
+}
+
+/** "+500 MMK" — an add-on's extra charge, or an amount still to be
+ *  added on top of a bill. */
+export function formatMoneyDelta(amount: number) {
+  return `+${formatAmount(amount)}`;
 }
 
 /** "11:35 AM" in the viewer's locale. The server's render can differ

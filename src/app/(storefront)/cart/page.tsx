@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Box, Typography } from "@mui/material";
 import {
+  CartSubmitService,
   LocationService,
   OrderSessionService,
   TableDraftService,
@@ -41,10 +42,17 @@ export const dynamic = "force-dynamic";
 export default async function CartPage({
   searchParams,
 }: {
-  searchParams: Promise<{ locationId?: string; tableId?: string }>;
+  searchParams: Promise<{
+    locationId?: string;
+    tableId?: string;
+    scanned?: string;
+  }>;
 }) {
-  const { locationId: locationIdParam, tableId: tableIdParam } =
-    await searchParams;
+  const {
+    locationId: locationIdParam,
+    tableId: tableIdParam,
+    scanned,
+  } = await searchParams;
   const tableId = tableIdParam ? Number(tableIdParam) : null;
 
   if (tableId) {
@@ -94,8 +102,12 @@ export default async function CartPage({
   const session = token
     ? await OrderSessionService.getActiveSessionByToken(token)
     : null;
+  // The session's location when there is one (the query param could be
+  // edited), otherwise the page's own — the browser cart is kept per
+  // location, so one is needed to show it at all.
+  const locationId = session?.locationId ?? Number(locationIdParam);
 
-  if (!session) {
+  if (!session && !(locationId > 0)) {
     const backHref = tableId
       ? `/menu?locationId=${locationIdParam}&tableId=${tableId}`
       : locationIdParam
@@ -122,32 +134,42 @@ export default async function CartPage({
     );
   }
 
-  const [shopName, shortages, bill] = await Promise.all([
-    LocationService.getShopNameForLocation(session.locationId),
-    OrderSessionService.getShortagesForSession(session.id, session.locationId),
-    // "Order More" can split one bill into several rounds — the
-    // header (and the Order-confirmed screen it feeds) shows the
-    // BILL's number, matching the cashier's Order List card, never
-    // this particular round's own number.
-    OrderSessionService.getBillForSession(session),
+  const [shopName, sendState, bill] = await Promise.all([
+    LocationService.getShopNameForLocation(locationId),
+    // Read-only — the same answer every later cart check gives.
+    CartSubmitService.getSendState(locationId, token ?? null),
+    // "Order More" can split one bill into several rounds — the header
+    // (and the Order-confirmed screen it feeds) shows the BILL's number,
+    // matching the cashier's Order List card, never this round's own.
+    session ? OrderSessionService.getBillForSession(session) : null,
   ]);
 
   return (
     <CartPageClient
-      sessionId={session.id}
-      initialTotal={orderLinesTotal(session.orders)}
-      locationId={session.locationId}
-      orderNumber={bill.billNumber}
+      // A new round or status from the server (after a submit's refresh)
+      // starts the page fresh from it.
+      key={session ? `${session.id}:${session.status}` : "no-session"}
+      locationId={locationId}
       shopName={shopName}
-      initialStatus={session.status as CartButtonStatus}
-      // getBillForSession's rounds filter excludes CART, so while this
-      // round IS the CART round, any round still in `bill.rounds` is
-      // an earlier one already with the kitchen (see
-      // OrderSessionService.getOrStartCartRound — this only happens
-      // once the accepted round's next round has been started).
-      hasEarlierRound={session.status === "CART" && bill.rounds.length > 0}
-      initialShortages={shortages}
-      initialCart={session.orders.map(toCartLine)}
+      initialSendState={sendState}
+      justScanned={scanned === "1"}
+      session={
+        session && bill
+          ? {
+              id: session.id,
+              status: session.status as CartButtonStatus,
+              billNumber: bill.billNumber,
+              // A CART round's rows are the old server-held cart — the
+              // cart is in the browser now, so they're not shown.
+              roundLines:
+                session.status === "CART" ? [] : session.orders.map(toCartLine),
+              roundTotal:
+                session.status === "CART" ? 0 : orderLinesTotal(session.orders),
+              // getBillForSession's rounds are the submitted ones only.
+              hasEarlierRound: bill.rounds.length > 0,
+            }
+          : null
+      }
     />
   );
 }

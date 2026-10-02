@@ -80,6 +80,48 @@ export const submitDraftSchema = z.object({
 });
 export type SubmitDraftInput = z.infer<typeof submitDraftSchema>;
 
+// Browser-held cart check (validateCartAction) — the whole cart the
+// Counter / Online cart keeps in localStorage. Caps keep one request
+// small; the business rules themselves live in validateCartLines.
+const MAX_CART_LINES = 50;
+const MAX_ADDONS_PER_LINE = 20;
+
+const cartLineSchema = z.object({
+  menuId: positiveInt,
+  // Duplicates count once (the same as the merge rule, lineMergeKey).
+  addonIds: addonIds
+    .transform((ids) => [...new Set(ids)])
+    .refine(
+      (ids) => ids.length <= MAX_ADDONS_PER_LINE,
+      `A cart line can have at most ${MAX_ADDONS_PER_LINE} add-ons.`,
+    ),
+  // Any whole number here, NOT the 1–99 `quantity` above: an out-of-range
+  // quantity comes back as that line's "invalid" status, so the customer
+  // sees which row to fix instead of the whole check failing.
+  quantity: z.number().int(),
+  // The browser stores "no note" as null.
+  note: orderNoteSchema.nullable().transform((note) => note ?? null),
+  // What the customer last saw — only compared, never charged.
+  displayedUnitPrice: z.number().int().nonnegative().optional(),
+});
+
+export const validateCartSchema = z.object({
+  locationId: positiveInt,
+  lines: z
+    .array(cartLineSchema)
+    .max(MAX_CART_LINES, `A cart can have at most ${MAX_CART_LINES} lines.`),
+});
+export type ValidateCartInput = z.infer<typeof validateCartSchema>;
+export type ValidateCartRawInput = z.input<typeof validateCartSchema>;
+
+// Submitting the same cart: plus the idempotency key the browser makes
+// once per submission (crypto.randomUUID) — see OrderSession.clientRequestId.
+export const submitCartSchema = validateCartSchema.extend({
+  clientRequestId: z.uuid(),
+});
+export type SubmitCartInput = z.infer<typeof submitCartSchema>;
+export type SubmitCartRawInput = z.input<typeof submitCartSchema>;
+
 export const pollTableSchema = z.object({
   tableId: positiveInt,
   locationId: positiveInt,

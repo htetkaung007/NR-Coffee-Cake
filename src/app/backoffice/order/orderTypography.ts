@@ -13,5 +13,5 @@ export const sectionHeadingSx = { fontWeight: 800 } as const;
 /** Card / row titles ("Table 1", "#A060"). */
 export const entryTitleSx = { fontWeight: 700 } as const;
 
-/** Money on cards and rows ("13,500 MMK"). */
+/** Money on cards and rows (text from formatAmount). */
 export const moneySx = { fontWeight: 800 } as const;

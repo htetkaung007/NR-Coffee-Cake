@@ -21,7 +21,7 @@ const inMemory = new Map<number, number>();
 const storageKey = (tableId: number) => `order-confirmed-dismissed:${tableId}`;
 
 /** Highest round id the customer has dismissed for this table (0 = none). */
-export function getDismissedUpTo(tableId: number) {
+function getDismissedUpTo(tableId: number) {
   let stored = 0;
   try {
     stored = Number(window.localStorage.getItem(storageKey(tableId))) || 0;

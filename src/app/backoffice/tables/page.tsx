@@ -1,38 +1,22 @@
 import Link from "next/link";
 import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { LocationService, TableService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { TableService } from "@/app/services";
+import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 import TableCard from "@/app/components/TableCard";
 
 export default async function TablesPage() {
-  const { companyId, userId } = await getSessionContext();
-
-  if (!companyId || !userId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to view tables.
-        </Typography>
-      </Box>
-    );
-  }
-
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Select a location first to view its tables.
-        </Typography>
-      </Box>
-    );
-  }
+  const { context, fallback } = await requireBackofficeContext({
+    signedOut: "Please sign in to view tables.",
+    noLocation: "Select a location first to view its tables.",
+  });
+  if (!context) return fallback;
+  const { location } = context;
 
   // Tables are scoped to whichever location the user currently has
   // selected — same "selected location" concept the Menu list uses.
   const tables = await TableService.getTablesByLocation(
-    selectedLocation.locationId,
+    location.locationId,
   );
 
   return (

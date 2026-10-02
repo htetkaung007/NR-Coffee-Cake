@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
-import { getMenuDetailAction } from "@/app/(storefront)/counter/action";
+import { getMenuDetailAction } from "@/app/(storefront)/menu/action";
 import { lineTotal } from "@/app/lib/orderTotals";
 
 import MenuDetailBody from "./menuDetail/MenuDetailBody";
@@ -36,6 +36,11 @@ interface MenuDetailDialogProps {
     addonIds: number[],
     /** Trimmed; "" when the customer left it blank. */
     note: string,
+    /** The item as this dialog showed it (current name, prices, add-ons,
+     *  photo) — for a caller that keeps its own copy of the line, like
+     *  the Counter's browser cart. Callers that save on the server ignore
+     *  it. */
+    detail: MenuDetail,
   ) => Promise<string | null>;
   editing?: MenuDetailEditingSelection;
 }
@@ -178,6 +183,7 @@ export default function MenuDetailDialog({
       quantity,
       addonIds,
       note.trim(),
+      detail,
     );
     setSubmitting(false);
     if (errorMessage) {

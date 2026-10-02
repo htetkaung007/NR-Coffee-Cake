@@ -11,7 +11,7 @@ import MenuBrowser, { MenuOption } from "./MenuBrowser";
 import {
   addDraftItemAction,
   pollTableAction,
-} from "@/app/(storefront)/counter/action";
+} from "@/app/(storefront)/table/action";
 import { DraftLine } from "@/app/(storefront)/cart/CartList";
 import { applyAddedLine, sumQuantities } from "@/app/lib/orderTotals";
 import { toLineAddons } from "@/app/lib/roundLine";

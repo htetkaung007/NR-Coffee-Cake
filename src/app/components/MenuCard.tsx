@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { formatAmount } from "@/app/lib/orderFormat";
 import MenuThumb from "./MenuThumb";
 
 export interface MenuCardData {
@@ -113,7 +114,7 @@ export default function MenuCard({
   // ordered; the hover/pressed feedback follows the same condition.
   const isInteractive = Boolean(onAddToCart) && isAvailable;
   const hasDescription = item.description.trim().length > 0;
-  const priceLabel = `${item.price.toLocaleString()} MMK`;
+  const priceLabel = formatAmount(item.price);
 
   const content = (
     <>

@@ -1,33 +1,16 @@
-import { Box, Typography } from "@mui/material";
-import { LocationService, OrderSessionApprovalService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { OrderSessionApprovalService } from "@/app/services";
+import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 import OrderListView from "./OrderListView";
 
 export default async function OrderPage() {
-  const { userId } = await getSessionContext();
-  if (!userId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to view orders.
-        </Typography>
-      </Box>
-    );
-  }
-
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          No location selected. Please choose a location first.
-        </Typography>
-      </Box>
-    );
-  }
+  const { context, fallback } = await requireBackofficeContext({
+    signedOut: "Please sign in to view orders.",
+  });
+  if (!context) return fallback;
+  const { location } = context;
 
   const entries = await OrderSessionApprovalService.getOpenEntries(
-    selectedLocation.locationId,
+    location.locationId,
   );
 
   // The list only needs each round's id (Mark-as-Paid settles them

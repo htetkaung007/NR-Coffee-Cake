@@ -1,6 +1,7 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { normalizeOrderNote } from "@/app/lib/orderNote";
 import { lineMergeKey } from "@/app/lib/orderLineMerge";
+import { findUnpickedRequiredGroup } from "@/app/lib/addonSelection";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 import { PriceSnapshotService } from "../priceSnapshot.service";
@@ -219,7 +220,9 @@ export class OrderSessionCartService {
 
   /** Every required addon category linked to this menu (see
    *  MenuAddonCategories) must have AT LEAST ONE of its own addons
-   *  present in the given addonIds — same rule the client-side radio
+   *  present in the given addonIds (the rule itself lives in
+   *  findUnpickedRequiredGroup, shared with the browser-cart check
+   *  validateCartLines; this loads the groups from the DB) — same rule the client-side radio
    *  group enforces, re-checked here since a client can't be trusted
    *  to have actually enforced it (see addItemToCart's comment).
    *  Doesn't check that every id in addonIds actually belongs to this
@@ -240,16 +243,17 @@ export class OrderSessionCartService {
       },
     });
 
-    for (const link of requiredCategoryLinks) {
-      const categoryAddonIds = new Set(
-        link.addonCategory.addons.map((addon) => addon.id),
+    const unpicked = findUnpickedRequiredGroup(
+      addonIds,
+      requiredCategoryLinks.map((link) => ({
+        name: link.addonCategory.name,
+        addonIds: link.addonCategory.addons.map((addon) => addon.id),
+      })),
+    );
+    if (unpicked) {
+      throw new ValidationError(
+        `Please choose an option for "${unpicked.name}".`,
       );
-      const hasSelection = addonIds.some((id) => categoryAddonIds.has(id));
-      if (!hasSelection) {
-        throw new ValidationError(
-          `Please choose an option for "${link.addonCategory.name}".`,
-        );
-      }
     }
   }
 }

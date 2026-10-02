@@ -17,7 +17,7 @@ function isRealCalendarDay(value: string): boolean {
   );
 }
 
-export const historyDaySchema = z
+const historyDaySchema = z
   .string()
   .regex(DAY_FORMAT, "Day must be in YYYY-MM-DD format.")
   .refine(isRealCalendarDay, { message: "Day must be a real date." })

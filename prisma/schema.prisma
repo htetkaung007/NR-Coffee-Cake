@@ -354,6 +354,17 @@ model OrderSession {
   // CANCELLED rows written before this column existed (old data is
   // left as-is, never backfilled).
   cancelReason  CancelReason?
+  // Idempotency key for a browser-cart submit (Counter / Online carts
+  // live in localStorage and reach the server only on submit). The
+  // customer's browser generates it with crypto.randomUUID() for ONE
+  // cart submission and sends it along; if a submission arrives with
+  // an id that already exists, the server returns that existing order
+  // instead of creating a second one — so a retry after a dropped
+  // response can't double-order. Null for sessions not created from a
+  // browser cart (Table QR rounds, staff orders, older data).
+  // @unique allows many NULLs in PostgreSQL, so older rows need no
+  // backfill.
+  clientRequestId String? @unique
 
   @@index([billSessionId])
   @@index([billId])

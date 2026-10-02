@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 
 export const createMenuSchema = z.object({
   name: z
@@ -12,7 +13,7 @@ export const createMenuSchema = z.object({
     .max(100, "Description cannot exceed 100 characters."),
   price: z.coerce
     .number()
-    .int("Price must be a whole number of MMK.")
+    .int(`Price must be a whole number of ${CURRENCY_LABEL}.`)
     .positive("Price must be greater than zero."),
   quantity: z.coerce
     .number()

@@ -4,6 +4,7 @@ import { Box, Button, DialogActions, Stack, Typography } from "@mui/material";
 
 import QuantityStepper, { type QuantityControl } from "./QuantityStepper";
 import { SHEET_TEXT } from "./sheetText";
+import { formatAmount } from "@/app/lib/orderFormat";
 import type { MenuDetailVariant } from "./types";
 
 interface MenuDetailFooterProps {
@@ -72,7 +73,7 @@ export default function MenuDetailFooter({
             }}
           >
             {submitLabel}
-            {!isSoldOut && ` · ${totalPrice.toLocaleString()} MMK`}
+            {!isSoldOut && ` · ${formatAmount(totalPrice)}`}
           </Button>
         </Stack>
       </Box>
@@ -100,7 +101,7 @@ export default function MenuDetailFooter({
         >
           <Typography sx={{ fontWeight: 700 }}>{name}</Typography>
           <Typography sx={{ fontWeight: 700, color: "primary.main" }}>
-            {totalPrice.toLocaleString()} MMK
+            {formatAmount(totalPrice)}
           </Typography>
         </Stack>
       )}

@@ -105,8 +105,8 @@ const safeUpdateStaffCartItem = toSafeResult(
 );
 
 /** A line's quantity (the − / + stepper) or its add-ons and note (the
- *  edit dialog) — the staff twin of the customer's updateCartItemAction,
- *  which reads the customer's session cookie instead. */
+ *  edit dialog) of the staff's server-held cart (the Counter customer's
+ *  cart lives in their browser instead — see useBrowserCart). */
 export async function updateStaffCartItemAction(
   sessionId: number,
   orderId: number,

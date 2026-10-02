@@ -7,8 +7,8 @@ export const COUNTER_SESSION_COOKIE = "counter_session_token";
 
 /** Shared Set-Cookie options for COUNTER_SESSION_COOKIE — every write
  *  site (the scan Route Handler, startNextRound's cookie move in
- *  pollOrderStatusAction, and getOrStartCartRound's cookie move in
- *  addToCartAction) used to repeat this object literal; one canonical
+ *  pollOrderStatusAction, and submitCartAction's move onto a new
+ *  round) used to repeat this object literal; one canonical
  *  copy means they can't drift out of sync (e.g. one write site
  *  missing `secure` in production). No Max-Age here, for the same
  *  reason the comment below gives — only ever spread into a
@@ -47,6 +47,6 @@ export const CONTRIBUTOR_TOKEN_COOKIE = "table_contributor_tokens";
 // lifecycle owner: a CART session that never places an order expires
 // on its own after 40 minutes (see OrderSessionService's
 // CART_ABANDON_MINUTES), and PAID clears the cookie immediately on
-// the customer's next request (see markSessionPaid's comment). A
+// the customer's next request (see markSessionsPaid's comment). A
 // fixed cookie expiry on top of that would just be a second, easily
 // out-of-sync copy of the same rule.

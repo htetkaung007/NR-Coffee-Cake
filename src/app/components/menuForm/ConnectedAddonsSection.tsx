@@ -15,6 +15,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ConnectAddonGroupDialog from "../ConnectAddonGroupDialog";
 import { AddonGroupOption } from "../ConnectAddonGroupDialog";
+import { formatMoneyDelta } from "@/app/lib/orderFormat";
 
 interface ConnectedAddonsSectionProps {
   addonCategories: AddonGroupOption[];
@@ -159,7 +160,7 @@ export default function ConnectedAddonsSection({
                       label={
                         addon.price === 0
                           ? addon.name
-                          : `${addon.name} (+${addon.price.toLocaleString()} MMK)`
+                          : `${addon.name} (${formatMoneyDelta(addon.price)})`
                       }
                       variant="outlined"
                       sx={{ bgcolor: "background.paper", borderColor: "divider" }}

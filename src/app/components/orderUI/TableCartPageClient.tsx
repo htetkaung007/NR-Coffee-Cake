@@ -31,12 +31,13 @@ import {
   removeDraftItemAction,
   submitDraftAction,
   updateDraftItemAction,
-} from "@/app/(storefront)/counter/action";
+} from "@/app/(storefront)/table/action";
 import CartList, {
   CartLine,
   DraftLine,
   Shortage,
 } from "@/app/(storefront)/cart/CartList";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -317,8 +318,7 @@ export default function TableCartPageClient({
                   Total Price
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {(showingRound ? roundTotal : draftTotal).toLocaleString()}{" "}
-                  MMK
+                  {formatAmount(showingRound ? roundTotal : draftTotal)}
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1}>

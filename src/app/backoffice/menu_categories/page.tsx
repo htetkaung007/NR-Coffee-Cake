@@ -1,33 +1,15 @@
-import { Box, Typography } from "@mui/material";
 import { LocationService, MenuCategoryService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 import MenuCategoryOrderView from "./MenuCategoryOrderView";
 
 export default async function MenuCategoriesPage() {
-  const { companyId, userId } = await getSessionContext();
+  const { context, fallback } = await requireBackofficeContext({
+    signedOut: "Please sign in to view menu categories.",
+  });
+  if (!context) return fallback;
+  const { companyId, location } = context;
 
-  if (!companyId || !userId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to view menu categories.
-        </Typography>
-      </Box>
-    );
-  }
-
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          No location selected. Please choose a location first.
-        </Typography>
-      </Box>
-    );
-  }
-
-  const { locationId } = selectedLocation;
+  const { locationId } = location;
   const [visible, hidden, shopName] = await Promise.all([
     MenuCategoryService.getVisibleCategories(companyId, locationId),
     MenuCategoryService.getHiddenCategories(companyId, locationId),

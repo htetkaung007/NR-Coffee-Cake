@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { formatAmount } from "@/app/lib/orderFormat";
 import MenuThumb from "./MenuThumb";
 
 /** Shape returned by MenuService.getMenusWithDetails — the only fields
@@ -166,7 +167,7 @@ export default function BOMenuCard({ item }: MenuCardProps) {
             color: "primary.main",
           }}
         >
-          {item.price.toLocaleString()} MMK
+          {formatAmount(item.price)}
         </Typography>
 
         <Box sx={{ flexGrow: 1 }} />

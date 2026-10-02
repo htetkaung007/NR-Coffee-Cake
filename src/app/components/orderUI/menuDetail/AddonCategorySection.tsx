@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 
 import { SHEET_TEXT } from "./sheetText";
+import { formatMoneyDelta } from "@/app/lib/orderFormat";
 import type { Addon, AddonCategory, MenuDetailVariant } from "./types";
 
 /** Phone addon row: name + price on the left, the radio / checkbox at the
@@ -158,7 +159,7 @@ function AddonLabel({
           color: addon.price > 0 ? "decor.price" : "success.main",
         }}
       >
-        {addon.price > 0 ? `+${addon.price.toLocaleString()} MMK` : "Free"}
+        {addon.price > 0 ? formatMoneyDelta(addon.price) : "Free"}
       </Typography>
     </Stack>
   );

@@ -22,7 +22,7 @@ import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import SettingsIcon from "@mui/icons-material/Settings";
 
-export const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 260;
 
 const TOPBAR_HEIGHT_DESKTOP = 64;
 

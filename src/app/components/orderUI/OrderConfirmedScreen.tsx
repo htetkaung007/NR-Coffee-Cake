@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 import BackCircleButton from "./BackCircleButton";
 
@@ -103,7 +104,7 @@ export default function OrderConfirmedScreen({
                 variant="body1"
                 sx={{ fontWeight: 700, color: "primary.main" }}
               >
-                {total.toLocaleString()} MMK
+                {formatAmount(total)}
               </Typography>
             </Box>
           </Stack>

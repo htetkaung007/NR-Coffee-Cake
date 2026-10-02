@@ -7,7 +7,6 @@ import {
 } from "@/app/lib/actionHelper";
 import { AppError } from "@/app/lib/errors";
 import { getSessionContext } from "@/app/lib/session";
-import { todayInShop } from "@/app/lib/shopDay";
 import {
   historyDetailInputSchema,
   historyListInputSchema,
@@ -21,7 +20,7 @@ import { LocationService, OrderHistoryService } from "@/app/services";
 /** Every action below needs the same thing: the signed-in user's
  *  currently-selected location. One local helper (not a global lib
  *  addition — Rule 3 colocation) instead of repeating this in all
- *  four action bodies. */
+ *  three action bodies. */
 async function resolveLocationId(): Promise<number> {
   const { companyId, userId } = await getSessionContext();
   if (!companyId || !userId) {
@@ -190,20 +189,5 @@ export async function getHistoryDetailAction(input: {
     historyDetailInputSchema,
     input,
   ).asyncAndThen(safeGetHistoryDetail);
-  return toActionResult(result);
-}
-
-const safeGetHistoryBounds = toSafeResult(async () => {
-  const locationId = await resolveLocationId();
-  const minDay =
-    (await OrderHistoryService.getFirstOrderDay(locationId)) ?? todayInShop();
-  return { minDay, maxDay: todayInShop() };
-});
-
-/** The date picker's allowed range — no schema/input to validate,
- *  nothing to search by, so this skips validateWith entirely (same as
- *  getPendingApprovalsAction elsewhere, which also takes no input). */
-export async function getHistoryBoundsAction() {
-  const result = await safeGetHistoryBounds();
   return toActionResult(result);
 }

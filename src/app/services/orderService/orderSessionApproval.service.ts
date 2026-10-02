@@ -75,9 +75,8 @@ export class OrderSessionApprovalService {
 
   /** Everything that has to happen once a session (or a batch of them)
    *  is written to PAID, inside the SAME transaction as that status
-   *  write — both markSessionPaid and markSessionsPaid call this
-   *  last, so the post-payment cleanup lives in exactly one place
-   *  instead of drifting between the single- and bulk-pay paths.
+   *  write — markSessionsPaid calls this last, so the post-payment
+   *  cleanup lives in exactly one place.
    *
    *  No stock changes here: drafts (Table QR) and a CART round
    *  (Counter "Order More") were never decremented in the first place
@@ -85,8 +84,8 @@ export class OrderSessionApprovalService {
    *  TableDraftService.submitDraft) — so there's nothing to restore.
    *
    *  a) Table QR — bumps Table.contributorEpoch per distinct tableId
-   *     (unchanged logic, moved here from markSessionPaid/
-   *     markSessionsPaid — see the epoch bump's own reasoning below),
+   *     (unchanged logic, moved here from markSessionsPaid — see the
+   *     epoch bump's own reasoning below),
    *     then deletes that table's leftover drafts (Order rows with
    *     orderSessionId: null), same delete-addons-then-orders pattern
    *     TableDraftService.submitDraft uses. Without this, the NEXT
@@ -160,17 +159,6 @@ export class OrderSessionApprovalService {
         await OrderSessionService.cancelSession(tx, round.id, "UNSUBMITTED");
       }
     }
-  }
-
-  /** Single-session convenience — delegates to markSessionsPaid so
-   *  there's exactly one place that creates the Bill row and does the
-   *  PAID write (see that method's own comment). No caller in this
-   *  codebase actually settles just one round anymore (the Order List
-   *  UI always goes through markEntryPaidAction/markSessionsPaid, one
-   *  confirm click per whole entry) — kept working, delegating, for
-   *  markSessionPaidAction's sake rather than removed outright. */
-  static async markSessionPaid(sessionId: number) {
-    return OrderSessionApprovalService.markSessionsPaid([sessionId]);
   }
 
   /** Marks every given session PAID — one write for every open round

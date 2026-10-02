@@ -7,7 +7,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useTheme } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
 import { canPrintBill, type EntryBill } from "@/app/lib/orderTotals";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { formatAmount, formatMoneyDelta } from "@/app/lib/orderFormat";
 import {
   acceptCounterSessionAction,
   markEntryPaidAction,
@@ -158,7 +158,7 @@ export default function OrderDetailView({
               sx={{ color: "warning.main" }}
             />
             <Typography variant="body2" color="text.secondary">
-              +{formatAmount(bill.pendingAmount)} waiting approval
+              {formatMoneyDelta(bill.pendingAmount)} waiting approval
             </Typography>
           </Stack>
         )}

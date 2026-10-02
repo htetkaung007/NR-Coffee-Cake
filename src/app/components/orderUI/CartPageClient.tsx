@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -10,196 +10,277 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
+import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
+import { useCartValidation } from "@/app/lib/hooks/useCartValidation";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { cartLinesTotal } from "@/app/lib/orderTotals";
-import { toLineAddons } from "@/app/lib/roundLine";
-
+import { cartLineTotal, cartLinesTotal } from "@/app/lib/orderTotals";
 import {
-  removeFromCartAction,
-  submitOrderAction,
-  updateCartItemAction,
-} from "@/app/(storefront)/counter/action";
-import CartList, { CartLine, Shortage } from "@/app/(storefront)/cart/CartList";
+  toBrowserCartLine,
+  toServerLines,
+  type BrowserCartLine,
+} from "@/app/lib/browserCart";
+import {
+  decideSubmit,
+  type SendState,
+  type ValidatedCartLine,
+} from "@/app/lib/cartValidation";
+import { formatAmount } from "@/app/lib/orderFormat";
+
+import { submitCartAction } from "@/app/(storefront)/cart/action";
+import CartList, {
+  CartLineRow,
+  type CartLine,
+} from "@/app/(storefront)/cart/CartList";
 import CartButton, { CartButtonStatus } from "./CartButton";
+import CartLineNotice from "./CartLineNotice";
 import MenuDetailDialog from "./MenuDetailDialog";
 import BackCircleButton from "./BackCircleButton";
 import OrderConfirmedScreen from "./OrderConfirmedScreen";
 import EmptyCartState from "./EmptyCartState";
+import CounterQrScannerDialog from "./CounterQrScannerDialog";
 
 interface CartPageClientProps {
-  /** The round's id — for the receipt link on the order-confirmed screen. */
-  sessionId: number;
-  /** The round's billing total at page load, for the order-confirmed
-   *  screen (kept current by the status poll). */
-  initialTotal: number;
   locationId: number;
-  orderNumber: string;
   shopName: string | null;
-  initialStatus: CartButtonStatus;
-  initialCart: CartLine[];
-  /** True when this bill already has an earlier round with the
-   *  kitchen (see OrderSessionService.getOrStartCartRound) — only
-   *  possible while initialStatus is CART, since that's the only
-   *  status this page shows the editable cart for. Drives a one-line
-   *  notice near the top so the customer knows these items are a NEW
-   *  order, not additions to what's already cooking. */
-  hasEarlierRound?: boolean;
-  /** Snapshot taken at page load — there's no polling pre-submit here
-   *  (a lone Counter customer's own cart can't change from anyone but
-   *  them — see CounterOrderClient.tsx), so this can go stale between
-   *  load and submit; the real enforcement is still the atomic
-   *  decrementStock inside submitOrderForApproval, same as it always
-   *  was. Shown dimmed with a warning, and Edit/Cancel let the
-   *  customer self-serve a fix (same as Table's draft review) rather
-   *  than being forced to just wait or ask staff. */
-  initialShortages: Shortage[];
+  /** The Counter session the scan cookie points at, or null (never
+   *  scanned here, or the scan has expired) — then the cart can still be
+   *  built and checked, just not sent. */
+  session: {
+    /** The current round — for the receipt link once it's confirmed. */
+    id: number;
+    status: CartButtonStatus;
+    /** The BILL's number (matches the cashier's Order List card). */
+    billNumber: string;
+    /** The current round's lines as the server has them — shown while
+     *  it's awaiting approval, and counted on the confirmed screen. */
+    roundLines: CartLine[];
+    roundTotal: number;
+    /** This bill already has an order with the kitchen, so what's in
+     *  the cart will go as a NEW order next to it. */
+    hasEarlierRound: boolean;
+  } | null;
+  /** Could this browser send right now — the server's answer at render
+   *  time; every later check updates it (see useCartValidation). */
+  initialSendState: SendState;
+  /** Arrived straight from scanning the counter QR (/counter/continue) —
+   *  shows a one-time "you can send now" banner. */
+  justScanned: boolean;
 }
 
+/** A browser cart line in the row shape CartLineRow renders. */
+function toRowLine(line: BrowserCartLine, index: number): CartLine {
+  return {
+    id: index,
+    menuId: line.menuId,
+    menuName: line.display.name,
+    quantity: line.quantity,
+    price: line.display.unitPrice,
+    imageUrl: line.display.imageUrl,
+    addons: line.display.addons,
+    note: line.note,
+  };
+}
+
+const canBeOrdered = (line: ValidatedCartLine | null) =>
+  line === null || line.status === "ok" || line.status === "priceChanged";
+
 /**
- * The cart's own page (see cart/page.tsx for why it's a separate
- * route). Per design feedback, submitting here does NOT navigate away
- * to a separate "waiting for approval" screen — the customer stays on
- * this page and the Submit button itself becomes the status indicator
- * (spinner while waiting, a checkmark once confirmed; see
- * CartButton's status prop). Only a terminal outcome (approved-then-
- * paid, rejected, or timed out) leaves this page, since there's
- * nothing left here to show once the session itself is gone.
+ * The Counter cart page. The cart itself lives in this browser (see
+ * useBrowserCart); the server checks it (validateCartAction) whenever the
+ * page opens, the cart changes, or the customer comes back to the tab,
+ * and every total shown is the server's once that check is in. Sending
+ * (submitCartAction) re-checks on the server and either places the
+ * order or says what to look at first.
+ *
+ * Once an order is placed the page follows its round as before: the
+ * Submit button doubles as the status while the counter decides, and an
+ * accepted order shows the confirmed screen until the customer starts a
+ * new cart ("Order more").
  */
 export default function CartPageClient({
-  sessionId,
-  initialTotal,
   locationId,
-  orderNumber,
   shopName,
-  initialStatus,
-  initialCart,
-  hasEarlierRound = false,
-  initialShortages,
+  session,
+  initialSendState,
+  justScanned,
 }: CartPageClientProps) {
   const router = useRouter();
-  const [cart, setCart] = useState(initialCart);
-  const [status, setStatus] = useState<CartButtonStatus>(initialStatus);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const [editingItem, setEditingItem] = useState<CartLine | null>(null);
-  const [roundTotal, setRoundTotal] = useState(initialTotal);
-  const hasShortage = initialShortages.length > 0;
-
-  const cartTotal = useMemo(
-    () => cartLinesTotal(cart),
-    [cart],
+  const browserCart = useBrowserCart(locationId);
+  const { cart } = browserCart;
+  const validation = useCartValidation(
+    locationId,
+    cart,
+    browserCart.applyValidation,
+    initialSendState,
   );
+  const { sendState } = validation;
 
-  // Only starts once submitted — while still in CART on this page,
-  // there's nothing server-side that could change without this
-  // customer's own action (unlike /menu's browsing view, which polls
-  // even pre-submit for shared Table sessions — see
-  // CounterOrderClient.tsx's isTableSession).
+  const [status, setStatus] = useState<CartButtonStatus>(
+    session?.status ?? "CART",
+  );
+  const [roundLines, setRoundLines] = useState(session?.roundLines ?? []);
+  const [roundTotal, setRoundTotal] = useState(session?.roundTotal ?? 0);
+  // The in-app scanner — mounted only while open (see requestScan).
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const scanButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, startSubmit] = useTransition();
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  // Only while the counter is deciding — the same polling as before the
+  // cart moved to the browser.
   usePollOrderStatus(
     status === "PENDING_APPROVAL",
     (result) => {
       setStatus(result.status as CartButtonStatus);
-      setCart(result.cart);
+      setRoundLines(result.cart);
       setRoundTotal(result.total);
     },
-    () => router.push(`/menu?locationId=${locationId}`),
+    () => goBackToMenu(),
   );
 
-  function handleSubmit() {
-    setError(null);
-    startTransition(async () => {
-      const result = await submitOrderAction();
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-      setStatus("PENDING_APPROVAL");
-    });
+  // The "scanned" marker is one-time: drop it from the address so a
+  // reload or Back doesn't show the banner again.
+  useEffect(() => {
+    if (!justScanned) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("scanned");
+    window.history.replaceState(null, "", url);
+  }, [justScanned]);
+
+  /** Opens the in-app counter-QR scanner. It loads the camera library
+   *  only now, and falls back to explaining the phone's own camera
+   *  whenever the camera can't be used — either way the counter QR
+   *  brings the customer back to this cart (see /counter/continue). */
+  function requestScan() {
+    setScannerOpen(true);
   }
 
-  // The − / + on a line: save the new quantity (same addons and note),
-  // then reflect it locally.
-  function handleQuantityChange(line: CartLine, next: number) {
-    setError(null);
-    startTransition(async () => {
-      const result = await updateCartItemAction(
-        line.id,
-        next,
-        line.addons.map((addon) => addon.id),
-        line.note ?? undefined,
-      );
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-      setCart((current) =>
-        current.map((item) =>
-          item.id === line.id ? { ...item, quantity: next } : item,
-        ),
-      );
-    });
+  function closeScanner() {
+    setScannerOpen(false);
+    // Back to the button that opened it (DESIGN.md Rule 22).
+    scanButtonRef.current?.focus();
   }
 
-  function handleRemove(orderId: number) {
-    setError(null);
-    startTransition(async () => {
-      const result = await removeFromCartAction(orderId);
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-      setCart((current) => current.filter((line) => line.id !== orderId));
-    });
-  }
-
-  // Only shown once the current round is PENDING/COOKING. No server
-  // call here anymore — the next round is started LAZILY, on the menu
-  // page, the moment the customer actually adds an item (see
-  // OrderSessionService.getOrStartCartRound) — so this is just
-  // navigation, same as goBackToMenu below.
-  function handleOrderMore() {
-    router.push(`/menu?locationId=${locationId}`);
-    router.refresh();
-  }
-
-  // router.push + refresh (not a plain <Link>) — a soft <Link> nav here
-  // was seen to occasionally leave this page's own tree mounted while
-  // the URL updated to /menu (a Next.js Router Cache quirk); refresh()
-  // forces the destination to always re-fetch fresh Server Component
-  // output instead of trusting any cached entry.
+  // router.push + refresh (not a plain <Link>) — see the menu page: a
+  // soft navigation here could leave this tree mounted on /menu.
   function goBackToMenu() {
     router.push(`/menu?locationId=${locationId}`);
     router.refresh();
   }
 
-  // Approved by the counter: show the order-confirmed screen for as long
-  // as this round is the current one — on the live approval and on any
-  // later visit to /cart. "Order more" starts a new round (a fresh
-  // cart), which is what takes the customer off it.
-  if (status === "PENDING" || status === "COOKING") {
+  const rowLines = cart.lines.map(toRowLine);
+  const result = validation.result;
+  const checkedLines = cart.lines.map((_, index) => result?.lines[index] ?? null);
+  // Server numbers once the check is in; until then, what was shown when
+  // each item was added.
+  const total = result ? result.total : cartLinesTotal(rowLines);
+  const decision = result ? decideSubmit(result) : null;
+  const blockedCount = checkedLines.filter((line) => !canBeOrdered(line)).length;
+  const removableIndexes = checkedLines.flatMap((line, index) =>
+    line?.status === "soldOut" || line?.status === "unavailable" ? [index] : [],
+  );
+
+  /** How many of a short menu THIS line can keep, with the menu's other
+   *  lines as they are (they share one stock). */
+  function fitQuantity(index: number) {
+    const available = checkedLines[index]?.availableQuantity ?? 0;
+    const others = cart.lines.reduce(
+      (sum, line, i) =>
+        i !== index && line.menuId === cart.lines[index].menuId
+          ? sum + line.quantity
+          : sum,
+      0,
+    );
+    return Math.max(0, available - others);
+  }
+
+  function handleSubmit() {
+    const clientRequestId = cart.clientRequestId;
+    if (!clientRequestId) return;
+    const sentLines = rowLines;
+    const sentTotal = total;
+    setError(null);
+    startSubmit(async () => {
+      let response;
+      try {
+        response = await submitCartAction({
+          locationId,
+          lines: toServerLines(cart),
+          clientRequestId,
+        });
+      } catch {
+        // The same request id goes with a retry, so it can never place
+        // the order twice.
+        setError(
+          "Couldn't reach the counter. Check your connection and tap Submit again — your order won't be sent twice.",
+        );
+        return;
+      }
+      if (!response.success) {
+        setError(response.error.message);
+        return;
+      }
+      const outcome = response.data;
+      switch (outcome.status) {
+        case "submitted":
+          // Show the order waiting right away; the refresh then loads the
+          // round from the server (the page remounts on the new round).
+          setRoundLines(sentLines);
+          setRoundTotal(sentTotal);
+          setStatus("PENDING_APPROVAL");
+          browserCart.clear();
+          router.refresh();
+          return;
+        case "needsScan":
+        case "awaitingApproval":
+          validation.reportSendState(outcome.status);
+          return;
+        case "pricesChanged":
+        case "needsAttention":
+          validation.showResult(outcome.validation);
+          return;
+      }
+    });
+  }
+
+  if (!browserCart.isLoaded) {
+    // The stored cart is read right after hydration — don't flash
+    // "your cart is empty" before it is.
+    return <Box sx={{ minHeight: "100dvh" }} />;
+  }
+
+  // Accepted by the counter, and no new cart started yet.
+  if (session && (status === "PENDING" || status === "COOKING") && cart.lines.length === 0) {
     return (
       <OrderConfirmedScreen
-        orderNumber={orderNumber}
-        itemCount={cart.length}
+        orderNumber={session.billNumber}
+        itemCount={roundLines.length}
         total={roundTotal}
-        seeOrderHref={`/history/${sessionId}?locationId=${locationId}`}
+        seeOrderHref={`/history/${session.id}?locationId=${locationId}`}
         onBack={goBackToMenu}
-        onOrderMore={handleOrderMore}
-        isPending={isPending}
+        onOrderMore={goBackToMenu}
       />
     );
   }
 
-  // An empty cart — a fresh round after "Order more", or the last item was
-  // removed — is just the empty state, never the confirmed screen (that's
-  // tied to a round that's still PENDING/COOKING, handled above).
-  if (cart.length === 0) {
+  if (status !== "PENDING_APPROVAL" && cart.lines.length === 0) {
     return (
       <EmptyCartState onBack={goBackToMenu} onBrowseMenu={goBackToMenu} />
     );
   }
+
+  const isWaiting = status === "PENDING_APPROVAL";
+  const sendDisabledReason =
+    sendState === "awaitingApproval"
+      ? "Your last order is waiting for the counter to confirm."
+      : decision === "needsAttention"
+        ? "Fix the items marked above before sending."
+        : null;
+  const editingLine = editingIndex !== null ? cart.lines[editingIndex] : null;
 
   return (
     <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
@@ -222,157 +303,253 @@ export default function CartPageClient({
         >
           <BackCircleButton ariaLabel="Back to menu" onClick={goBackToMenu} />
           <Stack>
-            <Typography variant="h6">{orderNumber}</Typography>
+            <Typography variant="h6">
+              {session?.billNumber ?? "Your cart"}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
               {shopName ?? "Café Maw"}
             </Typography>
           </Stack>
         </Stack>
 
-        {hasEarlierRound && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Your earlier order is with the kitchen — these items will be
-            sent as a new order.
-          </Alert>
-        )}
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
+        {!isWaiting && (
+          <Stack spacing={1} sx={{ mb: 2 }}>
+            {justScanned && sendState === "canSend" && (
+              <Alert severity="success" role="status">
+                ✓ Scanned — you can send your order now.
+              </Alert>
+            )}
+            {session?.hasEarlierRound && (
+              <Alert severity="info">
+                Your earlier order is with the kitchen — these items will be
+                sent as a new order.
+              </Alert>
+            )}
+            {blockedCount > 0 && (
+              <Alert
+                severity="warning"
+                action={
+                  removableIndexes.length > 0 ? (
+                    <Button
+                      color="inherit"
+                      size="small"
+                      sx={{ minHeight: 44 }}
+                      onClick={() => browserCart.removeLines(removableIndexes)}
+                    >
+                      Remove unavailable items
+                    </Button>
+                  ) : undefined
+                }
+              >
+                Some items changed — review before sending.
+              </Alert>
+            )}
+            {validation.failed && (
+              <Alert
+                severity="warning"
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    sx={{ minHeight: 44 }}
+                    onClick={() => void validation.retry()}
+                  >
+                    Retry
+                  </Button>
+                }
+              >
+                Couldn&apos;t check the latest prices. You can still send —
+                the counter checks them again.
+              </Alert>
+            )}
+            {error && <Alert severity="error">{error}</Alert>}
+          </Stack>
         )}
 
         <Box
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 3,
+            p: 1.5,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
         >
-          <Box
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 3,
-              p: 1.5,
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0,
-            }}
-          >
-            <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-              <CartList
-                cart={cart}
-                shortages={initialShortages}
-                editable={status === "CART"}
-                isPending={isPending}
-                onRemove={handleRemove}
-                onEdit={setEditingItem}
-                onQuantityChange={handleQuantityChange}
-              />
-            </Box>
-            {status === "CART" ? (
-              <Box sx={{ pt: 1.5 }}>
-                <Divider sx={{ mb: 1.5 }} />
-                <Stack
-                  direction="row"
-                  sx={{ justifyContent: "space-between", mb: 1.5 }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    Total Price
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    {cartTotal.toLocaleString()} MMK
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      flex: 1,
-                      whiteSpace: "nowrap",
-                      transition:
-                        "transform 0.15s ease, background-color 0.15s ease",
-                      [hoverCapableMedia]: {
-                        "&:hover": {
-                          transform: "translateY(-1px)",
-                          bgcolor: "action.hover",
-                        },
-                      },
-                    }}
-                    onClick={goBackToMenu}
-                  >
-                    Add More
-                  </Button>
-                  <Box sx={{ flex: 2 }}>
-                    <CartButton
-                      status={status}
-                      disabled={isPending || cart.length === 0 || hasShortage}
-                      onClick={handleSubmit}
-                    />
-                  </Box>
-                </Stack>
-              </Box>
+          <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+            {isWaiting ? (
+              <CartList cart={roundLines} />
             ) : (
-              <Box sx={{ pt: 1.5 }}>
-                <CartButton
-                  status={status}
-                  disabled={isPending || cart.length === 0 || hasShortage}
-                  onClick={handleSubmit}
-                />
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 700 }}>
+                  Your order
+                </Typography>
+                <Stack divider={<Divider />}>
+                  {rowLines.map((rowLine, index) => {
+                    const checked = checkedLines[index];
+                    const blocked = !canBeOrdered(checked);
+                    return (
+                      <CartLineRow
+                        key={index}
+                        line={rowLine}
+                        actionable
+                        disabled={isSubmitting}
+                        dimmed={
+                          checked?.status === "soldOut" ||
+                          checked?.status === "unavailable"
+                        }
+                        onEdit={() => setEditingIndex(index)}
+                        onRemove={() => browserCart.removeLine(index)}
+                        onQuantityChange={(next) =>
+                          browserCart.setQuantity(index, next)
+                        }
+                        priceLabel={
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontWeight: 700,
+                              whiteSpace: "nowrap",
+                              color: blocked ? "text.secondary" : "text.primary",
+                              textDecoration: blocked ? "line-through" : "none",
+                            }}
+                          >
+                            {formatAmount(
+                              checked?.lineTotal ?? cartLineTotal(rowLine),
+                            )}
+                          </Typography>
+                        }
+                        status={
+                          checked && (
+                            <CartLineNotice
+                              line={checked}
+                              fitQuantity={fitQuantity(index)}
+                              onChangeQuantity={(quantity) =>
+                                browserCart.setQuantity(index, quantity)
+                              }
+                              onRemove={() => browserCart.removeLine(index)}
+                              onEdit={() => setEditingIndex(index)}
+                            />
+                          )
+                        }
+                      />
+                    );
+                  })}
+                </Stack>
               </Box>
             )}
           </Box>
-          {hasShortage && status === "CART" && (
-            <Typography
-              variant="caption"
-              color="error"
-              sx={{ display: "block", mt: 1 }}
-            >
-              Some items in your cart just ran out — edit or cancel them
-              below before submitting.
-            </Typography>
+
+          {isWaiting ? (
+            <Box sx={{ pt: 1.5 }}>
+              <CartButton status={status} disabled onClick={() => {}} />
+            </Box>
+          ) : (
+            <Box sx={{ pt: 1.5 }}>
+              <Divider sx={{ mb: 1.5 }} />
+              <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  Total Price
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {formatAmount(total)}
+                </Typography>
+              </Stack>
+              {/* Always takes its line, so the note coming and going
+                 never moves the buttons. */}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                role="status"
+                aria-live="polite"
+                sx={{ display: "block", minHeight: "1.66em", mb: 1 }}
+              >
+                {validation.checking ? "Checking latest prices…" : ""}
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    whiteSpace: "nowrap",
+                    transition:
+                      "transform 0.15s ease, background-color 0.15s ease",
+                    [hoverCapableMedia]: {
+                      "&:hover": {
+                        transform: "translateY(-1px)",
+                        bgcolor: "action.hover",
+                      },
+                    },
+                  }}
+                  onClick={goBackToMenu}
+                >
+                  Add More
+                </Button>
+                <Box sx={{ flex: 2 }}>
+                  {sendState === "needsScan" ? (
+                    <Button
+                      ref={scanButtonRef}
+                      variant="contained"
+                      fullWidth
+                      startIcon={<PhotoCameraOutlinedIcon aria-hidden />}
+                      onClick={requestScan}
+                      sx={{ minHeight: 44, whiteSpace: "nowrap" }}
+                    >
+                      Scan counter QR
+                    </Button>
+                  ) : (
+                    <CartButton
+                      status="CART"
+                      submitLabel="Send order"
+                      disabled={
+                        isSubmitting ||
+                        sendDisabledReason !== null ||
+                        !cart.clientRequestId
+                      }
+                      onClick={handleSubmit}
+                    />
+                  )}
+                </Box>
+              </Stack>
+              {(sendState === "needsScan" || sendDisabledReason) && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 1 }}
+                >
+                  {sendState === "needsScan"
+                    ? "Scan the QR code at the counter to send your order."
+                    : sendDisabledReason}
+                </Typography>
+              )}
+            </Box>
           )}
         </Box>
       </Box>
 
+      {scannerOpen && <CounterQrScannerDialog onClose={closeScanner} />}
+
       <MenuDetailDialog
-        open={editingItem !== null}
-        menuId={editingItem?.menuId ?? null}
+        open={editingLine !== null}
+        menuId={editingLine?.menuId ?? null}
         locationId={locationId}
         canOrder
-        onClose={() => setEditingItem(null)}
+        onClose={() => setEditingIndex(null)}
         editing={
-          editingItem
+          editingLine
             ? {
-                quantity: editingItem.quantity,
-                addonIds: editingItem.addons.map((addon) => addon.id),
-                note: editingItem.note ?? undefined,
+                quantity: editingLine.quantity,
+                addonIds: editingLine.addonIds,
+                note: editingLine.note ?? undefined,
               }
             : undefined
         }
-        onSubmit={async (_menuId, quantity, addonIds, note) => {
-          if (!editingItem) return "Nothing to update.";
-          const result = await updateCartItemAction(
-            editingItem.id,
-            quantity,
-            addonIds,
-            note,
-          );
-          if (!result.success) {
-            return result.error.message;
-          }
-          // The server's saved line — its add-ons carry their own
-          // price snapshots, which the line total needs.
-          const saved = result.data;
-          setCart((current) =>
-            current.map((line) =>
-              line.id === saved.id
-                ? {
-                    ...line,
-                    quantity: saved.quantity,
-                    addons: toLineAddons(saved.OrdersAddons),
-                    note: saved.note,
-                  }
-                : line,
-            ),
+        onSubmit={async (_menuId, quantity, addonIds, note, detail) => {
+          if (editingIndex === null) return "Nothing to update.";
+          browserCart.updateLine(
+            editingIndex,
+            toBrowserCartLine(detail, quantity, addonIds, note),
           );
           return null;
         }}

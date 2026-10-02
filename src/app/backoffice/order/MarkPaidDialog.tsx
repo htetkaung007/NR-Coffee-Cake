@@ -8,6 +8,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 interface MarkPaidDialogProps {
   open: boolean;
@@ -36,7 +37,7 @@ export default function MarkPaidDialog({
       <DialogContent>
         <DialogContentText>
           This settles all {orderCount} {orderCount === 1 ? "order" : "orders"}{" "}
-          for {title} — {total.toLocaleString()} MMK total. This can&apos;t be
+          for {title} — {formatAmount(total)} total. This can&apos;t be
           undone.
         </DialogContentText>
       </DialogContent>

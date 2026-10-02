@@ -39,6 +39,7 @@ import NewOrderToast, {
 } from "./NewOrderToast";
 import OrderSoundToggle from "./OrderSoundToggle";
 import OrdersPageHeader from "./OrdersPageHeader";
+import { formatAmount } from "@/app/lib/orderFormat";
 import { entryTitleSx, moneySx, sectionHeadingSx } from "./orderTypography";
 
 interface OrderEntry {
@@ -248,7 +249,7 @@ function EntryCard({
 
             <Box sx={{ minHeight: 44, display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={moneySx}>
-                {entry.combinedTotal.toLocaleString()} MMK
+                {formatAmount(entry.combinedTotal)}
               </Typography>
             </Box>
           </Stack>
