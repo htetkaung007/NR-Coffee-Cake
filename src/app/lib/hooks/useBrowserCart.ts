@@ -6,9 +6,13 @@ import {
   applyValidation,
   clear,
   emptyCart,
+  forgetLastSubmitted,
   itemCount,
   parseCart,
+  pruneLastSubmitted,
+  recordSubmission,
   removeLine,
+  restoreAfterRejection,
   setQuantity,
   updateLine,
   type BrowserCart,
@@ -38,11 +42,14 @@ const storageKey = (locationId: number) => `cart:v1:${locationId}`;
 const current = new Map<number, BrowserCart>();
 const serverSnapshots = new Map<number, BrowserCart>();
 
+const nowIso = () => new Date().toISOString();
+
 function readStored(locationId: number): BrowserCart {
   try {
-    return parseCart(
-      window.localStorage.getItem(storageKey(locationId)),
-      locationId,
+    // A day-old submission record is dropped as the cart is first read.
+    return pruneLastSubmitted(
+      parseCart(window.localStorage.getItem(storageKey(locationId)), locationId),
+      nowIso(),
     );
   } catch {
     return emptyCart(locationId);
@@ -110,7 +117,6 @@ function newRequestId(): string {
   ].join("-");
 }
 
-const nowIso = () => new Date().toISOString();
 
 function subscribeNothing() {
   return () => {};
@@ -167,6 +173,16 @@ export function useBrowserCart(locationId: number) {
       updateLine: (index: number, line: BrowserCartLine) =>
         update((c) => updateLine(c, index, line, nowIso())),
       clear: () => update((c) => clear(c, nowIso())),
+      /** A submit succeeded as round `sessionId`: empty the cart, but
+       *  remember what was sent in case the counter turns it down. */
+      recordSubmission: (sessionId: number) =>
+        update((c) => recordSubmission(c, sessionId, nowIso())),
+      /** Round `sessionId` was rejected or expired: its lines come back. */
+      restoreAfterRejection: (sessionId: number) =>
+        update((c) =>
+          restoreAfterRejection(c, sessionId, nowIso(), newRequestId),
+        ),
+      forgetLastSubmitted: () => update((c) => forgetLastSubmitted(c)),
       applyValidation: (result: CartValidationResult) =>
         update((c) => applyValidation(c, result)),
     }),

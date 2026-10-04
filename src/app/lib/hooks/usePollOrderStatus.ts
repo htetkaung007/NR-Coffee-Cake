@@ -31,11 +31,13 @@ function isTerminalPollOutcome(status: PollResult["status"]) {
 export function usePollOrderStatus(
   enabled: boolean,
   onResult: (result: PollResult) => void,
-  onTerminal: () => void,
+  /** Gets the terminal result too — e.g. to tell a rejected round from
+   *  a paid one. */
+  onTerminal: (result: PollResult) => void,
 ) {
   usePolling(enabled, POLL_INTERVAL_MS, pollOrderStatusAction, (result) => {
     if (isTerminalPollOutcome(result.status)) {
-      onTerminal();
+      onTerminal(result);
       return;
     }
     onResult(result);

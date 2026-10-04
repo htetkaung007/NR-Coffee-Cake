@@ -29,7 +29,11 @@ import {
 } from "@/app/lib/cartValidation";
 import { formatAmount } from "@/app/lib/orderFormat";
 
-import { submitCartAction } from "@/app/(storefront)/cart/action";
+import {
+  getSubmittedOrderOutcomeAction,
+  submitCartAction,
+} from "@/app/(storefront)/cart/action";
+import { shownCancelReason, type ShownCancelReason } from "@/app/lib/roundOutcome";
 import CartList, {
   CartLineRow,
   type CartLine,
@@ -39,6 +43,7 @@ import CartLineNotice from "./CartLineNotice";
 import MenuDetailDialog from "./MenuDetailDialog";
 import BackCircleButton from "./BackCircleButton";
 import OrderConfirmedScreen from "./OrderConfirmedScreen";
+import OrderRejectedScreen from "./OrderRejectedScreen";
 import EmptyCartState from "./EmptyCartState";
 import CounterQrScannerDialog from "./CounterQrScannerDialog";
 
@@ -129,18 +134,90 @@ export default function CartPageClient({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, startSubmit] = useTransition();
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  // A sent round the counter turned down or let expire — from the live
+  // poll, or looked up later by the remembered submission's request id.
+  const [rejection, setRejection] = useState<{
+    sessionId: number;
+    orderNumber: string;
+    reason: ShownCancelReason;
+  } | null>(null);
+  const isWaiting = status === "PENDING_APPROVAL";
+
+  /** The items go back into the cart (once — see restoreAfterRejection)
+   *  and the screen explains why. */
+  function handleRejected(found: NonNullable<typeof rejection>) {
+    browserCart.restoreAfterRejection(found.sessionId);
+    setRejection(found);
+    setStatus("CART");
+  }
 
   // Only while the counter is deciding — the same polling as before the
   // cart moved to the browser.
   usePollOrderStatus(
-    status === "PENDING_APPROVAL",
+    isWaiting,
     (result) => {
       setStatus(result.status as CartButtonStatus);
       setRoundLines(result.cart);
       setRoundTotal(result.total);
+      // Accepted: nothing will need restoring.
+      if (result.status === "PENDING" || result.status === "COOKING") {
+        browserCart.forgetLastSubmitted();
+      }
     },
-    () => goBackToMenu(),
+    (result) => {
+      const reason =
+        result.status === "no_session"
+          ? null
+          : shownCancelReason(result.status, result.cancelReason);
+      const roundId = cart.lastSubmitted?.sessionId ?? session?.id;
+      if (reason && roundId !== undefined && result.status !== "no_session") {
+        handleRejected({
+          sessionId: roundId,
+          orderNumber: result.orderNumber,
+          reason,
+        });
+        return;
+      }
+      goBackToMenu();
+    },
   );
+
+  // Not watching when it was decided (another page, tab closed): ask what
+  // became of the remembered submission — by then the scan cookie may be
+  // gone, the request id is not.
+  const lastRequestId = cart.lastSubmitted?.clientRequestId;
+  const latest = useRef({ handleRejected, forget: browserCart.forgetLastSubmitted });
+  useEffect(() => {
+    latest.current = {
+      handleRejected,
+      forget: browserCart.forgetLastSubmitted,
+    };
+  });
+  useEffect(() => {
+    if (!lastRequestId || isWaiting) return;
+    let current = true;
+    getSubmittedOrderOutcomeAction({ clientRequestId: lastRequestId })
+      .then((response) => {
+        if (!current || !response.success || !response.data) return;
+        const outcome = response.data;
+        if (outcome.cancelReason) {
+          latest.current.handleRejected({
+            sessionId: outcome.sessionId,
+            orderNumber: outcome.orderNumber,
+            reason: outcome.cancelReason,
+          });
+        } else if (outcome.status !== "PENDING_APPROVAL") {
+          // Accepted (or otherwise settled): nothing to restore.
+          latest.current.forget();
+        }
+      })
+      .catch(() => {
+        // Offline — asked again next time the page opens.
+      });
+    return () => {
+      current = false;
+    };
+  }, [lastRequestId, isWaiting]);
 
   // The "scanned" marker is one-time: drop it from the address so a
   // reload or Back doesn't show the banner again.
@@ -232,7 +309,8 @@ export default function CartPageClient({
           setRoundLines(sentLines);
           setRoundTotal(sentTotal);
           setStatus("PENDING_APPROVAL");
-          browserCart.clear();
+          // Remembered until the counter decides — restored if rejected.
+          browserCart.recordSubmission(outcome.sessionId);
           router.refresh();
           return;
         case "needsScan":
@@ -251,6 +329,29 @@ export default function CartPageClient({
     // The stored cart is read right after hydration — don't flash
     // "your cart is empty" before it is.
     return <Box sx={{ minHeight: "100dvh" }} />;
+  }
+
+  // Turned down: shown while this round's submission is still remembered
+  // — both buttons forget it, so it never comes back for this round.
+  if (rejection && cart.lastSubmitted?.sessionId === rejection.sessionId) {
+    return (
+      <OrderRejectedScreen
+        orderNumber={rejection.orderNumber}
+        reason={rejection.reason}
+        nextStep="Your items are back in your cart — change them if you like and send again."
+        primaryLabel="Review my cart"
+        onPrimary={() => browserCart.forgetLastSubmitted()}
+        secondaryLabel="Back to menu"
+        onSecondary={() => {
+          browserCart.forgetLastSubmitted();
+          goBackToMenu();
+        }}
+        onBack={() => {
+          browserCart.forgetLastSubmitted();
+          goBackToMenu();
+        }}
+      />
+    );
   }
 
   // Accepted by the counter, and no new cart started yet.
@@ -273,7 +374,6 @@ export default function CartPageClient({
     );
   }
 
-  const isWaiting = status === "PENDING_APPROVAL";
   const sendDisabledReason =
     sendState === "awaitingApproval"
       ? "Your last order is waiting for the counter to confirm."

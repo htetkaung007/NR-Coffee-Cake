@@ -1,5 +1,5 @@
 /** The route a printed counter QR points to (see (storefront)/counter/route.ts). */
-export const COUNTER_QR_PATH = "/counter";
+const COUNTER_QR_PATH = "/counter";
 
 /** Why the in-app scanner can't use the camera — each gets its own
  *  explanation and phone-camera fallback (see CounterQrScannerDialog). */

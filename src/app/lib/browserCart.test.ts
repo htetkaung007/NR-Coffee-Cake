@@ -4,9 +4,13 @@ import {
   applyValidation,
   clear,
   emptyCart,
+  forgetLastSubmitted,
   itemCount,
   parseCart,
+  pruneLastSubmitted,
+  recordSubmission,
   removeLine,
+  restoreAfterRejection,
   setQuantity,
   toBrowserCartLine,
   toServerLines,
@@ -395,5 +399,135 @@ describe("toBrowserCartLine", () => {
     const built = toBrowserCartLine(detail, 1, [999], "");
     expect(built.addonIds).toEqual([]);
     expect(built.display.addons).toEqual([]);
+  });
+});
+
+// ── After a submit: restore a rejected order ────────────────────────────
+
+const ID_C = "33333333-3333-4333-8333-333333333333";
+const ROUND = 42;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A cart that sent Latte ×2 + Mocha as round 42 and is now empty. */
+function submittedCart() {
+  const sent = cartWith(line(LATTE, { quantity: 2 }), line(MOCHA));
+  return recordSubmission(sent, ROUND, T1);
+}
+
+describe("recordSubmission", () => {
+  it("keeps the sent lines, with the round and request id they went as", () => {
+    const cart = submittedCart();
+    expect(cart.lastSubmitted).toMatchObject({
+      clientRequestId: ID_A,
+      sessionId: ROUND,
+      submittedAt: T1,
+      restored: false,
+    });
+    expect(cart.lastSubmitted?.lines.map((l) => l.menuId)).toEqual([LATTE, MOCHA]);
+  });
+
+  it("empties the cart and drops its request id", () => {
+    const cart = submittedCart();
+    expect(cart.lines).toEqual([]);
+    expect(cart.clientRequestId).toBeNull();
+  });
+
+  it("replaces the previous submission's record", () => {
+    const again = recordSubmission(
+      addLine(submittedCart(), line(MOCHA), T2, ids(ID_B)),
+      ROUND + 1,
+      T2,
+    );
+    expect(again.lastSubmitted?.sessionId).toBe(ROUND + 1);
+    expect(again.lastSubmitted?.lines.map((l) => l.menuId)).toEqual([MOCHA]);
+  });
+});
+
+describe("restoreAfterRejection", () => {
+  it("puts the sent lines back into an empty cart", () => {
+    const cart = restoreAfterRejection(submittedCart(), ROUND, T2, ids(ID_B));
+    expect(cart.lines.map((l) => [l.menuId, l.quantity])).toEqual([
+      [LATTE, 2],
+      [MOCHA, 1],
+    ]);
+  });
+
+  it("gives the restored cart a fresh request id, never the rejected order's", () => {
+    const cart = restoreAfterRejection(submittedCart(), ROUND, T2, ids(ID_B));
+    expect(cart.clientRequestId).toBe(ID_B);
+  });
+
+  it("merges the sent lines into a cart that already has items", () => {
+    const started = addLine(submittedCart(), line(LATTE), T2, ids(ID_C));
+    const cart = restoreAfterRejection(started, ROUND, T2, ids());
+    expect(cart.lines.map((l) => [l.menuId, l.quantity])).toEqual([
+      [LATTE, 3],
+      [MOCHA, 1],
+    ]);
+  });
+
+  it("keeps the request id of a cart that already has items", () => {
+    const started = addLine(submittedCart(), line(LATTE), T2, ids(ID_C));
+    const cart = restoreAfterRejection(started, ROUND, T2, ids());
+    expect(cart.clientRequestId).toBe(ID_C);
+  });
+
+  it("restores the same round only once", () => {
+    const once = restoreAfterRejection(submittedCart(), ROUND, T2, ids(ID_B));
+    const twice = restoreAfterRejection(once, ROUND, T2, ids());
+    expect(twice.lines).toEqual(once.lines);
+  });
+
+  it("ignores a rejection of a different round", () => {
+    const cart = submittedCart();
+    expect(restoreAfterRejection(cart, ROUND + 1, T2, ids())).toEqual(cart);
+  });
+
+  it("does nothing when no submission is remembered", () => {
+    const cart = cartWith(line(LATTE));
+    expect(restoreAfterRejection(cart, ROUND, T2, ids())).toEqual(cart);
+  });
+});
+
+describe("forgetLastSubmitted", () => {
+  it("drops the submission record and leaves the lines alone", () => {
+    const restored = restoreAfterRejection(submittedCart(), ROUND, T2, ids(ID_B));
+    const cart = forgetLastSubmitted(restored);
+    expect(cart.lastSubmitted).toBeNull();
+    expect(cart.lines).toEqual(restored.lines);
+  });
+});
+
+describe("pruneLastSubmitted", () => {
+  const at = (ms: number) => new Date(Date.parse(T1) + ms).toISOString();
+
+  it("forgets a submission more than a day old", () => {
+    expect(pruneLastSubmitted(submittedCart(), at(DAY_MS + 1)).lastSubmitted).toBeNull();
+  });
+
+  it("keeps a submission from within the last day", () => {
+    expect(
+      pruneLastSubmitted(submittedCart(), at(DAY_MS - 1)).lastSubmitted,
+    ).not.toBeNull();
+  });
+});
+
+describe("parseCart — the submission record", () => {
+  it("reads back a remembered submission", () => {
+    const stored = submittedCart();
+    expect(parseCart(JSON.stringify(stored), LOCATION)).toEqual(stored);
+  });
+
+  it("reads a cart stored before submissions were remembered", () => {
+    const { lastSubmitted: _dropped, ...older } = cartWith(line(LATTE));
+    void _dropped;
+    const parsed = parseCart(JSON.stringify(older), LOCATION);
+    expect(parsed.lastSubmitted).toBeNull();
+    expect(parsed.lines).toHaveLength(1);
+  });
+
+  it("returns an empty cart when the submission record is malformed", () => {
+    const raw = JSON.stringify({ ...submittedCart(), lastSubmitted: { lines: 1 } });
+    expect(parseCart(raw, LOCATION)).toEqual(emptyCart(LOCATION));
   });
 });

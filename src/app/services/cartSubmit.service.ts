@@ -10,6 +10,7 @@ import {
 } from "../lib/cartValidation";
 import { lineMergeKey, type PricedAddon } from "../lib/orderLineMerge";
 import { normalizeOrderNote } from "../lib/orderNote";
+import { shownCancelReason } from "../lib/roundOutcome";
 import { CartValidationService } from "./cartValidation.service";
 import { PriceSnapshotService } from "./priceSnapshot.service";
 import {
@@ -137,6 +138,26 @@ export class CartSubmitService {
       sessionId: session.id,
       orderNumber: session.orderNumber,
       sessionToken: session.token,
+    };
+  }
+
+  /** What became of the order a browser sent with this request id —
+   *  so the cart page can learn, even later, that it was rejected or
+   *  expired (by then the scan cookie may already be cleared). Read-only.
+   *  The id is a random secret only that browser holds, and only the
+   *  round's number and status come back. `cancelReason` is set only for
+   *  a cancellation the customer is told about (see shownCancelReason). */
+  static async getSubmittedOutcome(clientRequestId: string) {
+    const session = await prisma.orderSession.findUnique({
+      where: { clientRequestId },
+      select: { id: true, orderNumber: true, status: true, cancelReason: true },
+    });
+    if (!session) return null;
+    return {
+      sessionId: session.id,
+      orderNumber: session.orderNumber,
+      status: session.status,
+      cancelReason: shownCancelReason(session.status, session.cancelReason),
     };
   }
 

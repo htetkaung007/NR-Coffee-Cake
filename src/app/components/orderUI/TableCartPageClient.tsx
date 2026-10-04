@@ -20,12 +20,16 @@ import CartButton, { CartButtonStatus } from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";
 import BackCircleButton from "./BackCircleButton";
 import OrderConfirmedScreen from "./OrderConfirmedScreen";
+import OrderRejectedScreen from "./OrderRejectedScreen";
 import EmptyCartState from "./EmptyCartState";
 import { usePolling } from "@/app/lib/hooks/usePolling";
 import {
   dismissConfirmedRound,
+  dismissRejectedRound,
   useConfirmedRoundDismissed,
-} from "@/app/lib/hooks/useConfirmedRoundDismissed";
+  useRejectedRoundDismissed,
+} from "@/app/lib/hooks/useRoundDismissed";
+import type { ShownCancelReason } from "@/app/lib/roundOutcome";
 import {
   pollTableAction,
   removeDraftItemAction,
@@ -52,6 +56,15 @@ interface TableCartPageClientProps {
    *  what this page keeps showing once the draft has become a round. */
   initialRoundItems: CartLine[];
   initialShortages: Shortage[];
+  /** The table's last round, if the counter turned it down or let it
+   *  expire (see OrderSessionService.getRejectedRoundForTable). */
+  initialRejectedRound: RejectedRound | null;
+}
+
+interface RejectedRound {
+  id: number;
+  orderNumber: string;
+  cancelReason: ShownCancelReason;
 }
 
 /**
@@ -73,6 +86,7 @@ export default function TableCartPageClient({
   initialActiveRound,
   initialRoundItems,
   initialShortages,
+  initialRejectedRound,
 }: TableCartPageClientProps) {
   const router = useRouter();
   const [draftItems, setDraftItems] = useState(initialDraftItems);
@@ -85,6 +99,12 @@ export default function TableCartPageClient({
     activeRound?.id,
   );
   const [roundItems, setRoundItems] = useState(initialRoundItems);
+  const [rejectedRound, setRejectedRound] = useState(initialRejectedRound);
+  // Same per-round memory as the confirmed screen, under its own key.
+  const rejectedDismissed = useRejectedRoundDismissed(
+    tableId,
+    rejectedRound?.id,
+  );
   // True from the tap on Send to Kitchen until the new round's state has
   // been applied — drives the button's "Waiting counter approval" look
   // right away, without the list going anywhere.
@@ -107,6 +127,7 @@ export default function TableCartPageClient({
       setActiveRound(result.activeRound);
       setRoundItems(result.roundItems);
       setShortages(result.shortages);
+      setRejectedRound(result.rejectedRound);
     },
   );
 
@@ -189,6 +210,7 @@ export default function TableCartPageClient({
         setActiveRound(fresh.activeRound);
         setRoundItems(fresh.roundItems);
         setShortages(fresh.shortages);
+        setRejectedRound(fresh.rejectedRound);
       } else {
         router.refresh();
       }
@@ -199,6 +221,33 @@ export default function TableCartPageClient({
   function goBackToMenu() {
     router.push(`/menu?locationId=${locationId}&tableId=${tableId}`);
     router.refresh();
+  }
+
+  // The latest round was turned down (or expired) and nobody has started
+  // a new draft yet: say so once, instead of an unexplained empty cart.
+  // Drafts are per contributor on the server, so nothing is restored.
+  if (rejectedRound && activeRound === null && draftItems.length === 0) {
+    // Storage can't be read during the server render — wait until known.
+    if (rejectedDismissed === null) return null;
+    if (!rejectedDismissed) {
+      const roundId = rejectedRound.id;
+      return (
+        <OrderRejectedScreen
+          orderNumber={rejectedRound.orderNumber}
+          reason={rejectedRound.cancelReason}
+          nextStep="You can add items and send again."
+          primaryLabel="Back to menu"
+          onPrimary={() => {
+            dismissRejectedRound(tableId, roundId);
+            goBackToMenu();
+          }}
+          onBack={() => {
+            dismissRejectedRound(tableId, roundId);
+            goBackToMenu();
+          }}
+        />
+      );
+    }
   }
 
   // The latest round has been approved and nothing new is being drafted:

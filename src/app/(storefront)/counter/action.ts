@@ -1,71 +1,26 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { OrderSessionService, isSessionTerminal } from "@/app/services";
-import { AppError } from "@/app/lib/errors";
-import { toActionResult, toSafeResult } from "@/app/lib/actionHelper";
 import {
   COUNTER_SESSION_COOKIE,
   counterSessionCookieOptions,
 } from "@/app/lib/orderSessionCookie";
 import { toCartLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
-import { config } from "@/app/utils/config";
 
-/** The one place this file reads the Counter session cookie — every
- *  Counter-flow action below goes through this instead of repeating
- *  `cookies()` + `.get(...)` itself. Counter-only now: Table QR has
- *  no session cookie anymore (see orderSessionCookie.ts's comment on
- *  the removed TABLE_SESSION_COOKIE) — its own actions in
- *  table/action.ts use getContributorToken + an explicit tableId
- *  instead. Returns the cookie store too (not just the token) since a
- *  couple of callers also need to clear the cookie in the same
- *  request. */
+/** The one place this file reads the Counter session cookie. The cart
+ *  itself lives in the browser now (sent with submitCartAction, in
+ *  cart/action.ts); what's left here is the order-status poll.
+ *  Counter-only: Table QR has no session cookie anymore (see
+ *  orderSessionCookie.ts's comment on the removed TABLE_SESSION_COOKIE)
+ *  — its own actions in table/action.ts use getContributorToken + an
+ *  explicit tableId instead. Returns the cookie store too (not just the token) since the
+ *  poll may clear or move the cookie in the same request. */
 async function getCookieToken() {
   const store = await cookies();
   const token = store.get(COUNTER_SESSION_COOKIE)?.value ?? null;
   return { store, token, cookieName: token ? COUNTER_SESSION_COOKIE : null };
-}
-const url = config.orderAppUrl;
-
-/** Every cart/order action resolves the session from the cookie
- *  itself, never from a client-supplied id — a customer's request can
- *  only ever act on the session their own browser is holding. Uses
- *  getActiveSessionByToken (not the raw getSessionByToken) so an
- *  abandoned-past-40-minutes or already-terminal session is rejected
- *  here too, not just on the page's initial load. Throws (via
- *  toSafeResult) rather than returning null, since these callers have
- *  no reasonable fallback besides surfacing an error. */
-async function requireSessionFromCookie() {
-  const { token } = await getCookieToken();
-  if (!token) {
-    throw new AppError("No active order session.", "UNAUTHORIZED");
-  }
-
-  const session = await OrderSessionService.getActiveSessionByToken(token);
-  if (!session) {
-    throw new AppError("Order session not found or has expired.", "NOT_FOUND");
-  }
-  if (!session.tableId) {
-    throw new AppError("Order session has no table.", "VALIDATION");
-  }
-
-  return session;
-}
-
-const safeSubmitOrder = toSafeResult(async () => {
-  const session = await requireSessionFromCookie();
-  return OrderSessionService.submitOrderForApproval(session.id);
-});
-
-export async function submitOrderAction() {
-  const result = await safeSubmitOrder();
-  const actionResult = toActionResult(result);
-  if (actionResult.success) {
-    revalidatePath(`${url}/menu`);
-  }
-  return actionResult;
 }
 
 /**
@@ -80,12 +35,9 @@ export async function submitOrderAction() {
  * can set the response cookie, unlike the cashier's Approve/Reject/Paid
  * actions in the Backoffice, which run in a different browser entirely.
  *
- * Doesn't reuse requireSessionFromCookie — that one throws on a
- * missing/absent session, which is the right behavior for cart
- * actions but wrong here: polling needs to report "no_session" as a
- * normal, expected result, not an error. Only the cookie-read
- * (getCookieToken) is shared between them; the terminal-status check
- * reuses the Service's isSessionTerminal so it can't drift from
+ * A missing/absent session is a normal, expected result here
+ * ("no_session"), not an error. The terminal-status check reuses the
+ * Service's isSessionTerminal so it can't drift from
  * getActiveSessionByToken's definition.
  */
 export async function pollOrderStatusAction() {
@@ -125,6 +77,10 @@ export async function pollOrderStatusAction() {
   // certainly still current.
   return {
     status: refreshed.status,
+    // With the round's own number, so a CANCELLED result can say which
+    // order wasn't accepted (see shownCancelReason).
+    cancelReason: refreshed.cancelReason,
+    orderNumber: refreshed.orderNumber,
     total: orderLinesTotal(session.orders),
     cart: session.orders.map(toCartLine),
   };

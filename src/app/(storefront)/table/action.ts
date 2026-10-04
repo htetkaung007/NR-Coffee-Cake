@@ -26,12 +26,10 @@ import { config } from "@/app/utils/config";
 
 const url = config.orderAppUrl;
 
-/** Table QR's counterpart to requireSessionFromCookie (counter/
- *  action.ts) — every draft action below resolves "who is this" from CONTRIBUTOR_TOKEN_COOKIE
- *  + a client-supplied tableId, never trusting a client-supplied
- *  identity directly. Throws (not null) for the same reason
- *  requireSessionFromCookie does: no reasonable fallback besides
- *  surfacing an error.
+/** Every draft action below resolves "who is this" from
+ *  CONTRIBUTOR_TOKEN_COOKIE + a client-supplied tableId, never trusting a
+ *  client-supplied identity directly. Throws (not null): these callers
+ *  have no reasonable fallback besides surfacing an error.
  *
  *  Two distinct reasons a browser might fail this, both surfaced with
  *  the same message and treated identically by every caller: no token
@@ -215,14 +213,18 @@ export async function pollTableAction(tableId: number, locationId: number) {
     return { authorized: false as const };
   }
 
-  const [draftItems, activeRound, shortages] = await Promise.all([
-    TableDraftService.getDraftItemsForTable(parsed.data.tableId),
-    OrderSessionService.getActiveRoundWithOrdersForTable(parsed.data.tableId),
-    TableDraftService.getShortagesForTable(
-      parsed.data.tableId,
-      parsed.data.locationId,
-    ),
-  ]);
+  const [draftItems, activeRound, shortages, rejectedRound] =
+    await Promise.all([
+      TableDraftService.getDraftItemsForTable(parsed.data.tableId),
+      OrderSessionService.getActiveRoundWithOrdersForTable(parsed.data.tableId),
+      TableDraftService.getShortagesForTable(
+        parsed.data.tableId,
+        parsed.data.locationId,
+      ),
+      // The table's last round, if the counter turned it down / let it
+      // expire — shown once on the cart page (see OrderRejectedScreen).
+      OrderSessionService.getRejectedRoundForTable(parsed.data.tableId),
+    ]);
 
   return {
     authorized: true as const,
@@ -238,5 +240,6 @@ export async function pollTableAction(tableId: number, locationId: number) {
       : null,
     roundItems: activeRound ? activeRound.orders.map(toCartLine) : [],
     shortages,
+    rejectedRound,
   };
 }

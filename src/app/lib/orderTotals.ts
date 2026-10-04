@@ -198,25 +198,10 @@ export function buildEntryBillFromSessions(
   );
 }
 
-/** How many items the customer's cart badge should count — the sum of
- *  the lines' quantities, since identical lines merge into one line
- *  ("Cappuccino ×3" is 3 items; see addItemToCart). A Counter session
- *  keeps its order lines after Submit (status moves on to
- *  PENDING_APPROVAL/PENDING/COOKING), so only a CART session's lines
- *  are still "in the cart" — anything else counts 0 (MUI's Badge hides
- *  itself at 0). The one place this rule lives; every Counter screen
- *  that feeds OrderTopBar's cartItemCount goes through it. */
-export function countUnsubmittedItems(
-  status: string,
-  cart: readonly { quantity: number }[],
-) {
-  return status === "CART" ? sumQuantities(cart) : 0;
-}
-
 /** How many items a list of lines holds — quantities summed, since an
  *  identical pick merges into one line ("Latte ×2" is 2 items). Behind
- *  both cart badges: Counter's (via countUnsubmittedItems) and Table
- *  QR's draft list. */
+ *  Table QR's draft badge and the staff New Order cart (the Counter
+ *  badge counts the browser cart — see browserCart.itemCount). */
 export function sumQuantities(lines: readonly { quantity: number }[]) {
   return lines.reduce((sum, line) => sum + line.quantity, 0);
 }

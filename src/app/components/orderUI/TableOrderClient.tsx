@@ -17,7 +17,7 @@ import { applyAddedLine, sumQuantities } from "@/app/lib/orderTotals";
 import { toLineAddons } from "@/app/lib/roundLine";
 import { useRefreshOnVisible } from "@/app/lib/hooks/useRefreshOnVisible";
 import { usePolling } from "@/app/lib/hooks/usePolling";
-import { dismissConfirmedRound } from "@/app/lib/hooks/useConfirmedRoundDismissed";
+import { dismissConfirmedRound } from "@/app/lib/hooks/useRoundDismissed";
 import { POLL_INTERVAL_MS } from "@/app/lib/hooks/usePollOrderStatus";
 import {
   getOrderPageBackground,

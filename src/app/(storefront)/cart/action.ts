@@ -13,6 +13,8 @@ import {
 } from "@/app/lib/orderSessionCookie";
 import {
   submitCartSchema,
+  submittedOutcomeSchema,
+  type SubmittedOutcomeInput,
   validateCartSchema,
   type SubmitCartInput,
   type SubmitCartRawInput,
@@ -78,8 +80,25 @@ export async function submitCartAction(input: SubmitCartRawInput) {
   );
   const actionResult = toActionResult(result);
   if (actionResult.success && actionResult.data.status === "submitted") {
-    // Same page the server-cart submit (submitOrderAction) refreshes.
+    // The order menu, as the Counter submit has always refreshed.
     revalidatePath(`${url}/menu`);
   }
   return actionResult;
+}
+
+const safeGetSubmittedOutcome = toSafeResult((input: SubmittedOutcomeInput) =>
+  CartSubmitService.getSubmittedOutcome(input.clientRequestId),
+);
+
+/** What became of the order this browser last sent (by its request id):
+ *  the cart page asks when it opens with a remembered submission, to
+ *  show "wasn't accepted" and put the items back even if the customer
+ *  wasn't watching when it happened. Read-only; no session needed. */
+export async function getSubmittedOrderOutcomeAction(input: {
+  clientRequestId: string;
+}) {
+  const result = await validateWith(submittedOutcomeSchema, input).asyncAndThen(
+    safeGetSubmittedOutcome,
+  );
+  return toActionResult(result);
 }

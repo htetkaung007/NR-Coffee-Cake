@@ -26,12 +26,27 @@ export interface BrowserCartLine {
 /** The Counter customer's cart as kept in the browser (localStorage),
  *  one per location. clientRequestId is the idempotency key for
  *  submitting it (see OrderSession.clientRequestId). */
+/** The cart as it was just sent, kept until the round's outcome is
+ *  known: restored if the counter rejects it or doesn't decide in time,
+ *  forgotten once it's accepted, dismissed, or a day old. */
+export interface LastSubmitted {
+  /** The request id the order was sent with — also how its outcome is
+   *  looked up later (see getSubmittedOrderOutcomeAction). */
+  clientRequestId: string;
+  sessionId: number;
+  submittedAt: string;
+  lines: BrowserCartLine[];
+  /** Already put back into the cart once — never twice. */
+  restored: boolean;
+}
+
 export interface BrowserCart {
   version: 1;
   locationId: number;
   clientRequestId: string | null;
   updatedAt: string;
   lines: BrowserCartLine[];
+  lastSubmitted: LastSubmitted | null;
 }
 
 /** A fixed timestamp for a cart nobody has touched — keeps emptyCart
@@ -45,6 +60,7 @@ export function emptyCart(locationId: number): BrowserCart {
     clientRequestId: null,
     updatedAt: NEVER_UPDATED,
     lines: [],
+    lastSubmitted: null,
   };
 }
 
@@ -208,6 +224,63 @@ export function applyValidation(
   };
 }
 
+/** After a successful submit: the cart empties (the next first line
+ *  gets a fresh request id), and what was sent is remembered for that
+ *  round until its outcome is known — replacing any earlier record. */
+export function recordSubmission(
+  cart: BrowserCart,
+  sessionId: number,
+  now: string,
+): BrowserCart {
+  const lastSubmitted = cart.clientRequestId
+    ? {
+        clientRequestId: cart.clientRequestId,
+        sessionId,
+        submittedAt: now,
+        lines: cart.lines,
+        restored: false,
+      }
+    : null;
+  return { ...withLines(cart, [], now), lastSubmitted };
+}
+
+/** The counter rejected round `sessionId` (or let it expire): its lines
+ *  go back into the cart — merged into anything added since, by the
+ *  same merge rule as adding — once only. The cart keeps its own
+ *  request id, or gets a FRESH one: the rejected order's id would make
+ *  the server answer "already submitted" instead of sending again. */
+export function restoreAfterRejection(
+  cart: BrowserCart,
+  sessionId: number,
+  now: string,
+  newId: () => string,
+): BrowserCart {
+  const last = cart.lastSubmitted;
+  if (!last || last.sessionId !== sessionId || last.restored) return cart;
+  const lines = last.lines.reduce(mergeInto, cart.lines);
+  return {
+    ...withLines(cart, lines, now),
+    clientRequestId: lines.length > 0 ? (cart.clientRequestId ?? newId()) : null,
+    lastSubmitted: { ...last, restored: true },
+  };
+}
+
+/** The round was accepted, or the customer dismissed its outcome. */
+export function forgetLastSubmitted(cart: BrowserCart): BrowserCart {
+  return cart.lastSubmitted ? { ...cart, lastSubmitted: null } : cart;
+}
+
+const LAST_SUBMITTED_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** A submission over a day old is forgotten — by then its outcome is
+ *  long settled and restoring it would only surprise the customer. */
+export function pruneLastSubmitted(cart: BrowserCart, now: string): BrowserCart {
+  const last = cart.lastSubmitted;
+  if (!last) return cart;
+  const age = Date.parse(now) - Date.parse(last.submittedAt);
+  return age > LAST_SUBMITTED_TTL_MS ? forgetLastSubmitted(cart) : cart;
+}
+
 /** How many items the cart badge counts — quantities summed. */
 export function itemCount(cart: BrowserCart): number {
   return cart.lines.reduce((sum, line) => sum + line.quantity, 0);
@@ -265,30 +338,41 @@ export function toBrowserCartLine(
 
 const money = z.number().int().nonnegative();
 
+const storedLineSchema = z.object({
+  menuId: positiveInt,
+  addonIds: z.array(positiveInt),
+  // Any positive count: a merge can pass the per-add cap, and the
+  // server reports that line as "invalid" rather than the whole
+  // cart being thrown away here.
+  quantity: positiveInt,
+  note: orderNoteSchema.nullable().transform((note) => note ?? null),
+  display: z.object({
+    name: z.string(),
+    unitPrice: money,
+    addons: z.array(
+      z.object({ id: positiveInt, name: z.string(), unitPrice: money }),
+    ),
+    imageUrl: z.string().nullable(),
+  }),
+});
+
 const storedCartSchema = z.object({
   version: z.literal(1),
   locationId: positiveInt,
   clientRequestId: z.uuid().nullable(),
   updatedAt: z.iso.datetime(),
-  lines: z.array(
-    z.object({
-      menuId: positiveInt,
-      addonIds: z.array(positiveInt),
-      // Any positive count: a merge can pass the per-add cap, and the
-      // server reports that line as "invalid" rather than the whole
-      // cart being thrown away here.
-      quantity: positiveInt,
-      note: orderNoteSchema.nullable().transform((note) => note ?? null),
-      display: z.object({
-        name: z.string(),
-        unitPrice: money,
-        addons: z.array(
-          z.object({ id: positiveInt, name: z.string(), unitPrice: money }),
-        ),
-        imageUrl: z.string().nullable(),
-      }),
-    }),
-  ),
+  lines: z.array(storedLineSchema),
+  // Absent in carts stored before submissions were remembered.
+  lastSubmitted: z
+    .object({
+      clientRequestId: z.uuid(),
+      sessionId: positiveInt,
+      submittedAt: z.iso.datetime(),
+      lines: z.array(storedLineSchema),
+      restored: z.boolean(),
+    })
+    .nullable()
+    .default(null),
 });
 
 /** Reads a stored cart (localStorage text). Anything unusable — nothing

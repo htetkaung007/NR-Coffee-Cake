@@ -3,10 +3,11 @@ import { prisma } from "@/app/utils/prisma";
 import { Prisma, CancelReason } from "../../../../prisma/generated/browser";
 import { MenuStockService } from "../menuStock.service";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
+import { shownCancelReason } from "@/app/lib/roundOutcome";
 
 type Tx = Prisma.TransactionClient;
 
-/** Shared by submitOrderForApproval and submitStaffOrder — both need
+/** Shared by submitCartRoundForApproval and submitStaffOrder — both need
  *  to atomically decrement stock for every one of the session's CART
  *  items before actually transitioning it out of CART (see the
  *  "decrement at submit, not at add-to-cart/draft" design discussion);
@@ -250,6 +251,30 @@ export class OrderSessionService {
     });
     if (!current || isSessionTerminal(current.status)) return null;
     return current;
+  }
+
+  /** The table's latest round, if the counter turned it down or let it
+   *  expire (see shownCancelReason) — for the Table cart page's "wasn't
+   *  accepted" screen. The table's activeSessionId keeps pointing at a
+   *  round after it ends (see getActiveRoundForTable), so this is that
+   *  round read as-is. Read-only; null for anything else. */
+  static async getRejectedRoundForTable(tableId: number) {
+    const table = await prisma.table.findFirst({
+      where: { id: tableId, isArchived: false },
+      select: { activeSessionId: true },
+    });
+    if (!table?.activeSessionId) return null;
+
+    const round = await prisma.orderSession.findFirst({
+      where: { id: table.activeSessionId, isArchived: false },
+      select: { id: true, orderNumber: true, status: true, cancelReason: true },
+    });
+    const reason = round
+      ? shownCancelReason(round.status, round.cancelReason)
+      : null;
+    return round && reason
+      ? { id: round.id, orderNumber: round.orderNumber, cancelReason: reason }
+      : null;
   }
 
   /** getActiveRoundForTable plus the round's line items — for the
@@ -741,7 +766,7 @@ export class OrderSessionService {
     });
   }
 
-  /** Staff Order-taking page equivalent of submitOrderForApproval —
+  /** Staff Order-taking page equivalent of submitCartRoundForApproval —
    *  CART -> PENDING directly, skipping PENDING_APPROVAL entirely.
    *  There's no cashier to approve a manager's own order against
    *  (they ARE the person who'd be approving it), so the 2-minute
@@ -792,35 +817,14 @@ export class OrderSessionService {
     );
   }
 
-  /** Customer taps "Submit Order" — CART -> PENDING_APPROVAL, starting
-   *  the 2-minute cashier-approval window (design doc "Step 4").
-   *  Refuses anything not currently CART so a double-submit (e.g. a
-   *  second tap before the UI updates) can't restart the timer or
-   *  re-queue an already-pending order. */
-  static async submitOrderForApproval(sessionId: number) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
-    if (session.status !== "CART") {
-      throw new ValidationError(
-        "This order has already been submitted or is no longer editable.",
-      );
-    }
-
-    return prisma.$transaction((tx: Tx) =>
-      OrderSessionService.submitCartRoundForApproval(tx, session),
-    );
-  }
-
   /** The CART -> PENDING_APPROVAL step itself, inside the CALLER's
    *  transaction: decrements stock for every line of the round (the
    *  atomic guard — a shortage throws InsufficientStockError and rolls
    *  the whole caller back) and starts the approval window. The caller
-   *  has already made sure the round is CART. Shared by
-   *  submitOrderForApproval (server-held cart) and CartSubmitService
-   *  (browser-held cart, which inserts the lines in the same
-   *  transaction first) so the two submits can't drift apart. */
+   *  has already made sure the round is CART. Used by CartSubmitService
+   *  (the customer's browser-held cart, whose lines it inserts in the
+   *  same transaction first); refuses nothing itself, so a caller must
+   *  never run it on a round that already left CART. */
   static async submitCartRoundForApproval(
     tx: Tx,
     round: { id: number; locationId: number },

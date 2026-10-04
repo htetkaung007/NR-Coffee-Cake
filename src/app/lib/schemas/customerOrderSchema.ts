@@ -13,7 +13,7 @@ export const quantity = z.number().int().min(1).max(99);
 export const addonIds = z.array(positiveInt).default([]);
 // Optional per-item instruction ("no onion"). Limited by WORDS, not
 // characters — see countWords for what counts as a word. Defined once
-// so all four add/update schemas below enforce the same rule.
+// so every schema that takes a note enforces the same rule.
 export const orderNoteSchema = z
   .string()
   .trim()
@@ -22,27 +22,6 @@ export const orderNoteSchema = z
     (value) => !value || countWords(value) <= MAX_ORDER_NOTE_WORDS,
     `Note must be ${MAX_ORDER_NOTE_WORDS} words or fewer.`,
   );
-
-export const addToCartSchema = z.object({
-  menuId: positiveInt,
-  quantity,
-  addonIds,
-  note: orderNoteSchema,
-});
-export type AddToCartInput = z.infer<typeof addToCartSchema>;
-
-export const removeFromCartSchema = z.object({
-  orderId: positiveInt,
-});
-export type RemoveFromCartInput = z.infer<typeof removeFromCartSchema>;
-
-export const updateCartItemSchema = z.object({
-  orderId: positiveInt,
-  quantity,
-  addonIds,
-  note: orderNoteSchema,
-});
-export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
 
 export const menuDetailSchema = z.object({
   menuId: positiveInt,
@@ -121,6 +100,12 @@ export const submitCartSchema = validateCartSchema.extend({
 });
 export type SubmitCartInput = z.infer<typeof submitCartSchema>;
 export type SubmitCartRawInput = z.input<typeof submitCartSchema>;
+
+// Looking up what became of a sent cart, by the same request id.
+export const submittedOutcomeSchema = z.object({
+  clientRequestId: z.uuid(),
+});
+export type SubmittedOutcomeInput = z.infer<typeof submittedOutcomeSchema>;
 
 export const pollTableSchema = z.object({
   tableId: positiveInt,

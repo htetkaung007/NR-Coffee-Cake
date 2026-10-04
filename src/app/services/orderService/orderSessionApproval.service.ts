@@ -20,7 +20,7 @@ type Tx = Prisma.TransactionClient;
  * are only ever called from src/app/backoffice/order/ Controllers, never
  * from a customer-facing cookie-based flow (customer/, table/) or a QR
  * scan Route Handler. Session CREATION and cart-building
- * (resolveTableQrScan, addItemToCart, submitOrderForApproval, etc.)
+ * (resolveTableQrScan, addItemToCart, submitCartRoundForApproval, etc.)
  * stayed in OrderSessionService — those are tightly coupled to each
  * other (a whole customer-facing flow) in a way this group isn't.
  * startStaffSession stayed there too, even though it's staff-triggered,

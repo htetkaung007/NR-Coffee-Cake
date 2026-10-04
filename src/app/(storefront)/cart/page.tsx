@@ -65,12 +65,14 @@ export default async function CartPage({
       ));
     if (contributorToken && isTokenCurrent) {
       const locationId = Number(locationIdParam);
-      const [draftItems, activeRound, shopName, shortages] = await Promise.all([
-        TableDraftService.getDraftItemsForTable(tableId),
-        OrderSessionService.getActiveRoundWithOrdersForTable(tableId),
-        LocationService.getShopNameForLocation(locationId),
-        TableDraftService.getShortagesForTable(tableId, locationId),
-      ]);
+      const [draftItems, activeRound, shopName, shortages, rejectedRound] =
+        await Promise.all([
+          TableDraftService.getDraftItemsForTable(tableId),
+          OrderSessionService.getActiveRoundWithOrdersForTable(tableId),
+          LocationService.getShopNameForLocation(locationId),
+          TableDraftService.getShortagesForTable(tableId, locationId),
+          OrderSessionService.getRejectedRoundForTable(tableId),
+        ]);
 
       return (
         <TableCartPageClient
@@ -91,6 +93,7 @@ export default async function CartPage({
           }
           initialRoundItems={activeRound?.orders.map(toCartLine) ?? []}
           initialShortages={shortages}
+          initialRejectedRound={rejectedRound}
         />
       );
     }

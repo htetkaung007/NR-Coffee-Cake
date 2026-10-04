@@ -8,7 +8,7 @@ import { menuDetailSchema } from "@/app/lib/schemas/customerOrderSchema";
  *
  *  No session required — view-only browsing (hasSession=false) can
  *  open a menu's detail the same as an active order can, so this
- *  doesn't go through requireSessionFromCookie. locationId is passed
+ *  doesn't read the Counter session cookie. locationId is passed
  *  explicitly (not read from a session) for that same reason: there
  *  may be no session to read it from. Returns null (not a thrown
  *  error) for a menu that doesn't exist, belongs to a different
