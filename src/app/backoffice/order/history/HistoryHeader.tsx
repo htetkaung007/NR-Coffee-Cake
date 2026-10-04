@@ -1,19 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import {
   Box,
   IconButton,
   InputAdornment,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
-import { alpha, type SxProps, type Theme } from "@mui/material/styles";
+import type { SxProps, Theme } from "@mui/material/styles";
 import ClearIcon from "@mui/icons-material/Clear";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
-import { hoverCapableMedia, topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
+import SegmentedTabs from "@/app/components/SegmentedTabs";
+import StickyPageHeader from "@/app/components/StickyPageHeader";
 import DayNavigator from "./DayNavigator";
 import OrdersPageHeader from "../OrdersPageHeader";
 
@@ -91,24 +90,7 @@ export default function HistoryHeader({
   };
 
   return (
-    <Box
-      component="header"
-      sx={(theme) => ({
-        position: "sticky",
-        top: topBarHeight(theme),
-        zIndex: 2,
-        // Page surface (cream), so the white cards below read as cards.
-        bgcolor: "background.default",
-        borderBottom: 1,
-        borderColor: "divider",
-        // Same top offset as the Order List's page padding, so the shared
-        // header sits in the same place on both routes.
-        pt: { xs: 1.5, sm: 2, md: 3 },
-        pb: 1.5,
-        // xs: none of its own — BackofficeShell's gutter already applies.
-        px: { xs: 0, sm: 2, md: 3 },
-      })}
-    >
+    <StickyPageHeader>
       {/* Row 1 — the Orders header shared with the Order List. */}
       <Box sx={{ mb: 2 }}>
         <OrdersPageHeader />
@@ -186,95 +168,18 @@ export default function HistoryHeader({
          (not underline Tabs), each half with its own count pill. Full
          width on phones (easier to tap); from sm only as wide as its
          content and pushed to the right edge, lining up with the search
-         field above. A two-column 1fr grid keeps both halves the same
-         width — the wider label's — at either size. */}
-      <Box
-        role="tablist"
-        aria-label="Order history tabs"
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          width: { xs: "100%", sm: "fit-content" },
-          ml: { sm: "auto" },
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 2,
-          bgcolor: "background.paper",
-          p: 0.5,
-          gap: 0.5,
-        }}
-      >
-        {TABS.map((item) => {
-          const selected = item.value === tab;
-          return (
-            <Box
-              key={item.value}
-              component={Link}
-              href={buildTabHref(item.value)}
-              role="tab"
-              aria-selected={selected}
-              sx={(theme) => ({
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
-                minHeight: 44,
-                px: 1.5,
-                borderRadius: 1.5,
-                textDecoration: "none",
-                color: selected ? "primary.contrastText" : "text.primary",
-                bgcolor: selected ? "primary.main" : "transparent",
-                transition:
-                  "background-color 160ms ease-out, color 160ms ease-out",
-                [hoverCapableMedia]: {
-                  "&:hover": {
-                    bgcolor: selected
-                      ? "primary.main"
-                      : theme.palette.action.hover,
-                  },
-                },
-                "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: 2,
-                },
-              })}
-            >
-              {/* Same variant as the Order List's [Open] [History]. */}
-              <Typography component="span" variant="button">
-                {item.label}
-              </Typography>
-              <Box
-                component="span"
-                sx={(theme) => ({
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 22,
-                  minHeight: 22,
-                  px: 0.5,
-                  borderRadius: "999px",
-                  bgcolor: alpha(
-                    selected
-                      ? theme.palette.primary.contrastText
-                      : theme.palette.primary.main,
-                    selected ? 0.2 : 0.08,
-                  ),
-                })}
-              >
-                <Typography
-                  variant="button"
-                  component="span"
-                  sx={{
-                    color: selected ? "primary.contrastText" : "text.secondary",
-                  }}
-                >
-                  {counts[item.value]}
-                </Typography>
-              </Box>
-            </Box>
-          );
-        })}
-      </Box>
-    </Box>
+         field above. */}
+      <SegmentedTabs
+        ariaLabel="Order history tabs"
+        value={tab}
+        items={TABS.map((item) => ({
+          value: item.value,
+          label: item.label,
+          href: buildTabHref(item.value),
+          count: counts[item.value],
+        }))}
+        sx={{ ml: { sm: "auto" } }}
+      />
+    </StickyPageHeader>
   );
 }

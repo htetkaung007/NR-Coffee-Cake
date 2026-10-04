@@ -14,6 +14,7 @@ export function getBoTheme(mode: PaletteMode) {
   // Coffee brown / caramel — see primary below. The two border strengths
   // (divider, inputBorder) are derived from it, so they follow the brand.
   const primaryMain = isLight ? "#4A2E22" : "#D4A373";
+  const successMain = "#10B981";
   const textPrimary = isLight ? "#1F272D" : "#F5F5F5"; // Main Text Color
   const textSecondary = isLight
     ? "rgba(0, 0, 0, 0.6)"
@@ -32,8 +33,15 @@ export function getBoTheme(mode: PaletteMode) {
       },
       success: {
         // Free Badge Background
-        main: "#10B981",
+        main: successMain,
       },
+      // The success role as text — income amounts on Reports. success.main
+      // is too light on the light surfaces (2.5:1), and MUI's derived
+      // success.dark only just scrapes 4.5:1 on the cream page, so light
+      // mode uses a deeper shade of the same emerald: 5.5:1 on paper,
+      // 5.1:1 on the page. Dark mode: success.main itself, 6.8:1 on paper
+      // and 7.3:1 on the page.
+      successText: isLight ? "#047857" : successMain,
       // The roles below are written out with MUI v9's own defaults (all
       // four shades, so nothing is re-derived) — declared only so every
       // Backoffice color can be changed from this file.

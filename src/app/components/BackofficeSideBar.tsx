@@ -1,109 +1,237 @@
 "use client";
 
+import { useEffect, useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Drawer,
-  Toolbar,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Box,
   Typography,
 } from "@mui/material";
-import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
-import CategoryIcon from "@mui/icons-material/Category";
-import FastfoodIcon from "@mui/icons-material/Fastfood";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import { alpha, type Theme } from "@mui/material/styles";
+import type { SvgIconComponent } from "@mui/icons-material";
+import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
+import AddShoppingCartOutlinedIcon from "@mui/icons-material/AddShoppingCartOutlined";
+import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
+import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
+import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
+import AddCircleOutlineOutlinedIcon from "@mui/icons-material/AddCircleOutlineOutlined";
+import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
-import SettingsIcon from "@mui/icons-material/Settings";
+import {
+  findActiveHref,
+  visibleNavSections,
+  type NavRole,
+} from "@/app/lib/backofficeNav";
+import { markSeen, useSeenFlag } from "@/app/lib/hooks/useSeenFlag";
+import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
 
 const SIDEBAR_WIDTH = 260;
 
 const TOPBAR_HEIGHT_DESKTOP = 64;
 
-const navItems = [
-  { label: "Orders", href: "/backoffice/order", icon: ReceiptLongIcon },
-  {
-    label: "New Order",
-    href: "/backoffice/order/new",
-    icon: AddShoppingCartIcon,
-  },
-  {
-    label: "Menu Categories",
-    href: "/backoffice/menu_categories",
-    icon: CategoryIcon,
-  },
-  { label: "Menus", href: "/backoffice/menus", icon: RestaurantMenuIcon },
-  { label: "Add-ons", href: "/backoffice/addons", icon: FastfoodIcon },
+type NavItem = {
+  label: string;
+  href: string;
+  icon: SvgIconComponent;
+  /** Only these roles see the item; omitted = everyone. */
+  roles?: readonly NavRole[];
+  /** A pill after the label, hidden for good once the item's page has
+   *  been opened in this browser (remembered under `seenKey`). */
+  badge?: { text: string; seenKey: string };
+};
 
-  { label: "Tables", href: "/backoffice/tables", icon: TableRestaurantIcon },
-  { label: "Locations", href: "/backoffice/locations", icon: LocationOnIcon },
-  { label: "Settings", href: "/backoffice/setting", icon: SettingsIcon },
+type NavSection = { title: string; items: readonly NavItem[] };
+
+// The one list both the desktop sidebar and the phone drawer render.
+const navSections: readonly NavSection[] = [
+  {
+    title: "Service",
+    items: [
+      { label: "Orders", href: "/backoffice/order", icon: ReceiptLongOutlinedIcon },
+      {
+        label: "New order",
+        href: "/backoffice/order/new",
+        icon: AddShoppingCartOutlinedIcon,
+      },
+      {
+        label: "Tables",
+        href: "/backoffice/tables",
+        icon: TableRestaurantOutlinedIcon,
+      },
+    ],
+  },
+  {
+    title: "Menu",
+    items: [
+      { label: "Menus", href: "/backoffice/menus", icon: RestaurantOutlinedIcon },
+      {
+        label: "Menu categories",
+        href: "/backoffice/menu_categories",
+        icon: GridViewOutlinedIcon,
+      },
+      {
+        label: "Add-ons",
+        href: "/backoffice/addons",
+        icon: AddCircleOutlineOutlinedIcon,
+      },
+    ],
+  },
+  {
+    title: "Business",
+    items: [
+      {
+        label: "Reports",
+        href: "/backoffice/reports",
+        icon: BarChartOutlinedIcon,
+        roles: ["ADMIN"],
+        badge: { text: "New", seenKey: "backoffice:seen:reports" },
+      },
+      {
+        label: "Locations",
+        href: "/backoffice/locations",
+        icon: LocationOnOutlinedIcon,
+      },
+      { label: "Settings", href: "/backoffice/setting", icon: TuneOutlinedIcon },
+    ],
+  },
 ];
 
-function SidebarContent() {
-  const pathname = usePathname();
+const allHrefs = navSections.flatMap((section) =>
+  section.items.map((item) => item.href),
+);
+
+const itemTransition = (theme: Theme) =>
+  theme.transitions.create(["background-color", "color"], {
+    duration: theme.transitions.duration.shortest,
+    easing: "ease",
+  });
+
+function NavBadge({
+  badge,
+  isActive,
+}: {
+  badge: NonNullable<NavItem["badge"]>;
+  isActive: boolean;
+}) {
+  const seen = useSeenFlag(badge.seenKey);
+
+  // Opening the item's page is what retires its badge.
+  useEffect(() => {
+    if (isActive) markSeen(badge.seenKey);
+  }, [isActive, badge.seenKey]);
+
+  if (seen) return null;
+  return (
+    <Typography
+      variant="caption"
+      component="span"
+      sx={(theme) => ({
+        ml: 1,
+        px: 1,
+        borderRadius: 999,
+        flexShrink: 0,
+        ...(isActive
+          ? {
+              bgcolor: alpha(theme.palette.primary.contrastText, 0.2),
+              color: "primary.contrastText",
+            }
+          : {
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: "primary.main",
+            }),
+      })}
+    >
+      {badge.text}
+    </Typography>
+  );
+}
+
+function NavSectionList({
+  section,
+  activeHref,
+  onNavigate,
+}: {
+  section: NavSection;
+  activeHref: string | null;
+  onNavigate?: () => void;
+}) {
+  const captionId = useId();
 
   return (
-    <Box sx={{ bgcolor: "background.paper", height: "100%" }}>
-      <Toolbar>
-        <Typography
-          sx={{
-            fontWeight: 70,
-            color: "text.primary",
-            fontSize: 15,
-            opacity: 0.7,
-          }}
-        >
-          Management Tabs
-        </Typography>
-      </Toolbar>
-
-      <List sx={{ px: 1 }}>
-        {navItems.map(({ label, href, icon: Icon }) => {
-          const isActive =
-            pathname === href || pathname?.startsWith(`${href}/`);
-
+    <Box>
+      <Typography
+        id={captionId}
+        variant="caption"
+        component="h2"
+        sx={{
+          display: "block",
+          px: 2,
+          pb: 1,
+          color: "text.secondary",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+        }}
+      >
+        {section.title}
+      </Typography>
+      <List
+        disablePadding
+        aria-labelledby={captionId}
+        sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+      >
+        {section.items.map(({ label, href, icon: Icon, badge }) => {
+          const isActive = href === activeHref;
           return (
-            <Link key={href} href={href} style={{ textDecoration: "none" }}>
+            <ListItem key={href} disablePadding>
               <ListItemButton
+                component={Link}
+                href={href}
                 selected={isActive}
-                sx={{
+                aria-current={isActive ? "page" : undefined}
+                onClick={(event) => {
+                  // ⌘/Ctrl-click opens a new tab — keep the drawer open.
+                  if (onNavigate && isPlainLeftClick(event)) onNavigate();
+                }}
+                sx={(theme) => ({
+                  minHeight: 44,
                   borderRadius: 2,
-                  mb: 0.5,
-                  color: isActive ? "primary.main" : "text.primary",
-                  // Selected fill: MUI's own .Mui-selected tint (derived
-                  // from primary). Hover: action.hover — background.default
-                  // is the page's cream and wouldn't show on the white
-                  // (paper) sidebar.
+                  color: "text.primary",
+                  transition: itemTransition(theme),
+                  "&.Mui-focusVisible": {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: 2,
+                  },
+                  "&.Mui-selected, &.Mui-selected.Mui-focusVisible": {
+                    bgcolor: "primary.main",
+                    color: "primary.contrastText",
+                  },
                   [hoverCapableMedia]: {
                     "&:hover": { bgcolor: "action.hover" },
+                    "&.Mui-selected:hover": { bgcolor: "primary.dark" },
                   },
-                }}
+                })}
               >
                 <ListItemIcon
-                  sx={{
-                    color: isActive ? "primary.main" : "text.primary",
+                  sx={(theme) => ({
                     minWidth: 40,
-                  }}
+                    color: "inherit",
+                    transition: itemTransition(theme),
+                  })}
                 >
                   <Icon />
                 </ListItemIcon>
-                <ListItemText
-                  primary={label}
-                  sx={{
-                    "& .MuiListItemText-primary": {
-                      fontWeight: isActive ? 600 : 400,
-                    },
-                  }}
-                />
+                <ListItemText primary={label} />
+                {badge && <NavBadge badge={badge} isActive={isActive} />}
               </ListItemButton>
-            </Link>
+            </ListItem>
           );
         })}
       </List>
@@ -111,14 +239,51 @@ function SidebarContent() {
   );
 }
 
+function SidebarContent({
+  role,
+  onNavigate,
+}: {
+  role: NavRole;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const activeHref = findActiveHref(pathname, allHrefs);
+
+  return (
+    <Box
+      sx={{
+        bgcolor: "background.paper",
+        height: "100%",
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        px: 1,
+        py: 2,
+      }}
+    >
+      {visibleNavSections(navSections, role).map((section) => (
+        <NavSectionList
+          key={section.title}
+          section={section}
+          activeHref={activeHref}
+          onNavigate={onNavigate}
+        />
+      ))}
+    </Box>
+  );
+}
+
 type BackofficeSideBarProps = {
   mobileOpen: boolean;
   onClose: () => void;
+  role: NavRole;
 };
 
 export function BackofficeSideBar({
   mobileOpen,
   onClose,
+  role,
 }: BackofficeSideBarProps) {
   return (
     <Box
@@ -136,10 +301,12 @@ export function BackofficeSideBar({
             width: SIDEBAR_WIDTH,
             borderRight: 1,
             borderColor: "divider",
+            pt: "env(safe-area-inset-top, 0px)",
+            pb: "env(safe-area-inset-bottom, 0px)",
           },
         }}
       >
-        <SidebarContent />
+        <SidebarContent role={role} onNavigate={onClose} />
       </Drawer>
 
       <Drawer
@@ -157,7 +324,7 @@ export function BackofficeSideBar({
           },
         }}
       >
-        <SidebarContent />
+        <SidebarContent role={role} />
       </Drawer>
     </Box>
   );

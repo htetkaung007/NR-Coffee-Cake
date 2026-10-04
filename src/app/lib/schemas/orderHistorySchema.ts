@@ -1,23 +1,11 @@
 import { z } from "zod";
-import { todayInShop } from "@/app/lib/shopDay";
+import { isRealCalendarDay, todayInShop } from "@/app/lib/shopDay";
 
 const DAY_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Rejects calendar days that don't actually exist (e.g. "2026-02-30")
- *  — plain Date parsing silently rolls those over to a real day
- *  instead of failing, so the check has to compare the parsed
- *  components back against what was typed. */
-function isRealCalendarDay(value: string): boolean {
-  const [year, month, day] = value.split("-").map(Number);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  return (
-    parsed.getUTCFullYear() === year &&
-    parsed.getUTCMonth() === month - 1 &&
-    parsed.getUTCDate() === day
-  );
-}
-
-const historyDaySchema = z
+/** A shop day the customer-facing history/report screens may ask for —
+ *  also what the Backoffice reports take as their `anchorDay`. */
+export const historyDaySchema = z
   .string()
   .regex(DAY_FORMAT, "Day must be in YYYY-MM-DD format.")
   .refine(isRealCalendarDay, { message: "Day must be a real date." })

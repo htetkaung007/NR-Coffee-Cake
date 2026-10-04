@@ -21,6 +21,8 @@ export default async function BackOfficeLayout({ children }: Props) {
   const company = await AppService.getCompanyByEmail(email);
   if (!company) redirect("/auth/signIn");
   const companyName = company.name;
+  // Same least-privilege fallback as getSessionContext().
+  const role = session?.user?.role ?? "MANAGER";
 
   return (
     <SurfaceThemeProvider surface="bo">
@@ -28,7 +30,7 @@ export default async function BackOfficeLayout({ children }: Props) {
           across Backoffice navigation and the top/side bars can read it. */}
       <OrderAlertsProvider>
         <Box>
-          <BackofficeShell companyName={companyName}>
+          <BackofficeShell companyName={companyName} role={role}>
             <NewOrderBanner />
             <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
               <Box
@@ -40,7 +42,10 @@ export default async function BackOfficeLayout({ children }: Props) {
                   // horizontal padding there.
                   bgcolor: { xs: "transparent", sm: "background.default" },
                   width: "100%",
-                  padding: { xs: 0, sm: 0, md: 3 },
+                  // No top padding: BackofficeShell's backofficePageTop
+                  // is the only gap above a page's title.
+                  px: { xs: 0, sm: 0, md: 3 },
+                  pb: { xs: 0, sm: 0, md: 3 },
                   borderRadius: { xs: 0, sm: 3 },
                 }}
               >

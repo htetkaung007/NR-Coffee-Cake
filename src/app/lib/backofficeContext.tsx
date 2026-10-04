@@ -10,6 +10,7 @@ type SelectedLocation = NonNullable<
 export interface BackofficeContext {
   userId: number;
   companyId: number;
+  role: "ADMIN" | "MANAGER";
   location: SelectedLocation;
 }
 
@@ -33,21 +34,32 @@ function BackofficeNotice({ message }: { message: string }) {
  *   });
  *   if (!context) return fallback;
  *
+ * A page only Admins may see passes `forbidden` (the notice a Manager
+ * gets); the role is checked right after sign-in, before the location,
+ * so a Manager is never asked to pick one for a page they can't open.
+ *
  * Lives in lib/ next to getSessionContext for the same reason: reading
  * the session is a Controller-layer concern (Rule 1).
  */
 export async function requireBackofficeContext(messages: {
   signedOut: string;
   noLocation?: string;
+  forbidden?: string;
 }): Promise<
   | { context: BackofficeContext; fallback: null }
   | { context: null; fallback: ReactElement }
 > {
-  const { companyId, userId } = await getSessionContext();
+  const { companyId, userId, role } = await getSessionContext();
   if (!companyId || !userId) {
     return {
       context: null,
       fallback: <BackofficeNotice message={messages.signedOut} />,
+    };
+  }
+  if (messages.forbidden !== undefined && role !== "ADMIN") {
+    return {
+      context: null,
+      fallback: <BackofficeNotice message={messages.forbidden} />,
     };
   }
 
@@ -66,5 +78,5 @@ export async function requireBackofficeContext(messages: {
     };
   }
 
-  return { context: { userId, companyId, location }, fallback: null };
+  return { context: { userId, companyId, role, location }, fallback: null };
 }

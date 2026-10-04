@@ -23,3 +23,4 @@ export { OrderSessionCartService } from "./orderService/orderSessionCart.service
 export { TableDraftService } from "./tableDraft.service";
 export { CartValidationService } from "./cartValidation.service";
 export { CartSubmitService } from "./cartSubmit.service";
+export { ReportService } from "./report.service";

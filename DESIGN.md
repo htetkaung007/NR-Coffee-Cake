@@ -171,8 +171,15 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
   `warning` = needs attention / awaiting approval; `success` = accepted /
   paid; `error` = destructive or failed. Don't reuse status colors for
   categories (e.g. Table vs Counter uses icon + label, not error/warning).
-- **Money is never red.** Prices and totals use `text.primary`; emphasize
-  totals with size/weight only.
+- **Money is neutral by default and never red.** Prices and totals use
+  `text.primary`; emphasize totals with size/weight only. The one
+  exception is **Reports**, where money *received* (sales, avg. bill,
+  daily sales, channel and item/add-on sales) uses the **income** tone —
+  the success role's text shade, `palette.successText` (≥ 4.5:1 on paper
+  and page in both modes). Cancelled / "Not charged" amounts, counts,
+  percentages and deltas stay neutral. Pick the tone with
+  `moneyToneSx(tone)` / `moneyColor(tone)` (`backoffice/order/orderTypography.ts`)
+  — never write a money color out in a component.
 - Contrast: body text ≥ 4.5:1; large text and UI borders/icons ≥ 3:1.
 - Never convey state by color alone — pair it with an icon, label, or text.
 - Print output is always `common.black` on `common.white`, regardless of

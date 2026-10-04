@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Skeleton, Stack, Typography } from "@mui/material";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import type { SvgIconComponent } from "@mui/icons-material";
+import EmptyState from "@/app/components/EmptyState";
 import { getHistoryListAction } from "./action";
 import type { CancelledRoundListItem, PaidBillListItem } from "./action";
 import { CancelledRoundRow, PaidBillRow } from "./HistoryRow";
@@ -53,33 +53,6 @@ function SkeletonRow() {
         <Skeleton variant="text" width="70%" />
       </Box>
       <Skeleton variant="text" width={56} />
-    </Stack>
-  );
-}
-
-function EmptyState({
-  Icon,
-  message,
-}: {
-  Icon: SvgIconComponent;
-  message: string;
-}) {
-  return (
-    <Stack
-      spacing={1}
-      sx={{
-        alignItems: "center",
-        textAlign: "center",
-        px: 2,
-        py: 6,
-        border: 1,
-        borderStyle: "dashed",
-        borderColor: "divider",
-        borderRadius: 2,
-      }}
-    >
-      <Icon fontSize="large" sx={{ color: "text.secondary" }} />
-      <Typography variant="body1">{message}</Typography>
     </Stack>
   );
 }

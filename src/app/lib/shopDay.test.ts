@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dayRangeUtc, toShopDay } from "./shopDay";
+import { addDays, dayRangeUtc, isShopDay, toShopDay } from "./shopDay";
 
 // Shop timezone is Asia/Yangon (UTC+06:30) — pinned in vitest.config.ts.
 const HOUR_MS = 60 * 60 * 1000;
@@ -36,5 +36,75 @@ describe("dayRangeUtc", () => {
 
   it("agrees with toShopDay on which day its start belongs to", () => {
     expect(toShopDay(dayRangeUtc("2026-09-25").start)).toBe("2026-09-25");
+  });
+});
+
+describe("addDays", () => {
+  it("moves a day forward", () => {
+    expect(addDays("2026-09-25", 1)).toBe("2026-09-26");
+  });
+
+  it("moves a day back when n is negative", () => {
+    expect(addDays("2026-09-25", -1)).toBe("2026-09-24");
+  });
+
+  it("leaves the day alone for 0", () => {
+    expect(addDays("2026-09-25", 0)).toBe("2026-09-25");
+  });
+
+  it("rolls over a month end", () => {
+    expect(addDays("2026-09-30", 1)).toBe("2026-10-01");
+  });
+
+  it("rolls back over a month start", () => {
+    expect(addDays("2026-10-01", -1)).toBe("2026-09-30");
+  });
+
+  it("rolls over a year end", () => {
+    expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
+  });
+
+  it("rolls back over a year start", () => {
+    expect(addDays("2027-01-01", -1)).toBe("2026-12-31");
+  });
+
+  it("has a 29 February in a leap year", () => {
+    expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
+  });
+
+  it("skips straight to 1 March in a year that isn't a leap year", () => {
+    expect(addDays("2027-02-28", 1)).toBe("2027-03-01");
+  });
+
+  it("moves several weeks at once", () => {
+    expect(addDays("2026-09-28", 42)).toBe("2026-11-09");
+  });
+
+  it("keeps the zero-padded YYYY-MM-DD form", () => {
+    expect(addDays("2026-01-09", 1)).toBe("2026-01-10");
+    expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
+  });
+});
+
+describe("isShopDay", () => {
+  it("accepts a real date in YYYY-MM-DD form", () => {
+    expect(isShopDay("2026-09-25")).toBe(true);
+  });
+
+  it("accepts 29 February in a leap year", () => {
+    expect(isShopDay("2028-02-29")).toBe(true);
+  });
+
+  it("rejects a date that doesn't exist", () => {
+    expect(isShopDay("2026-02-30")).toBe(false);
+    expect(isShopDay("2027-02-29")).toBe(false);
+    expect(isShopDay("2026-13-01")).toBe(false);
+  });
+
+  it("rejects text that isn't in YYYY-MM-DD form", () => {
+    expect(isShopDay("25/09/2026")).toBe(false);
+    expect(isShopDay("2026-9-5")).toBe(false);
+    expect(isShopDay("")).toBe(false);
+    expect(isShopDay("not a day")).toBe(false);
   });
 });

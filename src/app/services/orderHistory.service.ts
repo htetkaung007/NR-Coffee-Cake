@@ -317,11 +317,9 @@ export class OrderHistoryService {
 
   /** Whole-day totals for the Cancelled tab's header — same
    *  REJECTED/EXPIRED-only scope as listCancelledRounds, `search`
-   *  ignored for the same reason getPaidSummary ignores it. No stored
-   *  total on OrderSession (unlike Bill), so — same as every other
-   *  money figure in this app — notCharged is computed from each
-   *  round's own price snapshots via orderLinesTotal, not a DB-side
-   *  sum. */
+   *  ignored for the same reason getPaidSummary ignores it. The
+   *  counting itself is getCancelledSummaryForRange, shared with the
+   *  Backoffice reports. */
   static async getCancelledSummary({
     locationId,
     day,
@@ -330,6 +328,32 @@ export class OrderHistoryService {
     day: string;
   }) {
     const { start, end } = dayRangeUtc(day);
+    const { count, notCharged } =
+      await OrderHistoryService.getCancelledSummaryForRange({
+        locationId,
+        start,
+        end,
+      });
+    return { count, notCharged };
+  }
+
+  /** What was cancelled at this location in [start, end) — the one
+   *  definition behind the Order History Cancelled tab's header (one day,
+   *  see getCancelledSummary) and the reports' "Not charged" figures (a
+   *  week or month). REJECTED/EXPIRED only (see listCancelledRounds for
+   *  why), counted by when they were cancelled. No stored total on
+   *  OrderSession (unlike Bill), so — same as every other money figure in
+   *  this app — notCharged is computed from each round's own price
+   *  snapshots via orderLinesTotal, not a DB-side sum. One query. */
+  static async getCancelledSummaryForRange({
+    locationId,
+    start,
+    end,
+  }: {
+    locationId: number;
+    start: Date;
+    end: Date;
+  }) {
     const sessions = await prisma.orderSession.findMany({
       where: {
         locationId,
@@ -339,6 +363,7 @@ export class OrderHistoryService {
         updateTime: { gte: start, lt: end },
       },
       select: {
+        cancelReason: true,
         orders: {
           where: { isArchived: false },
           select: {
@@ -352,6 +377,8 @@ export class OrderHistoryService {
 
     return {
       count: sessions.length,
+      rejected: sessions.filter((s) => s.cancelReason === "REJECTED").length,
+      timedOut: sessions.filter((s) => s.cancelReason === "EXPIRED").length,
       notCharged: sessions.reduce(
         (sum, session) => sum + orderLinesTotal(session.orders),
         0,

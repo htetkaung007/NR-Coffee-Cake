@@ -12,6 +12,19 @@ export function formatAmount(amount: number) {
   return `${amount.toLocaleString()} ${CURRENCY_LABEL}`;
 }
 
+/** "999", "24.4k", "1.3M" — an amount in a tight spot (a chart's axis or
+ *  a bar's label), no currency: the chart's caption names it. One
+ *  decimal at most, a trailing ".0" dropped, and anything that would
+ *  round to "1000k" is written as "1M". */
+export function formatCompactAmount(amount: number): string {
+  const size = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  const oneDecimal = (n: number) => String(Number(n.toFixed(1)));
+  if (size >= 999_950) return `${sign}${oneDecimal(size / 1_000_000)}M`;
+  if (size >= 1_000) return `${sign}${oneDecimal(size / 1_000)}k`;
+  return `${sign}${Math.round(size)}`;
+}
+
 /** "+500 MMK" — an add-on's extra charge, or an amount still to be
  *  added on top of a bill. */
 export function formatMoneyDelta(amount: number) {

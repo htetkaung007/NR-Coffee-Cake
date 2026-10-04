@@ -451,8 +451,9 @@ export default function OrderListView({ entries }: OrderListViewProps) {
 
   return (
     // xs: no horizontal padding of its own — BackofficeShell's 12px
-    // gutter is the only one on phones (same as the History page).
-    <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2, md: 3 } }}>
+    // gutter is the only one on phones (same as the History page). No
+    // top padding: the shell's backofficePageTop is the gap above the title.
+    <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, pb: { xs: 1.5, sm: 2, md: 3 } }}>
       <Box sx={{ mb: 2 }}>
         {/* Actions always shown — even with nothing open, the cashier
             can turn the sound on before the first order arrives. */}

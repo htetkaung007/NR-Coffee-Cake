@@ -7,6 +7,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const SHOP_DAY_FORMAT = "YYYY-MM-DD";
+const SHOP_DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /** "What day is it for the shop right now" — the shop's own wall-clock
  *  day (config.shopTimezone), never the server's local time or a plain
@@ -35,4 +36,32 @@ export function dayRangeUtc(day: string): { start: Date; end: Date } {
     start: start.utc().toDate(),
     end: start.add(1, "day").utc().toDate(),
   };
+}
+
+/** A shop day ("YYYY-MM-DD") `n` calendar days later (earlier when n is
+ *  negative). Plain calendar arithmetic on the date itself — shop days
+ *  are calendar dates, so no timezone or clock is involved, and month
+ *  and year ends, leap days included, roll over correctly. */
+export function addDays(day: string, n: number): string {
+  return dayjs.utc(day).add(n, "day").format(SHOP_DAY_FORMAT);
+}
+
+/** Rejects calendar days that don't actually exist (e.g. "2026-02-30")
+ *  — plain Date parsing silently rolls those over to a real day
+ *  instead of failing, so the check has to compare the parsed
+ *  components back against what was typed. Assumes the "YYYY-MM-DD"
+ *  shape (see isShopDay for the whole check). */
+export function isRealCalendarDay(value: string): boolean {
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  );
+}
+
+/** Is this text a shop day — "YYYY-MM-DD" AND a date that exists? */
+export function isShopDay(value: string): boolean {
+  return SHOP_DAY_PATTERN.test(value) && isRealCalendarDay(value);
 }

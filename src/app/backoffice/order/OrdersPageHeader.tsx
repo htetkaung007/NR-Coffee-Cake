@@ -16,8 +16,15 @@ import OrderSectionNav from "./OrderSectionNav";
  */
 export default function OrdersPageHeader({
   actions,
+  title = "Orders",
+  showSectionNav = true,
 }: {
   actions?: React.ReactNode;
+  /** Another page of the Backoffice (Reports) reuses this header row with
+   *  its own title. */
+  title?: string;
+  /** The [Open] [History] switch belongs to the Orders pages only. */
+  showSectionNav?: boolean;
 }) {
   return (
     <Stack
@@ -42,9 +49,9 @@ export default function OrdersPageHeader({
         }}
       >
         <Typography component="h1" variant="h6">
-          Orders
+          {title}
         </Typography>
-        <OrderSectionNav />
+        {showSectionNav && <OrderSectionNav />}
       </Stack>
       {actions && (
         <Stack

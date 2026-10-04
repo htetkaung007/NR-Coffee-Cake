@@ -30,10 +30,15 @@ declare module "@mui/material/styles" {
   interface Palette {
     inputBorder: string;
     decor: DecorPalette;
+    /** The success role as TEXT (money received, on Reports): a shade
+     *  of success with ≥ 4.5:1 against background.paper AND
+     *  background.default. Only the Bo theme defines it. */
+    successText?: string;
   }
   interface PaletteOptions {
     inputBorder?: string;
     decor?: DecorPalette;
+    successText?: string;
   }
 }
 
@@ -61,6 +66,21 @@ export const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
 // after a tap.
 export const hoverCapableMedia = "@media (hover: hover) and (pointer: fine)";
 
+/** Text only a screen reader gets — a spoken equivalent of something shown
+ *  as a symbol or a chart (DESIGN.md Rule 22). Still takes part in layout
+ *  as a 1px box, so it never causes a scroll. */
+export const visuallyHiddenSx = {
+  border: 0,
+  clip: "rect(0 0 0 0)",
+  height: "1px",
+  margin: "-1px",
+  overflow: "hidden",
+  padding: 0,
+  position: "absolute",
+  whiteSpace: "nowrap",
+  width: "1px",
+} as const;
+
 /** The Backoffice's fixed top bar's height at the current breakpoint
  *  (from sm up — the only range any sticky/fixed content below it
  *  needs to clear), read from the theme's own toolbar mixin rather
@@ -73,6 +93,14 @@ export function topBarHeight(theme: Theme) {
   };
   return fromSm.minHeight;
 }
+
+/** THE gap between the Backoffice's top bar and a page's first line (its
+ *  title): 16px on phones, 24px from sm. BackofficeShell's <main> is the
+ *  only thing that applies it — pages and the layout add no top padding
+ *  of their own, so every page title starts at the same height. A sticky
+ *  header that is a page's first block (StickyPageHeader) pulls itself up
+ *  by the same amount and pads it back, so it keeps that gap when stuck. */
+export const backofficePageTop = { xs: 2, sm: 3 } as const;
 
 export const FONT_BODY = "var(--font-english), var(--font-myanmar), sans-serif";
 
