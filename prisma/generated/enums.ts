@@ -31,6 +31,16 @@ export const CancelReason = {
 export type CancelReason = (typeof CancelReason)[keyof typeof CancelReason]
 
 
+export const RejectReason = {
+  OUT_OF_STOCK: 'OUT_OF_STOCK',
+  SUSPECTED_FAKE: 'SUSPECTED_FAKE',
+  CUSTOMER_REQUEST: 'CUSTOMER_REQUEST',
+  OTHER: 'OTHER'
+} as const
+
+export type RejectReason = (typeof RejectReason)[keyof typeof RejectReason]
+
+
 export const UserRole = {
   ADMIN: 'ADMIN',
   MANAGER: 'MANAGER'

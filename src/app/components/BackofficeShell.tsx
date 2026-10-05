@@ -10,10 +10,16 @@ import type { NavRole } from "../lib/backofficeNav";
 interface Props {
   children?: React.ReactNode;
   companyName?: string;
+  locationName: string | null;
   role: NavRole;
 }
 
-export function BackofficeShell({ children, companyName, role }: Props) {
+export function BackofficeShell({
+  children,
+  companyName,
+  locationName,
+  role,
+}: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -27,6 +33,8 @@ export function BackofficeShell({ children, companyName, role }: Props) {
       <BackofficeTopBar
         onMenuClick={() => setMobileOpen((prev) => !prev)}
         companyName={companyName}
+        locationName={locationName}
+        canChangeLocation={role === "ADMIN"}
       />
       <Box>
         <BackofficeSideBar

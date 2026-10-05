@@ -266,6 +266,23 @@ export type EnumCancelReasonNullableWithAggregatesFilter<$PrismaModel = never> =
   _max?: Prisma.NestedEnumCancelReasonNullableFilter<$PrismaModel>
 }
 
+export type EnumRejectReasonNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.RejectReason | Prisma.EnumRejectReasonFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel> | $Enums.RejectReason | null
+}
+
+export type EnumRejectReasonNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RejectReason | Prisma.EnumRejectReasonFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRejectReasonNullableWithAggregatesFilter<$PrismaModel> | $Enums.RejectReason | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
+}
+
 export type NestedIntFilter<$PrismaModel = never> = {
   equals?: number | Prisma.IntFieldRefInput<$PrismaModel>
   in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
@@ -529,6 +546,23 @@ export type NestedEnumCancelReasonNullableWithAggregatesFilter<$PrismaModel = ne
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCancelReasonNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCancelReasonNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumRejectReasonNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.RejectReason | Prisma.EnumRejectReasonFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel> | $Enums.RejectReason | null
+}
+
+export type NestedEnumRejectReasonNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RejectReason | Prisma.EnumRejectReasonFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RejectReason[] | Prisma.ListEnumRejectReasonFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRejectReasonNullableWithAggregatesFilter<$PrismaModel> | $Enums.RejectReason | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
 }
 
 

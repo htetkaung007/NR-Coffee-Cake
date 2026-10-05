@@ -108,6 +108,8 @@ export class ReportService {
           count: cancelled.count,
           rejected: cancelled.rejected,
           timedOut: cancelled.timedOut,
+          // Rejected rounds per RejectReason, then "Not recorded".
+          reasons: cancelled.reasons,
           notCharged: cancelled.notCharged,
         },
       },

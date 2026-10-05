@@ -319,6 +319,7 @@ export type OrderSessionWhereInput = {
   table?: Prisma.XOR<Prisma.TableNullableScalarRelationFilter, Prisma.TableWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
   bill?: Prisma.XOR<Prisma.BillNullableScalarRelationFilter, Prisma.BillWhereInput> | null
+  cancellation?: Prisma.XOR<Prisma.OrderCancellationNullableScalarRelationFilter, Prisma.OrderCancellationWhereInput> | null
 }
 
 export type OrderSessionOrderByWithRelationInput = {
@@ -341,6 +342,7 @@ export type OrderSessionOrderByWithRelationInput = {
   table?: Prisma.TableOrderByWithRelationInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
   bill?: Prisma.BillOrderByWithRelationInput
+  cancellation?: Prisma.OrderCancellationOrderByWithRelationInput
 }
 
 export type OrderSessionWhereUniqueInput = Prisma.AtLeast<{
@@ -366,6 +368,7 @@ export type OrderSessionWhereUniqueInput = Prisma.AtLeast<{
   table?: Prisma.XOR<Prisma.TableNullableScalarRelationFilter, Prisma.TableWhereInput> | null
   orders?: Prisma.OrderListRelationFilter
   bill?: Prisma.XOR<Prisma.BillNullableScalarRelationFilter, Prisma.BillWhereInput> | null
+  cancellation?: Prisma.XOR<Prisma.OrderCancellationNullableScalarRelationFilter, Prisma.OrderCancellationWhereInput> | null
 }, "id" | "token" | "clientRequestId">
 
 export type OrderSessionOrderByWithAggregationInput = {
@@ -428,6 +431,7 @@ export type OrderSessionCreateInput = {
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
   bill?: Prisma.BillCreateNestedOneWithoutSessionsInput
+  cancellation?: Prisma.OrderCancellationCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionUncheckedCreateInput = {
@@ -447,6 +451,7 @@ export type OrderSessionUncheckedCreateInput = {
   cancelReason?: $Enums.CancelReason | null
   clientRequestId?: string | null
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
+  cancellation?: Prisma.OrderCancellationUncheckedCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionUpdateInput = {
@@ -465,6 +470,7 @@ export type OrderSessionUpdateInput = {
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
   bill?: Prisma.BillUpdateOneWithoutSessionsNestedInput
+  cancellation?: Prisma.OrderCancellationUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateInput = {
@@ -484,6 +490,7 @@ export type OrderSessionUncheckedUpdateInput = {
   cancelReason?: Prisma.NullableEnumCancelReasonFieldUpdateOperationsInput | $Enums.CancelReason | null
   clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
+  cancellation?: Prisma.OrderCancellationUncheckedUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionCreateManyInput = {
@@ -619,6 +626,11 @@ export type OrderSessionSumOrderByAggregateInput = {
   tableId?: Prisma.SortOrder
   billSessionId?: Prisma.SortOrder
   billId?: Prisma.SortOrder
+}
+
+export type OrderSessionScalarRelationFilter = {
+  is?: Prisma.OrderSessionWhereInput
+  isNot?: Prisma.OrderSessionWhereInput
 }
 
 export type OrderSessionCreateNestedManyWithoutTableInput = {
@@ -771,6 +783,20 @@ export type OrderSessionUncheckedUpdateManyWithoutBillNestedInput = {
   deleteMany?: Prisma.OrderSessionScalarWhereInput | Prisma.OrderSessionScalarWhereInput[]
 }
 
+export type OrderSessionCreateNestedOneWithoutCancellationInput = {
+  create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutCancellationInput, Prisma.OrderSessionUncheckedCreateWithoutCancellationInput>
+  connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutCancellationInput
+  connect?: Prisma.OrderSessionWhereUniqueInput
+}
+
+export type OrderSessionUpdateOneRequiredWithoutCancellationNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderSessionCreateWithoutCancellationInput, Prisma.OrderSessionUncheckedCreateWithoutCancellationInput>
+  connectOrCreate?: Prisma.OrderSessionCreateOrConnectWithoutCancellationInput
+  upsert?: Prisma.OrderSessionUpsertWithoutCancellationInput
+  connect?: Prisma.OrderSessionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderSessionUpdateToOneWithWhereWithoutCancellationInput, Prisma.OrderSessionUpdateWithoutCancellationInput>, Prisma.OrderSessionUncheckedUpdateWithoutCancellationInput>
+}
+
 export type OrderSessionCreateWithoutTableInput = {
   token?: string
   orderNumber: string
@@ -786,6 +812,7 @@ export type OrderSessionCreateWithoutTableInput = {
   location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
   bill?: Prisma.BillCreateNestedOneWithoutSessionsInput
+  cancellation?: Prisma.OrderCancellationCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionUncheckedCreateWithoutTableInput = {
@@ -804,6 +831,7 @@ export type OrderSessionUncheckedCreateWithoutTableInput = {
   cancelReason?: $Enums.CancelReason | null
   clientRequestId?: string | null
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
+  cancellation?: Prisma.OrderCancellationUncheckedCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionCreateOrConnectWithoutTableInput = {
@@ -868,6 +896,7 @@ export type OrderSessionCreateWithoutLocationInput = {
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
   bill?: Prisma.BillCreateNestedOneWithoutSessionsInput
+  cancellation?: Prisma.OrderCancellationCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionUncheckedCreateWithoutLocationInput = {
@@ -886,6 +915,7 @@ export type OrderSessionUncheckedCreateWithoutLocationInput = {
   cancelReason?: $Enums.CancelReason | null
   clientRequestId?: string | null
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
+  cancellation?: Prisma.OrderCancellationUncheckedCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionCreateOrConnectWithoutLocationInput = {
@@ -929,6 +959,7 @@ export type OrderSessionCreateWithoutOrdersInput = {
   location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
   bill?: Prisma.BillCreateNestedOneWithoutSessionsInput
+  cancellation?: Prisma.OrderCancellationCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionUncheckedCreateWithoutOrdersInput = {
@@ -947,6 +978,7 @@ export type OrderSessionUncheckedCreateWithoutOrdersInput = {
   billId?: number | null
   cancelReason?: $Enums.CancelReason | null
   clientRequestId?: string | null
+  cancellation?: Prisma.OrderCancellationUncheckedCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionCreateOrConnectWithoutOrdersInput = {
@@ -980,6 +1012,7 @@ export type OrderSessionUpdateWithoutOrdersInput = {
   location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
   bill?: Prisma.BillUpdateOneWithoutSessionsNestedInput
+  cancellation?: Prisma.OrderCancellationUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateWithoutOrdersInput = {
@@ -998,6 +1031,7 @@ export type OrderSessionUncheckedUpdateWithoutOrdersInput = {
   billId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cancelReason?: Prisma.NullableEnumCancelReasonFieldUpdateOperationsInput | $Enums.CancelReason | null
   clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellation?: Prisma.OrderCancellationUncheckedUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionCreateWithoutBillInput = {
@@ -1015,6 +1049,7 @@ export type OrderSessionCreateWithoutBillInput = {
   location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
   table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
   orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
+  cancellation?: Prisma.OrderCancellationCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionUncheckedCreateWithoutBillInput = {
@@ -1033,6 +1068,7 @@ export type OrderSessionUncheckedCreateWithoutBillInput = {
   cancelReason?: $Enums.CancelReason | null
   clientRequestId?: string | null
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
+  cancellation?: Prisma.OrderCancellationUncheckedCreateNestedOneWithoutOrderSessionInput
 }
 
 export type OrderSessionCreateOrConnectWithoutBillInput = {
@@ -1059,6 +1095,96 @@ export type OrderSessionUpdateWithWhereUniqueWithoutBillInput = {
 export type OrderSessionUpdateManyWithWhereWithoutBillInput = {
   where: Prisma.OrderSessionScalarWhereInput
   data: Prisma.XOR<Prisma.OrderSessionUpdateManyMutationInput, Prisma.OrderSessionUncheckedUpdateManyWithoutBillInput>
+}
+
+export type OrderSessionCreateWithoutCancellationInput = {
+  token?: string
+  orderNumber: string
+  isCounter?: boolean
+  status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  billSessionId?: number | null
+  cancelReason?: $Enums.CancelReason | null
+  clientRequestId?: string | null
+  location: Prisma.LocationCreateNestedOneWithoutOrderSessionsInput
+  table?: Prisma.TableCreateNestedOneWithoutOrderSessionsInput
+  orders?: Prisma.OrderCreateNestedManyWithoutOrderSessionInput
+  bill?: Prisma.BillCreateNestedOneWithoutSessionsInput
+}
+
+export type OrderSessionUncheckedCreateWithoutCancellationInput = {
+  id?: number
+  token?: string
+  orderNumber: string
+  locationId: number
+  tableId?: number | null
+  isCounter?: boolean
+  status?: $Enums.ORDERSTATUS
+  approvalExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  billSessionId?: number | null
+  billId?: number | null
+  cancelReason?: $Enums.CancelReason | null
+  clientRequestId?: string | null
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutOrderSessionInput
+}
+
+export type OrderSessionCreateOrConnectWithoutCancellationInput = {
+  where: Prisma.OrderSessionWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderSessionCreateWithoutCancellationInput, Prisma.OrderSessionUncheckedCreateWithoutCancellationInput>
+}
+
+export type OrderSessionUpsertWithoutCancellationInput = {
+  update: Prisma.XOR<Prisma.OrderSessionUpdateWithoutCancellationInput, Prisma.OrderSessionUncheckedUpdateWithoutCancellationInput>
+  create: Prisma.XOR<Prisma.OrderSessionCreateWithoutCancellationInput, Prisma.OrderSessionUncheckedCreateWithoutCancellationInput>
+  where?: Prisma.OrderSessionWhereInput
+}
+
+export type OrderSessionUpdateToOneWithWhereWithoutCancellationInput = {
+  where?: Prisma.OrderSessionWhereInput
+  data: Prisma.XOR<Prisma.OrderSessionUpdateWithoutCancellationInput, Prisma.OrderSessionUncheckedUpdateWithoutCancellationInput>
+}
+
+export type OrderSessionUpdateWithoutCancellationInput = {
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  cancelReason?: Prisma.NullableEnumCancelReasonFieldUpdateOperationsInput | $Enums.CancelReason | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
+  table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
+  bill?: Prisma.BillUpdateOneWithoutSessionsNestedInput
+}
+
+export type OrderSessionUncheckedUpdateWithoutCancellationInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  locationId?: Prisma.IntFieldUpdateOperationsInput | number
+  tableId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isCounter?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumORDERSTATUSFieldUpdateOperationsInput | $Enums.ORDERSTATUS
+  approvalExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  billSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  billId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  cancelReason?: Prisma.NullableEnumCancelReasonFieldUpdateOperationsInput | $Enums.CancelReason | null
+  clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionCreateManyTableInput = {
@@ -1093,6 +1219,7 @@ export type OrderSessionUpdateWithoutTableInput = {
   location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
   bill?: Prisma.BillUpdateOneWithoutSessionsNestedInput
+  cancellation?: Prisma.OrderCancellationUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateWithoutTableInput = {
@@ -1111,6 +1238,7 @@ export type OrderSessionUncheckedUpdateWithoutTableInput = {
   cancelReason?: Prisma.NullableEnumCancelReasonFieldUpdateOperationsInput | $Enums.CancelReason | null
   clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
+  cancellation?: Prisma.OrderCancellationUncheckedUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateManyWithoutTableInput = {
@@ -1162,6 +1290,7 @@ export type OrderSessionUpdateWithoutLocationInput = {
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
   bill?: Prisma.BillUpdateOneWithoutSessionsNestedInput
+  cancellation?: Prisma.OrderCancellationUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateWithoutLocationInput = {
@@ -1180,6 +1309,7 @@ export type OrderSessionUncheckedUpdateWithoutLocationInput = {
   cancelReason?: Prisma.NullableEnumCancelReasonFieldUpdateOperationsInput | $Enums.CancelReason | null
   clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
+  cancellation?: Prisma.OrderCancellationUncheckedUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateManyWithoutLocationInput = {
@@ -1231,6 +1361,7 @@ export type OrderSessionUpdateWithoutBillInput = {
   location?: Prisma.LocationUpdateOneRequiredWithoutOrderSessionsNestedInput
   table?: Prisma.TableUpdateOneWithoutOrderSessionsNestedInput
   orders?: Prisma.OrderUpdateManyWithoutOrderSessionNestedInput
+  cancellation?: Prisma.OrderCancellationUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateWithoutBillInput = {
@@ -1249,6 +1380,7 @@ export type OrderSessionUncheckedUpdateWithoutBillInput = {
   cancelReason?: Prisma.NullableEnumCancelReasonFieldUpdateOperationsInput | $Enums.CancelReason | null
   clientRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   orders?: Prisma.OrderUncheckedUpdateManyWithoutOrderSessionNestedInput
+  cancellation?: Prisma.OrderCancellationUncheckedUpdateOneWithoutOrderSessionNestedInput
 }
 
 export type OrderSessionUncheckedUpdateManyWithoutBillInput = {
@@ -1319,6 +1451,7 @@ export type OrderSessionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
   orders?: boolean | Prisma.OrderSession$ordersArgs<ExtArgs>
   bill?: boolean | Prisma.OrderSession$billArgs<ExtArgs>
+  cancellation?: boolean | Prisma.OrderSession$cancellationArgs<ExtArgs>
   _count?: boolean | Prisma.OrderSessionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orderSession"]>
 
@@ -1388,6 +1521,7 @@ export type OrderSessionInclude<ExtArgs extends runtime.Types.Extensions.Interna
   table?: boolean | Prisma.OrderSession$tableArgs<ExtArgs>
   orders?: boolean | Prisma.OrderSession$ordersArgs<ExtArgs>
   bill?: boolean | Prisma.OrderSession$billArgs<ExtArgs>
+  cancellation?: boolean | Prisma.OrderSession$cancellationArgs<ExtArgs>
   _count?: boolean | Prisma.OrderSessionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1408,6 +1542,7 @@ export type $OrderSessionPayload<ExtArgs extends runtime.Types.Extensions.Intern
     table: Prisma.$TablePayload<ExtArgs> | null
     orders: Prisma.$OrderPayload<ExtArgs>[]
     bill: Prisma.$BillPayload<ExtArgs> | null
+    cancellation: Prisma.$OrderCancellationPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1823,6 +1958,7 @@ export interface Prisma__OrderSessionClient<T, Null = never, ExtArgs extends run
   table<T extends Prisma.OrderSession$tableArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderSession$tableArgs<ExtArgs>>): Prisma.Prisma__TableClient<runtime.Types.Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   orders<T extends Prisma.OrderSession$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderSession$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bill<T extends Prisma.OrderSession$billArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderSession$billArgs<ExtArgs>>): Prisma.Prisma__BillClient<runtime.Types.Result.GetResult<Prisma.$BillPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  cancellation<T extends Prisma.OrderSession$cancellationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderSession$cancellationArgs<ExtArgs>>): Prisma.Prisma__OrderCancellationClient<runtime.Types.Result.GetResult<Prisma.$OrderCancellationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2327,6 +2463,25 @@ export type OrderSession$billArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   include?: Prisma.BillInclude<ExtArgs> | null
   where?: Prisma.BillWhereInput
+}
+
+/**
+ * OrderSession.cancellation
+ */
+export type OrderSession$cancellationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrderCancellation
+   */
+  select?: Prisma.OrderCancellationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrderCancellation
+   */
+  omit?: Prisma.OrderCancellationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrderCancellationInclude<ExtArgs> | null
+  where?: Prisma.OrderCancellationWhereInput
 }
 
 /**

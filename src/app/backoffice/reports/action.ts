@@ -37,20 +37,6 @@ async function requireReportScope() {
   return { companyId, locationId: selectedLocation.locationId };
 }
 
-const safeGetOverview = toSafeResult(async (input: ReportPeriodInput) => {
-  const scope = await requireReportScope();
-  return ReportService.getOverview({ ...scope, ...input });
-});
-
-/** Sales for a week or month — see ReportService.getOverview. */
-export async function getReportOverviewAction(input: ReportPeriodInput) {
-  const result = await validateWith(
-    reportPeriodInputSchema,
-    input,
-  ).asyncAndThen(safeGetOverview);
-  return toActionResult(result);
-}
-
 const safeGetItems = toSafeResult(async (input: ReportPeriodInput) => {
   const scope = await requireReportScope();
   return ReportService.getItems({ ...scope, ...input });
@@ -81,7 +67,8 @@ export async function getReportPairingAction(input: ReportPairingInput) {
 }
 
 /** The data each tab renders — types only, for the page's client
- *  components (a "use server" file may export types). */
+ *  components (a "use server" file may export types). The Overview has
+ *  no action: page.tsx loads it through ReportService.getOverview. */
 export type ReportOverview = Awaited<ReturnType<typeof ReportService.getOverview>>;
 export type ReportItems = Awaited<ReturnType<typeof ReportService.getItems>>;
 export type ReportPairing = Awaited<ReturnType<typeof ReportService.getPairing>>;

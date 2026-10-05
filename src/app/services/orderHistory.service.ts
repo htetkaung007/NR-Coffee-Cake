@@ -6,6 +6,11 @@ import {
   sumQuantities,
 } from "../lib/orderTotals";
 import { dayRangeUtc, toShopDay } from "../lib/shopDay";
+import {
+  toCancellationDetail,
+  type CancellationDetail,
+} from "../lib/cancellation";
+import { summarizeRejectReasons } from "../lib/rejectReason";
 import { Prisma } from "../../../prisma/generated/client";
 
 /** A page of cursor-paginated rows, oldest-cursor-last — see
@@ -32,6 +37,15 @@ const DEFAULT_PAGE_SIZE = 20;
  * nothing here ever creates or mutates a row (Rule 14 — a different
  * reason to change: reporting/search queries, not payment workflow).
  */
+
+/** The OrderCancellation fields History shows (turned into a reason + a
+ *  wait by toCancellationDetail) — a relation include on the same
+ *  query, never a per-row lookup. */
+const cancellationSelect = {
+  requestedAt: true,
+  decidedAt: true,
+  rejectReason: true,
+} as const;
 export class OrderHistoryService {
   /** "Table X" / "Counter" — the one place this label is decided, from
    *  a round's own isCounter flag (never table.isCounter — a round's
@@ -238,6 +252,9 @@ export class OrderHistoryService {
       title: string;
       isCounter: boolean;
       reason: string;
+      /** The round's OrderCancellation details; null when it was
+       *  cancelled before those were recorded. */
+      cancellation: CancellationDetail | null;
       cancelledAt: Date;
       createdAt: Date;
       itemCount: number;
@@ -278,6 +295,7 @@ export class OrderHistoryService {
       take: limit + 1,
       include: {
         table: { select: { name: true } },
+        cancellation: { select: cancellationSelect },
         orders: {
           where: { isArchived: false },
           select: {
@@ -299,6 +317,7 @@ export class OrderHistoryService {
       isCounter: session.isCounter,
       // Guaranteed non-null by the cancelReason filter above.
       reason: session.cancelReason as string,
+      cancellation: toCancellationDetail(session.cancellation),
       cancelledAt: session.updateTime,
       createdAt: session.createdAt,
       itemCount: sumQuantities(session.orders),
@@ -364,6 +383,7 @@ export class OrderHistoryService {
       },
       select: {
         cancelReason: true,
+        cancellation: { select: { rejectReason: true } },
         orders: {
           where: { isArchived: false },
           select: {
@@ -379,6 +399,9 @@ export class OrderHistoryService {
       count: sessions.length,
       rejected: sessions.filter((s) => s.cancelReason === "REJECTED").length,
       timedOut: sessions.filter((s) => s.cancelReason === "EXPIRED").length,
+      // Why the REJECTED ones were rejected (Reports) — from the same
+      // rows, no extra query.
+      reasons: summarizeRejectReasons(sessions),
       notCharged: sessions.reduce(
         (sum, session) => sum + orderLinesTotal(session.orders),
         0,
@@ -483,6 +506,7 @@ export class OrderHistoryService {
       },
       include: {
         table: { select: { name: true } },
+        cancellation: { select: cancellationSelect },
         orders: OrderHistoryService.detailOrdersInclude,
       },
     });
@@ -504,6 +528,7 @@ export class OrderHistoryService {
       isCounter: session.isCounter,
       // Guaranteed non-null by the cancelReason filter above.
       reason: session.cancelReason as string,
+      cancellation: toCancellationDetail(session.cancellation),
       cancelledAt: session.updateTime,
       createdAt: session.createdAt,
       amount: orderLinesTotal(session.orders),

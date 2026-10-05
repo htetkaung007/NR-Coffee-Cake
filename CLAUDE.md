@@ -132,6 +132,15 @@ left in a broken/inconsistent state?"
   object key often needs an ID (e.g. menuId) that doesn't exist until
   after the DB row is created. Sequence: DB write, then external
   upload, then a second separate DB write to store the resulting URL.
+- **Cancelling a round has ONE writer:**
+  `OrderSessionService.cancelSession` (in the caller's transaction) is
+  the only code that writes status CANCELLED / `cancelReason`, gives the
+  stock back, and creates the `OrderCancellation` row (REJECTED and
+  EXPIRED only — never UNSUBMITTED, never accepted rounds). Every cancel
+  path (Reject, lazy and batch expiry, abandoned carts, leftover carts
+  at payment) goes through it; don't write those fields anywhere else.
+  An `OrderCancellation` row is frozen history: written once, never
+  edited.
 
 ## 8. Naming — follow library/framework conventions, don't fight them
 

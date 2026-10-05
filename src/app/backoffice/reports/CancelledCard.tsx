@@ -2,10 +2,20 @@
 
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
 import { formatAmount } from "@/app/lib/orderFormat";
+import { formatRejectReasonCounts } from "@/app/lib/rejectReason";
 import type { ReportOverview } from "./action";
 import { moneyToneSx, sectionHeadingSx } from "../order/orderTypography";
 
-function Cell({ label, value }: { label: string; value: string }) {
+function Cell({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  /** A small line under the value (Rejected: the reasons). */
+  detail?: string;
+}) {
   return (
     <Box sx={{ flex: 1, minWidth: 0, px: { xs: 1, sm: 2 }, py: 0.5 }}>
       <Typography
@@ -24,13 +34,20 @@ function Cell({ label, value }: { label: string; value: string }) {
       >
         {value}
       </Typography>
+      {detail && (
+        <Typography variant="caption" component="p" color="text.secondary">
+          {detail}
+        </Typography>
+      )}
     </Box>
   );
 }
 
 /** Rejected · Timed out · Not charged — the Order History Cancelled
  *  tab's own definition (REJECTED / EXPIRED rounds, priced from their
- *  snapshots), over the whole period. */
+ *  snapshots), over the whole period. Under Rejected, why: "Out of stock
+ *  1 · Looks fake 2" (non-zero reasons only, in words — never colour).
+ *  On a phone that line wraps inside its third of the card. */
 export default function CancelledCard({
   cancelled,
 }: {
@@ -50,7 +67,11 @@ export default function CancelledCard({
         divider={<Divider orientation="vertical" flexItem />}
         sx={{ mx: { xs: -1, sm: -2 } }}
       >
-        <Cell label="Rejected" value={String(cancelled.rejected)} />
+        <Cell
+          label="Rejected"
+          value={String(cancelled.rejected)}
+          detail={formatRejectReasonCounts(cancelled.reasons) || undefined}
+        />
         <Cell label="Timed out" value={String(cancelled.timedOut)} />
         <Cell label="Not charged" value={formatAmount(cancelled.notCharged)} />
       </Stack>

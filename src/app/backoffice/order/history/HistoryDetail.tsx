@@ -10,6 +10,7 @@ import RoundSection from "../[entryKey]/RoundSection";
 import { formatClockTime } from "@/app/lib/orderFormat";
 import {
   formatCancelReasonLabel,
+  formatCancelWait,
   formatDurationMinutes,
   formatShopDateLabel,
   formatTimeRange,
@@ -85,6 +86,10 @@ export default function HistoryDetail({
   const cancelled = !isPaid ? (detail as CancelledRoundDetail) : null;
 
   const title = paid ? paid.title : (cancelled?.title ?? "");
+  // A recorded rejection: how long the customer waited for it.
+  const waitLine = cancelled
+    ? formatCancelWait(cancelled.reason, cancelled.cancellation)
+    : null;
   const isCounter = paid ? paid.isCounter : (cancelled?.isCounter ?? false);
   const dateLine = paid
     ? `${formatShopDateLabel(paid.paidAt, shopTimezone)} · ${formatTimeRange(paid.startedAt, paid.paidAt)}`
@@ -114,7 +119,13 @@ export default function HistoryDetail({
         sx={{ alignItems: "flex-start", px: 2, pt: 2 }}
       >
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          {/* Wraps, so a long "Rejected · …" chip drops below the title on
+             a narrow phone instead of overflowing. */}
+          <Stack
+            direction="row"
+            useFlexGap
+            sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}
+          >
             {/* Same as the Order detail page's bill title (BillContent). */}
             <Typography component="h2" variant="h6" noWrap>
               {title}
@@ -125,7 +136,10 @@ export default function HistoryDetail({
               <StatusChip
                 tone="error"
                 icon={<HighlightOffIcon />}
-                label={formatCancelReasonLabel(cancelled?.reason ?? "")}
+                label={formatCancelReasonLabel(
+                  cancelled?.reason ?? "",
+                  cancelled?.cancellation ?? null,
+                )}
               />
             )}
           </Stack>
@@ -173,6 +187,11 @@ export default function HistoryDetail({
               {isCounter ? "counter" : "table"}
             </Typography>
           </Box>
+        )}
+        {waitLine && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            {waitLine}
+          </Typography>
         )}
         <BillTotal
           label={paid ? "Total paid" : "Not charged"}

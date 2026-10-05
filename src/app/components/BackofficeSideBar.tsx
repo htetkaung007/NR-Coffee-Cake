@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Drawer,
+  Toolbar,
   List,
   ListItem,
   ListItemButton,
@@ -34,8 +35,6 @@ import { markSeen, useSeenFlag } from "@/app/lib/hooks/useSeenFlag";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
 
 const SIDEBAR_WIDTH = 260;
-
-const TOPBAR_HEIGHT_DESKTOP = 64;
 
 type NavItem = {
   label: string;
@@ -249,27 +248,44 @@ function SidebarContent({
   const pathname = usePathname();
   const activeHref = findActiveHref(pathname, allHrefs);
 
+  // Both drawers' paper starts at the top of the screen, under the fixed
+  // top bar (which stays above it). A <Toolbar /> spacer — the same one
+  // BackofficeShell puts above <main> — takes the top bar's height at
+  // every breakpoint/orientation, so the list always starts just below
+  // it. The list fills the rest (flex: 1 + minHeight: 0) and scrolls on
+  // its own, ending at the bottom of the screen.
   return (
     <Box
       sx={{
         bgcolor: "background.paper",
-        height: "100%",
-        overflowY: "auto",
+        flex: 1,
+        minHeight: 0,
         display: "flex",
         flexDirection: "column",
-        gap: 2,
-        px: 1,
-        py: 2,
       }}
     >
-      {visibleNavSections(navSections, role).map((section) => (
-        <NavSectionList
-          key={section.title}
-          section={section}
-          activeHref={activeHref}
-          onNavigate={onNavigate}
-        />
-      ))}
+      <Toolbar sx={{ flexShrink: 0 }} />
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          px: 1,
+          py: 2,
+        }}
+      >
+        {visibleNavSections(navSections, role).map((section) => (
+          <NavSectionList
+            key={section.title}
+            section={section}
+            activeHref={activeHref}
+            onNavigate={onNavigate}
+          />
+        ))}
+      </Box>
     </Box>
   );
 }
@@ -299,6 +315,7 @@ export function BackofficeSideBar({
           display: { xs: "block", sm: "none" },
           "& .MuiDrawer-paper": {
             width: SIDEBAR_WIDTH,
+            boxSizing: "border-box",
             borderRight: 1,
             borderColor: "divider",
             pt: "env(safe-area-inset-top, 0px)",
@@ -319,8 +336,6 @@ export function BackofficeSideBar({
             boxSizing: "border-box",
             borderRight: 1,
             borderColor: "divider",
-            top: TOPBAR_HEIGHT_DESKTOP,
-            height: `calc(100% - ${TOPBAR_HEIGHT_DESKTOP}px)`,
           },
         }}
       >

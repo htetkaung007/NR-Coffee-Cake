@@ -1,18 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { err, ok, type Result } from "neverthrow";
 import {
   toActionResult,
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { AppError } from "@/app/lib/errors";
+import { AppError, type ErrorInfo } from "@/app/lib/errors";
 import {
   createManagerSchema,
   type CreateManagerInput,
 } from "@/app/lib/schemas/authSchema";
+import {
+  updateCompanyNameSchema,
+  type UpdateCompanyNameInput,
+} from "@/app/lib/schemas/companyNameSchema";
 import { getSessionContext } from "@/app/lib/session";
-import { AppService, LocationService } from "@/app/services";
+import { AppService, CompanyService, LocationService } from "@/app/services";
 
 const safeCreateManager = toSafeResult(async (input: CreateManagerInput) => {
   const { companyId, role } = await getSessionContext();
@@ -62,6 +67,48 @@ export async function setSelectedLocationAction(locationId: number) {
   if (actionResult.success) {
     // Every page that reads getSelectedLocation needs to reflect the
     // change — menus list/create/edit all depend on it.
+    revalidatePath("/backoffice", "layout");
+  }
+
+  return actionResult;
+}
+
+/** The company to rename is ALWAYS the signed-in Admin's own — taken from
+ *  the session, never from the client's input. */
+function requireAdminCompany(session: {
+  companyId: number | null;
+  role: string;
+}): Result<number, ErrorInfo> {
+  if (!session.companyId) {
+    return err({ message: "You must be signed in.", code: "UNAUTHORIZED" });
+  }
+  if (session.role !== "ADMIN") {
+    return err({
+      message: "Only Admins can rename the company.",
+      code: "FORBIDDEN",
+    });
+  }
+  return ok(session.companyId);
+}
+
+const safeUpdateCompanyName = toSafeResult(
+  async (input: UpdateCompanyNameInput & { companyId: number }) =>
+    CompanyService.updateName(input.companyId, input.name),
+);
+
+export async function updateCompanyNameAction(formData: FormData) {
+  const session = await getSessionContext();
+  const result = await requireAdminCompany(session)
+    .andThen((companyId) =>
+      validateWith(updateCompanyNameSchema, {
+        name: formData.get("name"),
+      }).map((data) => ({ ...data, companyId })),
+    )
+    .asyncAndThen(safeUpdateCompanyName);
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    // The top bar (in the Backoffice layout) shows the company name.
     revalidatePath("/backoffice", "layout");
   }
 

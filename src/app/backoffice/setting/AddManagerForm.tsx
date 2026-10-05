@@ -9,9 +9,7 @@ import {
   Snackbar,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
-import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import { createManagerAction } from "./action";
 
 interface LocationOption {
@@ -56,92 +54,60 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
 
   return (
     <>
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}
-      >
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 3,
-            p: { xs: 2, sm: 3 },
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 1,
-              pb: 2,
-              mb: 2.5,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-            }}
+      {/* Sits inside the Settings page's "Managers" card, which carries
+         the heading and description. */}
+      <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 480 }}>
+        <Stack spacing={2.5}>
+          {error && <Alert severity="error">{error}</Alert>}
+          {locations.length === 0 && (
+            <Alert severity="warning">
+              Create a location first before adding a Manager.
+            </Alert>
+          )}
+
+          <TextField
+            label="Manager Email"
+            type="email"
+            required
+            fullWidth
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+
+          <TextField
+            label="Password"
+            type="password"
+            required
+            fullWidth
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            helperText="At least 8 characters."
+          />
+
+          <TextField
+            select
+            label="Location"
+            required
+            fullWidth
+            value={locationId}
+            onChange={(event) => setLocationId(event.target.value)}
           >
-            <PersonAddOutlinedIcon color="primary" />
-            <Box>
-              <Typography variant="h6">Add Manager</Typography>
-              <Typography variant="caption" color="text.secondary">
-                Creates a Manager account fixed to one location. Managers
-                can&apos;t switch or create locations.
-              </Typography>
-            </Box>
-          </Box>
+            {locations.map((location) => (
+              <MenuItem key={location.id} value={location.id}>
+                {location.name}
+              </MenuItem>
+            ))}
+          </TextField>
 
-          <Stack spacing={2.5}>
-            {error && <Alert severity="error">{error}</Alert>}
-            {locations.length === 0 && (
-              <Alert severity="warning">
-                Create a location first before adding a Manager.
-              </Alert>
-            )}
-
-            <TextField
-              label="Manager Email"
-              type="email"
-              required
-              fullWidth
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-
-            <TextField
-              label="Password"
-              type="password"
-              required
-              fullWidth
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              helperText="At least 8 characters."
-            />
-
-            <TextField
-              select
-              label="Location"
-              required
-              fullWidth
-              value={locationId}
-              onChange={(event) => setLocationId(event.target.value)}
-            >
-              {locations.map((location) => (
-                <MenuItem key={location.id} value={location.id}>
-                  {location.name}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isPending || locations.length === 0}
-              sx={{ alignSelf: "flex-start", px: 3 }}
-            >
-              {isPending ? "Adding..." : "Add Manager"}
-            </Button>
-          </Stack>
-        </Box>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isPending || locations.length === 0}
+            sx={{ alignSelf: "flex-start", px: 3 }}
+          >
+            {isPending ? "Adding..." : "Add Manager"}
+          </Button>
+        </Stack>
       </Box>
 
       <Snackbar

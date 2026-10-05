@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+/** A name typed by a person: trimmed, and not empty once trimmed. Shared
+ *  by every "name" field (a user's, a company's) so the rule lives once. */
+export const requiredName = (message: string) => z.string().trim().min(1, message);
+
 export const registerSchema = z.object({
-  name: z.string().trim().min(1, "Name is required."),
+  name: requiredName("Name is required."),
   email: z.string().trim().email("A valid email is required."),
   password: z.string().min(8, "Password must be at least 8 characters."),
 });

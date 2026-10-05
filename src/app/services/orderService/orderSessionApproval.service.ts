@@ -3,7 +3,7 @@ import { NotFoundError, ValidationError } from "../../lib/errors";
 import { orderLinesTotal } from "../../lib/orderTotals";
 import { BillService } from "../bill.service";
 import { OrderSessionService } from "./orderSession.service";
-import { Prisma } from "../../../../prisma/generated/browser";
+import { Prisma, type RejectReason } from "../../../../prisma/generated/browser";
 
 type Tx = Prisma.TransactionClient;
 
@@ -48,8 +48,12 @@ export class OrderSessionApprovalService {
   /** Cashier taps Reject — PENDING_APPROVAL -> CANCELLED (reason
    *  REJECTED, stock given back — see OrderSessionService.cancelSession).
    *  Same terminal outcome as a timeout (getSessionStatus), just
-   *  cashier-initiated instead of time-initiated. */
-  static async rejectCounterSession(sessionId: number) {
+   *  cashier-initiated instead of time-initiated. The cashier's reason
+   *  is kept on the round's OrderCancellation row. */
+  static async rejectCounterSession(
+    sessionId: number,
+    rejectReason: RejectReason,
+  ) {
     const session = await prisma.orderSession.findFirst({
       where: { id: sessionId, isArchived: false },
     });
@@ -63,6 +67,7 @@ export class OrderSessionApprovalService {
         tx,
         sessionId,
         "REJECTED",
+        { rejectReason },
       );
       // Lost a race with Accept or the timeout between the check above
       // and this write — same answer the check itself would give now.

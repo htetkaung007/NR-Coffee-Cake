@@ -6,6 +6,7 @@ import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useTheme } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
+import type { RejectReason } from "@/app/lib/rejectReason";
 import { canPrintBill, type EntryBill } from "@/app/lib/orderTotals";
 import { formatAmount, formatMoneyDelta } from "@/app/lib/orderFormat";
 import {
@@ -69,6 +70,14 @@ export default function OrderDetailView({
     });
   }
 
+  // The dialog needs the action's answer (to close, or to show the
+  // error), so this one doesn't go through runAction.
+  async function rejectRound(sessionId: number, reason: RejectReason) {
+    const result = await rejectCounterSessionAction(sessionId, reason);
+    if (result.success) startTransition(() => router.refresh());
+    return result;
+  }
+
   function handleMarkPaid() {
     setIsConfirmOpen(false);
     setIsBillOpen(false);
@@ -128,9 +137,7 @@ export default function OrderDetailView({
               onAccept={(sessionId) =>
                 runAction(() => acceptCounterSessionAction(sessionId))
               }
-              onReject={(sessionId) =>
-                runAction(() => rejectCounterSessionAction(sessionId))
-              }
+              onReject={rejectRound}
             />
           </Box>
           <OrderSidePanel label="Bill" showFrom="lg" width={360}>

@@ -13,7 +13,7 @@ import { isShopDay } from "./shopDay";
 
 /** The Backoffice Reports page's view state, kept in the URL
  *  (?period=week|month&day=YYYY-MM-DD&tab=overview|items&list=top|slow). */
-export const REPORTS_PATH = "/backoffice/reports";
+const REPORTS_PATH = "/backoffice/reports";
 
 export type ReportTab = "overview" | "items";
 export type ReportList = "top" | "slow";

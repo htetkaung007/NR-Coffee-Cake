@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Box,
   Button,
@@ -14,6 +15,9 @@ import CheckIcon from "@mui/icons-material/Check";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import MenuThumb from "@/app/components/MenuThumb";
 import StatusChip, { StatusDot } from "./StatusChip";
+import RejectReasonDialog from "../RejectReasonDialog";
+import type { ActionResult } from "@/app/lib/actionResult";
+import type { RejectReason } from "@/app/lib/rejectReason";
 import { countLabel, formatClockTime } from "@/app/lib/orderFormat";
 
 export interface RoundLine {
@@ -201,9 +205,11 @@ export default function RoundCard({
   /** An action is in flight — disables Accept/Reject. */
   isPending: boolean;
   onAccept: () => void;
-  onReject: () => void;
+  /** Rejects this round with the reason picked in the dialog. */
+  onReject: (reason: RejectReason) => Promise<ActionResult<unknown>>;
 }) {
   const isAwaitingApproval = round.status === "PENDING_APPROVAL";
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
 
   return (
     <Card
@@ -313,7 +319,8 @@ export default function RoundCard({
               variant="outlined"
               color="error"
               disabled={isPending}
-              onClick={onReject}
+              aria-haspopup="dialog"
+              onClick={() => setIsRejectOpen(true)}
               sx={{ minHeight: 44, flexGrow: { xs: 1, sm: 0 } }}
             >
               Reject
@@ -329,6 +336,12 @@ export default function RoundCard({
               Accept
             </Button>
           </Stack>
+          <RejectReasonDialog
+            open={isRejectOpen}
+            orderNumber={round.orderNumber}
+            onClose={() => setIsRejectOpen(false)}
+            onReject={onReject}
+          />
         </>
       )}
     </Card>

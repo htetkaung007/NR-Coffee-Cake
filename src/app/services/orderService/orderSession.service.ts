@@ -1,11 +1,20 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { prisma } from "@/app/utils/prisma";
-import { Prisma, CancelReason } from "../../../../prisma/generated/browser";
+import { Prisma, type RejectReason } from "../../../../prisma/generated/browser";
 import { MenuStockService } from "../menuStock.service";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import { shownCancelReason } from "@/app/lib/roundOutcome";
+import { deriveDecidedAt, deriveRequestedAt } from "@/app/lib/cancellation";
 
 type Tx = Prisma.TransactionClient;
+
+/** cancelSession's reason, and what goes with it: a rejection always
+ *  carries the cashier's reason; an expiry or an unsent cart never does
+ *  (a compile error either way). */
+type CancelArgs =
+  | [reason: "REJECTED", details: { rejectReason: RejectReason }]
+  | [reason: "EXPIRED"]
+  | [reason: "UNSUBMITTED"];
 
 /** Shared by submitCartRoundForApproval and submitStaffOrder — both need
  *  to atomically decrement stock for every one of the session's CART
@@ -141,9 +150,30 @@ export class OrderSessionService {
    *  cashier Accepted it a moment before a lazy expiry ran) is left
    *  alone rather than cancelled out from under the kitchen. Returns
    *  whether THIS call cancelled it. Must run inside the caller's
-   *  transaction (Rule 7: status write + stock give-back are one unit). */
-  static async cancelSession(tx: Tx, sessionId: number, reason: CancelReason) {
+   *  transaction (Rule 7: status write + stock give-back + the
+   *  cancellation record are one unit).
+   *
+   *  REJECTED / EXPIRED also write the round's OrderCancellation row —
+   *  this is its only writer, and the row is never edited afterwards.
+   *  Its times are derived from the session as it was BEFORE the write
+   *  below (which clears approvalExpiresAt), so that's read first. Only
+   *  a call that actually cancelled the round writes one; UNSUBMITTED
+   *  never does. */
+  static async cancelSession(tx: Tx, sessionId: number, ...args: CancelArgs) {
+    const [reason] = args;
     const wasSubmitted = reason !== "UNSUBMITTED";
+    const before = wasSubmitted
+      ? await tx.orderSession.findUnique({
+          where: { id: sessionId },
+          select: {
+            approvalExpiresAt: true,
+            createdAt: true,
+            updateTime: true,
+            isCounter: true,
+          },
+        })
+      : null;
+
     const cancelled = await tx.orderSession.updateMany({
       where: {
         id: sessionId,
@@ -169,6 +199,21 @@ export class OrderSessionService {
         session.locationId,
         order.quantity,
       );
+    }
+
+    if (before) {
+      await tx.orderCancellation.create({
+        data: {
+          orderSessionId: sessionId,
+          requestedAt: deriveRequestedAt(before, APPROVAL_WINDOW_MINUTES),
+          decidedAt: deriveDecidedAt(
+            reason,
+            before.approvalExpiresAt,
+            new Date(),
+          ),
+          rejectReason: args[0] === "REJECTED" ? args[1].rejectReason : null,
+        },
+      });
     }
     return true;
   }

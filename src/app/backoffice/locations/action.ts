@@ -70,6 +70,9 @@ export async function updateLocationNameAction(
   if (actionResult.success) {
     revalidatePath("/backoffice/locations");
     revalidatePath(`/backoffice/locations/${locationId}`);
+    // The top bar (in the Backoffice layout) shows the selected
+    // location's name.
+    revalidatePath("/backoffice", "layout");
   }
 
   return actionResult;
@@ -94,6 +97,8 @@ export async function toggleLocationArchiveAction(
   if (actionResult.success) {
     revalidatePath("/backoffice/locations");
     revalidatePath(`/backoffice/locations/${locationId}`);
+    // An archived selected location drops out of the top bar.
+    revalidatePath("/backoffice", "layout");
   }
 
   return actionResult;

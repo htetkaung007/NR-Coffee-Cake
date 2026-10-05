@@ -59,7 +59,7 @@ declare module "@mui/material/styles" {
 // MUI ရဲ့ default breakpoints — theme.breakpoints.up("sm") နဲ့ တူညီအောင်
 // hardcode ထားရတာက createTheme() ထဲက object literal အတွင်းမှာ
 // `theme.breakpoints` ကို self-reference လုပ်လို့ မရလို့ပါ (circular).
-export const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
+const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
 
 // Gates `&:hover` styles to devices that actually have a real hover +
 // precise pointer, so touch devices never get stuck showing a hover state
@@ -102,9 +102,9 @@ export function topBarHeight(theme: Theme) {
  *  by the same amount and pads it back, so it keeps that gap when stuck. */
 export const backofficePageTop = { xs: 2, sm: 3 } as const;
 
-export const FONT_BODY = "var(--font-english), var(--font-myanmar), sans-serif";
+const FONT_BODY = "var(--font-english), var(--font-myanmar), sans-serif";
 
-export const FONT_DISPLAY =
+const FONT_DISPLAY =
   "var(--font-display), var(--font-myanmar-serif), serif";
 
 const BORDER_RADIUS = 8;

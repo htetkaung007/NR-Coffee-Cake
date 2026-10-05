@@ -401,7 +401,8 @@ export const ModelName = {
   Order: 'Order',
   OrdersAddon: 'OrdersAddon',
   OrderSession: 'OrderSession',
-  Bill: 'Bill'
+  Bill: 'Bill',
+  OrderCancellation: 'OrderCancellation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -417,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill"
+    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill" | "orderCancellation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1753,6 +1754,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    OrderCancellation: {
+      payload: Prisma.$OrderCancellationPayload<ExtArgs>
+      fields: Prisma.OrderCancellationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrderCancellationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrderCancellationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>
+        }
+        findFirst: {
+          args: Prisma.OrderCancellationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrderCancellationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>
+        }
+        findMany: {
+          args: Prisma.OrderCancellationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>[]
+        }
+        create: {
+          args: Prisma.OrderCancellationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>
+        }
+        createMany: {
+          args: Prisma.OrderCancellationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrderCancellationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>[]
+        }
+        delete: {
+          args: Prisma.OrderCancellationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>
+        }
+        update: {
+          args: Prisma.OrderCancellationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrderCancellationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrderCancellationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrderCancellationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrderCancellationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderCancellationPayload>
+        }
+        aggregate: {
+          args: Prisma.OrderCancellationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrderCancellation>
+        }
+        groupBy: {
+          args: Prisma.OrderCancellationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderCancellationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrderCancellationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderCancellationCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2037,6 +2112,18 @@ export const BillScalarFieldEnum = {
 export type BillScalarFieldEnum = (typeof BillScalarFieldEnum)[keyof typeof BillScalarFieldEnum]
 
 
+export const OrderCancellationScalarFieldEnum = {
+  id: 'id',
+  orderSessionId: 'orderSessionId',
+  requestedAt: 'requestedAt',
+  decidedAt: 'decidedAt',
+  rejectReason: 'rejectReason',
+  createdAt: 'createdAt'
+} as const
+
+export type OrderCancellationScalarFieldEnum = (typeof OrderCancellationScalarFieldEnum)[keyof typeof OrderCancellationScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2155,6 +2242,20 @@ export type EnumCancelReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'CancelReason[]'
  */
 export type ListEnumCancelReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CancelReason[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RejectReason'
+ */
+export type EnumRejectReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RejectReason'>
+    
+
+
+/**
+ * Reference to a field of type 'RejectReason[]'
+ */
+export type ListEnumRejectReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RejectReason[]'>
     
 
 
@@ -2299,6 +2400,7 @@ export type GlobalOmitConfig = {
   ordersAddon?: Prisma.OrdersAddonOmit
   orderSession?: Prisma.OrderSessionOmit
   bill?: Prisma.BillOmit
+  orderCancellation?: Prisma.OrderCancellationOmit
 }
 
 /* Types for Logging */

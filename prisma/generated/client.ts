@@ -141,3 +141,16 @@ export type OrderSession = Prisma.OrderSessionModel
  *  * being duplicated here.
  */
 export type Bill = Prisma.BillModel
+/**
+ * Model OrderCancellation
+ * *
+ *  * One row per SUBMITTED round that ended cancelled — REJECTED by the
+ *  * cashier or EXPIRED (approval window passed). Never written for
+ *  * UNSUBMITTED carts or for accepted rounds. OrderSessionService
+ *  * .cancelSession is the only writer, in the same write that sets the
+ *  * session CANCELLED. Rounds cancelled before this table existed simply
+ *  * have no row (never backfilled). Kept off OrderSession on purpose, so
+ *  * submit/accept code writes nothing extra. Lives and dies with its
+ *  * session: no updateTime/isArchived, deleted with it.
+ */
+export type OrderCancellation = Prisma.OrderCancellationModel

@@ -1,7 +1,9 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { formatDuration, type CancellationDetail } from "@/app/lib/cancellation";
 import { formatClockTime } from "@/app/lib/orderFormat";
+import { rejectReasonLabel } from "@/app/lib/rejectReason";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -43,9 +45,32 @@ export function formatDurationMinutes(startIso: string, endIso: string) {
 }
 
 /** "Rejected" / "Timed out" — the only two reasons this page ever shows
- *  (see OrderHistoryService's own REJECTED/EXPIRED-only scope). */
-export function formatCancelReasonLabel(reason: string) {
-  return reason === "REJECTED" ? "Rejected" : "Timed out";
+ *  (see OrderHistoryService's own REJECTED/EXPIRED-only scope) — plus
+ *  what was recorded: "Rejected · Out of stock", "Timed out · no
+ *  decision in 10m". Without a record it stays the plain label. */
+export function formatCancelReasonLabel(
+  reason: string,
+  cancellation: CancellationDetail | null = null,
+) {
+  if (reason === "REJECTED") {
+    return cancellation?.rejectReason
+      ? `Rejected · ${rejectReasonLabel(cancellation.rejectReason)}`
+      : "Rejected";
+  }
+  return cancellation?.waitSeconds != null
+    ? `Timed out · no decision in ${formatDuration(cancellation.waitSeconds)}`
+    : "Timed out";
+}
+
+/** "Waited 4m 20s before it was rejected" — the detail view's line for a
+ *  recorded rejection; null otherwise (a timeout's label already says
+ *  how long it waited). */
+export function formatCancelWait(
+  reason: string,
+  cancellation: CancellationDetail | null,
+) {
+  if (reason !== "REJECTED" || cancellation?.waitSeconds == null) return null;
+  return `Waited ${formatDuration(cancellation.waitSeconds)} before it was rejected`;
 }
 
 /** "Fri, Sep 25" for an absolute timestamp, read on the SHOP's calendar

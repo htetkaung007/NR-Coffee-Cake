@@ -68,7 +68,8 @@ export const ModelName = {
   Order: 'Order',
   OrdersAddon: 'OrdersAddon',
   OrderSession: 'OrderSession',
-  Bill: 'Bill'
+  Bill: 'Bill',
+  OrderCancellation: 'OrderCancellation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -330,6 +331,18 @@ export const BillScalarFieldEnum = {
 } as const
 
 export type BillScalarFieldEnum = (typeof BillScalarFieldEnum)[keyof typeof BillScalarFieldEnum]
+
+
+export const OrderCancellationScalarFieldEnum = {
+  id: 'id',
+  orderSessionId: 'orderSessionId',
+  requestedAt: 'requestedAt',
+  decidedAt: 'decidedAt',
+  rejectReason: 'rejectReason',
+  createdAt: 'createdAt'
+} as const
+
+export type OrderCancellationScalarFieldEnum = (typeof OrderCancellationScalarFieldEnum)[keyof typeof OrderCancellationScalarFieldEnum]
 
 
 export const SortOrder = {

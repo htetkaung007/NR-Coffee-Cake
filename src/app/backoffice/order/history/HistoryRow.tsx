@@ -218,11 +218,18 @@ export function CancelledRoundRow({
       title={item.title}
       amount={item.amount}
       secondaryLine={
+        // Wraps, so a long "Rejected · …" chip drops to its own line on a
+        // narrow phone instead of overflowing the row.
         <Stack
           component="span"
           direction="row"
-          spacing={1}
-          sx={{ display: "inline-flex", alignItems: "center" }}
+          useFlexGap
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 1,
+          }}
         >
           <Typography
             component="span"
@@ -238,7 +245,7 @@ export function CancelledRoundRow({
             variant="outlined"
             label={
               <Typography variant="caption" component="span">
-                {formatCancelReasonLabel(item.reason)}
+                {formatCancelReasonLabel(item.reason, item.cancellation)}
               </Typography>
             }
           />

@@ -1,5 +1,7 @@
 "use client";
 
+import type { ActionResult } from "@/app/lib/actionResult";
+import type { RejectReason } from "@/app/lib/rejectReason";
 import { Box, Typography } from "@mui/material";
 import RoundCard, { type Round } from "./RoundCard";
 import { formatClockTime } from "@/app/lib/orderFormat";
@@ -63,7 +65,11 @@ export default function RoundTimeline({
   startedAt: string;
   isPending: boolean;
   onAccept: (sessionId: number) => void;
-  onReject: (sessionId: number) => void;
+  /** Rejects a round with the cashier's reason (RejectReasonDialog). */
+  onReject: (
+    sessionId: number,
+    reason: RejectReason,
+  ) => Promise<ActionResult<unknown>>;
 }) {
   return (
     <Box
@@ -102,7 +108,7 @@ export default function RoundTimeline({
             round={round}
             isPending={isPending}
             onAccept={() => onAccept(round.id)}
-            onReject={() => onReject(round.id)}
+            onReject={(reason) => onReject(round.id, reason)}
           />
         </Box>
       ))}

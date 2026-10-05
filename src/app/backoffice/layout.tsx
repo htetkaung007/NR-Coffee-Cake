@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "../utils/config/authOptions";
 import { BackofficeShell } from "../components/BackofficeShell";
-import { AppService } from "../services";
+import { AppService, LocationService } from "../services";
+import { getSessionContext } from "../lib/session";
 import { Box } from "@mui/material";
 import { SurfaceThemeProvider } from "../lib/theme/ThemeModeProvider";
 import { OrderAlertsProvider } from "./OrderAlertsProvider";
@@ -21,8 +22,16 @@ export default async function BackOfficeLayout({ children }: Props) {
   const company = await AppService.getCompanyByEmail(email);
   if (!company) redirect("/auth/signIn");
   const companyName = company.name;
-  // Same least-privilege fallback as getSessionContext().
-  const role = session?.user?.role ?? "MANAGER";
+
+  // The selected location's name for the top bar (null: none selected,
+  // or it has been archived — the top bar then shows its fallbacks).
+  const { userId, role } = await getSessionContext();
+  const selectedLocation = userId
+    ? await LocationService.getSelectedLocation(userId)
+    : null;
+  const locationName = selectedLocation
+    ? await LocationService.getShopNameForLocation(selectedLocation.locationId)
+    : null;
 
   return (
     <SurfaceThemeProvider surface="bo">
@@ -30,7 +39,11 @@ export default async function BackOfficeLayout({ children }: Props) {
           across Backoffice navigation and the top/side bars can read it. */}
       <OrderAlertsProvider>
         <Box>
-          <BackofficeShell companyName={companyName} role={role}>
+          <BackofficeShell
+            companyName={companyName}
+            locationName={locationName}
+            role={role}
+          >
             <NewOrderBanner />
             <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
               <Box

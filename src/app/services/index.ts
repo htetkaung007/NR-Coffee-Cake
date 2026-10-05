@@ -5,6 +5,7 @@
 // every file that imports it.
 
 export { AppService } from "./app.service";
+export { CompanyService } from "./company.service";
 export { MenuService } from "./menu.service";
 export { MenuCategoryService } from "./menuCategory.service";
 export { MenuStockService } from "./menuStock.service";
