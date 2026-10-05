@@ -69,6 +69,7 @@ export default function RoundTimeline({
   onReject: (
     sessionId: number,
     reason: RejectReason,
+    note?: string,
   ) => Promise<ActionResult<unknown>>;
 }) {
   return (
@@ -108,7 +109,7 @@ export default function RoundTimeline({
             round={round}
             isPending={isPending}
             onAccept={() => onAccept(round.id)}
-            onReject={(reason) => onReject(round.id, reason)}
+            onReject={(reason, note) => onReject(round.id, reason, note)}
           />
         </Box>
       ))}

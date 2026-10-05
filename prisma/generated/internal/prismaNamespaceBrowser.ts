@@ -339,6 +339,7 @@ export const OrderCancellationScalarFieldEnum = {
   requestedAt: 'requestedAt',
   decidedAt: 'decidedAt',
   rejectReason: 'rejectReason',
+  note: 'note',
   createdAt: 'createdAt'
 } as const
 

@@ -75,3 +75,13 @@ export function formatRejectReasonCounts(
     .map((entry) => `${rejectReasonShortLabel(entry.reason)} ${entry.count}`)
     .join(" · ");
 }
+
+/** What a rejection carries into cancelSession: only Other may have a
+ *  note (null when the cashier left it empty) — a note on any other
+ *  reason is a compile error. */
+export type RejectDetails =
+  | { rejectReason: "OTHER"; note: string | null }
+  | { rejectReason: Exclude<RejectReason, "OTHER"> };
+
+/** The hard limit on a rejection note (also the DB column's VarChar). */
+export const REJECT_NOTE_MAX_LENGTH = 120;

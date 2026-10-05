@@ -16,6 +16,13 @@ export const reportPeriodInputSchema = z.object({
 });
 export type ReportPeriodInput = z.infer<typeof reportPeriodInputSchema>;
 
+/** The Reports CSV export: which file (order lines by default, or the
+ *  cancelled rounds' lines) for a period around a day. */
+export const reportExportInputSchema = reportPeriodInputSchema.extend({
+  type: z.enum(["lines", "cancelled"]).default("lines"),
+});
+export type ReportExportInput = z.infer<typeof reportExportInputSchema>;
+
 /** Pairing is always a calendar month, so it takes the day only. */
 export const reportPairingInputSchema = z.object({
   anchorDay: reportAnchorDaySchema,

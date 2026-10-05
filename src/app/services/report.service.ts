@@ -27,6 +27,11 @@ import {
   type ReportBill,
 } from "../lib/salesReport";
 import { todayInShop } from "../lib/shopDay";
+import type {
+  ExportBill,
+  ExportCancelledRound,
+  ExportLine,
+} from "../lib/exportLines";
 import { CartValidationService } from "./cartValidation.service";
 import { OrderHistoryService } from "./orderHistory.service";
 
@@ -46,6 +51,45 @@ interface PeriodArgs extends Scope {
 type Range = ReturnType<typeof periodRangeUtc>;
 
 const unique = (ids: readonly number[]) => [...new Set(ids)];
+
+/** What the CSV exports read of an order line — snapshots only, and
+ *  never contributorToken or any other secret. */
+const exportLineSelect = {
+  id: true,
+  menuId: true,
+  quantity: true,
+  unitPrice: true,
+  note: true,
+  OrdersAddons: {
+    orderBy: { id: "asc" },
+    select: { unitPrice: true, addon: { select: { name: true } } },
+  },
+} as const;
+
+function toExportLine(
+  order: {
+    id: number;
+    menuId: number;
+    quantity: number;
+    unitPrice: number;
+    note: string | null;
+    OrdersAddons: { unitPrice: number; addon: { name: string } }[];
+  },
+  menuNames: Map<number, string>,
+): ExportLine {
+  return {
+    id: order.id,
+    menuId: order.menuId,
+    menuName: menuNames.get(order.menuId) ?? "Unknown item",
+    quantity: order.quantity,
+    unitPrice: order.unitPrice,
+    addons: order.OrdersAddons.map((link) => ({
+      name: link.addon.name,
+      unitPrice: link.unitPrice,
+    })),
+    note: order.note,
+  };
+}
 
 /**
  * Read-only data for the Backoffice Reports — money counts PAID bills only
@@ -239,6 +283,148 @@ export class ReportService {
         name: category.name,
       })),
     };
+  }
+
+  /**
+   * Everything the printable report shows, for one period: exactly
+   * getOverview + getItems, run together — no queries or arithmetic of
+   * its own, so the paper always matches the Reports page.
+   */
+  static async getPrintableReport(args: PeriodArgs) {
+    const [overview, items] = await Promise.all([
+      ReportService.getOverview(args),
+      ReportService.getItems(args),
+    ]);
+    return { overview, items };
+  }
+
+  /**
+   * The period's PAID bills for the order-lines CSV: each bill with its
+   * rounds (oldest first) and their non-archived lines at their own price
+   * snapshots, add-on names included. The bill's channel and table are its
+   * FIRST round's, as loadBills decides them. Exactly the bills behind the
+   * Reports page's Sales, so the lines add up to it.
+   *
+   * Queries: 3 — the location check, the bills (sessions, lines and
+   * add-ons come with them), then the menu names.
+   */
+  static async getExportLines({ companyId, locationId, kind, anchorDay }: PeriodArgs) {
+    await ReportService.assertLocationInCompany({ companyId, locationId });
+
+    const period = periodFor(kind, anchorDay);
+    const range = periodRangeUtc(period);
+    const bills = await prisma.bill.findMany({
+      where: { locationId, paidAt: { gte: range.start, lt: range.end } },
+      orderBy: [{ paidAt: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        billNumber: true,
+        paidAt: true,
+        total: true,
+        sessions: {
+          where: { isArchived: false },
+          orderBy: { id: "asc" },
+          select: {
+            orderNumber: true,
+            createdAt: true,
+            isCounter: true,
+            table: { select: { name: true } },
+            orders: { where: { isArchived: false }, select: exportLineSelect },
+          },
+        },
+      },
+    });
+
+    const menuNames = await ReportService.loadMenuNames(
+      unique(
+        bills.flatMap((bill) =>
+          bill.sessions.flatMap((session) => session.orders.map((order) => order.menuId)),
+        ),
+      ),
+    );
+
+    const rows: ExportBill[] = bills.map((bill) => {
+      const first = bill.sessions[0];
+      const isCounter = first?.isCounter ?? true;
+      return {
+        id: bill.id,
+        billNumber: bill.billNumber,
+        paidAt: bill.paidAt,
+        total: bill.total,
+        channel: isCounter ? "counter" : "table",
+        tableName: isCounter ? null : (first?.table?.name ?? null),
+        rounds: bill.sessions.map((session) => ({
+          orderNumber: session.orderNumber,
+          createdAt: session.createdAt,
+          lines: session.orders.map((order) => toExportLine(order, menuNames)),
+        })),
+      };
+    });
+    return { period, bills: rows };
+  }
+
+  /**
+   * The period's REJECTED / EXPIRED rounds for the cancelled-lines CSV —
+   * picked by OrderHistoryService.cancelledInRange, the same rule as the
+   * Cancelled card, so its lines add up to "Not charged". Each with its
+   * OrderCancellation row (null for rounds cancelled before those were
+   * recorded) and its non-archived lines at their price snapshots.
+   *
+   * Queries: 3 — the location check, the rounds (cancellation, table,
+   * lines and add-ons come with them), then the menu names.
+   */
+  static async getExportCancelled({
+    companyId,
+    locationId,
+    kind,
+    anchorDay,
+  }: PeriodArgs) {
+    await ReportService.assertLocationInCompany({ companyId, locationId });
+
+    const period = periodFor(kind, anchorDay);
+    const range = periodRangeUtc(period);
+    const sessions = await prisma.orderSession.findMany({
+      where: OrderHistoryService.cancelledInRange({ locationId, ...range }),
+      orderBy: [{ updateTime: "asc" }, { id: "asc" }],
+      select: {
+        orderNumber: true,
+        isCounter: true,
+        cancelReason: true,
+        updateTime: true,
+        table: { select: { name: true } },
+        cancellation: {
+          select: {
+            requestedAt: true,
+            decidedAt: true,
+            rejectReason: true,
+            note: true,
+          },
+        },
+        orders: {
+          where: { isArchived: false },
+          select: { ...exportLineSelect, isArchived: true },
+        },
+      },
+    });
+
+    const menuNames = await ReportService.loadMenuNames(
+      unique(sessions.flatMap((session) => session.orders.map((order) => order.menuId))),
+    );
+
+    const rounds: ExportCancelledRound[] = sessions.map((session) => ({
+      orderNumber: session.orderNumber,
+      channel: session.isCounter ? "counter" : "table",
+      tableName: session.table?.name ?? null,
+      // cancelledInRange only returns REJECTED / EXPIRED rounds.
+      cancelReason: session.cancelReason as "REJECTED" | "EXPIRED",
+      cancelledAt: session.updateTime,
+      cancellation: session.cancellation,
+      lines: session.orders.map((order) => ({
+        ...toExportLine(order, menuNames),
+        isArchived: order.isArchived,
+      })),
+    }));
+    return { period, rounds };
   }
 
   /**

@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { addDays, dayRangeUtc, isShopDay, toShopDay } from "./shopDay";
+import {
+  addDays,
+  dayRangeUtc,
+  formatShopDateTime,
+  toShopTime,
+  isShopDay,
+  toShopDay,
+} from "./shopDay";
 
 // Shop timezone is Asia/Yangon (UTC+06:30) — pinned in vitest.config.ts.
 const HOUR_MS = 60 * 60 * 1000;
@@ -106,5 +113,29 @@ describe("isShopDay", () => {
     expect(isShopDay("2026-9-5")).toBe(false);
     expect(isShopDay("")).toBe(false);
     expect(isShopDay("not a day")).toBe(false);
+  });
+});
+
+describe("formatShopDateTime", () => {
+  it("writes an instant on the shop's clock (Asia/Yangon, UTC+6:30)", () => {
+    expect(formatShopDateTime(new Date("2026-10-05T08:34:00Z"))).toBe(
+      "Oct 5, 2026, 3:04 PM",
+    );
+  });
+
+  it("rolls over to the shop's next day before UTC does", () => {
+    expect(formatShopDateTime(new Date("2026-10-05T18:00:00Z"))).toBe(
+      "Oct 6, 2026, 12:30 AM",
+    );
+  });
+});
+
+describe("toShopTime", () => {
+  it("writes an instant as HH:mm on the shop's clock (24-hour)", () => {
+    expect(toShopTime(new Date("2026-10-05T08:34:00Z"))).toBe("15:04");
+  });
+
+  it("writes just after the shop's midnight as 00:01", () => {
+    expect(toShopTime(new Date("2026-10-04T17:31:00Z"))).toBe("00:01");
   });
 });

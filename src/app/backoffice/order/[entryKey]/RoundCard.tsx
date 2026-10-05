@@ -205,8 +205,12 @@ export default function RoundCard({
   /** An action is in flight — disables Accept/Reject. */
   isPending: boolean;
   onAccept: () => void;
-  /** Rejects this round with the reason picked in the dialog. */
-  onReject: (reason: RejectReason) => Promise<ActionResult<unknown>>;
+  /** Rejects this round with the reason (and, for Other, the note)
+   *  picked in the dialog. */
+  onReject: (
+    reason: RejectReason,
+    note?: string,
+  ) => Promise<ActionResult<unknown>>;
 }) {
   const isAwaitingApproval = round.status === "PENDING_APPROVAL";
   const [isRejectOpen, setIsRejectOpen] = useState(false);

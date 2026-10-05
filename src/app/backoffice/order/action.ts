@@ -9,9 +9,9 @@ import {
 import { AppError } from "@/app/lib/errors";
 import {
   rejectRoundSchema,
+  type RejectRound,
   type RejectRoundInput,
 } from "@/app/lib/schemas/rejectRoundSchema";
-import type { RejectReason } from "@/app/lib/rejectReason";
 import { getSessionContext } from "@/app/lib/session";
 import { LocationService, OrderSessionApprovalService } from "@/app/services";
 
@@ -60,14 +60,14 @@ export async function acceptCounterSessionAction(sessionId: number) {
   return actionResult;
 }
 
-const safeReject = toSafeResult(async (input: RejectRoundInput) => {
+const safeReject = toSafeResult(async (input: RejectRound) => {
   const { companyId } = await getSessionContext();
   if (!companyId) {
     throw new AppError("You must be signed in.", "UNAUTHORIZED");
   }
   return OrderSessionApprovalService.rejectCounterSession(
     input.sessionId,
-    input.rejectReason,
+    input.details,
   );
 });
 
@@ -76,15 +76,12 @@ const safeReject = toSafeResult(async (input: RejectRoundInput) => {
  *  here: this is the cashier's browser, not the customer's — the
  *  customer's own next poll (pollOrderStatusAction) is what clears
  *  their cookie once it sees the resulting CANCELLED status. The
- *  cashier's reason must be one of RejectReason's values. */
-export async function rejectCounterSessionAction(
-  sessionId: number,
-  rejectReason: RejectReason,
-) {
-  const result = await validateWith(rejectRoundSchema, {
-    sessionId,
-    rejectReason,
-  }).asyncAndThen(safeReject);
+ *  cashier's reason must be one of RejectReason's values; a note is only
+ *  accepted with Other (see rejectRoundSchema). */
+export async function rejectCounterSessionAction(input: RejectRoundInput) {
+  const result = await validateWith(rejectRoundSchema, input).asyncAndThen(
+    safeReject,
+  );
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice/order");

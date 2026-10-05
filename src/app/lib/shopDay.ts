@@ -65,3 +65,16 @@ export function isRealCalendarDay(value: string): boolean {
 export function isShopDay(value: string): boolean {
   return SHOP_DAY_PATTERN.test(value) && isRealCalendarDay(value);
 }
+
+/** "Oct 5, 2026, 3:04 PM" — an instant on the SHOP's clock, whatever the
+ *  server's or viewer's own timezone (e.g. a printed report's
+ *  "Generated" time). */
+export function formatShopDateTime(date: Date): string {
+  return dayjs(date).tz(config.shopTimezone).format("MMM D, YYYY, h:mm A");
+}
+
+/** "15:04" — an instant's time of day on the SHOP's clock, 24-hour (the
+ *  CSV exports' time columns, beside toShopDay's date). */
+export function toShopTime(date: Date): string {
+  return dayjs(date).tz(config.shopTimezone).format("HH:mm");
+}

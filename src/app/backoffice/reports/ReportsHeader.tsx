@@ -4,9 +4,15 @@ import { Box, Stack } from "@mui/material";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import StickyPageHeader from "@/app/components/StickyPageHeader";
 import type { ReportPeriod } from "@/app/lib/reportPeriod";
-import { reportHref, type ReportParams } from "@/app/lib/reportView";
+import {
+  printableReportHref,
+  reportExportHref,
+  reportHref,
+  type ReportParams,
+} from "@/app/lib/reportView";
 import OrdersPageHeader from "../order/OrdersPageHeader";
 import PeriodNavigator from "./PeriodNavigator";
+import ReportExportMenu from "./ReportExportMenu";
 
 interface ReportsHeaderProps {
   params: ReportParams;
@@ -42,7 +48,29 @@ export default function ReportsHeader({
   return (
     <>
       <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, pb: 1 }}>
-        <OrdersPageHeader title="Reports" showSectionNav={false} />
+        <OrdersPageHeader
+          title="Reports"
+          showSectionNav={false}
+          // The printable report for the period on screen right now.
+          actions={
+            <ReportExportMenu
+              printHref={printableReportHref({
+                kind: params.kind,
+                day: params.day,
+              })}
+              linesCsvHref={reportExportHref({
+                type: "lines",
+                kind: params.kind,
+                day: params.day,
+              })}
+              cancelledCsvHref={reportExportHref({
+                type: "cancelled",
+                kind: params.kind,
+                day: params.day,
+              })}
+            />
+          }
+        />
       </Box>
 
       <StickyPageHeader placement="below-title">

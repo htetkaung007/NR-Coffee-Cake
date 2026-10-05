@@ -436,6 +436,13 @@ model OrderCancellation {
   // Why the cashier rejected it — set only on REJECTED rows; null for
   // EXPIRED.
   rejectReason   RejectReason?
+  // The cashier's optional free-text note — ONLY when rejectReason is
+  // OTHER (e.g. "coffee machine broken"). Null for every other reason,
+  // for timeouts and for older rows (never backfilled). The app trims
+  // it and stores an empty note as null; 120 characters is the hard
+  // limit (enforced in Zod too). Written only by cancelSession, never
+  // edited afterwards.
+  note           String?       @db.VarChar(120)
   createdAt      DateTime      @default(now())
 }
 

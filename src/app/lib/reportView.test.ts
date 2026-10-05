@@ -21,6 +21,11 @@ import {
   type ReportSlowItem,
 } from "./reportView";
 import { periodFor } from "./reportPeriod";
+import {
+  printableReportHref,
+  printableReportTitle,
+  reportExportHref,
+} from "./reportView";
 
 const TODAY = "2026-09-30"; // a Wednesday; its week is Sep 28 – Oct 4
 
@@ -566,5 +571,47 @@ describe("pairingMonthCaption", () => {
 
   it("is null for a finished month", () => {
     expect(pairingMonthCaption(periodFor("month", "2026-08-10"), TODAY)).toBeNull();
+  });
+});
+
+describe("printableReportHref", () => {
+  it("opens the printable report for a week around a day", () => {
+    expect(printableReportHref({ kind: "week", day: "2026-10-04" })).toBe(
+      "/print/report?period=week&day=2026-10-04",
+    );
+  });
+
+  it("opens the printable report for a month around a day", () => {
+    expect(printableReportHref({ kind: "month", day: "2026-10-15" })).toBe(
+      "/print/report?period=month&day=2026-10-15",
+    );
+  });
+});
+
+describe("printableReportTitle", () => {
+  it("names a month", () => {
+    expect(printableReportTitle(periodFor("month", "2026-10-15"))).toBe(
+      "Monthly report — October 2026",
+    );
+  });
+
+  it("names a week with its dates", () => {
+    expect(printableReportTitle(periodFor("week", "2026-10-01"))).toBe(
+      "Weekly report — Sep 28 – Oct 4, 2026",
+    );
+  });
+});
+
+describe("reportExportHref", () => {
+  it("downloads a period's order lines", () => {
+    expect(reportExportHref({ type: "lines", kind: "month", day: "2026-10-15" })).toBe(
+      "/backoffice/reports/export?type=lines&period=month&day=2026-10-15",
+    );
+  });
+
+  it("downloads a period's cancelled lines", () => {
+    expect(reportExportHref({ type: "cancelled", kind: "week", day: "2026-10-04" })).toBe(
+      "/backoffice/reports/export?type=cancelled&period=week&day=2026-10-04",
+    );
   });
 });

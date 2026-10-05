@@ -73,6 +73,9 @@ export interface CancellationDetail {
   rejectReason: RejectReason | null;
   /** Submit to decision, in whole seconds (null when unknown). */
   waitSeconds: number | null;
+  /** The cashier's note (Other only; null otherwise). Staff-typed free
+   *  text: shown as plain text, never put in a URL. */
+  note: string | null;
 }
 
 /** null for a round with no row (cancelled before rows were kept). */
@@ -81,11 +84,13 @@ export function toCancellationDetail(
     requestedAt: Date;
     decidedAt: Date;
     rejectReason: RejectReason | null;
+    note: string | null;
   } | null,
 ): CancellationDetail | null {
   if (!row) return null;
   return {
     rejectReason: row.rejectReason,
     waitSeconds: waitSeconds(row.requestedAt, row.decidedAt),
+    note: row.note,
   };
 }

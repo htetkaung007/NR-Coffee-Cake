@@ -5,6 +5,7 @@ import {
   isCurrentPeriod,
   MONTH_NAMES,
   nextPeriod,
+  periodLabel,
   previousPeriod,
   type ReportPeriod,
   type ReportPeriodKind,
@@ -48,6 +49,37 @@ export function reportHref(params: ReportParams): string {
   const { kind, day, tab, list } = params;
   const base = `${REPORTS_PATH}?period=${kind}&day=${day}&tab=${tab}`;
   return list === "slow" ? `${base}&list=slow` : base;
+}
+
+/** What every report's figures are — under the Reports page and on the
+ *  printable report alike. */
+export const REPORT_FOOTNOTE =
+  "Café sales · paid bills only · internet voucher sales not included";
+
+/** The printable report (print / Save as PDF) for the period around
+ *  `day` — outside the Backoffice, under the (print) route group. */
+export function printableReportHref(params: {
+  kind: ReportPeriodKind;
+  day: string;
+}): string {
+  return `/print/report?period=${params.kind}&day=${params.day}`;
+}
+
+/** The CSV download for the period around `day`: its order lines, or
+ *  its cancelled rounds' lines (see reports/export/route.ts). */
+export function reportExportHref(params: {
+  type: "lines" | "cancelled";
+  kind: ReportPeriodKind;
+  day: string;
+}): string {
+  return `${REPORTS_PATH}/export?type=${params.type}&period=${params.kind}&day=${params.day}`;
+}
+
+/** "Monthly report — October 2026" / "Weekly report — Sep 28 – Oct 4,
+ *  2026" — the printable report's title. */
+export function printableReportTitle(period: ReportPeriod): string {
+  const kind = period.kind === "month" ? "Monthly" : "Weekly";
+  return `${kind} report — ${periodLabel(period)}`;
 }
 
 /** The days the period navigator's arrows lead to: any day of the period

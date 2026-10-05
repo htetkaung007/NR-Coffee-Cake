@@ -6,7 +6,7 @@ import { Box, Typography } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { periodFor } from "@/app/lib/reportPeriod";
-import type { ReportParams } from "@/app/lib/reportView";
+import { REPORT_FOOTNOTE, type ReportParams } from "@/app/lib/reportView";
 import type { ReportOverview } from "./action";
 import ItemsTab from "./ItemsTab";
 import OverviewTab from "./OverviewTab";
@@ -14,8 +14,6 @@ import ReportsHeader from "./ReportsHeader";
 import { ErrorRetry } from "./ReportStates";
 import { useReportItems } from "./useReportItems";
 
-const FOOTNOTE =
-  "Café sales · paid bills only · internet voucher sales not included.";
 
 interface ReportsViewProps {
   params: ReportParams;
@@ -111,7 +109,7 @@ export default function ReportsView({
             color="text.secondary"
             sx={{ mt: 3 }}
           >
-            {FOOTNOTE}
+            {REPORT_FOOTNOTE}.
           </Typography>
         </Box>
       </Box>

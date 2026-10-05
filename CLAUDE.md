@@ -141,6 +141,16 @@ left in a broken/inconsistent state?"
   at payment) goes through it; don't write those fields anywhere else.
   An `OrderCancellation` row is frozen history: written once, never
   edited.
+- **The cancellation `note` is staff-typed free text** (Other only,
+  ≤ 120 characters, normalised by `rejectRoundSchema`). Never put it in a
+  URL (query string, path, redirect).
+- **CSV exports (`lib/csv.ts`, `lib/exportLines.ts`):** every TEXT cell
+  goes through `csvText` — it quotes, and guards against formula
+  injection (a leading `=`, `+`, `-`, `@`, tab or CR gets an apostrophe);
+  numbers go through `csvNumber`. Never build a CSV line by hand. Exports
+  never contain tokens (session/contributor tokens, `clientRequestId`),
+  access keys (`counterAccessKey`), cookie values or other internal
+  secrets — select the columns explicitly, never a whole row.
 
 ## 8. Naming — follow library/framework conventions, don't fight them
 

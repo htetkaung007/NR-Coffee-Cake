@@ -50,6 +50,7 @@ export type OrderCancellationMinAggregateOutputType = {
   requestedAt: Date | null
   decidedAt: Date | null
   rejectReason: $Enums.RejectReason | null
+  note: string | null
   createdAt: Date | null
 }
 
@@ -59,6 +60,7 @@ export type OrderCancellationMaxAggregateOutputType = {
   requestedAt: Date | null
   decidedAt: Date | null
   rejectReason: $Enums.RejectReason | null
+  note: string | null
   createdAt: Date | null
 }
 
@@ -68,6 +70,7 @@ export type OrderCancellationCountAggregateOutputType = {
   requestedAt: number
   decidedAt: number
   rejectReason: number
+  note: number
   createdAt: number
   _all: number
 }
@@ -89,6 +92,7 @@ export type OrderCancellationMinAggregateInputType = {
   requestedAt?: true
   decidedAt?: true
   rejectReason?: true
+  note?: true
   createdAt?: true
 }
 
@@ -98,6 +102,7 @@ export type OrderCancellationMaxAggregateInputType = {
   requestedAt?: true
   decidedAt?: true
   rejectReason?: true
+  note?: true
   createdAt?: true
 }
 
@@ -107,6 +112,7 @@ export type OrderCancellationCountAggregateInputType = {
   requestedAt?: true
   decidedAt?: true
   rejectReason?: true
+  note?: true
   createdAt?: true
   _all?: true
 }
@@ -203,6 +209,7 @@ export type OrderCancellationGroupByOutputType = {
   requestedAt: Date
   decidedAt: Date
   rejectReason: $Enums.RejectReason | null
+  note: string | null
   createdAt: Date
   _count: OrderCancellationCountAggregateOutputType | null
   _avg: OrderCancellationAvgAggregateOutputType | null
@@ -235,6 +242,7 @@ export type OrderCancellationWhereInput = {
   requestedAt?: Prisma.DateTimeFilter<"OrderCancellation"> | Date | string
   decidedAt?: Prisma.DateTimeFilter<"OrderCancellation"> | Date | string
   rejectReason?: Prisma.EnumRejectReasonNullableFilter<"OrderCancellation"> | $Enums.RejectReason | null
+  note?: Prisma.StringNullableFilter<"OrderCancellation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderCancellation"> | Date | string
   orderSession?: Prisma.XOR<Prisma.OrderSessionScalarRelationFilter, Prisma.OrderSessionWhereInput>
 }
@@ -245,6 +253,7 @@ export type OrderCancellationOrderByWithRelationInput = {
   requestedAt?: Prisma.SortOrder
   decidedAt?: Prisma.SortOrder
   rejectReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   orderSession?: Prisma.OrderSessionOrderByWithRelationInput
 }
@@ -258,6 +267,7 @@ export type OrderCancellationWhereUniqueInput = Prisma.AtLeast<{
   requestedAt?: Prisma.DateTimeFilter<"OrderCancellation"> | Date | string
   decidedAt?: Prisma.DateTimeFilter<"OrderCancellation"> | Date | string
   rejectReason?: Prisma.EnumRejectReasonNullableFilter<"OrderCancellation"> | $Enums.RejectReason | null
+  note?: Prisma.StringNullableFilter<"OrderCancellation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderCancellation"> | Date | string
   orderSession?: Prisma.XOR<Prisma.OrderSessionScalarRelationFilter, Prisma.OrderSessionWhereInput>
 }, "id" | "orderSessionId">
@@ -268,6 +278,7 @@ export type OrderCancellationOrderByWithAggregationInput = {
   requestedAt?: Prisma.SortOrder
   decidedAt?: Prisma.SortOrder
   rejectReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.OrderCancellationCountOrderByAggregateInput
   _avg?: Prisma.OrderCancellationAvgOrderByAggregateInput
@@ -285,6 +296,7 @@ export type OrderCancellationScalarWhereWithAggregatesInput = {
   requestedAt?: Prisma.DateTimeWithAggregatesFilter<"OrderCancellation"> | Date | string
   decidedAt?: Prisma.DateTimeWithAggregatesFilter<"OrderCancellation"> | Date | string
   rejectReason?: Prisma.EnumRejectReasonNullableWithAggregatesFilter<"OrderCancellation"> | $Enums.RejectReason | null
+  note?: Prisma.StringNullableWithAggregatesFilter<"OrderCancellation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OrderCancellation"> | Date | string
 }
 
@@ -292,6 +304,7 @@ export type OrderCancellationCreateInput = {
   requestedAt: Date | string
   decidedAt: Date | string
   rejectReason?: $Enums.RejectReason | null
+  note?: string | null
   createdAt?: Date | string
   orderSession: Prisma.OrderSessionCreateNestedOneWithoutCancellationInput
 }
@@ -302,6 +315,7 @@ export type OrderCancellationUncheckedCreateInput = {
   requestedAt: Date | string
   decidedAt: Date | string
   rejectReason?: $Enums.RejectReason | null
+  note?: string | null
   createdAt?: Date | string
 }
 
@@ -309,6 +323,7 @@ export type OrderCancellationUpdateInput = {
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decidedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rejectReason?: Prisma.NullableEnumRejectReasonFieldUpdateOperationsInput | $Enums.RejectReason | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   orderSession?: Prisma.OrderSessionUpdateOneRequiredWithoutCancellationNestedInput
 }
@@ -319,6 +334,7 @@ export type OrderCancellationUncheckedUpdateInput = {
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decidedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rejectReason?: Prisma.NullableEnumRejectReasonFieldUpdateOperationsInput | $Enums.RejectReason | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -328,6 +344,7 @@ export type OrderCancellationCreateManyInput = {
   requestedAt: Date | string
   decidedAt: Date | string
   rejectReason?: $Enums.RejectReason | null
+  note?: string | null
   createdAt?: Date | string
 }
 
@@ -335,6 +352,7 @@ export type OrderCancellationUpdateManyMutationInput = {
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decidedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rejectReason?: Prisma.NullableEnumRejectReasonFieldUpdateOperationsInput | $Enums.RejectReason | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -344,6 +362,7 @@ export type OrderCancellationUncheckedUpdateManyInput = {
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decidedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rejectReason?: Prisma.NullableEnumRejectReasonFieldUpdateOperationsInput | $Enums.RejectReason | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -358,6 +377,7 @@ export type OrderCancellationCountOrderByAggregateInput = {
   requestedAt?: Prisma.SortOrder
   decidedAt?: Prisma.SortOrder
   rejectReason?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -372,6 +392,7 @@ export type OrderCancellationMaxOrderByAggregateInput = {
   requestedAt?: Prisma.SortOrder
   decidedAt?: Prisma.SortOrder
   rejectReason?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -381,6 +402,7 @@ export type OrderCancellationMinOrderByAggregateInput = {
   requestedAt?: Prisma.SortOrder
   decidedAt?: Prisma.SortOrder
   rejectReason?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -429,6 +451,7 @@ export type OrderCancellationCreateWithoutOrderSessionInput = {
   requestedAt: Date | string
   decidedAt: Date | string
   rejectReason?: $Enums.RejectReason | null
+  note?: string | null
   createdAt?: Date | string
 }
 
@@ -437,6 +460,7 @@ export type OrderCancellationUncheckedCreateWithoutOrderSessionInput = {
   requestedAt: Date | string
   decidedAt: Date | string
   rejectReason?: $Enums.RejectReason | null
+  note?: string | null
   createdAt?: Date | string
 }
 
@@ -460,6 +484,7 @@ export type OrderCancellationUpdateWithoutOrderSessionInput = {
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decidedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rejectReason?: Prisma.NullableEnumRejectReasonFieldUpdateOperationsInput | $Enums.RejectReason | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -468,6 +493,7 @@ export type OrderCancellationUncheckedUpdateWithoutOrderSessionInput = {
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   decidedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rejectReason?: Prisma.NullableEnumRejectReasonFieldUpdateOperationsInput | $Enums.RejectReason | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -479,6 +505,7 @@ export type OrderCancellationSelect<ExtArgs extends runtime.Types.Extensions.Int
   requestedAt?: boolean
   decidedAt?: boolean
   rejectReason?: boolean
+  note?: boolean
   createdAt?: boolean
   orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orderCancellation"]>
@@ -489,6 +516,7 @@ export type OrderCancellationSelectCreateManyAndReturn<ExtArgs extends runtime.T
   requestedAt?: boolean
   decidedAt?: boolean
   rejectReason?: boolean
+  note?: boolean
   createdAt?: boolean
   orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orderCancellation"]>
@@ -499,6 +527,7 @@ export type OrderCancellationSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   requestedAt?: boolean
   decidedAt?: boolean
   rejectReason?: boolean
+  note?: boolean
   createdAt?: boolean
   orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orderCancellation"]>
@@ -509,10 +538,11 @@ export type OrderCancellationSelectScalar = {
   requestedAt?: boolean
   decidedAt?: boolean
   rejectReason?: boolean
+  note?: boolean
   createdAt?: boolean
 }
 
-export type OrderCancellationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderSessionId" | "requestedAt" | "decidedAt" | "rejectReason" | "createdAt", ExtArgs["result"]["orderCancellation"]>
+export type OrderCancellationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderSessionId" | "requestedAt" | "decidedAt" | "rejectReason" | "note" | "createdAt", ExtArgs["result"]["orderCancellation"]>
 export type OrderCancellationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orderSession?: boolean | Prisma.OrderSessionDefaultArgs<ExtArgs>
 }
@@ -534,6 +564,7 @@ export type $OrderCancellationPayload<ExtArgs extends runtime.Types.Extensions.I
     requestedAt: Date
     decidedAt: Date
     rejectReason: $Enums.RejectReason | null
+    note: string | null
     createdAt: Date
   }, ExtArgs["result"]["orderCancellation"]>
   composites: {}
@@ -964,6 +995,7 @@ export interface OrderCancellationFieldRefs {
   readonly requestedAt: Prisma.FieldRef<"OrderCancellation", 'DateTime'>
   readonly decidedAt: Prisma.FieldRef<"OrderCancellation", 'DateTime'>
   readonly rejectReason: Prisma.FieldRef<"OrderCancellation", 'RejectReason'>
+  readonly note: Prisma.FieldRef<"OrderCancellation", 'String'>
   readonly createdAt: Prisma.FieldRef<"OrderCancellation", 'DateTime'>
 }
     

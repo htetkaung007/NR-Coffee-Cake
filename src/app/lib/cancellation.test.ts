@@ -136,8 +136,20 @@ describe("toCancellationDetail", () => {
         requestedAt: at("2026-10-05T09:00:00Z"),
         decidedAt: at("2026-10-05T09:04:20Z"),
         rejectReason: "OUT_OF_STOCK",
+        note: null,
       }),
-    ).toEqual({ rejectReason: "OUT_OF_STOCK", waitSeconds: 260 });
+    ).toEqual({ rejectReason: "OUT_OF_STOCK", waitSeconds: 260, note: null });
+  });
+
+  it("keeps the cashier's note", () => {
+    expect(
+      toCancellationDetail({
+        requestedAt: at("2026-10-05T09:00:00Z"),
+        decidedAt: at("2026-10-05T09:00:30Z"),
+        rejectReason: "OTHER",
+        note: "coffee machine broken",
+      }),
+    ).toEqual({ rejectReason: "OTHER", waitSeconds: 30, note: "coffee machine broken" });
   });
 
   it("is null for a round with no cancellation row", () => {

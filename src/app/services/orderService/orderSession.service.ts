@@ -1,6 +1,7 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { prisma } from "@/app/utils/prisma";
-import { Prisma, type RejectReason } from "../../../../prisma/generated/browser";
+import { Prisma } from "../../../../prisma/generated/browser";
+import type { RejectDetails } from "@/app/lib/rejectReason";
 import { MenuStockService } from "../menuStock.service";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import { shownCancelReason } from "@/app/lib/roundOutcome";
@@ -9,10 +10,10 @@ import { deriveDecidedAt, deriveRequestedAt } from "@/app/lib/cancellation";
 type Tx = Prisma.TransactionClient;
 
 /** cancelSession's reason, and what goes with it: a rejection always
- *  carries the cashier's reason; an expiry or an unsent cart never does
- *  (a compile error either way). */
+ *  carries the cashier's reason (and, for Other only, a note); an expiry
+ *  or an unsent cart never does (a compile error either way). */
 type CancelArgs =
-  | [reason: "REJECTED", details: { rejectReason: RejectReason }]
+  | [reason: "REJECTED", details: RejectDetails]
   | [reason: "EXPIRED"]
   | [reason: "UNSUBMITTED"];
 
@@ -212,6 +213,10 @@ export class OrderSessionService {
             new Date(),
           ),
           rejectReason: args[0] === "REJECTED" ? args[1].rejectReason : null,
+          note:
+            args[0] === "REJECTED" && args[1].rejectReason === "OTHER"
+              ? args[1].note
+              : null,
         },
       });
     }

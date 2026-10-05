@@ -72,8 +72,16 @@ export default function OrderDetailView({
 
   // The dialog needs the action's answer (to close, or to show the
   // error), so this one doesn't go through runAction.
-  async function rejectRound(sessionId: number, reason: RejectReason) {
-    const result = await rejectCounterSessionAction(sessionId, reason);
+  async function rejectRound(
+    sessionId: number,
+    reason: RejectReason,
+    note?: string,
+  ) {
+    const result = await rejectCounterSessionAction({
+      sessionId,
+      rejectReason: reason,
+      note,
+    });
     if (result.success) startTransition(() => router.refresh());
     return result;
   }

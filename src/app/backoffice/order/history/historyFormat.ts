@@ -62,6 +62,23 @@ export function formatCancelReasonLabel(
     : "Timed out";
 }
 
+/** "Rejected · Other — coffee machine broken" — the detail view's line
+ *  for a rejection for Other that has the cashier's note (shown in full,
+ *  as plain text); null otherwise. The list row stays "Rejected · Other". */
+export function formatCancelNoteLine(
+  reason: string,
+  cancellation: CancellationDetail | null,
+) {
+  if (
+    reason !== "REJECTED" ||
+    cancellation?.rejectReason !== "OTHER" ||
+    !cancellation.note
+  ) {
+    return null;
+  }
+  return `${formatCancelReasonLabel(reason, cancellation)} — ${cancellation.note}`;
+}
+
 /** "Waited 4m 20s before it was rejected" — the detail view's line for a
  *  recorded rejection; null otherwise (a timeout's label already says
  *  how long it waited). */

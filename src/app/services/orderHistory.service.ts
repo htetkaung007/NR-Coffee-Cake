@@ -45,6 +45,7 @@ const cancellationSelect = {
   requestedAt: true,
   decidedAt: true,
   rejectReason: true,
+  note: true,
 } as const;
 export class OrderHistoryService {
   /** "Table X" / "Counter" — the one place this label is decided, from
@@ -356,6 +357,29 @@ export class OrderHistoryService {
     return { count, notCharged };
   }
 
+  /** THE rule for "cancelled at this location in [start, end)":
+   *  REJECTED/EXPIRED only (see listCancelledRounds for why), counted by
+   *  when they were cancelled (updateTime). Shared by the summary below
+   *  (History header, the Reports Cancelled card) and the Reports'
+   *  cancelled-lines export, so the two can never pick different rounds. */
+  static cancelledInRange({
+    locationId,
+    start,
+    end,
+  }: {
+    locationId: number;
+    start: Date;
+    end: Date;
+  }): Prisma.OrderSessionWhereInput {
+    return {
+      locationId,
+      isArchived: false,
+      status: "CANCELLED",
+      cancelReason: { in: ["REJECTED", "EXPIRED"] },
+      updateTime: { gte: start, lt: end },
+    };
+  }
+
   /** What was cancelled at this location in [start, end) — the one
    *  definition behind the Order History Cancelled tab's header (one day,
    *  see getCancelledSummary) and the reports' "Not charged" figures (a
@@ -374,13 +398,7 @@ export class OrderHistoryService {
     end: Date;
   }) {
     const sessions = await prisma.orderSession.findMany({
-      where: {
-        locationId,
-        isArchived: false,
-        status: "CANCELLED",
-        cancelReason: { in: ["REJECTED", "EXPIRED"] },
-        updateTime: { gte: start, lt: end },
-      },
+      where: OrderHistoryService.cancelledInRange({ locationId, start, end }),
       select: {
         cancelReason: true,
         cancellation: { select: { rejectReason: true } },

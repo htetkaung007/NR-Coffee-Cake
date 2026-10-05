@@ -9,6 +9,7 @@ import StatusChip from "../[entryKey]/StatusChip";
 import RoundSection from "../[entryKey]/RoundSection";
 import { formatClockTime } from "@/app/lib/orderFormat";
 import {
+  formatCancelNoteLine,
   formatCancelReasonLabel,
   formatCancelWait,
   formatDurationMinutes,
@@ -86,7 +87,11 @@ export default function HistoryDetail({
   const cancelled = !isPaid ? (detail as CancelledRoundDetail) : null;
 
   const title = paid ? paid.title : (cancelled?.title ?? "");
-  // A recorded rejection: how long the customer waited for it.
+  // A recorded rejection: the cashier's note (Other only) and how long
+  // the customer waited for it.
+  const noteLine = cancelled
+    ? formatCancelNoteLine(cancelled.reason, cancelled.cancellation)
+    : null;
   const waitLine = cancelled
     ? formatCancelWait(cancelled.reason, cancelled.cancellation)
     : null;
@@ -187,6 +192,15 @@ export default function HistoryDetail({
               {isCounter ? "counter" : "table"}
             </Typography>
           </Box>
+        )}
+        {/* Plain text (React escapes it), wrapped in full — never cut. */}
+        {noteLine && (
+          <Typography
+            variant="body2"
+            sx={{ mb: 0.5, overflowWrap: "anywhere", whiteSpace: "normal" }}
+          >
+            {noteLine}
+          </Typography>
         )}
         {waitLine && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
