@@ -8,6 +8,7 @@ import {
 } from "@/app/lib/orderSessionCookie";
 import { toCartLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
+import { approvalTiming } from "@/app/lib/approvalTiming";
 
 /** The one place this file reads the Counter session cookie. The cart
  *  itself lives in the browser now (sent with submitCartAction, in
@@ -81,6 +82,9 @@ export async function pollOrderStatusAction() {
     // order wasn't accepted (see shownCancelReason).
     cancelReason: refreshed.cancelReason,
     orderNumber: refreshed.orderNumber,
+    // Time left to confirm, measured on the SERVER's clock (null unless
+    // the round is still waiting with a deadline).
+    approval: approvalTiming(refreshed, new Date()),
     total: orderLinesTotal(session.orders),
     cart: session.orders.map(toCartLine),
   };

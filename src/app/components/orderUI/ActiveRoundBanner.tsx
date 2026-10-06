@@ -19,6 +19,9 @@ export interface ActiveRound {
    *  and its billing total. */
   id?: number;
   total?: number;
+  /** Awaiting approval only: how long ago it was sent, in seconds, on
+   *  the server's clock (a Table round has no deadline). */
+  sentSecondsAgo?: number | null;
 }
 
 /** Shown on TableCartPageClient's draft view (not on the menu page,

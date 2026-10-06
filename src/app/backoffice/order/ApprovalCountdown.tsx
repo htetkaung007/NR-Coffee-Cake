@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Typography } from "@mui/material";
+import { remainingSeconds } from "@/app/lib/approvalCountdown";
 
 // One shared 1-second clock for every countdown on the page instead of
 // an interval per card. The interval only exists while at least one
@@ -58,9 +59,11 @@ export default function ApprovalCountdown({ expiresAt }: ApprovalCountdownProps)
 
   let label = "--:-- left";
   if (now !== null) {
-    const secondsLeft = Math.max(
+    // The one definition of "time left" (rounded up, never below 0) —
+    // here measured straight against the deadline, nothing elapsed yet.
+    const secondsLeft = remainingSeconds(
+      (new Date(expiresAt).getTime() - now) / 1000,
       0,
-      Math.ceil((new Date(expiresAt).getTime() - now) / 1000),
     );
     label = secondsLeft === 0 ? "Expiring…" : `${formatRemaining(secondsLeft)} left`;
   }

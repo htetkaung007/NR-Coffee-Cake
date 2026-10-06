@@ -15,6 +15,7 @@ import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLinesTotal } from "@/app/lib/orderTotals";
 import { toLineAddons } from "@/app/lib/roundLine";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
+import SentAgo from "./SentAgo";
 import DraftList from "./DraftList";
 import CartButton, { CartButtonStatus } from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";
@@ -344,6 +345,16 @@ export default function TableCartPageClient({
                 <CartList
                   cart={roundItems}
                   title={`Sent to kitchen · ${activeRound?.orderNumber ?? ""}`}
+                  // Awaiting approval: how long ago (no deadline here).
+                  subtitle={
+                    activeRound?.status === "PENDING_APPROVAL" &&
+                    activeRound.sentSecondsAgo != null ? (
+                      <SentAgo
+                        sentSecondsAgo={activeRound.sentSecondsAgo}
+                        sync={activeRound}
+                      />
+                    ) : null
+                  }
                 />
               ) : (
                 <DraftList

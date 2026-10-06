@@ -281,6 +281,8 @@ interface CartListProps {
   onQuantityChange?: (line: CartLine, next: number) => void;
   isPending?: boolean;
   title?: string;
+  /** A small line under the title (e.g. "Sent 3 min ago"). */
+  subtitle?: React.ReactNode;
 }
 
 /**
@@ -300,6 +302,7 @@ const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
     onQuantityChange,
     isPending = false,
     title = "Your order",
+    subtitle,
   },
   ref,
 ) {
@@ -314,6 +317,7 @@ const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
       <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 700 }}>
         {title}
       </Typography>
+      {subtitle}
       <Stack divider={<Divider />}>
         {cart.map((line) => (
           <CartLineRow

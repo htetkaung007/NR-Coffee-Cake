@@ -11,6 +11,8 @@ import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
 import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
+import { secondsSince } from "@/app/lib/approvalCountdown";
+import { approvalTiming } from "@/app/lib/approvalTiming";
 import CartPageClient from "@/app/components/orderUI/CartPageClient";
 import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
@@ -88,6 +90,11 @@ export default async function CartPage({
                   orderNumber: activeRound.orderNumber,
                   status: activeRound.status,
                   total: orderLinesTotal(activeRound.orders),
+                  // Server clock: created at the moment of Send.
+                  sentSecondsAgo:
+                    activeRound.status === "PENDING_APPROVAL"
+                      ? secondsSince(activeRound.createdAt, new Date())
+                      : null,
                 }
               : null
           }
@@ -170,6 +177,8 @@ export default async function CartPage({
                 session.status === "CART" ? 0 : orderLinesTotal(session.orders),
               // getBillForSession's rounds are the submitted ones only.
               hasEarlierRound: bill.rounds.length > 0,
+              // Time left to confirm, on the SERVER's clock.
+              approval: approvalTiming(session, new Date()),
             }
           : null
       }

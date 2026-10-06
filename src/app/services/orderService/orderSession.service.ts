@@ -6,6 +6,7 @@ import { MenuStockService } from "../menuStock.service";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import { shownCancelReason } from "@/app/lib/roundOutcome";
 import { deriveDecidedAt, deriveRequestedAt } from "@/app/lib/cancellation";
+import { APPROVAL_WINDOW_MINUTES } from "@/app/lib/approvalWindow";
 
 type Tx = Prisma.TransactionClient;
 
@@ -63,7 +64,6 @@ export function isSessionTerminal(status: string) {
   return (TERMINAL_STATUSES as readonly string[]).includes(status);
 }
 
-const APPROVAL_WINDOW_MINUTES = 10;
 
 // A session still sitting in CART this long after being created — no
 // order ever submitted through it — is treated as abandoned (customer

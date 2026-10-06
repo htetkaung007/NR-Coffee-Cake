@@ -13,6 +13,8 @@ import {
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
+import type { ApprovalTiming } from "@/app/lib/approvalTiming";
+import CounterWaitingPanel from "./CounterWaitingPanel";
 import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 import { useCartValidation } from "@/app/lib/hooks/useCartValidation";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
@@ -66,6 +68,9 @@ interface CartPageClientProps {
     /** This bill already has an order with the kitchen, so what's in
      *  the cart will go as a NEW order next to it. */
     hasEarlierRound: boolean;
+    /** Time left for the counter to confirm (server clock); null when
+     *  the round isn't waiting or has no deadline. */
+    approval: ApprovalTiming | null;
   } | null;
   /** Could this browser send right now — the server's answer at render
    *  time; every later check updates it (see useCartValidation). */
@@ -128,6 +133,8 @@ export default function CartPageClient({
   );
   const [roundLines, setRoundLines] = useState(session?.roundLines ?? []);
   const [roundTotal, setRoundTotal] = useState(session?.roundTotal ?? 0);
+  // Time left to confirm — re-synced from the server on every poll.
+  const [approval, setApproval] = useState(session?.approval ?? null);
   // The in-app scanner — mounted only while open (see requestScan).
   const [scannerOpen, setScannerOpen] = useState(false);
   const scanButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -159,6 +166,7 @@ export default function CartPageClient({
       setStatus(result.status as CartButtonStatus);
       setRoundLines(result.cart);
       setRoundTotal(result.total);
+      setApproval(("approval" in result ? result.approval : null) ?? null);
       // Accepted: nothing will need restoring.
       if (result.status === "PENDING" || result.status === "COOKING") {
         browserCart.forgetLastSubmitted();
@@ -411,6 +419,13 @@ export default function CartPageClient({
             </Typography>
           </Stack>
         </Stack>
+
+        {isWaiting && session && (
+          <CounterWaitingPanel
+            orderNumber={session.billNumber}
+            approval={approval}
+          />
+        )}
 
         {!isWaiting && (
           <Stack spacing={1} sx={{ mb: 2 }}>
