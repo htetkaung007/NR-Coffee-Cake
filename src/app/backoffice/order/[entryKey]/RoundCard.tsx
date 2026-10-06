@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Card,
-  Chip,
   Divider,
   Stack,
   Typography,
@@ -25,9 +24,7 @@ export interface RoundLine {
   quantity: number;
   menuName: string;
   imageUrl: string | null;
-  /** Required picks, e.g. "Large" — see describeLineAddons. */
-  variantText: string;
-  /** Optional add-ons, shown as chips. */
+  /** Every add-on on the line, in the order picked. */
   addonNames: string[];
   note: string | null;
 }
@@ -37,16 +34,15 @@ export interface Round {
   orderNumber: string;
   createdAt: string;
   status: string;
-  approvalExpiresAt: string | null;
+  /** When the round is due, if it's awaiting approval (approvalDeadline):
+   *  ISO time, and whether it cancels itself then (Counter) or only
+   *  becomes overdue (Table). */
+  approvalDue: { at: string; autoCancels: boolean } | null;
   /** Total quantity across the round's lines. */
   itemCount: number;
   lines: RoundLine[];
 }
 
-// Item / add-ons / qty. The qty column has a fixed width so the column
-// headers (their own grid) line up with every row's qty chip.
-const QTY_COLUMN = "48px";
-const WIDE_COLUMNS = `minmax(0, 3fr) minmax(0, 2fr) ${QTY_COLUMN}`;
 const THUMBNAIL_SIZE = 40;
 
 /** The menu item's own photo, or a first-letter tile when it has none
@@ -71,124 +67,58 @@ function Thumbnail({ name, imageUrl }: { name: string; imageUrl: string | null }
   );
 }
 
-/** One item. Wide: item | add-ons | qty in columns. Phone: add-ons wrap
- *  under the name (indented past the thumbnail), qty stays right. */
+/** One item, for the kitchen (no prices): the thumbnail, then "1 × Moat
+ *  Hnin" with the quantity first, the add-ons right under the name ("+
+ *  Default Addon1 · + Default Addon2"), and the customer's note on its
+ *  own line. One column at every width — nothing is pushed to the far
+ *  right on a phone. */
 function LineRow({ line }: { line: RoundLine }) {
   return (
-    <Box
+    <Stack
       component="li"
+      direction="row"
+      spacing={{ xs: 1, sm: 2 }}
       sx={{
-        display: "grid",
-        gridTemplateAreas: {
-          xs: `"item qty" "addons qty" "note note"`,
-          sm: `"item addons qty" "note note note"`,
-        },
-        gridTemplateColumns: {
-          xs: `minmax(0, 1fr) ${QTY_COLUMN}`,
-          sm: WIDE_COLUMNS,
-        },
-        columnGap: { xs: 1, sm: 2 },
+        alignItems: "flex-start",
         py: 1,
         "& + &": { borderTop: 1, borderColor: "divider" },
       }}
     >
-      <Stack
-        direction="row"
-        spacing={{ xs: 1, sm: 2 }}
-        sx={{ gridArea: "item", alignItems: "center", minWidth: 0 }}
-      >
-        <Thumbnail name={line.menuName} imageUrl={line.imageUrl} />
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="body1">{line.menuName}</Typography>
-          {line.variantText && (
-            <Typography variant="body2" color="text.secondary">
-              {line.variantText}
-            </Typography>
-          )}
-        </Box>
-      </Stack>
-
-      {line.addonNames.length > 0 ? (
-        <Stack
-          direction="row"
-          useFlexGap
-          sx={{
-            gridArea: "addons",
-            flexWrap: "wrap",
-            gap: 0.5,
-            alignSelf: "center",
-            // Phone: indent under the name — the 40px thumbnail plus the
-            // row's 8px gap = spacing(6).
-            pl: { xs: 6, sm: 0 },
-            mt: { xs: 1, sm: 0 },
-          }}
-        >
-          {line.addonNames.map((name, index) => (
-            <Chip
-              key={`${name}-${index}`}
-              size="small"
-              variant="outlined"
-              label={
-                <Typography variant="caption" component="span">
-                  {name}
-                </Typography>
-              }
-            />
-          ))}
-        </Stack>
-      ) : (
-        <Typography
-          aria-hidden
-          color="text.secondary"
-          sx={{
-            gridArea: "addons",
-            alignSelf: "center",
-            display: { xs: "none", sm: "block" },
-          }}
-        >
-          —
+      <Thumbnail name={line.menuName} imageUrl={line.imageUrl} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body1" sx={{ overflowWrap: "anywhere" }}>
+          <strong>{line.quantity} ×</strong> {line.menuName}
         </Typography>
-      )}
-
-      <Chip
-        size="small"
-        aria-label={`Quantity ${line.quantity}`}
-        label={
-          <Typography variant="caption" component="span">
-            ×{line.quantity}
+        {line.addonNames.length > 0 && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ overflowWrap: "anywhere" }}
+          >
+            {line.addonNames.map((name) => `+ ${name}`).join(" · ")}
           </Typography>
-        }
-        sx={{
-          gridArea: "qty",
-          justifySelf: "end",
-          alignSelf: "center",
-          bgcolor: "text.primary",
-          color: "background.paper",
-        }}
-      />
-
-      {line.note && (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={(theme) => ({
-            gridArea: "note",
-            alignItems: "flex-start",
-            mt: 1,
-            p: 1,
-            borderRadius: 1,
-            bgcolor: alpha(theme.palette.warning.main, 0.12),
-          })}
-        >
-          <EditOutlinedIcon
-            fontSize="small"
-            titleAccess="Note"
-            sx={{ color: "warning.main" }}
-          />
-          <Typography variant="body2">{line.note}</Typography>
-        </Stack>
-      )}
-    </Box>
+        )}
+        {line.note && (
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ alignItems: "flex-start", mt: 0.5, color: "text.secondary" }}
+          >
+            <EditOutlinedIcon
+              titleAccess="Note"
+              sx={{ fontSize: "1rem", mt: 0.25, flexShrink: 0 }}
+            />
+            {/* Plain text — React escapes it. */}
+            <Typography
+              variant="body2"
+              sx={{ minWidth: 0, overflowWrap: "anywhere" }}
+            >
+              {line.note}
+            </Typography>
+          </Stack>
+        )}
+      </Box>
+    </Stack>
   );
 }
 
@@ -260,33 +190,6 @@ export default function RoundCard({
         )}
       </Stack>
 
-      {/* Column headers — wide screens only; purely visual (each row's
-          cells say what they are). */}
-      <Box
-        aria-hidden
-        sx={{
-          display: { xs: "none", sm: "grid" },
-          gridTemplateColumns: WIDE_COLUMNS,
-          columnGap: 2,
-          px: 2,
-          pt: 1,
-        }}
-      >
-        <Typography variant="overline" color="text.secondary">
-          Item
-        </Typography>
-        <Typography variant="overline" color="text.secondary">
-          Add-ons
-        </Typography>
-        <Typography
-          variant="overline"
-          color="text.secondary"
-          sx={{ textAlign: "right" }}
-        >
-          Qty
-        </Typography>
-      </Box>
-
       <Box
         component="ul"
         sx={{ listStyle: "none", m: 0, px: { xs: 1, sm: 2 }, py: 1 }}
@@ -316,8 +219,8 @@ export default function RoundCard({
               suppressHydrationWarning
               sx={{ flexGrow: 1, width: { xs: "100%", sm: "auto" } }}
             >
-              {round.approvalExpiresAt &&
-                `Expires ${formatClockTime(round.approvalExpiresAt)}`}
+              {round.approvalDue &&
+                `${round.approvalDue.autoCancels ? "Expires" : "Confirm by"} ${formatClockTime(round.approvalDue.at)}`}
             </Typography>
             <Button
               variant="outlined"

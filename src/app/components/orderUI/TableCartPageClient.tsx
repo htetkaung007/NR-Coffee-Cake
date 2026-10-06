@@ -15,7 +15,7 @@ import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLinesTotal } from "@/app/lib/orderTotals";
 import { toLineAddons } from "@/app/lib/roundLine";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
-import SentAgo from "./SentAgo";
+import ApprovalWaitingPanel from "./ApprovalWaitingPanel";
 import DraftList from "./DraftList";
 import CartButton, { CartButtonStatus } from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";
@@ -319,6 +319,18 @@ export default function TableCartPageClient({
 
         {!showingRound && <ActiveRoundBanner activeRound={activeRound} />}
 
+        {/* Same place as on the Counter cart page: the round's calm,
+           soft countdown (a Table round is never cancelled — past its
+           target it reads "taking a little longer"). */}
+        {showingRound &&
+          activeRound?.status === "PENDING_APPROVAL" &&
+          activeRound.approval && (
+            <ApprovalWaitingPanel
+              orderNumber={activeRound.orderNumber}
+              approval={activeRound.approval}
+            />
+          )}
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -345,16 +357,6 @@ export default function TableCartPageClient({
                 <CartList
                   cart={roundItems}
                   title={`Sent to kitchen · ${activeRound?.orderNumber ?? ""}`}
-                  // Awaiting approval: how long ago (no deadline here).
-                  subtitle={
-                    activeRound?.status === "PENDING_APPROVAL" &&
-                    activeRound.sentSecondsAgo != null ? (
-                      <SentAgo
-                        sentSecondsAgo={activeRound.sentSecondsAgo}
-                        sync={activeRound}
-                      />
-                    ) : null
-                  }
                 />
               ) : (
                 <DraftList

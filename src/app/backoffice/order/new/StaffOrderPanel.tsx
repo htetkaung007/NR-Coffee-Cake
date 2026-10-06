@@ -19,8 +19,8 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import RemoveIcon from "@mui/icons-material/Remove";
-import { cartLineTotal, type LineAddon } from "@/app/lib/orderTotals";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { lineBreakdown, type LineAddon } from "@/app/lib/orderTotals";
+import BillLineRows from "@/app/components/BillLineRows";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import BillTotal from "../BillTotal";
 import { moneySx } from "../orderTypography";
@@ -78,7 +78,6 @@ function OrderLine({
   onChangeQuantity: (line: StaffCartLine, next: number) => void;
   onRemove: (line: StaffCartLine) => void;
 }) {
-  const addonText = line.addons.map((addon) => addon.name).join(", ");
   // While busy the buttons stay focusable (aria-disabled, clicks
   // ignored) so repeated − / + presses don't drop keyboard focus.
   const guard = (action: () => void) => () => {
@@ -113,12 +112,17 @@ function OrderLine({
             },
           })}
         >
-          <Typography variant="body1">{line.menuName}</Typography>
-          {addonText && (
-            <Typography variant="body2" color="text.secondary">
-              {addonText}
-            </Typography>
-          )}
+          {/* Itemised like every bill: the item, then each add-on with
+             what it adds — the same rows as the order detail's bill. */}
+          <BillLineRows
+            rows={lineBreakdown({
+              name: line.menuName,
+              quantity: line.quantity,
+              unitPrice: line.price,
+              addons: line.addons,
+            })}
+            itemAmountSx={moneySx}
+          />
           {line.note && (
             <Stack
               direction="row"
@@ -135,12 +139,6 @@ function OrderLine({
             </Stack>
           )}
         </ButtonBase>
-        <Typography
-          variant="body1"
-          sx={{ ...moneySx, flexShrink: 0, color: "text.primary" }}
-        >
-          {formatAmount(cartLineTotal(line))}
-        </Typography>
       </Stack>
 
       <Stack

@@ -351,6 +351,12 @@ export class TableDraftService {
     }
 
     return prisma.$transaction(async (tx: Tx) => {
+      // approvalExpiresAt stays NULL on purpose — never set it here.
+      // expireStaleApprovals cancels ANY waiting round whose
+      // approvalExpiresAt has passed (it doesn't check isCounter), and a
+      // cancelled Table round can't be put back: the drafts below are
+      // merged and deleted. A Table round's "due" time is a soft target
+      // computed from createdAt by approvalDeadline — never stored.
       const session = await tx.orderSession.create({
         data: {
           locationId,

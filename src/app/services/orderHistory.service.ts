@@ -429,9 +429,8 @@ export class OrderHistoryService {
 
   /** Fully-loaded lines for a detail view — the one include shape
    *  shared by getPaidBillDetail/getCancelledRoundDetail below, with
-   *  everything buildEntryBill/describeLineAddons need (including each
-   *  addon's addonCategory.isRequired, to split "Large" from optional
-   *  extras the same way the live Order List's bill does). */
+   *  everything buildEntryBill needs to itemise each line (the menu's
+   *  and each add-on's name, beside the price snapshots). */
   private static readonly detailOrdersInclude = {
     where: { isArchived: false },
     orderBy: { id: "asc" as const },
@@ -439,12 +438,7 @@ export class OrderHistoryService {
       menu: { select: { name: true } },
       OrdersAddons: {
         include: {
-          addon: {
-            select: {
-              name: true,
-              addonCategory: { select: { isRequired: true } },
-            },
-          },
+          addon: { select: { name: true } },
         },
       },
     },

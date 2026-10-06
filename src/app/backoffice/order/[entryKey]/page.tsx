@@ -1,10 +1,8 @@
 import { redirect } from "next/navigation";
 import { OrderSessionApprovalService } from "@/app/services";
+import { approvalDeadline } from "@/app/lib/approvalDeadline";
 import { requireBackofficeContext } from "@/app/lib/backofficeContext";
-import {
-  buildEntryBillFromSessions,
-  describeLineAddons,
-} from "@/app/lib/orderTotals";
+import { buildEntryBillFromSessions } from "@/app/lib/orderTotals";
 import OrderDetailView from "./OrderDetailView";
 
 // Awaiting approval first (oldest first — closest to expiring), then everything else newest first.
@@ -26,6 +24,18 @@ function orderRoundsForDisplay<Round extends { id: number; status: string }>(
  *  open round) or a single Counter order. `entryKey` is the same key
  *  groupSessionsForDisplay gives the card ("table-<id>" /
  *  "counter-<id>"). */
+function approvalDueFor(session: {
+  status: string;
+  isCounter: boolean;
+  createdAt: Date;
+  approvalExpiresAt: Date | null;
+}) {
+  const due = approvalDeadline(session);
+  return due
+    ? { at: due.deadline.toISOString(), autoCancels: due.autoCancels }
+    : null;
+}
+
 export default async function OrderDetailPage({
   params,
 }: {
@@ -54,20 +64,18 @@ export default async function OrderDetailPage({
     orderNumber: session.orderNumber,
     createdAt: session.createdAt.toISOString(),
     status: session.status,
-    approvalExpiresAt: session.approvalExpiresAt?.toISOString() ?? null,
+    // When it's due (approvalDeadline): Counter auto-cancels then; a
+    // Table round only becomes overdue.
+    approvalDue: approvalDueFor(session),
     itemCount: session.orders.reduce((sum, order) => sum + order.quantity, 0),
-    lines: session.orders.map((order) => {
-      const { variantText, extraNames } = describeLineAddons(order);
-      return {
-        id: order.id,
-        quantity: order.quantity,
-        menuName: order.menu.name,
-        imageUrl: order.menu.assetUrl || null,
-        variantText,
-        addonNames: extraNames,
-        note: order.note,
-      };
-    }),
+    lines: session.orders.map((order) => ({
+      id: order.id,
+      quantity: order.quantity,
+      menuName: order.menu.name,
+      imageUrl: order.menu.assetUrl || null,
+      addonNames: order.OrdersAddons.map((link) => link.addon.name),
+      note: order.note,
+    })),
   }));
 
   const firstRound = entry.sessions.reduce((oldest, session) =>

@@ -4,7 +4,8 @@ import {
   progressFraction,
   remainingLabel,
   remainingSeconds,
-  secondsUntil,
+  waitingAnnouncement,
+  waitingCopy,
 } from "./approvalCountdown";
 
 describe("remainingLabel", () => {
@@ -31,14 +32,6 @@ describe("remainingSeconds", () => {
 
   it("never goes below 0", () => {
     expect(remainingSeconds(5, 60_000)).toBe(0);
-  });
-});
-
-describe("secondsUntil", () => {
-  it("never goes below 0 once the deadline has passed", () => {
-    expect(
-      secondsUntil(new Date("2026-10-05T10:00:00Z"), new Date("2026-10-05T10:00:05Z")),
-    ).toBe(0);
   });
 });
 
@@ -70,5 +63,50 @@ describe("announcementFor", () => {
   it("stays quiet on ordinary ticks and on the first reading", () => {
     expect(announcementFor(450, 449)).toBeNull();
     expect(announcementFor(null, 300)).toBeNull();
+  });
+});
+
+describe("waitingCopy", () => {
+  it("keeps the Counter copy: auto-cancel line and the counter hint", () => {
+    const copy = waitingCopy(true);
+    expect(copy.title).toBe("Waiting for the counter to confirm");
+    expect(copy.deadlineLine("10:12")).toBe(
+      "If it isn't confirmed by 10:12, it will be cancelled automatically — you won't be charged.",
+    );
+    expect(copy.hint?.("#A013")).toBe("Still waiting? Show order #A013 at the counter.");
+    expect(copy.overdue).toBeNull();
+  });
+
+  it("gives a Table round a soft target, no hint, and a calm overdue line", () => {
+    const copy = waitingCopy(false);
+    expect(copy.title).toBe("Waiting for our staff to confirm");
+    expect(copy.subtitle).toBe("Usually confirmed within a few minutes.");
+    expect(copy.deadlineLine("10:12")).toBe("Usually confirmed by 10:12.");
+    expect(copy.hint).toBeNull();
+    expect(copy.overdue).toBe(
+      "Taking a little longer than usual — please let our staff know.",
+    );
+  });
+});
+
+describe("waitingAnnouncement", () => {
+  it("announces the minute marks for both kinds of round", () => {
+    expect(waitingAnnouncement(121, 120, true)).toBe("2 minutes left to confirm");
+    expect(waitingAnnouncement(121, 120, false)).toBe("2 minutes left to confirm");
+  });
+
+  it("announces a Table round's 'taking longer' once, as it reaches 0", () => {
+    expect(waitingAnnouncement(1, 0, false)).toBe(
+      "Taking a little longer than usual — please let our staff know.",
+    );
+    expect(waitingAnnouncement(0, 0, false)).toBeNull();
+  });
+
+  it("says nothing extra for a Counter round reaching 0", () => {
+    expect(waitingAnnouncement(1, 0, true)).toBeNull();
+  });
+
+  it("stays quiet on the first reading, even when already overdue", () => {
+    expect(waitingAnnouncement(null, 0, false)).toBeNull();
   });
 });

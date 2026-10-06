@@ -11,7 +11,6 @@ import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
 import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
-import { secondsSince } from "@/app/lib/approvalCountdown";
 import { approvalTiming } from "@/app/lib/approvalTiming";
 import CartPageClient from "@/app/components/orderUI/CartPageClient";
 import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
@@ -90,11 +89,9 @@ export default async function CartPage({
                   orderNumber: activeRound.orderNumber,
                   status: activeRound.status,
                   total: orderLinesTotal(activeRound.orders),
-                  // Server clock: created at the moment of Send.
-                  sentSecondsAgo:
-                    activeRound.status === "PENDING_APPROVAL"
-                      ? secondsSince(activeRound.createdAt, new Date())
-                      : null,
+                  // The soft countdown — never auto-cancels for a Table
+                  // round (see approvalDeadline).
+                  approval: approvalTiming(activeRound, new Date()),
                 }
               : null
           }

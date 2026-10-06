@@ -1,6 +1,7 @@
 "use client";
 
 import { Chip } from "@mui/material";
+import type { ApprovalTiming } from "@/app/lib/approvalTiming";
 
 /** Exported so the History page (see /history/page.tsx) can label past
  *  rounds the same way this banner labels the current one, instead of
@@ -19,9 +20,10 @@ export interface ActiveRound {
    *  and its billing total. */
   id?: number;
   total?: number;
-  /** Awaiting approval only: how long ago it was sent, in seconds, on
-   *  the server's clock (a Table round has no deadline). */
-  sentSecondsAgo?: number | null;
+  /** Awaiting approval only: the soft countdown (server clock) — a
+   *  Table round's target is one approval window after it was sent; past
+   *  it the round is overdue but never cancelled. Null when not waiting. */
+  approval?: ApprovalTiming | null;
 }
 
 /** Shown on TableCartPageClient's draft view (not on the menu page,

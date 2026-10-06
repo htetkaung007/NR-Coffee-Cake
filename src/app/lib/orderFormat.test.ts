@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   formatAmount,
+  formatAmountParts,
   formatCompactAmount,
   formatMoneyDelta,
 } from "./orderFormat";
@@ -61,5 +62,20 @@ describe("formatCompactAmount", () => {
     [-999950, "-1M"],
   ])("keeps the sign of a negative amount (%s → %s)", (value, expected) => {
     expect(formatCompactAmount(value)).toBe(expected);
+  });
+});
+
+describe("formatAmountParts", () => {
+  it("splits an amount into its grouped number and the currency", () => {
+    expect(formatAmountParts(4570)).toEqual({ value: "4,570", currency: "MMK" });
+  });
+
+  it("writes zero as 0", () => {
+    expect(formatAmountParts(0)).toEqual({ value: "0", currency: "MMK" });
+  });
+
+  it("is what formatAmount joins with one space", () => {
+    const { value, currency } = formatAmountParts(1234567);
+    expect(formatAmount(1234567)).toBe(`${value} ${currency}`);
   });
 });

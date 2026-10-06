@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Box, Button, GlobalStyles, Stack, Typography } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
 import type { EntryBill } from "@/app/lib/orderTotals";
+import BillLineRows from "@/app/components/BillLineRows";
 import {
   countLabel,
   formatAmount,
@@ -225,26 +226,13 @@ export default function ReceiptLayout({
               {isClient && ` · ${formatClockTime(round.time)}`}
             </Typography>
             {round.lines.map((line) => (
-              <Stack
+              // Itemised like the on-screen bill; compact, all black.
+              <BillLineRows
                 key={line.id}
-                direction="row"
-                spacing={1}
-                sx={{ justifyContent: "space-between" }}
-              >
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="body2">
-                    {line.name} ×{line.qty}
-                  </Typography>
-                  {line.addonSummary && (
-                    <Typography variant="caption" component="p">
-                      {line.addonSummary}
-                    </Typography>
-                  )}
-                </Box>
-                <Typography variant="body2" sx={{ flexShrink: 0 }}>
-                  {formatAmount(line.lineTotal)}
-                </Typography>
-              </Stack>
+                rows={line.breakdown}
+                density="compact"
+                print
+              />
             ))}
           </Box>
         ))}

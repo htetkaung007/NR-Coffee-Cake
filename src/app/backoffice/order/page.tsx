@@ -24,6 +24,7 @@ export default async function OrderPage() {
     hasPendingApproval: entry.hasPendingApproval,
     earliestApprovalExpiresAt:
       entry.earliestApprovalExpiresAt?.toISOString() ?? null,
+    earliestApprovalAutoCancels: entry.earliestApprovalAutoCancels,
     combinedTotal: entry.combinedTotal,
     sessions: entry.sessions.map((session) => ({
       id: session.id,

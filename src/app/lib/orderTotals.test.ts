@@ -4,6 +4,7 @@ import {
   canPrintBill,
   cartLineTotal,
   cartLinesTotal,
+  lineBreakdown,
   lineTotal,
   orderLineTotal,
   orderLinesTotal,
@@ -131,5 +132,59 @@ describe("canPrintBill", () => {
 
   it("is false for an entry with no rounds", () => {
     expect(canPrintBill([])).toBe(false);
+  });
+});
+
+describe("lineBreakdown", () => {
+  /** The rows always add up to THE line total — never a second rule. */
+  function expectSumsToLineTotal(line: Parameters<typeof lineBreakdown>[0]) {
+    const sum = lineBreakdown(line).reduce((total, row) => total + row.amount, 0);
+    expect(sum).toBe(
+      lineTotal(
+        line.unitPrice,
+        line.addons.map((addon) => addon.unitPrice),
+        line.quantity,
+      ),
+    );
+  }
+
+  it("splits Latte 2,000 + Extra shot 500, ×2 into 4,000 and 1,000", () => {
+    const line = {
+      name: "Latte",
+      quantity: 2,
+      unitPrice: 2000,
+      addons: [{ name: "Extra shot", unitPrice: 500 }],
+    };
+    expect(lineBreakdown(line)).toEqual([
+      { kind: "item", name: "Latte", quantity: 2, amount: 4000 },
+      { kind: "addon", name: "Extra shot", quantity: 2, amount: 1000 },
+    ]);
+    expectSumsToLineTotal(line);
+  });
+
+  it("gives every add-on its own row, in order", () => {
+    const line = {
+      name: "Moat Hnin",
+      quantity: 1,
+      unitPrice: 3000,
+      addons: [
+        { name: "Default Addon1", unitPrice: 300 },
+        { name: "Default Addon2", unitPrice: 0 },
+      ],
+    };
+    expect(lineBreakdown(line).map((row) => [row.kind, row.name, row.amount])).toEqual([
+      ["item", "Moat Hnin", 3000],
+      ["addon", "Default Addon1", 300],
+      ["addon", "Default Addon2", 0],
+    ]);
+    expectSumsToLineTotal(line);
+  });
+
+  it("is just the item row when there are no add-ons", () => {
+    const line = { name: "Espresso", quantity: 3, unitPrice: 1500, addons: [] };
+    expect(lineBreakdown(line)).toEqual([
+      { kind: "item", name: "Espresso", quantity: 3, amount: 4500 },
+    ]);
+    expectSumsToLineTotal(line);
   });
 });

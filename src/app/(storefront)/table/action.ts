@@ -11,7 +11,7 @@ import {
 import { getContributorToken } from "@/app/lib/contributorToken";
 import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
-import { secondsSince } from "@/app/lib/approvalCountdown";
+import { approvalTiming } from "@/app/lib/approvalTiming";
 import {
   addDraftItemSchema,
   removeDraftItemSchema,
@@ -237,11 +237,9 @@ export async function pollTableAction(tableId: number, locationId: number) {
           orderNumber: activeRound.orderNumber,
           status: activeRound.status,
           total: orderLinesTotal(activeRound.orders),
-          // Server clock: a Table round is created at the moment of Send.
-          sentSecondsAgo:
-            activeRound.status === "PENDING_APPROVAL"
-              ? secondsSince(activeRound.createdAt, new Date())
-              : null,
+          // The soft countdown (server clock) — same shape as Counter's,
+          // but a Table round never auto-cancels (see approvalDeadline).
+          approval: approvalTiming(activeRound, new Date()),
         }
       : null,
     roundItems: activeRound ? activeRound.orders.map(toCartLine) : [],

@@ -50,6 +50,9 @@ interface OrderEntry {
   /** ISO time the most urgent pending round auto-cancels; null when
    *  nothing in the entry is awaiting approval. */
   earliestApprovalExpiresAt: string | null;
+  /** Counter: the round cancels itself when due. Table: it only becomes
+   *  overdue ("Overdue m:ss"). */
+  earliestApprovalAutoCancels: boolean;
   combinedTotal: number;
   /** Only ids and status — Mark-as-Paid settles every round together.
    *  The items themselves are shown on the entry's detail page. */
@@ -241,6 +244,7 @@ function EntryCard({
                     </Typography>
                     <ApprovalCountdown
                       expiresAt={entry.earliestApprovalExpiresAt}
+                      autoCancels={entry.earliestApprovalAutoCancels}
                     />
                   </>
                 )}

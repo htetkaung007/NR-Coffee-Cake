@@ -1,4 +1,9 @@
-import { alpha, type Theme, type ThemeOptions } from "@mui/material/styles";
+import {
+  alpha,
+  darken,
+  type Theme,
+  type ThemeOptions,
+} from "@mui/material/styles";
 import { inputLabelClasses } from "@mui/material/InputLabel";
 import { outlinedInputClasses } from "@mui/material/OutlinedInput";
 
@@ -124,6 +129,9 @@ export const sharedThemeOptions: ThemeOptions = {
 
     h1: {
       fontFamily: FONT_DISPLAY,
+      // Playfair's default old-style figures make "Table 1" read as
+      // "Table ı" and "#A024" sit low — use its lining figures.
+      fontVariantNumeric: "lining-nums",
       fontWeight: 800,
       fontSize: "2rem",
       lineHeight: 1.3,
@@ -135,6 +143,9 @@ export const sharedThemeOptions: ThemeOptions = {
 
     h2: {
       fontFamily: FONT_DISPLAY,
+      // Playfair's default old-style figures make "Table 1" read as
+      // "Table ı" and "#A024" sit low — use its lining figures.
+      fontVariantNumeric: "lining-nums",
       fontWeight: 800,
       fontSize: "1.6rem",
       lineHeight: 1.35,
@@ -169,6 +180,9 @@ export const sharedThemeOptions: ThemeOptions = {
     // Section headings
     h6: {
       fontFamily: FONT_DISPLAY,
+      // Playfair's default old-style figures make "Table 1" read as
+      // "Table ı" and "#A024" sit low — use its lining figures.
+      fontVariantNumeric: "lining-nums",
       fontWeight: 800,
       fontSize: "1.1rem",
       lineHeight: 1.4,
@@ -249,6 +263,37 @@ export const sharedThemeOptions: ThemeOptions = {
           borderRadius: BORDER_RADIUS,
         },
       },
+      variants: [
+        {
+          // A filled success button (Order List "Paid", the Mark-as-paid
+          // dialog's confirm): success.main is too light for any text on
+          // it (white 2.5:1), so it fills with palette.successText — the
+          // success role's text shade — instead, with whichever text
+          // reads on it (light: white 5.5:1; dark: near-black 7.3:1) and
+          // a slightly darker hover. Only where the theme defines
+          // successText (the Backoffice's); success.main itself is
+          // unchanged for chips and badges.
+          props: { variant: "contained", color: "success" },
+          style: ({ theme }) => {
+            const fill = theme.palette.successText;
+            if (!fill) return {};
+            // MUI paints contained buttons from these two variables; the
+            // disabled look is untouched. MUI's own hover (success.dark)
+            // is cancelled, ours is gated so it never sticks on touch
+            // (DESIGN.md Rule 7).
+            return {
+              "--variant-containedBg": fill,
+              "--variant-containedColor": theme.palette.getContrastText(fill),
+              "@media (hover: hover)": {
+                "&:hover": { "--variant-containedBg": fill },
+              },
+              [hoverCapableMedia]: {
+                "&:hover": { "--variant-containedBg": darken(fill, 0.15) },
+              },
+            };
+          },
+        },
+      ],
     },
 
     MuiTextField: {

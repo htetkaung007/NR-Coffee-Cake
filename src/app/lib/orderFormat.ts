@@ -7,9 +7,17 @@
  *  import this instead of writing it out. */
 export const CURRENCY_LABEL = "MMK";
 
+/** { value: "4,570", currency: "MMK" } — an amount's two parts, for a
+ *  place that styles them apart (a big number, a small currency). The
+ *  ONE place an amount is formatted; formatAmount joins the parts. */
+export function formatAmountParts(amount: number) {
+  return { value: amount.toLocaleString(), currency: CURRENCY_LABEL };
+}
+
 /** "1,234 MMK" — every price and total on screen and on paper. */
 export function formatAmount(amount: number) {
-  return `${amount.toLocaleString()} ${CURRENCY_LABEL}`;
+  const { value, currency } = formatAmountParts(amount);
+  return `${value} ${currency}`;
 }
 
 /** "999", "24.4k", "1.3M" — an amount in a tight spot (a chart's axis or

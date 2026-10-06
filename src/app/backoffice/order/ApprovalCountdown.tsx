@@ -44,28 +44,41 @@ function formatRemaining(totalSeconds: number) {
 }
 
 interface ApprovalCountdownProps {
-  /** ISO timestamp the approval window closes (OrderSession.
-   *  approvalExpiresAt). */
+  /** ISO time the most urgent round is due (approvalDeadline). */
   expiresAt: string;
+  /** Counter: the round cancels itself then ("Expiring…"). Table: it
+   *  only becomes overdue — "Overdue m:ss", counting up. */
+  autoCancels: boolean;
 }
 
 /**
- * "m:ss left" until a Counter order's approval window closes (it
- * auto-cancels then). At zero it reads "Expiring…" — the Order List's
- * next auto-refresh drops the entry.
+ * "m:ss left" until the most urgent round awaiting approval is due. At
+ * zero a Counter round reads "Expiring…" (it auto-cancels — the Order
+ * List's next auto-refresh drops the entry); a Table round, which is
+ * never cancelled, reads "Overdue m:ss" counting up, so the cashier
+ * notices it. Same shared clock either way; the warning tone comes from
+ * the "Needs approval" row it sits in.
  */
-export default function ApprovalCountdown({ expiresAt }: ApprovalCountdownProps) {
+export default function ApprovalCountdown({
+  expiresAt,
+  autoCancels,
+}: ApprovalCountdownProps) {
   const now = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   let label = "--:-- left";
   if (now !== null) {
     // The one definition of "time left" (rounded up, never below 0) —
     // here measured straight against the deadline, nothing elapsed yet.
-    const secondsLeft = remainingSeconds(
-      (new Date(expiresAt).getTime() - now) / 1000,
-      0,
-    );
-    label = secondsLeft === 0 ? "Expiring…" : `${formatRemaining(secondsLeft)} left`;
+    const secondsToDeadline = (new Date(expiresAt).getTime() - now) / 1000;
+    const secondsLeft = remainingSeconds(secondsToDeadline, 0);
+    if (secondsLeft > 0) {
+      label = `${formatRemaining(secondsLeft)} left`;
+    } else if (autoCancels) {
+      label = "Expiring…";
+    } else {
+      // Whole seconds past the deadline, counting up from 0:00.
+      label = `Overdue ${formatRemaining(Math.max(0, Math.floor(-secondsToDeadline)))}`;
+    }
   }
 
   return (

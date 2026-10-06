@@ -14,7 +14,7 @@ import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import type { ApprovalTiming } from "@/app/lib/approvalTiming";
-import CounterWaitingPanel from "./CounterWaitingPanel";
+import ApprovalWaitingPanel from "./ApprovalWaitingPanel";
 import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 import { useCartValidation } from "@/app/lib/hooks/useCartValidation";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
@@ -421,7 +421,7 @@ export default function CartPageClient({
         </Stack>
 
         {isWaiting && session && (
-          <CounterWaitingPanel
+          <ApprovalWaitingPanel
             orderNumber={session.billNumber}
             approval={approval}
           />

@@ -74,9 +74,8 @@ export function orderLinesTotal(orders: PricedOrderLine[]) {
   return orders.reduce((sum, order) => sum + orderLineTotal(order), 0);
 }
 
-/** An Order row as the bill and the round cards read it: its price
- *  snapshot inputs plus names, and whether each addon was a required
- *  pick. */
+/** An Order row as the bill reads it: its price snapshot inputs plus
+ *  names. */
 interface BillLine {
   id: number;
   quantity: number;
@@ -84,38 +83,47 @@ interface BillLine {
   menu: { name: string };
   OrdersAddons: {
     unitPrice: number;
-    addon: {
-      name: string;
-      addonCategory: { isRequired: boolean };
-    };
+    addon: { name: string };
   }[];
 }
 
-/** Splits a line's addons into its variant (picks from a REQUIRED addon
- *  category — e.g. size "Large": the customer had to choose one, so it
- *  describes which version of the item this is) and its optional
- *  extras. The one place this rule lives; the bill's addonSummary and
- *  the order detail page's round cards both use it. */
-export function describeLineAddons(line: Pick<BillLine, "OrdersAddons">) {
-  const variantNames: string[] = [];
-  const extraNames: string[] = [];
-  for (const { addon } of line.OrdersAddons) {
-    (addon.addonCategory.isRequired ? variantNames : extraNames).push(
-      addon.name,
-    );
-  }
-  return { variantText: variantNames.join(", "), extraNames };
+/** One row of a bill line, item first then each add-on: its name, the
+ *  line's quantity, and what it adds to the line (snapshot price ×
+ *  quantity). The rows of a line ALWAYS add up to its lineTotal — the
+ *  tests hold them to it. */
+export interface BreakdownRow {
+  kind: "item" | "addon";
+  name: string;
+  quantity: number;
+  amount: number;
 }
 
-/** "Large · +2 add-ons", "Large", "+1 add-on" or "" — the one-line
- *  summary under an item's name on the bill. */
-function addonSummary(line: Pick<BillLine, "OrdersAddons">) {
-  const { variantText, extraNames } = describeLineAddons(line);
-  const extras =
-    extraNames.length > 0
-      ? `+${extraNames.length} ${extraNames.length === 1 ? "add-on" : "add-ons"}`
-      : "";
-  return [variantText, extras].filter(Boolean).join(" · ");
+/** A line as lineBreakdown reads it — names plus price snapshots. */
+export interface BreakdownSource {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  addons: readonly { name: string; unitPrice: number }[];
+}
+
+/** A line itemised for a bill: "Latte ×2 4,000" then "+ Extra shot ×2
+ *  1,000" — add-ons belong to ONE unit, so each is multiplied by the
+ *  quantity too (lineTotal's rule, split into its parts). */
+export function lineBreakdown(line: BreakdownSource): BreakdownRow[] {
+  return [
+    {
+      kind: "item",
+      name: line.name,
+      quantity: line.quantity,
+      amount: lineTotal(line.unitPrice, [], line.quantity),
+    },
+    ...line.addons.map((addon) => ({
+      kind: "addon" as const,
+      name: addon.name,
+      quantity: line.quantity,
+      amount: lineTotal(addon.unitPrice, [], line.quantity),
+    })),
+  ];
 }
 
 interface BillSourceRound<Time> {
@@ -164,10 +172,17 @@ export function buildEntryBill<Time>(rounds: BillSourceRound<Time>[]) {
       time: round.createdAt,
       lines: round.orders.map((line) => ({
         id: line.id,
-        name: line.menu.name,
-        qty: line.quantity,
-        addonSummary: addonSummary(line),
         lineTotal: orderLineTotal(line),
+        // Item, then one row per add-on — what BillLineRows renders.
+        breakdown: lineBreakdown({
+          name: line.menu.name,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          addons: line.OrdersAddons.map((link) => ({
+            name: link.addon.name,
+            unitPrice: link.unitPrice,
+          })),
+        }),
       })),
     })),
     pendingRounds,

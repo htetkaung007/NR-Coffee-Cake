@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from "../../lib/errors";
 import { orderLinesTotal } from "../../lib/orderTotals";
 import { BillService } from "../bill.service";
 import { OrderSessionService } from "./orderSession.service";
+import { approvalDeadline } from "../../lib/approvalDeadline";
 import { Prisma } from "../../../../prisma/generated/browser";
 import type { RejectDetails } from "../../lib/rejectReason";
 
@@ -283,15 +284,8 @@ export class OrderSessionApprovalService {
           where: { isArchived: false },
           include: {
             menu: true,
-            // isRequired tells a required pick (a size/variant, e.g.
-            // "Large") from an optional extra — see describeLineAddons.
-            OrdersAddons: {
-              include: {
-                addon: {
-                  include: { addonCategory: { select: { isRequired: true } } },
-                },
-              },
-            },
+            // Each add-on's name, for the itemised bill and round cards.
+            OrdersAddons: { include: { addon: true } },
           },
         },
       },
@@ -356,6 +350,7 @@ export class OrderSessionApprovalService {
       total: number;
       billSessionId: number | null;
       orderNumber: string;
+      createdAt: Date;
       approvalExpiresAt: Date | null;
     },
   >(sessions: T[]) {
@@ -366,10 +361,13 @@ export class OrderSessionApprovalService {
         title: string;
         isTableGroup: boolean;
         hasPendingApproval: boolean;
-        /** Earliest approvalExpiresAt among this group's
-         *  PENDING_APPROVAL sessions — when the group's most urgent
-         *  round times out and auto-cancels. Null if none is pending. */
+        /** When the group's most urgent PENDING_APPROVAL round is due
+         *  (approvalDeadline — Counter: auto-cancels; Table: becomes
+         *  overdue). Null if none is pending. */
         earliestApprovalExpiresAt: Date | null;
+        /** Whether that most urgent round cancels itself when due
+         *  (Counter) or only becomes overdue (Table). */
+        earliestApprovalAutoCancels: boolean;
         combinedTotal: number;
         sessions: T[];
       }
@@ -378,8 +376,8 @@ export class OrderSessionApprovalService {
     for (const session of sessions) {
       const key = OrderSessionApprovalService.entryKeyFor(session);
 
-      const pendingExpiry =
-        session.status === "PENDING_APPROVAL" ? session.approvalExpiresAt : null;
+      // null unless the round is awaiting approval (see approvalDeadline).
+      const due = approvalDeadline(session);
 
       const existing = groups.get(key);
       if (existing) {
@@ -389,11 +387,12 @@ export class OrderSessionApprovalService {
           existing.hasPendingApproval = true;
         }
         if (
-          pendingExpiry &&
+          due &&
           (!existing.earliestApprovalExpiresAt ||
-            pendingExpiry < existing.earliestApprovalExpiresAt)
+            due.deadline < existing.earliestApprovalExpiresAt)
         ) {
-          existing.earliestApprovalExpiresAt = pendingExpiry;
+          existing.earliestApprovalExpiresAt = due.deadline;
+          existing.earliestApprovalAutoCancels = due.autoCancels;
         }
         continue;
       }
@@ -403,7 +402,8 @@ export class OrderSessionApprovalService {
         title: session.label,
         isTableGroup: !session.isCounter,
         hasPendingApproval: session.status === "PENDING_APPROVAL",
-        earliestApprovalExpiresAt: pendingExpiry,
+        earliestApprovalExpiresAt: due?.deadline ?? null,
+        earliestApprovalAutoCancels: due?.autoCancels ?? false,
         combinedTotal: session.total,
         sessions: [session],
       });
@@ -427,8 +427,9 @@ export class OrderSessionApprovalService {
     // Entries with something awaiting a decision surface first — a
     // cashier's most urgent work (Accept/Reject) shouldn't be buried
     // below tables that only need eventual payment. Among those, the
-    // one closest to timing out (5-minute auto-cancel) comes first;
-    // a pending group with no expiry recorded sorts last of them.
+    // one whose most urgent round is due first comes first (Counter:
+    // auto-cancels then; Table: becomes overdue — so the longest-waiting
+    // table rises too); a pending group with no deadline sorts last.
     // Every other group keeps its existing order.
     const allGroups = Array.from(groups.values());
     const waiting = allGroups
