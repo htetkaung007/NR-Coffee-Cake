@@ -11,17 +11,23 @@ export default async function MenuCategoriesPage() {
   const { companyId, location } = context;
 
   const { locationId } = location;
-  const [visible, hidden, shopName] = await Promise.all([
+  const [visible, hidden, shopName, menusByCategory] = await Promise.all([
     MenuCategoryService.getVisibleCategories(companyId, locationId),
     MenuCategoryService.getHiddenCategories(companyId, locationId),
     LocationService.getShopNameForLocation(locationId),
+    MenuCategoryService.getCategoryMenus(companyId, locationId),
   ]);
 
-  const toItem = (category: (typeof visible)[number]) => ({
-    id: category.id,
-    name: category.name,
-    itemCount: category._count.menuMenuCategory,
-  });
+  // "N items" is the length of the list shown, so the two always agree.
+  const toItem = (category: (typeof visible)[number]) => {
+    const menus = menusByCategory.get(category.id) ?? [];
+    return {
+      id: category.id,
+      name: category.name,
+      itemCount: menus.length,
+      menus,
+    };
+  };
 
   return (
     <MenuCategoryOrderView

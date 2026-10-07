@@ -18,7 +18,8 @@ export default async function EditLocationPage({
   if (!scope) return fallback;
 
   const location = await LocationService.getLocationById(locationId);
-  if (!location) {
+  // Another company's location reads as not found.
+  if (!location || location.companyId !== scope.companyId) {
     return (
       <Box sx={{ p: 3 }}>
         <Typography color="text.secondary">Location not found.</Typography>
@@ -26,8 +27,10 @@ export default async function EditLocationPage({
     );
   }
 
-  const daysUntilDeletable = LocationService.getDaysUntilDeletable(
-    location.archivedAt,
+  // Display only — the delete action checks the same rule again.
+  const deletion = await LocationService.getDeletion(
+    location.id,
+    scope.companyId,
   );
 
   return (
@@ -36,9 +39,8 @@ export default async function EditLocationPage({
         id: location.id,
         name: location.name,
         isArchived: location.isArchived,
-        archivedAt: location.archivedAt?.toISOString() ?? null,
       }}
-      daysUntilDeletable={daysUntilDeletable}
+      deletion={deletion}
     />
   );
 }

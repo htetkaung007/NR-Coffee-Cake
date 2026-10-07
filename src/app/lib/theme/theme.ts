@@ -57,7 +57,9 @@ export function getBoTheme(mode: PaletteMode) {
         main: isLight ? "#ed6c02" : "#ffa726",
         light: isLight ? "#ff9800" : "#ffb74d",
         dark: isLight ? "#e65100" : "#f57c00",
-        contrastText: isLight ? "#fff" : "rgba(0, 0, 0, 0.87)",
+        // Dark text in both modes: white on the light-mode orange is only
+        // 3.1:1; near-black is ~6:1 (light) and ~10:1 (dark).
+        contrastText: "rgba(0, 0, 0, 0.87)",
       },
       error: {
         // Destructive actions (Reject) and the Order List's pending dot/border

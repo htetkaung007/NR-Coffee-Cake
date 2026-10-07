@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Alert,
   Box,
@@ -40,6 +39,10 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
+import CreateMenuCategoryDialog from "@/app/components/menuCategory/CreateMenuCategoryDialog";
+import StatusSnackbar, {
+  type StatusMessage,
+} from "@/app/components/StatusSnackbar";
 import EditMenuCategoryDialog, {
   type EditableMenuCategory,
 } from "@/app/components/EditMenuCategoryDialog";
@@ -52,7 +55,7 @@ import {
   sortMenuCategoriesAlphabeticallyAction,
 } from "./action";
 import SortableCategoryRow, {
-  itemCountLabel,
+  CategoryMenusPreview,
   type CategoryItem,
 } from "./SortableCategoryRow";
 import CategoryTabsPreview from "./CategoryTabsPreview";
@@ -106,6 +109,10 @@ export default function MenuCategoryOrderView({
   const [isSortConfirmOpen, setIsSortConfirmOpen] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
   const [editing, setEditing] = useState<EditableMenuCategory | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createdMessage, setCreatedMessage] = useState<StatusMessage | null>(
+    null,
+  );
 
   // ↑ / ↓: after the row moves, put focus back on the same arrow (or
   // the other one, if the row reached an end and this one is disabled)
@@ -212,7 +219,9 @@ export default function MenuCategoryOrderView({
     const previous = items;
     const collator = new Intl.Collator(undefined, { sensitivity: "base" });
     setItems(
-      [...items].sort((a, b) => collator.compare(a.name, b.name) || a.id - b.id),
+      [...items].sort(
+        (a, b) => collator.compare(a.name, b.name) || a.id - b.id,
+      ),
     );
     setError(null);
     setStatusMessage("Categories sorted A to Z.");
@@ -235,9 +244,7 @@ export default function MenuCategoryOrderView({
 
   return (
     <>
-      <Box
-        sx={{ px: { xs: 0, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2, md: 3 } }}
-      >
+      <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2, md: 3 } }}>
         <Stack
           direction="row"
           useFlexGap
@@ -258,8 +265,7 @@ export default function MenuCategoryOrderView({
             </Typography>
           </Box>
           <Button
-            component={Link}
-            href="/backoffice/menu_categories/new"
+            onClick={() => setIsCreateOpen(true)}
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ display: { xs: "none", sm: "inline-flex" }, minHeight: 44 }}
@@ -428,7 +434,9 @@ export default function MenuCategoryOrderView({
                             borderColor: "divider",
                             borderRadius: 2,
                             [hoverCapableMedia]: {
-                              "&:hover": { bgcolor: theme.palette.action.hover },
+                              "&:hover": {
+                                bgcolor: theme.palette.action.hover,
+                              },
                             },
                             "&.Mui-focusVisible": {
                               outline: `2px solid ${theme.palette.primary.main}`,
@@ -440,9 +448,7 @@ export default function MenuCategoryOrderView({
                             <Typography variant="body1" noWrap>
                               {category.name}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {itemCountLabel(category.itemCount)}
-                            </Typography>
+                            <CategoryMenusPreview menus={category.menus} />
                           </Box>
                           <Typography
                             variant="body2"
@@ -485,9 +491,27 @@ export default function MenuCategoryOrderView({
       </Box>
 
       <NewItemFab
-        href="/backoffice/menu_categories/new"
+        onClick={() => setIsCreateOpen(true)}
         label="New menu category"
         hideFrom="sm"
+      />
+
+      {/* New categories go last in the company order (the service
+          appends them); refresh brings the list up to date in place. */}
+      <CreateMenuCategoryDialog
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreated={(created) => {
+          setCreatedMessage({
+            text: `${created.name} created`,
+            severity: "success",
+          });
+          router.refresh();
+        }}
+      />
+      <StatusSnackbar
+        message={createdMessage}
+        onClose={() => setCreatedMessage(null)}
       />
 
       <Dialog
@@ -495,7 +519,9 @@ export default function MenuCategoryOrderView({
         onClose={() => setIsSortConfirmOpen(false)}
         aria-labelledby="sort-confirm-title"
       >
-        <DialogTitle id="sort-confirm-title">Sort categories A → Z?</DialogTitle>
+        <DialogTitle id="sort-confirm-title">
+          Sort categories A → Z?
+        </DialogTitle>
         <DialogContent>
           <DialogContentText>
             Your custom order will be replaced. This can&apos;t be undone.

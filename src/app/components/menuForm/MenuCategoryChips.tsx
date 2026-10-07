@@ -1,8 +1,7 @@
 "use client";
 
-import { Box, Chip, Stack, Typography } from "@mui/material";
-import Link from "next/link";
-import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 
 export interface MenuCategoryOption {
   id: number;
@@ -13,12 +12,15 @@ interface MenuCategoryChipsProps {
   categories: MenuCategoryOption[];
   selectedCategoryIds: number[];
   onToggle: (id: number) => void;
+  /** "+ New category" — opens the create dialog (no navigation). */
+  onCreateCategory: () => void;
 }
 
 export default function MenuCategoryChips({
   categories,
   selectedCategoryIds,
   onToggle,
+  onCreateCategory,
 }: MenuCategoryChipsProps) {
   return (
     <Box>
@@ -36,20 +38,14 @@ export default function MenuCategoryChips({
         <Typography variant="body2" sx={{ mb: 1 }}>
           Menu Category
         </Typography>
-        <Typography
-          variant="caption"
-          component={Link}
-          href="/backoffice/menu_categories/new"
-          sx={{
-            color: "primary.main",
-            textDecoration: "none",
-            [hoverCapableMedia]: {
-              "&:hover": { textDecoration: "underline" },
-            },
-          }}
+        <Button
+          size="small"
+          startIcon={<AddIcon fontSize="small" />}
+          onClick={onCreateCategory}
+          sx={{ minHeight: 44 }}
         >
-          + Add Category
-        </Typography>
+          New category
+        </Button>
       </Stack>
       <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
         {categories.map((category) => {

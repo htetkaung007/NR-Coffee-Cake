@@ -184,8 +184,8 @@ export default function CategoryTabsPreview({
               ))}
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              “All” opens first; the tabs follow this order — on the staff
-              order screen too.
+              “All” opens first; the tabs follow this order — on the staff order
+              screen too.
               {hasEmptyCategories &&
                 " Categories without items stay hidden from customers until you add one."}
             </Typography>

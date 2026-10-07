@@ -1,6 +1,10 @@
 import { prisma } from "../utils/prisma";
-import type { Prisma } from "../../../prisma/generated/client";
-import { ValidationError } from "../lib/errors";
+import { Prisma } from "../../../prisma/generated/client";
+import { AppError, NotFoundError, ValidationError } from "../lib/errors";
+import {
+  groupCategoryMenus,
+  planCategoryMenuRemoval,
+} from "../lib/categoryMenus";
 
 type Tx = Prisma.TransactionClient;
 
@@ -94,6 +98,49 @@ export class MenuCategoryService {
     });
   }
 
+  /** Every category's menus for the categories page (lib/categoryMenus:
+   *  status at this location, other-category counts), with four queries
+   *  for the whole page: the company's active links (link, menu and
+   *  category live — the same set "N items" counts), the stock rows and
+   *  hidden-menu rows here, and the categories visible here. */
+  static async getCategoryMenus(companyId: number, locationId: number) {
+    const links = await prisma.menuMenuCategory.findMany({
+      where: {
+        isArchived: false,
+        menu: { isArchived: false },
+        menuCategory: { companyId, isArchived: false },
+      },
+      select: {
+        menuId: true,
+        menuCategoryId: true,
+        menu: { select: { name: true, assetUrl: true } },
+      },
+    });
+    const menuIds = [...new Set(links.map((link) => link.menuId))];
+
+    const [stocks, hiddenRows, visibleCategories] = await Promise.all([
+      prisma.menuStock.findMany({
+        where: { menuId: { in: menuIds }, locationId, isArchived: false },
+        select: { menuId: true, quantity: true, isManuallyDisabled: true },
+      }),
+      prisma.disableLocationMenus.findMany({
+        where: { menuId: { in: menuIds }, locationId, isArchived: false },
+        select: { menuId: true },
+      }),
+      prisma.menuCategory.findMany({
+        where: visibleAtLocation(companyId, locationId),
+        select: { id: true },
+      }),
+    ]);
+
+    return groupCategoryMenus({
+      links,
+      visibleCategoryIds: new Set(visibleCategories.map((category) => category.id)),
+      stockByMenuId: new Map(stocks.map((stock) => [stock.menuId, stock])),
+      hiddenMenuIds: new Set(hiddenRows.map((row) => row.menuId)),
+    });
+  }
+
   static async createMenuCategory(
     companyId: number,
     name: string,
@@ -132,25 +179,39 @@ export class MenuCategoryService {
     });
   }
 
-  /** Rename a category, and flip whether it's shown at this location —
+  /** Rename a category, flip whether it's shown at this location —
    *  toggling a DisableLocationMenuCategories row rather than a column on
    *  MenuCategory itself, since "shown or not" is a per-location setting,
-   *  not a property of the category. */
+   *  not a property of the category — and take menus out of it
+   *  (`removeMenuIds`), all in ONE transaction: any refusal leaves
+   *  nothing changed.
+   *
+   *  Removing (planCategoryMenuRemoval): every id must be in THIS
+   *  category, and no menu may end with no category. Only this
+   *  category's links go, deleted the way MenuService.updateMenu
+   *  replaces a menu's links; other categories, the menus, stock and
+   *  orders are never touched. Serializable, so two saves removing a
+   *  menu's last two categories at once can't both pass the check — the
+   *  second fails and asks to try again. */
   static async updateMenuCategory(
     id: number,
-    input: { name: string; locationId: number; isEnabled: boolean },
+    input: {
+      companyId: number;
+      name: string;
+      locationId: number;
+      isEnabled: boolean;
+      removeMenuIds: readonly number[];
+    },
   ) {
     const category = await prisma.menuCategory.findFirst({
-      where: { id, isArchived: false },
+      where: { id, companyId: input.companyId, isArchived: false },
     });
-    if (!category) {
-      throw new ValidationError("Menu category not found.");
-    }
+    if (!category) throw new NotFoundError("Menu category", id);
 
     const nameTaken = await prisma.menuCategory.findFirst({
       where: {
         id: { not: id },
-        companyId: category.companyId,
+        companyId: input.companyId,
         isArchived: false,
         name: { equals: input.name, mode: "insensitive" },
       },
@@ -161,29 +222,87 @@ export class MenuCategoryService {
       );
     }
 
-    return prisma.$transaction(async (tx: Tx) => {
-      const updated = await tx.menuCategory.update({
-        where: { id },
-        data: { name: input.name },
-      });
+    try {
+      return await prisma.$transaction(
+        async (tx: Tx) => {
+          const updated = await tx.menuCategory.update({
+            where: { id },
+            data: { name: input.name },
+          });
 
-      const existingDisableRow =
-        await tx.disableLocationMenuCategories.findFirst({
-          where: { menuCategoryId: id, ...activeDisableRow(input.locationId) },
-        });
+          const existingDisableRow =
+            await tx.disableLocationMenuCategories.findFirst({
+              where: { menuCategoryId: id, ...activeDisableRow(input.locationId) },
+            });
 
-      if (input.isEnabled && existingDisableRow) {
-        await tx.disableLocationMenuCategories.update({
-          where: { id: existingDisableRow.id },
-          data: { isArchived: true },
-        });
-      } else if (!input.isEnabled && !existingDisableRow) {
-        await tx.disableLocationMenuCategories.create({
-          data: { locationId: input.locationId, menuCategoryId: id },
-        });
+          if (input.isEnabled && existingDisableRow) {
+            await tx.disableLocationMenuCategories.update({
+              where: { id: existingDisableRow.id },
+              data: { isArchived: true },
+            });
+          } else if (!input.isEnabled && !existingDisableRow) {
+            await tx.disableLocationMenuCategories.create({
+              data: { locationId: input.locationId, menuCategoryId: id },
+            });
+          }
+
+          if (input.removeMenuIds.length > 0) {
+            await MenuCategoryService.removeMenus(
+              tx,
+              id,
+              input.companyId,
+              input.removeMenuIds,
+            );
+          }
+
+          return updated;
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2034"
+      ) {
+        throw new AppError(
+          "Someone else changed these menus at the same time. Try again.",
+          "CONFLICT",
+        );
       }
+      throw error;
+    }
+  }
 
-      return updated;
+  /** updateMenuCategory's removal step, inside its transaction. */
+  private static async removeMenus(
+    tx: Tx,
+    menuCategoryId: number,
+    companyId: number,
+    removeMenuIds: readonly number[],
+  ) {
+    const links = await tx.menuMenuCategory.findMany({
+      where: {
+        menuId: { in: [...removeMenuIds] },
+        isArchived: false,
+        menu: { isArchived: false },
+        menuCategory: { companyId, isArchived: false },
+      },
+      select: { menuId: true, menuCategoryId: true, menu: { select: { name: true } } },
+    });
+    const plan = planCategoryMenuRemoval({ menuCategoryId, removeMenuIds, links });
+    if (plan.invalidIds.length > 0) {
+      throw new ValidationError(
+        "Some menus are no longer in this category. Refresh and try again.",
+      );
+    }
+    if (plan.orphanedMenuIds.length > 0) {
+      const name = links.find((link) => link.menuId === plan.orphanedMenuIds[0])!
+        .menu.name;
+      throw new ValidationError(`${name} must stay in at least one category.`);
+    }
+
+    await tx.menuMenuCategory.deleteMany({
+      where: { menuCategoryId, menuId: { in: plan.removeMenuIds } },
     });
   }
 

@@ -20,23 +20,26 @@ type HideFrom = "sm" | "md" | "lg";
 
 /**
  * The Backoffice's floating "+" for creating a new item (menu, menu
- * category, add-on group) on narrow screens — one link, fixed at the
- * bottom-right above the safe-area inset. Pair it with
+ * category, add-on group) on narrow screens — a link to a create page
+ * (`href`), or a button opening a create dialog (`onClick`) — fixed at
+ * the bottom-right above the safe-area inset. Pair it with
  * NewItemFabSpacer at the end of the page content.
  */
 export default function NewItemFab({
-  href,
   label,
   hideFrom,
+  ...target
 }: {
-  href: string;
   label: string;
   hideFrom: HideFrom;
-}) {
+} & ({ href: string } | { onClick: () => void })) {
+  const action =
+    "href" in target
+      ? { component: Link, href: target.href }
+      : { onClick: target.onClick };
   return (
     <Fab
-      component={Link}
-      href={href}
+      {...action}
       color="primary"
       aria-label={label}
       sx={{
@@ -57,7 +60,10 @@ export function NewItemFabSpacer({ hideFrom }: { hideFrom: HideFrom }) {
   return (
     <Box
       aria-hidden
-      sx={{ display: { xs: "block", [hideFrom]: "none" }, height: FAB_CLEARANCE }}
+      sx={{
+        display: { xs: "block", [hideFrom]: "none" },
+        height: FAB_CLEARANCE,
+      }}
     />
   );
 }

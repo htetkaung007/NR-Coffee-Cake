@@ -11,6 +11,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { formatAmount } from "@/app/lib/orderFormat";
+import { stockBadge } from "@/app/lib/stockLevel";
 import MenuThumb from "./MenuThumb";
 
 export interface MenuCardData {
@@ -39,9 +40,6 @@ interface MenuCardProps {
 
 /** How faded an unavailable (out-of-stock) card's photo and text are. */
 const OUT_OF_STOCK_OPACITY = 0.5;
-
-/** A card shows the low-stock chip once this few (or fewer) are left. */
-const LOW_STOCK_THRESHOLD = 5;
 
 /** Watercolor & Scribbles aesthetic — a couple of soft, blurred color
  *  blobs plus a light scribble line sitting behind the image, with colors
@@ -109,7 +107,9 @@ export default function MenuCard({
   const isAvailable = item.stockQuantity > 0 && item.isAvailable;
   // Only worth saying "Only 3 left" about something that can still be
   // ordered — a switched-off or sold-out item already reads "out of stock".
-  const showLowStock = isAvailable && item.stockQuantity <= LOW_STOCK_THRESHOLD;
+  // "Low" is the shared rule (lib/stockLevel): 1 to 4 left.
+  const showLowStock =
+    isAvailable && stockBadge(item.stockQuantity).kind === "low";
   // Interactive only when there's something to open AND the item can be
   // ordered; the hover/pressed feedback follows the same condition.
   const isInteractive = Boolean(onAddToCart) && isAvailable;

@@ -8,6 +8,11 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import {
+  categoryPreviewLine,
+  NO_MENUS_TEXT,
+  type CategoryMenu,
+} from "@/app/lib/categoryMenus";
 
 /** ↑ / ↓: outlined squares (1px divider border, theme radius), 44px;
  *  the disabled end fades out. */
@@ -24,11 +29,21 @@ const arrowButtonSx = {
 export interface CategoryItem {
   id: number;
   name: string;
+  /** Always menus.length. */
   itemCount: number;
+  /** Its menus, by name (MenuCategoryService.getCategoryMenus). */
+  menus: CategoryMenu[];
 }
 
-export function itemCountLabel(count: number) {
-  return `${count} ${count === 1 ? "item" : "items"}`;
+/** The line under a category's name: "N items · A, B, C +K more" — one
+ *  line, ellipsis (works for Myanmar names too), full text in title. */
+export function CategoryMenusPreview({ menus }: { menus: CategoryMenu[] }) {
+  const text = menus.length === 0 ? NO_MENUS_TEXT : categoryPreviewLine(menus);
+  return (
+    <Typography variant="body2" color="text.secondary" noWrap title={text}>
+      {text}
+    </Typography>
+  );
 }
 
 interface SortableCategoryRowProps {
@@ -42,10 +57,7 @@ interface SortableCategoryRowProps {
   onMove: (id: number, direction: "up" | "down") => void;
   onOpen: (category: CategoryItem) => void;
   /** Lets the parent re-focus an arrow after its row has moved. */
-  registerArrow: (
-    key: string,
-    element: HTMLButtonElement | null,
-  ) => void;
+  registerArrow: (key: string, element: HTMLButtonElement | null) => void;
 }
 
 /**
@@ -173,9 +185,7 @@ export default function SortableCategoryRow({
           <Typography variant="body1" noWrap>
             {category.name}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {itemCountLabel(category.itemCount)}
-          </Typography>
+          <CategoryMenusPreview menus={category.menus} />
         </Box>
       </ButtonBase>
 

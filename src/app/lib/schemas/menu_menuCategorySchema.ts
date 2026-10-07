@@ -72,9 +72,16 @@ export const createMenuCategorySchema = z.object({
 
 export type CreateMenuCategoryInput = z.infer<typeof createMenuCategorySchema>;
 
-export const updateMenuCategorySchema = z.object({
-  name: z.string().trim().min(1, "Category name is required.").max(50),
-  isEnabled: z.boolean(),
+/** Same name/switch rules as create (one name rule — the dialogs'
+ *  MenuCategoryFields validates with it too), plus the staged removals. */
+export const updateMenuCategorySchema = createMenuCategorySchema.extend({
+  /** Menus staged for removal from this category in the Edit dialog —
+   *  applied with the rename/enable in one transaction. */
+  removeMenuIds: z
+    .array(z.number().int().positive())
+    .max(200)
+    .refine((ids) => new Set(ids).size === ids.length, "Each menu only once.")
+    .default([]),
 });
 
 export type UpdateMenuCategoryInput = z.infer<typeof updateMenuCategorySchema>;

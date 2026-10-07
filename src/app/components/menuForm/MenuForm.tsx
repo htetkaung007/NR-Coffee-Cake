@@ -28,6 +28,10 @@ import MenuCategoryChips, { MenuCategoryOption } from "./MenuCategoryChips";
 import MenuImageUploader from "./MenuImageUploader";
 import StockQuantityStepper from "./StockQuantityStepper";
 import LocationChecklist, { type LocationOption } from "./LocationChecklist";
+import CreateMenuCategoryDialog, {
+  type CreatedMenuCategory,
+} from "../menuCategory/CreateMenuCategoryDialog";
+import StatusSnackbar, { type StatusMessage } from "../StatusSnackbar";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 
 interface MenuFormInitialData {
@@ -72,7 +76,9 @@ export default function MenuForm({
   const [shownLocationIds, setShownLocationIds] = useState<number[]>(
     initialData?.shownLocationIds ??
       locations
-        .filter((location) => location.locationId === currentLocation.locationId)
+        .filter(
+          (location) => location.locationId === currentLocation.locationId,
+        )
         .map((location) => location.locationId),
   );
   const submittedLocationIds = hasLocationChoice
@@ -100,6 +106,22 @@ export default function MenuForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  // "+ New category" creates in a dialog: the new one joins the chips
+  // and is selected, and nothing typed in the form is touched. Kept
+  // apart from the server's list so a refresh can't show it twice.
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [createdCategories, setCreatedCategories] = useState<
+    CreatedMenuCategory[]
+  >([]);
+  const [categoryMessage, setCategoryMessage] = useState<StatusMessage | null>(
+    null,
+  );
+  const categoryOptions = [
+    ...categories,
+    ...createdCategories.filter(
+      (created) => !categories.some((category) => category.id === created.id),
+    ),
+  ];
   const [isPending, startTransition] = useTransition();
 
   const MAX_NAME_LENGTH = 50;
@@ -118,6 +140,17 @@ export default function MenuForm({
         ? previous.filter((categoryId) => categoryId !== id)
         : [...previous, id],
     );
+  }
+
+  function handleCategoryCreated(created: CreatedMenuCategory) {
+    setCreatedCategories((current) => [...current, created]);
+    setSelectedCategoryIds((current) =>
+      current.includes(created.id) ? current : [...current, created.id],
+    );
+    setCategoryMessage({
+      text: `${created.name} created and selected`,
+      severity: "success",
+    });
   }
 
   function handleFileSelected(file: File) {
@@ -174,8 +207,9 @@ export default function MenuForm({
     description: description || "",
     price: Number(price) || 0,
     category:
-      categories.find((category) => selectedCategoryIds.includes(category.id))
-        ?.name ?? "Uncategorized",
+      categoryOptions.find((category) =>
+        selectedCategoryIds.includes(category.id),
+      )?.name ?? "Uncategorized",
     imageUrl: imagePreviewUrl,
     stockQuantity: quantity,
     isAvailable,
@@ -259,9 +293,10 @@ export default function MenuForm({
             />
 
             <MenuCategoryChips
-              categories={categories}
+              categories={categoryOptions}
               selectedCategoryIds={selectedCategoryIds}
               onToggle={toggleCategory}
+              onCreateCategory={() => setIsCreatingCategory(true)}
             />
 
             <Box
@@ -411,6 +446,16 @@ export default function MenuForm({
             : "Menu created successfully!"}
         </Alert>
       </Snackbar>
+
+      <CreateMenuCategoryDialog
+        open={isCreatingCategory}
+        onClose={() => setIsCreatingCategory(false)}
+        onCreated={handleCategoryCreated}
+      />
+      <StatusSnackbar
+        message={categoryMessage}
+        onClose={() => setCategoryMessage(null)}
+      />
     </>
   );
 }

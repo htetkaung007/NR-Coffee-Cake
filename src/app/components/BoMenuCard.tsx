@@ -17,8 +17,10 @@ import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { menuCardStatus } from "@/app/lib/menuCardStatus";
+import { stockBadge } from "@/app/lib/stockLevel";
 import { moneyToneSx } from "@/app/backoffice/order/orderTypography";
 import MenuThumb from "./MenuThumb";
+import MenuStatusChip from "./MenuStatusChip";
 import type { StatusMessage } from "./StatusSnackbar";
 import { useCan } from "./StaffAccessProvider";
 import { ASK_OWNER_HINTS } from "@/app/lib/permissions";
@@ -50,6 +52,17 @@ interface MenuCardProps {
   /** Reports the switch's outcome (the page shows one snackbar). */
   onNotify: (message: StatusMessage) => void;
 }
+
+/** The stock badge's colours per kind — solid (readable over any photo)
+ *  and each ≥ 4.5:1 in light and dark: neutral on paper; low =
+ *  warning.main with the theme's dark warning.contrastText (~6:1 light,
+ *  ~10:1 dark); sold out = error.dark with white (error.main fails in
+ *  dark mode). Words always say it too. */
+const STOCK_CHIP_SX = {
+  inStock: { bgcolor: "background.paper", color: "text.primary" },
+  low: { bgcolor: "warning.main", color: "warning.contrastText" },
+  soldOut: { bgcolor: "error.dark", color: "error.contrastText" },
+} as const;
 
 /** Visually hidden but still read by screen readers. */
 const SCREEN_READER_ONLY = {
@@ -91,6 +104,7 @@ export default function BOMenuCard({
     isManuallyDisabled: !isSwitchedOn,
     isHiddenHere: item.isHiddenHere,
   });
+  const stock = stockBadge(item.stockQuantity);
   const hiddenHintId = `menu-${item.id}-hidden-hint`;
   // Hidden here: the switch would change nothing a customer sees, so
   // it's disabled with its own visible hint (below) instead.
@@ -162,6 +176,10 @@ export default function BOMenuCard({
             alt={item.name}
           />
         </Box>
+        {/* Corner chips, 8px in, siblings of the dimmed image so they
+            stay at full contrast: category top-left (truncates), and a
+            bottom row — "Hidden here" left, the stock badge right — that
+            shares the width, so nothing overlaps on a 2-column phone. */}
         <Chip
           label={
             <Typography variant="caption" component="span">
@@ -171,14 +189,42 @@ export default function BOMenuCard({
           size="small"
           sx={{
             position: "absolute",
-            top: 4,
-            left: 4,
-            maxWidth: "calc(100% - 8px)",
+            top: 8,
+            left: 8,
+            maxWidth: "calc(100% - 16px)",
             height: 20,
             bgcolor: "background.paper",
             color: "text.primary",
           }}
         />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 8,
+            left: 8,
+            right: 8,
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "flex-end",
+            gap: 0.5,
+          }}
+        >
+          {status === "hidden" && (
+            <MenuStatusChip
+              status="hidden"
+              sx={{ mr: "auto", minWidth: 0, flexShrink: 1 }}
+            />
+          )}
+          <Chip
+            label={
+              <Typography variant="caption" component="span">
+                {stock.label}
+              </Typography>
+            }
+            size="small"
+            sx={{ flexShrink: 0, height: 20, ...STOCK_CHIP_SX[stock.kind] }}
+          />
+        </Box>
 
         {/* Status in words, never colour alone (menuCardStatus). */}
         {status === "unavailable" && (
@@ -212,31 +258,9 @@ export default function BOMenuCard({
             </Box>
           </Box>
         )}
-        {(status === "hidden" || status === "soldOut") && (
-          <Chip
-            label={
-              <Typography variant="caption" component="span">
-                {status === "hidden" ? "Hidden here" : "Sold out"}
-              </Typography>
-            }
-            size="small"
-            variant={status === "hidden" ? "outlined" : "filled"}
-            sx={{
-              position: "absolute",
-              bottom: 4,
-              right: 4,
-              height: 20,
-              // Sold out needs restocking (error role); error.dark keeps
-              // white text ≥ 4.5:1 in both modes. Hidden here is neutral.
-              ...(status === "hidden"
-                ? { bgcolor: "background.paper", color: "text.primary" }
-                : { bgcolor: "error.dark", color: "error.contrastText" }),
-            }}
-          />
-        )}
       </Box>
 
-      {/* Body: name → price → description (1 line) → "N left", with
+      {/* Body: name → price → description (1 line), with
           the footer pinned to the bottom so cards in a row line up. */}
       <CardContent
         sx={{
@@ -308,10 +332,6 @@ export default function BOMenuCard({
             {description}
           </Typography>
         )}
-
-        <Typography variant="body2" color="text.secondary">
-          {Math.max(0, item.stockQuantity)} left
-        </Typography>
 
         {item.isHiddenHere && (
           <Typography

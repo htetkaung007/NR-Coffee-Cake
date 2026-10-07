@@ -59,7 +59,7 @@ export async function createMenuCategoryAction(input: unknown) {
 
 const UpdateMenuCategory = toSafeResult(
   async (input: UpdateMenuCategoryInput & { menuCategoryId: number }) => {
-    const { userId } = await requireOwner();
+    const { companyId, userId } = await requireOwner();
 
     const selectedLocation = await LocationService.getSelectedLocation(userId);
     if (!selectedLocation) {
@@ -70,9 +70,11 @@ const UpdateMenuCategory = toSafeResult(
     }
 
     return MenuCategoryService.updateMenuCategory(input.menuCategoryId, {
+      companyId,
       name: input.name,
       locationId: selectedLocation.locationId,
       isEnabled: input.isEnabled,
+      removeMenuIds: input.removeMenuIds,
     });
   },
 );

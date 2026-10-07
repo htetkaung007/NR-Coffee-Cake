@@ -1,8 +1,14 @@
 import { prisma } from "../utils/prisma";
+import type { Prisma } from "../../../prisma/generated/client";
 import { NotFoundError, ValidationError } from "../lib/errors";
+import {
+  LOCATION_DELETION_MESSAGES,
+  locationDeletion,
+} from "../lib/locationDeletion";
+import { getFileStorageService } from "../lib/storage/getFileStorageService";
 import { MenuLocationService } from "./menuLocation.service";
 
-const HARD_DELETE_GRACE_DAYS = 60;
+type Tx = Prisma.TransactionClient;
 
 /**
  * Location domain — CRUD + archive lifecycle. Split out from AppService
@@ -89,10 +95,8 @@ export class LocationService {
 
   /**
    * Does one thing: flips isArchived and stamps/clears archivedAt to
-   * match. Archiving starts the 60-day hard-delete countdown;
-   * unarchiving cancels it by clearing the timestamp — a location
-   * that's been closed and reopened shouldn't carry over a stale
-   * countdown from its last closure.
+   * match (when it was closed — informational; deleting doesn't depend
+   * on it, see deleteLocation).
    */
   static async toggleLocationArchive(locationId: number, isArchived: boolean) {
     return prisma.location.update({
@@ -104,44 +108,105 @@ export class LocationService {
     });
   }
 
-  /**
-   * Does one thing: deletes, after validating the location is archived
-   * and the 60-day grace period has passed. Does not archive first —
-   * callers must have already called toggleLocationArchive; this
-   * method only ever tears down, it doesn't also transition state.
-   */
-  static async hardDeleteLocation(locationId: number) {
-    const location = await LocationService.getLocationById(locationId);
+  /** What the delete rule needs (lib/locationDeletion), read with `db` —
+   *  the client, or the delete's own transaction. Chain lookup: a
+   *  location that isn't this company's is NotFoundError. */
+  private static async deletionFacts(
+    db: Tx,
+    locationId: number,
+    companyId: number,
+  ) {
+    const location = await db.location.findFirst({
+      where: { id: locationId, companyId },
+      select: { id: true },
+    });
     if (!location) throw new NotFoundError("Location", String(locationId));
 
-    if (!location.isArchived || !location.archivedAt) {
-      throw new ValidationError(
-        "Only an archived location can be permanently deleted.",
-      );
-    }
-
-    const daysSinceArchived =
-      (Date.now() - location.archivedAt.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSinceArchived < HARD_DELETE_GRACE_DAYS) {
-      const daysRemaining = Math.ceil(
-        HARD_DELETE_GRACE_DAYS - daysSinceArchived,
-      );
-      throw new ValidationError(
-        `This location can be permanently deleted in ${daysRemaining} more day(s).`,
-      );
-    }
-
-    return prisma.location.delete({ where: { id: locationId } });
+    const [sessionCount, billCount, managerCount] = await Promise.all([
+      db.orderSession.count({ where: { locationId } }),
+      db.bill.count({ where: { locationId } }),
+      // Every user assigned here, archived or not — each row would block
+      // the delete (User.locationId has no onDelete).
+      db.user.count({ where: { locationId } }),
+    ]);
+    return { hasSales: sessionCount + billCount > 0, managerCount };
   }
 
-  /** Days remaining until hardDeleteLocation will succeed — for the UI
-   *  to show a countdown and disable the button, without duplicating
-   *  hardDeleteLocation's date math. Returns 0 if already eligible. */
-  static getDaysUntilDeletable(archivedAt: Date | null): number {
-    if (!archivedAt) return HARD_DELETE_GRACE_DAYS;
-    const daysSinceArchived =
-      (Date.now() - archivedAt.getTime()) / (1000 * 60 * 60 * 24);
-    return Math.max(0, Math.ceil(HARD_DELETE_GRACE_DAYS - daysSinceArchived));
+  /** Can this location be deleted permanently, and if not, why — for the
+   *  Edit page (the delete itself checks again). */
+  static async getDeletion(locationId: number, companyId: number) {
+    return locationDeletion(
+      await LocationService.deletionFacts(prisma, locationId, companyId),
+    );
+  }
+
+  /**
+   * Deletes a location with no sales history and no managers, right
+   * away (lib/locationDeletion — a location with sales can only ever be
+   * archived). One transaction, rule re-checked inside it: its setup rows
+   * go first — draft picks at its tables (no round was ever sent there,
+   * so every Order at them is a draft), the tables, stock rows and both
+   * per-location hide tables — then any admin whose selected location
+   * it was moves to the company's first other active location (or has
+   * none, and is asked to pick one), then the location itself.
+   *
+   * The tables' QR images are deleted from file storage AFTER the commit
+   * (an object-store delete can't be rolled back), best-effort: a
+   * leftover image is harmless, a failed DB delete must not lose them.
+   */
+  static async deleteLocation(locationId: number, companyId: number) {
+    const qrImageUrls = await prisma.$transaction(async (tx) => {
+      const deletion = locationDeletion(
+        await LocationService.deletionFacts(tx, locationId, companyId),
+      );
+      if (!deletion.allowed) {
+        throw new ValidationError(LOCATION_DELETION_MESSAGES[deletion.reason]);
+      }
+
+      const tables = await tx.table.findMany({
+        where: { locationId },
+        select: { id: true, qrcodeImageUrl: true },
+      });
+      const tableIds = tables.map((table) => table.id);
+      await tx.ordersAddon.deleteMany({
+        where: { order: { tableId: { in: tableIds } } },
+      });
+      await tx.order.deleteMany({ where: { tableId: { in: tableIds } } });
+      await tx.table.deleteMany({ where: { locationId } });
+      await tx.menuStock.deleteMany({ where: { locationId } });
+      await tx.disableLocationMenus.deleteMany({ where: { locationId } });
+      await tx.disableLocationMenuCategories.deleteMany({
+        where: { locationId },
+      });
+
+      const fallback = await tx.location.findFirst({
+        where: { companyId, isArchived: false, id: { not: locationId } },
+        orderBy: { id: "asc" },
+        select: { id: true },
+      });
+      if (fallback) {
+        await tx.selectedLocation.updateMany({
+          where: { locationId },
+          data: { locationId: fallback.id },
+        });
+      } else {
+        await tx.selectedLocation.deleteMany({ where: { locationId } });
+      }
+
+      await tx.location.delete({ where: { id: locationId } });
+      return tables
+        .map((table) => table.qrcodeImageUrl)
+        .filter((url): url is string => Boolean(url));
+    });
+
+    const storage = getFileStorageService();
+    await Promise.all(
+      qrImageUrls.map((url) =>
+        storage.delete(url).catch((error: unknown) => {
+          console.error("[deleteLocation] QR image not removed:", url, error);
+        }),
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------

@@ -95,8 +95,10 @@ export async function toggleLocationArchiveAction(
 }
 
 const safeHardDelete = toSafeResult(async (locationId: number) => {
-  await requireOwner();
-  return LocationService.hardDeleteLocation(locationId);
+  // Owner only; the location must be the owner's own company's.
+  const { companyId } = await requireOwner();
+  await LocationService.deleteLocation(locationId, companyId);
+  return { id: locationId };
 });
 
 export async function hardDeleteLocationAction(locationId: number) {
@@ -104,6 +106,8 @@ export async function hardDeleteLocationAction(locationId: number) {
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice/locations");
+    // An admin's selected location may have moved (top bar, every page).
+    revalidatePath("/backoffice", "layout");
   }
 
   return actionResult;

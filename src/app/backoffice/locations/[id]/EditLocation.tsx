@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -17,6 +18,10 @@ import {
   Typography,
 } from "@mui/material";
 import {
+  LOCATION_DELETION_MESSAGES,
+  type LocationDeletion,
+} from "@/app/lib/locationDeletion";
+import {
   toggleLocationArchiveAction,
   updateLocationNameAction,
   hardDeleteLocationAction,
@@ -27,15 +32,12 @@ interface EditLocationProps {
     id: number;
     name: string;
     isArchived: boolean;
-    archivedAt: string | null;
   };
-  daysUntilDeletable: number;
+  /** Display only — hardDeleteLocationAction checks the rule again. */
+  deletion: LocationDeletion;
 }
 
-export default function EditLocation({
-  location,
-  daysUntilDeletable,
-}: EditLocationProps) {
+export default function EditLocation({ location, deletion }: EditLocationProps) {
   const router = useRouter();
   const [name, setName] = useState(location.name);
   const [isArchived, setIsArchived] = useState(location.isArchived);
@@ -44,12 +46,19 @@ export default function EditLocation({
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // The owner types the location's name to enable Delete.
+  const [typedName, setTypedName] = useState("");
 
   const [isSavingName, startSavingName] = useTransition();
   const [isTogglingArchive, startTogglingArchive] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
 
-  const canHardDelete = isArchived && daysUntilDeletable === 0;
+  const isNameConfirmed = typedName.trim() === location.name.trim();
+
+  function openDeleteDialog() {
+    setTypedName("");
+    setDeleteDialogOpen(true);
+  }
 
   function handleSaveName(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -171,62 +180,94 @@ export default function EditLocation({
         </Box>
       </Box>
 
-      {/* Hard delete — only reachable once archived + 60 days have passed */}
-      {isArchived && (
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "error.main",
-            borderRadius: 3,
-            p: { xs: 2, sm: 3 },
-          }}
-        >
-          {deleteError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {deleteError}
-            </Alert>
-          )}
-          <Typography variant="body2" sx={{ mb: 0.5 }}>
-            Permanently Delete
+      {/* Danger zone — permanent delete (lib/locationDeletion): only a
+          location with no sales history and no managers; right away,
+          archived or not. */}
+      <Box
+        component="section"
+        aria-labelledby="danger-zone-title"
+        sx={{
+          border: "1px solid",
+          borderColor: "error.main",
+          borderRadius: 3,
+          p: { xs: 2, sm: 3 },
+        }}
+      >
+        {deleteError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {deleteError}
+          </Alert>
+        )}
+        <Typography variant="body2" id="danger-zone-title" sx={{ mb: 0.5 }}>
+          Danger zone
+        </Typography>
+        {deletion.allowed ? (
+          <>
+            <Typography variant="caption" color="text.secondary">
+              No sales here yet, so this location can be deleted — with its
+              tables, QR codes and stock. This can&apos;t be undone.
+            </Typography>
+            <Box sx={{ mt: 1.5 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                disabled={isDeleting}
+                onClick={openDeleteDialog}
+                sx={{ minHeight: 44 }}
+              >
+                Delete location permanently
+              </Button>
+            </Box>
+          </>
+        ) : (
+          <Typography variant="caption" color="text.secondary" component="p">
+            {deletion.reason === "hasManagers" ? (
+              <>
+                Managers are assigned to this location.{" "}
+                {LOCATION_DELETION_MESSAGES.hasManagers}{" "}
+                <Link href="/backoffice/setting#settings-managers">
+                  Settings → Managers
+                </Link>
+              </>
+            ) : (
+              LOCATION_DELETION_MESSAGES.hasSales
+            )}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {canHardDelete
-              ? "This location is eligible for permanent deletion. This cannot be undone."
-              : `Available for permanent deletion in ${daysUntilDeletable} more day(s).`}
-          </Typography>
-          <Box sx={{ mt: 1.5 }}>
-            <Button
-              variant="outlined"
-              color="error"
-              disabled={!canHardDelete || isDeleting}
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              Permanently Delete
-            </Button>
-          </Box>
-        </Box>
-      )}
+        )}
+      </Box>
 
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-location-title"
       >
-        <DialogTitle>Permanently delete this location?</DialogTitle>
+        <DialogTitle id="delete-location-title">
+          Delete {location.name} permanently?
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            This removes the location and its data from the database
-            permanently. This action cannot be undone. Are you sure?
+          <DialogContentText sx={{ mb: 2 }}>
+            This removes the location with its tables, their QR codes and its
+            stock. It can&apos;t be undone. Type the location&apos;s name to
+            confirm.
           </DialogContentText>
+          <TextField
+            label="Location name"
+            autoFocus
+            fullWidth
+            value={typedName}
+            onChange={(event) => setTypedName(event.target.value)}
+            helperText={`Type: ${location.name}`}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button
             color="error"
             variant="contained"
-            disabled={isDeleting}
+            disabled={!isNameConfirmed || isDeleting}
             onClick={handleHardDelete}
           >
-            {isDeleting ? "Deleting..." : "Yes, delete permanently"}
+            {isDeleting ? "Deleting..." : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

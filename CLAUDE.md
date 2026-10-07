@@ -279,8 +279,9 @@ independently of the app config). Everything else still goes through
   orders server-side (check location.isArchived in the order-creation
   Server Action, not just hide UI client-side) — not yet wired up.
 - Menu hard-delete (soft-delete via isArchived exists; permanent
-  delete with a grace period, mirroring Location's 60-day countdown,
-  is not yet built).
+  delete is not yet built). Locations have no grace period any more:
+  one with no sales history and no managers is deleted at once, one
+  with sales can only be archived (lib/locationDeletion.ts).
 
 ## 14. Service imports — always via the barrel file, never the concrete path
 
