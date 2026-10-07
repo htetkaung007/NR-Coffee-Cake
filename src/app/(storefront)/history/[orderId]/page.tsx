@@ -3,7 +3,17 @@ import { notFound } from "next/navigation";
 import { OrderSessionService, TableDraftService } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import { orderLineTotal, orderLinesTotal } from "@/app/lib/orderTotals";
+import {
+  cartLineTotal,
+  orderLineTotal,
+  orderLinesTotal,
+} from "@/app/lib/orderTotals";
+import {
+  contributorGroupHeading,
+  groupByContributor,
+  type ContributorLabel,
+} from "@/app/lib/contributors";
+import { toLabelledCartLine } from "@/app/lib/roundLine";
 import OrderReceipt, {
   type ReceiptLine,
 } from "@/app/components/orderUI/OrderReceipt";
@@ -45,6 +55,8 @@ export default async function OrderReceiptPage({
   // QR overrides this to the BILL's number below, matching the
   // cashier's Order List card and every other Counter customer screen.
   let orderNumber: string | null = null;
+  // Table QR: who ordered which line (labels — never tokens).
+  let labels: Map<number, ContributorLabel> | null = null;
 
   if (tableId) {
     const contributorToken = await getContributorToken(tableId);
@@ -55,10 +67,10 @@ export default async function OrderReceiptPage({
         contributorToken,
       ));
     if (contributorToken && isTokenCurrent) {
-      round = await OrderSessionService.getRoundDetailForTable(
-        tableId,
-        roundId,
-      );
+      [round, labels] = await Promise.all([
+        OrderSessionService.getRoundDetailForTable(tableId, roundId),
+        TableDraftService.getContributorLabels(tableId, contributorToken),
+      ]);
     }
   }
 
@@ -105,11 +117,33 @@ export default async function OrderReceiptPage({
     total: orderLineTotal(order),
   }));
 
+  // Table QR: the same lines per person, each with its subtotal.
+  const groups =
+    !isCounterRound && labels
+      ? groupByContributor(
+          round.orders.map((order) => toLabelledCartLine(order, labels)),
+        ).map((group) => ({
+          key: group.key,
+          heading: contributorGroupHeading(group.label),
+          subtotal: group.subtotal,
+          lines: group.lines.map((line) => ({
+            id: line.id,
+            menuName: line.menuName,
+            imageUrl: line.imageUrl ?? null,
+            addonNames: line.addons.map((addon) => addon.name),
+            note: line.note ?? null,
+            quantity: line.quantity,
+            total: cartLineTotal(line),
+          })),
+        }))
+      : undefined;
+
   return (
     <OrderReceipt
       orderNumber={orderNumber ?? round.orderNumber}
       status={round.status}
       lines={lines}
+      groups={groups}
       total={orderLinesTotal(round.orders)}
       backHref={`/history?${query}`}
       orderMore={

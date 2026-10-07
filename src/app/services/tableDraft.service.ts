@@ -1,9 +1,10 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { normalizeOrderNote } from "@/app/lib/orderNote";
-import { lineMergeKey } from "@/app/lib/orderLineMerge";
+import { groupDraftsForSubmit, lineMergeKey } from "@/app/lib/orderLineMerge";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../prisma/generated/client";
 import { getTokenEpoch } from "../lib/contributorToken";
+import { contributorLabelsById } from "../lib/contributors";
 import { MenuStockService } from "./menuStock.service";
 import { PriceSnapshotService } from "./priceSnapshot.service";
 import { generateOrderNumber } from "./orderService/orderSession.service";
@@ -63,8 +64,8 @@ export class TableDraftService {
    *  is created. Never into another customer's draft: each row is owned
    *  by one token (removeDraftItem/updateDraftItem check it), so a
    *  shared row would let one customer remove another's item. Identical
-   *  picks by different customers stay separate rows until Send to
-   *  Kitchen, where submitDraft merges them across the whole table. */
+   *  picks by different customers stay separate rows — before AND after
+   *  Send to Kitchen (submitDraft merges per customer only). */
   static async addDraftItem(
     tableId: number,
     contributorToken: string,
@@ -219,15 +220,41 @@ export class TableDraftService {
   }
 
   /** Everyone at the table sees the FULL draft list, not just their
-   *  own picks — the UI groups rows by contributorToken to decide
-   *  which get Edit/Cancel vs read-only (design mock's "Customer 1
-   *  order" / "Customer 2 order" split). */
+   *  own picks — grouped per person (design mock's "Your order" /
+   *  "Customer 2 order" split), with Edit/Cancel only on the viewer's
+   *  own. The rows include contributorToken: callers turn it into
+   *  labels (lib/contributors.ts) before anything reaches the client. */
   static async getDraftItemsForTable(tableId: number) {
     return prisma.order.findMany({
       where: { tableId, orderSessionId: null, isArchived: false },
       orderBy: { id: "asc" },
       include: { menu: true, OrdersAddons: { include: { addon: true } } },
     });
+  }
+
+  /** Who ordered which line, as labels ("You" / "Customer 2" — never a
+   *  token): numbered over the table's WHOLE open tab — its drafts plus
+   *  the lines of its open rounds (the same rounds getRoundHistoryForTable
+   *  lists) — so a person has the same number on every screen and phone.
+   *  One query; the tokens never leave this method. */
+  static async getContributorLabels(tableId: number, myToken: string | null) {
+    const rows = await prisma.order.findMany({
+      where: {
+        tableId,
+        isArchived: false,
+        OR: [
+          { orderSessionId: null },
+          {
+            orderSession: {
+              isArchived: false,
+              status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
+            },
+          },
+        ],
+      },
+      select: { id: true, contributorToken: true },
+    });
+    return contributorLabelsById(rows, myToken);
   }
 
   /** Informational — see MenuStockService.findShortages's own comment
@@ -270,18 +297,20 @@ export class TableDraftService {
   }
 
   /**
-   * "Send to Kitchen" — merges every contributor's draft picks for
-   * this table into one round. Identical (menu, addon set, note) rows from
-   * different contributors collapse into a single row with summed
-   * quantity, so the counter sees e.g. "Coffee × 2" as one line
-   * straight from the database — no display-time aggregation needed
-   * on that side (see OrderListView's ItemList, unchanged by this).
-   * The note is part of "identical": two "Coffee" drafts with different
-   * notes ("no sugar" vs none) stay separate lines, and a merged line
-   * keeps its note — otherwise the kitchen would lose it here.
-   * The draft rows are deleted once merged (they're staging, not
-   * history); the merged rows attached to the new OrderSession are
-   * the real record from here on, same as any Order row always was.
+   * "Send to Kitchen" — turns every contributor's draft picks for this
+   * table into one round (groupDraftsForSubmit). Each CUSTOMER's
+   * identical (menu, price, addon set, note) picks merge into one row
+   * with summed quantity; different customers' picks stay separate rows,
+   * each keeping its contributorToken — so every customer still sees
+   * their own lines after Send. The Backoffice merges identical lines
+   * for display only (mergeLinesForDisplay), so the counter still sees
+   * "Coffee × 2". The note is part of "identical": two "Coffee" drafts
+   * with different notes stay separate lines, and a merged line keeps
+   * its note — otherwise the kitchen would lose it here. The draft rows
+   * are deleted (they're staging, not history); the new rows attached
+   * to the OrderSession are the real record from here on. They carry a
+   * token but are never editable: removeDraftItem/updateDraftItem only
+   * ever match orderSessionId = null.
    *
    * Stock is decremented HERE, not at addDraftItem (see the "decrement
    * at submit, not at add-to-cart/draft" design discussion) — inside
@@ -312,43 +341,22 @@ export class TableDraftService {
       throw new ValidationError("Nothing to submit yet.");
     }
 
-    const groups = new Map<
-      string,
-      {
-        menuId: number;
-        menuName: string;
-        quantity: number;
-        unitPrice: number;
-        addons: { addonId: number; unitPrice: number }[];
-        note: string | null;
-      }
-    >();
-    for (const item of draftItems) {
-      const addons = item.OrdersAddons.map((link) => ({
-        addonId: link.addonId,
-        unitPrice: link.unitPrice,
-      })).sort((a, b) => a.addonId - b.addonId);
-      const note = normalizeOrderNote(item.note);
-      // Same line = lineMergeKey's rule (shared with Counter's cart) —
-      // each draft's OWN already-snapshotted unitPrice/addon prices are
-      // used here, never re-read from Menu/Addon: a merge at submit
-      // time must not silently repaint an earlier draft's price. A
-      // merged group keeps the first draft's note exactly as typed.
-      const key = lineMergeKey(item.menuId, item.unitPrice, addons, item.note);
-      const existing = groups.get(key);
-      if (existing) {
-        existing.quantity += item.quantity;
-      } else {
-        groups.set(key, {
-          menuId: item.menuId,
-          menuName: item.menu.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          addons,
-          note,
-        });
-      }
-    }
+    const { lines, stockByMenu } = groupDraftsForSubmit(
+      draftItems.map((item) => ({
+        contributorToken: item.contributorToken,
+        menuId: item.menuId,
+        menuName: item.menu.name,
+        quantity: item.quantity,
+        // Each draft's OWN already-snapshotted prices — never re-read
+        // from Menu/Addon: a merge at submit must not repaint a price.
+        unitPrice: item.unitPrice,
+        addons: item.OrdersAddons.map((link) => ({
+          addonId: link.addonId,
+          unitPrice: link.unitPrice,
+        })),
+        note: item.note,
+      })),
+    );
 
     return prisma.$transaction(async (tx: Tx) => {
       // approvalExpiresAt stays NULL on purpose — never set it here.
@@ -377,43 +385,36 @@ export class TableDraftService {
       });
       await tx.order.deleteMany({ where: { id: { in: draftIds } } });
 
-      // One menu's worth of stock at a time — grouped by (menu, addon
-      // set), so a shortage's error names the actual menu, not a
-      // per-contributor line the customer wouldn't recognize.
-      const consumedByMenuId = new Map<number, number>();
-      const menuNameByMenuId = new Map<number, string>();
-      for (const group of groups.values()) {
-        consumedByMenuId.set(
-          group.menuId,
-          (consumedByMenuId.get(group.menuId) ?? 0) + group.quantity,
-        );
-        menuNameByMenuId.set(group.menuId, group.menuName);
-      }
-      for (const [menuId, quantity] of consumedByMenuId) {
+      // Stock per menu, everyone's quantities combined — so a shortage's
+      // error names the actual menu, not one person's line.
+      for (const { menuId, menuName, quantity } of stockByMenu) {
         await MenuStockService.decrementStock(
           tx,
           menuId,
-          menuNameByMenuId.get(menuId)!,
+          menuName,
           locationId,
           quantity,
         );
       }
 
-      for (const group of groups.values()) {
-        const merged = await tx.order.create({
+      // One row per customer per line, keeping whose it is (never
+      // editable once submitted — see removeDraftItem).
+      for (const line of lines) {
+        const submitted = await tx.order.create({
           data: {
-            menuId: group.menuId,
-            quantity: group.quantity,
+            menuId: line.menuId,
+            quantity: line.quantity,
             tableId,
             orderSessionId: numbered.id,
-            note: group.note,
-            unitPrice: group.unitPrice,
+            contributorToken: line.contributorToken,
+            note: line.note,
+            unitPrice: line.unitPrice,
           },
         });
-        if (group.addons.length > 0) {
+        if (line.addons.length > 0) {
           await tx.ordersAddon.createMany({
-            data: group.addons.map(({ addonId, unitPrice }) => ({
-              orderId: merged.id,
+            data: line.addons.map(({ addonId, unitPrice }) => ({
+              orderId: submitted.id,
               addonId,
               unitPrice,
             })),

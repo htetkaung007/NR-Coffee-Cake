@@ -28,7 +28,6 @@ interface TableOrderClientProps {
   tableId: number;
   locationId: number;
   shopName: string | null;
-  myContributorToken: string;
   initialDraftItems: DraftLine[];
   /** The table's current round is waiting on counter approval — shows a
    *  spinner beside the top bar's cart icon. */
@@ -66,7 +65,6 @@ export default function TableOrderClient({
   tableId,
   locationId,
   shopName,
-  myContributorToken,
   initialDraftItems,
   initialAwaitingApproval,
   activeRoundId,
@@ -131,7 +129,10 @@ export default function TableOrderClient({
         // The server's own snapshot, not this component's (possibly
         // stale) menu prop — see Order.unitPrice's own schema comment.
         price: result.data.unitPrice,
-        contributorToken: myContributorToken,
+        // Labelled on the server ("You" + its number across the tab) —
+        // this browser never sees a token.
+        isMine: result.data.isMine,
+        contributorNo: result.data.contributorNo,
         // With their own price snapshots — part of the line's total.
         addons: toLineAddons(result.data.OrdersAddons),
         note: result.data.note,

@@ -75,8 +75,10 @@ describe("cartLinesTotal", () => {
 function billLine(id: number, unitPrice: number, quantity = 1) {
   return {
     id,
+    menuId: id,
     quantity,
     unitPrice,
+    note: null,
     menu: { name: `Item ${id}` },
     OrdersAddons: [],
   };

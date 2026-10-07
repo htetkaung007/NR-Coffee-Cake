@@ -120,6 +120,9 @@ export class OrderSessionCartService {
   static async getLineWithAddons(tx: Tx, orderId: number) {
     return tx.order.findUniqueOrThrow({
       where: { id: orderId },
+      // Returned to the client by Server Actions: never the token (it's
+      // the key to editing a Table draft — see lib/contributors.ts).
+      omit: { contributorToken: true },
       include: { OrdersAddons: { include: { addon: true } } },
     });
   }

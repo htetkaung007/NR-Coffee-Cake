@@ -17,6 +17,7 @@ import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLineTotal, type LineAddon } from "@/app/lib/orderTotals";
 import { formatAmount } from "@/app/lib/orderFormat";
+import type { ContributorLabel } from "@/app/lib/contributors";
 
 export interface CartLine {
   id: number;
@@ -44,12 +45,13 @@ export interface Shortage {
   available: number;
 }
 
-/** Table QR's draft line shape (see TableDraftService) — CartLine
- *  plus contributorToken, which the draft review screen (see
- *  DraftList.tsx) uses to decide whose card an item belongs to. */
-export interface DraftLine extends CartLine {
-  contributorToken: string;
-}
+/** A Table QR line (draft or submitted) with WHO ordered it — as a label
+ *  (lib/contributors.ts), never the token, which stays on the server.
+ *  DraftList and the round views group by it ("You", "Customer 2"). */
+export type LabelledCartLine = CartLine & ContributorLabel;
+
+/** Table QR's draft line shape (see TableDraftService). */
+export type DraftLine = LabelledCartLine;
 
 /** Highest quantity a line can be raised to — the same cap the server's
  *  schema enforces (see customerOrderSchema). */

@@ -8,7 +8,9 @@ import {
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import { orderLinesTotal } from "@/app/lib/orderTotals";
+import { cartLinesTotal, orderLinesTotal } from "@/app/lib/orderTotals";
+import { groupByContributor } from "@/app/lib/contributors";
+import { toLabelledCartLine } from "@/app/lib/roundLine";
 import { formatAmount } from "@/app/lib/orderFormat";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
@@ -58,10 +60,21 @@ export default async function HistoryPage({
 
     if (contributorToken && isTokenCurrent) {
       const locationId = Number(locationIdParam);
-      const [rounds, shopName] = await Promise.all([
+      const [rounds, shopName, labels] = await Promise.all([
         OrderSessionService.getRoundHistoryForTable(tableId),
         LocationService.getShopNameForLocation(locationId),
+        // Who's who as labels — the tokens stay on the server.
+        TableDraftService.getContributorLabels(tableId, contributorToken),
       ]);
+      // Each round's lines, labelled — then per person on each card.
+      const labelledRounds = rounds.map((round) => ({
+        round,
+        lines: round.orders.map((order) => toLabelledCartLine(order, labels)),
+      }));
+      // Display only: payment is still ONE bill for the whole table.
+      const myTotal = cartLinesTotal(
+        labelledRounds.flatMap(({ lines }) => lines.filter((line) => line.isMine)),
+      );
       // Every round listed below — the same set markSessionsPaid later
       // settles as one bill — so the sticky total always equals the sum
       // of the cards above it.
@@ -100,15 +113,24 @@ export default async function HistoryPage({
               </Typography>
             ) : (
               <Stack spacing={{ xs: 1.5, sm: 2 }}>
-                {rounds.map((round) => (
+                {labelledRounds.map(({ round, lines }) => (
                   <OrderHistoryCard
                     key={round.id}
                     href={`/history/${round.id}?locationId=${round.locationId}&tableId=${tableId}`}
                     orderNumber={round.orderNumber}
                     status={round.status}
-                    items={round.orders.map((order) => ({
-                      quantity: order.quantity,
-                      name: order.menu.name,
+                    items={lines.map((line) => ({
+                      quantity: line.quantity,
+                      name: line.menuName,
+                    }))}
+                    groups={groupByContributor(lines).map((group) => ({
+                      key: group.key,
+                      label: group.label,
+                      items: group.lines.map((line) => ({
+                        quantity: line.quantity,
+                        name: line.menuName,
+                      })),
+                      subtotal: group.subtotal,
                     }))}
                     total={orderLinesTotal(round.orders)}
                   />
@@ -146,6 +168,14 @@ export default async function HistoryPage({
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {rounds.length} {rounds.length === 1 ? "order" : "orders"}
+                  </Typography>
+                  {/* Display only — the table still pays one bill. */}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    component="p"
+                  >
+                    Your total so far: {formatAmount(myTotal)}
                   </Typography>
                 </Box>
                 <Typography

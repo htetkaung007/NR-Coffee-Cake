@@ -21,6 +21,9 @@ interface OrderReceiptProps {
   orderNumber: string;
   status: string;
   lines: ReceiptLine[];
+  /** Table QR: the same lines per person ("Your order", "Customer 2
+   *  order"…), each with its subtotal. Counter: absent — a flat list. */
+  groups?: { key: string; heading: string; subtotal: number; lines: ReceiptLine[] }[];
   total: number;
   backHref: string;
   /** The footer's "Order more" — a client component, so the page
@@ -39,6 +42,78 @@ export const ORDER_STATUS_CHIP: Record<
   COOKING: { label: "Cooking", color: "success" },
 };
 
+/** One receipt line: photo, name, add-ons, note, quantity and amount.
+ *  The one place this markup lives — the flat (Counter) and per-person
+ *  (Table) layouts both render lines through it. */
+function ReceiptLineRow({ line }: { line: ReceiptLine }) {
+  return (
+    <Stack
+      direction="row"
+      spacing={1.5}
+      sx={{ py: 1.5, alignItems: "flex-start" }}
+    >
+      <Avatar
+        variant="rounded"
+        src={line.imageUrl ?? undefined}
+        alt={line.menuName}
+        sx={{
+          width: 56,
+          height: 56,
+          bgcolor: "background.paper",
+          color: "text.secondary",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <RestaurantOutlinedIcon fontSize="small" />
+      </Avatar>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body1" sx={{ fontWeight: 700 }}>
+          {line.menuName}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {line.addonNames.length > 0
+            ? line.addonNames.join(", ")
+            : "No add-ons"}
+        </Typography>
+        {line.note && (
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ alignItems: "flex-start", mt: 0.25 }}
+          >
+            <StickyNote2OutlinedIcon
+              sx={{ fontSize: 14, mt: "2px", color: "text.secondary" }}
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontStyle: "italic", overflowWrap: "anywhere" }}
+            >
+              {line.note}
+            </Typography>
+          </Stack>
+        )}
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", mt: 0.25 }}
+        >
+          Qty {line.quantity}
+        </Typography>
+      </Box>
+
+      <Typography
+        variant="body1"
+        sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
+      >
+        {formatAmount(line.total)}
+      </Typography>
+    </Stack>
+  );
+}
+
 /** Read-only receipt for one order (round): what was ordered, with each
  *  line's addons / note / quantity / price, and the total. No service
  *  charge row — the project has no service charge, so subtotal = total. */
@@ -46,6 +121,7 @@ export default function OrderReceipt({
   orderNumber,
   status,
   lines,
+  groups,
   total,
   backHref,
   orderMore,
@@ -88,73 +164,26 @@ export default function OrderReceipt({
             <Box sx={{ borderBottom: "1px solid", borderColor: "divider" }} />
           }
         >
-          {lines.map((line) => (
-            <Stack
-              key={line.id}
-              direction="row"
-              spacing={1.5}
-              sx={{ py: 1.5, alignItems: "flex-start" }}
-            >
-              <Avatar
-                variant="rounded"
-                src={line.imageUrl ?? undefined}
-                alt={line.menuName}
-                sx={{
-                  width: 56,
-                  height: 56,
-                  bgcolor: "background.paper",
-                  color: "text.secondary",
-                  border: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
-                <RestaurantOutlinedIcon fontSize="small" />
-              </Avatar>
-
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                  {line.menuName}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {line.addonNames.length > 0
-                    ? line.addonNames.join(", ")
-                    : "No add-ons"}
-                </Typography>
-                {line.note && (
+          {groups
+            ? groups.map((group) => (
+                <Box key={group.key} sx={{ py: 1.5 }}>
                   <Stack
                     direction="row"
-                    spacing={0.5}
-                    sx={{ alignItems: "flex-start", mt: 0.25 }}
+                    sx={{ justifyContent: "space-between" }}
                   >
-                    <StickyNote2OutlinedIcon
-                      sx={{ fontSize: 14, mt: "2px", color: "text.secondary" }}
-                    />
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontStyle: "italic", overflowWrap: "anywhere" }}
-                    >
-                      {line.note}
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {group.heading}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formatAmount(group.subtotal)}
                     </Typography>
                   </Stack>
-                )}
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block", mt: 0.25 }}
-                >
-                  Qty {line.quantity}
-                </Typography>
-              </Box>
-
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
-              >
-                {formatAmount(line.total)}
-              </Typography>
-            </Stack>
-          ))}
+                  {group.lines.map((line) => (
+                    <ReceiptLineRow key={line.id} line={line} />
+                  ))}
+                </Box>
+              ))
+            : lines.map((line) => <ReceiptLineRow key={line.id} line={line} />)}
         </Stack>
       </Box>
 

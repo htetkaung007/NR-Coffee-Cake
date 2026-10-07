@@ -34,9 +34,10 @@ export interface PricedAddon {
  * price happened to be current.
  *
  * The one place this rule lives: Table QR's Send to Kitchen
- * (TableDraftService.submitDraft) merges a table's drafts with it, and
+ * (groupDraftsForSubmit) merges each customer's own drafts with it,
  * Counter's Add to cart (OrderSessionCartService.addItemToCart) merges
- * into an existing cart line with it.
+ * into an existing cart line with it, and the Backoffice merges a
+ * round's lines for display with it (mergeLinesForDisplay).
  */
 export function lineMergeKey(
   menuId: number,
@@ -48,4 +49,111 @@ export function lineMergeKey(
     .sort(([a], [b]) => a - b);
   // JSON keeps the parts unambiguous whatever a note contains.
   return JSON.stringify([menuId, unitPrice, addonSet, noteForComparison(note)]);
+}
+
+/** A Table draft as Send to Kitchen reads it: whose pick, and the line
+ *  with its own price snapshots. */
+export interface SubmitDraft {
+  contributorToken: string | null;
+  menuId: number;
+  menuName: string;
+  quantity: number;
+  unitPrice: number;
+  addons: readonly PricedAddon[];
+  note: string | null;
+}
+
+/** One submitted Order row: the same customer's identical picks merged. */
+export interface SubmitLine {
+  contributorToken: string | null;
+  menuId: number;
+  quantity: number;
+  unitPrice: number;
+  addons: PricedAddon[];
+  note: string | null;
+}
+
+/**
+ * Send to Kitchen's grouping (TableDraftService.submitDraft), pure:
+ *
+ * - `lines` — one row per CUSTOMER per line: a customer's identical
+ *   picks (lineMergeKey) merge into one row with the quantities added,
+ *   but two customers' identical picks stay two rows, each keeping its
+ *   contributorToken — so each person still sees their own lines after
+ *   Send. A merged row keeps its first draft's note (normalized) and its
+ *   add-ons sorted by id.
+ * - `stockByMenu` — what to take from stock: everyone's quantities
+ *   combined per menu (in first-seen order), so a shortage names the
+ *   menu, not one person's line.
+ */
+export function groupDraftsForSubmit(drafts: readonly SubmitDraft[]): {
+  lines: SubmitLine[];
+  stockByMenu: { menuId: number; menuName: string; quantity: number }[];
+} {
+  const lines = new Map<string, SubmitLine>();
+  const stock = new Map<number, { menuId: number; menuName: string; quantity: number }>();
+
+  for (const item of drafts) {
+    const addons = [...item.addons].sort((a, b) => a.addonId - b.addonId);
+    const key = JSON.stringify([
+      item.contributorToken,
+      lineMergeKey(item.menuId, item.unitPrice, addons, item.note),
+    ]);
+    const line = lines.get(key);
+    if (line) {
+      line.quantity += item.quantity;
+    } else {
+      lines.set(key, {
+        contributorToken: item.contributorToken,
+        menuId: item.menuId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        addons,
+        note: normalizeOrderNote(item.note),
+      });
+    }
+
+    const menu = stock.get(item.menuId);
+    if (menu) menu.quantity += item.quantity;
+    else stock.set(item.menuId, { menuId: item.menuId, menuName: item.menuName, quantity: item.quantity });
+  }
+
+  return { lines: [...lines.values()], stockByMenu: [...stock.values()] };
+}
+
+/** A submitted Order row as the Backoffice merges it for display. */
+interface DisplayMergeable {
+  id: number;
+  menuId: number;
+  quantity: number;
+  unitPrice: number;
+  note: string | null;
+  OrdersAddons: readonly PricedAddon[];
+  contributorToken?: string | null;
+}
+
+/**
+ * A round's lines as the Backoffice SHOWS them: Table QR keeps one row
+ * per customer per line (groupDraftsForSubmit), so identical lines from
+ * different customers are merged here — for display only — into one,
+ * the quantities added ("Iced Latte ×2"). Same rule as everywhere else
+ * (lineMergeKey): lines with a different note, add-on set or price
+ * snapshot stay separate. A merged line keeps its first line's id (the
+ * React key), add-ons and note; lines stay in order of first appearance,
+ * and the total is unchanged (each part is the same per-unit price).
+ * The contributorToken is dropped — the Backoffice never shows who. Pure:
+ * the rows given aren't changed.
+ */
+export function mergeLinesForDisplay<Line extends DisplayMergeable>(
+  lines: readonly Line[],
+): Omit<Line, "contributorToken">[] {
+  const merged = new Map<string, Omit<Line, "contributorToken">>();
+  for (const { contributorToken: _owner, ...line } of lines) {
+    void _owner;
+    const key = lineMergeKey(line.menuId, line.unitPrice, line.OrdersAddons, line.note);
+    const existing = merged.get(key);
+    if (existing) existing.quantity += line.quantity;
+    else merged.set(key, { ...line });
+  }
+  return [...merged.values()];
 }

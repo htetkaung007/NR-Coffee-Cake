@@ -3,6 +3,7 @@ import { OrderSessionApprovalService } from "@/app/services";
 import { approvalDeadline } from "@/app/lib/approvalDeadline";
 import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 import { buildEntryBillFromSessions } from "@/app/lib/orderTotals";
+import { mergeLinesForDisplay } from "@/app/lib/orderLineMerge";
 import OrderDetailView from "./OrderDetailView";
 
 // Awaiting approval first (oldest first — closest to expiring), then everything else newest first.
@@ -68,7 +69,9 @@ export default async function OrderDetailPage({
     // Table round only becomes overdue.
     approvalDue: approvalDueFor(session),
     itemCount: session.orders.reduce((sum, order) => sum + order.quantity, 0),
-    lines: session.orders.map((order) => ({
+    // Identical lines from different customers shown as one ("Iced Latte
+    // ×2") — display only; the Backoffice never shows who ordered what.
+    lines: mergeLinesForDisplay(session.orders).map((order) => ({
       id: order.id,
       quantity: order.quantity,
       menuName: order.menu.name,

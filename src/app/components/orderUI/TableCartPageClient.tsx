@@ -37,9 +37,9 @@ import {
   submitDraftAction,
   updateDraftItemAction,
 } from "@/app/(storefront)/table/action";
-import CartList, {
-  CartLine,
+import type {
   DraftLine,
+  LabelledCartLine,
   Shortage,
 } from "@/app/(storefront)/cart/CartList";
 import { formatAmount } from "@/app/lib/orderFormat";
@@ -50,12 +50,12 @@ interface TableCartPageClientProps {
   tableId: number;
   locationId: number;
   shopName: string | null;
-  myContributorToken: string;
   initialDraftItems: DraftLine[];
   initialActiveRound: ActiveRound | null;
-  /** The active round's line items (already merged by Send to Kitchen) —
+  /** The active round's line items — each customer's own lines (Send to
+   *  Kitchen merges per customer only), labelled with who ordered them —
    *  what this page keeps showing once the draft has become a round. */
-  initialRoundItems: CartLine[];
+  initialRoundItems: LabelledCartLine[];
   initialShortages: Shortage[];
   /** The table's last round, if the counter turned it down or let it
    *  expire (see OrderSessionService.getRejectedRoundForTable). */
@@ -82,7 +82,6 @@ export default function TableCartPageClient({
   tableId,
   locationId,
   shopName,
-  myContributorToken,
   initialDraftItems,
   initialActiveRound,
   initialRoundItems,
@@ -354,14 +353,19 @@ export default function TableCartPageClient({
           >
             <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
               {showingRound ? (
-                <CartList
-                  cart={roundItems}
-                  title={`Sent to kitchen · ${activeRound?.orderNumber ?? ""}`}
-                />
+                <>
+                  <Typography
+                    variant="body2"
+                    sx={{ mb: 0.5, fontWeight: 700 }}
+                  >
+                    Sent to kitchen · {activeRound?.orderNumber ?? ""}
+                  </Typography>
+                  {/* Same per-person cards as before Send, read-only. */}
+                  <DraftList draftItems={roundItems} readOnly />
+                </>
               ) : (
                 <DraftList
                   draftItems={draftItems}
-                  myContributorToken={myContributorToken}
                   shortages={shortages}
                   onRemove={handleRemove}
                   onEdit={(item) => setEditingItem(item)}

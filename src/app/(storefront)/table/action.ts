@@ -9,7 +9,7 @@ import {
   validateWith,
 } from "@/app/lib/actionHelper";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
+import { toDraftLine, toLabelledCartLine } from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import { approvalTiming } from "@/app/lib/approvalTiming";
 import {
@@ -54,9 +54,26 @@ async function requireContributorToken(tableId: number) {
   return token;
 }
 
+/** A draft line as it goes back to the client after an add or edit:
+ *  labelled ("You" + its number across the tab), never the token. */
+async function labelOwnLine<Line extends { id: number }>(
+  tableId: number,
+  contributorToken: string,
+  line: Line,
+) {
+  const labels = await TableDraftService.getContributorLabels(
+    tableId,
+    contributorToken,
+  );
+  return {
+    ...line,
+    ...(labels.get(line.id) ?? { isMine: true, contributorNo: null }),
+  };
+}
+
 const safeAddDraftItem = toSafeResult(async (input: AddDraftItemInput) => {
   const contributorToken = await requireContributorToken(input.tableId);
-  return TableDraftService.addDraftItem(
+  const line = await TableDraftService.addDraftItem(
     input.tableId,
     contributorToken,
     input.menuId,
@@ -64,6 +81,7 @@ const safeAddDraftItem = toSafeResult(async (input: AddDraftItemInput) => {
     input.addonIds,
     input.note,
   );
+  return labelOwnLine(input.tableId, contributorToken, line);
 });
 
 /** Table QR's add-to-draft — see MenuBrowser's
@@ -114,13 +132,14 @@ export async function removeDraftItemAction(tableId: number, orderId: number) {
 const safeUpdateDraftItem = toSafeResult(
   async (input: UpdateDraftItemInput) => {
     const contributorToken = await requireContributorToken(input.tableId);
-    return TableDraftService.updateDraftItem(
+    const line = await TableDraftService.updateDraftItem(
       contributorToken,
       input.orderId,
       input.quantity,
       input.addonIds,
       input.note,
     );
+    return labelOwnLine(input.tableId, contributorToken, line);
   },
 );
 
@@ -214,7 +233,7 @@ export async function pollTableAction(tableId: number, locationId: number) {
     return { authorized: false as const };
   }
 
-  const [draftItems, activeRound, shortages, rejectedRound] =
+  const [draftItems, activeRound, shortages, rejectedRound, labels] =
     await Promise.all([
       TableDraftService.getDraftItemsForTable(parsed.data.tableId),
       OrderSessionService.getActiveRoundWithOrdersForTable(parsed.data.tableId),
@@ -225,12 +244,16 @@ export async function pollTableAction(tableId: number, locationId: number) {
       // The table's last round, if the counter turned it down / let it
       // expire — shown once on the cart page (see OrderRejectedScreen).
       OrderSessionService.getRejectedRoundForTable(parsed.data.tableId),
+      // Who's who as labels — the tokens stay on the server.
+      TableDraftService.getContributorLabels(
+        parsed.data.tableId,
+        contributorToken,
+      ),
     ]);
 
   return {
     authorized: true as const,
-    myContributorToken: contributorToken,
-    draftItems: draftItems.map(toDraftLine),
+    draftItems: draftItems.map((item) => toDraftLine(item, labels)),
     activeRound: activeRound
       ? {
           id: activeRound.id,
@@ -242,7 +265,9 @@ export async function pollTableAction(tableId: number, locationId: number) {
           approval: approvalTiming(activeRound, new Date()),
         }
       : null,
-    roundItems: activeRound ? activeRound.orders.map(toCartLine) : [],
+    roundItems: activeRound
+      ? activeRound.orders.map((order) => toLabelledCartLine(order, labels))
+      : [],
     shortages,
     rejectedRound,
   };

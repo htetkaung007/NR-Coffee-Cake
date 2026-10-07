@@ -247,18 +247,22 @@ model Order {
   tableId          Int
   // Nullable — a "draft" line item (see the Table-QR per-customer draft
   // design) has no session yet: it's owned by (tableId, contributorToken)
-  // alone until "Send to Kitchen" merges same-menu/same-addon drafts and
-  // attaches the merged rows to a freshly created OrderSession. A
+  // alone until "Send to Kitchen" merges each customer's identical drafts
+  // and attaches the rows to a freshly created OrderSession. A
   // Counter QR line item is never a draft — it gets orderSessionId set
   // immediately, same as before this change.
   orderSession     OrderSession? @relation(fields: [orderSessionId], references: [id])
   orderSessionId   Int?
-  // Set only on draft (orderSessionId == null) rows — which customer's
-  // phone added this line, so only they can edit/remove it before
-  // Send to Kitchen (see the CONTRIBUTOR_TOKEN_COOKIE design). Left
-  // null once merged into a session: after submit, editing is no
-  // longer per-customer (the whole round is locked together), so
-  // there's nothing left to check it against.
+  // Which customer's phone added this line (see the
+  // CONTRIBUTOR_TOKEN_COOKIE design). Set on Table QR drafts AND kept on
+  // the submitted Table lines (Send to Kitchen merges per customer and
+  // copies it over), so each customer's own view can show "You" vs
+  // "Customer 2" after Send. Edit/remove rights apply to DRAFTS only
+  // (TableDraftService checks orderSessionId = null as well as the
+  // token) — a submitted line is never editable. Never sent to the
+  // client: the server turns it into { isMine, contributorNo } labels
+  // first (lib/contributors.ts). Null on Counter and staff lines, and on
+  // Table lines submitted before it was kept.
   contributorToken String?
   // Optional customer instruction for this one line item ("no onion",
   // "extra spicy") — item-level, not session-level. Null (never "")

@@ -1,4 +1,9 @@
-import type { CartLine, DraftLine } from "@/app/(storefront)/cart/CartList";
+import type {
+  CartLine,
+  DraftLine,
+  LabelledCartLine,
+} from "@/app/(storefront)/cart/CartList";
+import type { ContributorLabel } from "@/app/lib/contributors";
 import type { LineAddon } from "@/app/lib/orderTotals";
 
 /** An OrdersAddon link as fetched with its addon (for the name). */
@@ -46,13 +51,25 @@ export function toCartLine(order: {
   };
 }
 
-/** A Table QR draft row as the DraftLine shape — toCartLine plus whose
- *  pick it is. */
+/** Who a line is labelled as when the tab's labels don't know it
+ *  (shouldn't happen — the labels cover the whole tab). */
+const UNKNOWN: ContributorLabel = { isMine: false, contributorNo: null };
+
+/** A Table QR line (draft or submitted) as the labelled cart-line shape
+ *  — toCartLine plus WHO ordered it, as a label from the tab's labels
+ *  (TableDraftService.getContributorLabels). The row's contributorToken
+ *  is never copied: it doesn't leave the server. */
+export function toLabelledCartLine(
+  order: Parameters<typeof toCartLine>[0],
+  labels: ReadonlyMap<number, ContributorLabel>,
+): LabelledCartLine {
+  return { ...toCartLine(order), ...(labels.get(order.id) ?? UNKNOWN) };
+}
+
+/** A Table QR draft row as the DraftLine shape. */
 export function toDraftLine(
-  order: Parameters<typeof toCartLine>[0] & { contributorToken: string | null },
+  order: Parameters<typeof toCartLine>[0],
+  labels: ReadonlyMap<number, ContributorLabel>,
 ): DraftLine {
-  return {
-    ...toCartLine(order),
-    contributorToken: order.contributorToken ?? "",
-  };
+  return toLabelledCartLine(order, labels);
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import { Card, Divider, Stack, Typography } from "@mui/material";
-import { cartLinesTotal } from "@/app/lib/orderTotals";
+import {
+  contributorGroupHeading,
+  groupByContributor,
+} from "@/app/lib/contributors";
 import { formatAmount } from "@/app/lib/orderFormat";
 import {
   CartLineRow,
@@ -11,35 +14,34 @@ import {
 
 interface DraftListProps {
   draftItems: DraftLine[];
-  myContributorToken: string;
   shortages?: Shortage[];
-  onRemove: (orderId: number) => void;
-  onEdit: (item: DraftLine) => void;
-  onQuantityChange: (item: DraftLine, next: number) => void;
-  isPending: boolean;
+  /** The round already sent to the kitchen: the same per-person cards,
+   *  but nobody's lines can be changed any more. */
+  readOnly?: boolean;
+  onRemove?: (orderId: number) => void;
+  onEdit?: (item: DraftLine) => void;
+  onQuantityChange?: (item: DraftLine, next: number) => void;
+  isPending?: boolean;
 }
 
 /**
- * Per-customer draft review (design mock: "Customer 1 order" /
- * "Customer 2 order" as separate cards) — one card per contributor
- * that has picked anything, mine first. Only MY card's lines are
- * tappable (edit), have the − / + quantity stepper and the ✕ remove;
- * everyone else's picks are visible (the
- * whole point of a shared draft) but read-only — see
- * TableDraftService.removeDraftItem/updateDraftItem's ownership
- * checks, which this UI mirrors rather than relying on alone (a
- * disabled-looking button that still tried the request would just
- * surface a server error for something the UI could have prevented
- * outright).
+ * Per-customer cards (design mock: "Your order" / "Customer 2 order") —
+ * one card per person, yours first (groupByContributor), each with its
+ * subtotal. Who's who comes as labels; the tokens never reach the
+ * browser. Before Send, only YOUR lines are tappable (edit), have the
+ * − / + stepper and the ✕ remove; everyone else's picks are visible but
+ * read-only — mirroring TableDraftService's ownership checks, which the
+ * server still enforces. After Send (`readOnly`) the round keeps the
+ * same cards, with nothing editable.
  */
 export default function DraftList({
   draftItems,
-  myContributorToken,
   shortages = [],
+  readOnly = false,
   onRemove,
   onEdit,
   onQuantityChange,
-  isPending,
+  isPending = false,
 }: DraftListProps) {
   if (draftItems.length === 0) return null;
 
@@ -47,38 +49,21 @@ export default function DraftList({
     shortages.map((shortage) => [shortage.menuId, shortage]),
   );
 
-  const byContributor = new Map<string, DraftLine[]>();
-  for (const item of draftItems) {
-    const existing = byContributor.get(item.contributorToken);
-    if (existing) existing.push(item);
-    else byContributor.set(item.contributorToken, [item]);
-  }
-
-  // Mine first — the person looking at this screen cares most about
-  // what they themselves picked; everyone else's cards follow in
-  // whatever order they first added something.
-  const contributors = Array.from(byContributor.keys()).sort((a) =>
-    a === myContributorToken ? -1 : 1,
-  );
-
   return (
     <Stack spacing={1.5} sx={{ mb: 3 }}>
-      {contributors.map((token, index) => {
-        const isMine = token === myContributorToken;
-        const items = byContributor.get(token)!;
-        const subtotal = cartLinesTotal(items);
-
+      {groupByContributor(draftItems).map((group) => {
+        const editable = !readOnly && group.isMine;
         return (
-          <Card key={token} variant="outlined" sx={{ p: 1.5 }}>
+          <Card key={group.key} variant="outlined" sx={{ p: 1.5 }}>
             <Stack
               direction="row"
               sx={{ justifyContent: "space-between", mb: 1 }}
             >
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {isMine ? "Your order" : `Customer ${index + 1} order`}
+                {contributorGroupHeading(group.label)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {formatAmount(subtotal)}
+                {formatAmount(group.subtotal)}
               </Typography>
             </Stack>
 
@@ -86,16 +71,20 @@ export default function DraftList({
               spacing={1}
               divider={<Divider flexItem sx={{ opacity: 0.5 }} />}
             >
-              {items.map((item) => (
+              {group.lines.map((item) => (
                 <CartLineRow
                   key={item.id}
                   line={item}
                   shortage={shortageByMenuId.get(item.menuId)}
-                  actionable={isMine}
+                  actionable={editable}
                   disabled={isPending}
-                  onEdit={() => onEdit(item)}
-                  onRemove={() => onRemove(item.id)}
-                  onQuantityChange={(next) => onQuantityChange(item, next)}
+                  onEdit={editable ? () => onEdit?.(item) : undefined}
+                  onRemove={editable ? () => onRemove?.(item.id) : undefined}
+                  onQuantityChange={
+                    editable
+                      ? (next) => onQuantityChange?.(item, next)
+                      : undefined
+                  }
                 />
               ))}
             </Stack>

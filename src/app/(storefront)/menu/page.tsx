@@ -87,20 +87,22 @@ export default async function MenuPage({
         contributorToken,
       ));
     if (contributorToken && isTokenCurrent) {
-      const [menuData, shopName, draftItems, activeRound] = await Promise.all([
-        MenuService.getMenusForLocation(locationId),
-        LocationService.getShopNameForLocation(locationId),
-        TableDraftService.getDraftItemsForTable(tableId),
-        OrderSessionService.getActiveRoundForTable(tableId),
-      ]);
+      const [menuData, shopName, draftItems, activeRound, labels] =
+        await Promise.all([
+          MenuService.getMenusForLocation(locationId),
+          LocationService.getShopNameForLocation(locationId),
+          TableDraftService.getDraftItemsForTable(tableId),
+          OrderSessionService.getActiveRoundForTable(tableId),
+          // Who's who as labels — the tokens stay on the server.
+          TableDraftService.getContributorLabels(tableId, contributorToken),
+        ]);
 
       return (
         <TableOrderClient
           tableId={tableId}
           locationId={locationId}
           shopName={shopName}
-          myContributorToken={contributorToken}
-          initialDraftItems={draftItems.map(toDraftLine)}
+          initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}
           initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
           activeRoundId={activeRound?.id ?? null}
           menus={buildMenuOptions(menuData.menus)}

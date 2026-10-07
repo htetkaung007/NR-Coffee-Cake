@@ -1,3 +1,5 @@
+import { mergeLinesForDisplay } from "./orderLineMerge";
+
 /** An Order row with what its price depends on — see orderLineTotal.
  *  unitPrice/unitPrice below are each line's own PRICE SNAPSHOT (taken
  *  when the line was added), never Menu.price/Addon.price — a later
@@ -75,13 +77,17 @@ export function orderLinesTotal(orders: PricedOrderLine[]) {
 }
 
 /** An Order row as the bill reads it: its price snapshot inputs plus
- *  names. */
+ *  names, and what mergeLinesForDisplay compares (menu, note, add-on
+ *  ids). */
 interface BillLine {
   id: number;
+  menuId: number;
   quantity: number;
   unitPrice: number;
+  note: string | null;
   menu: { name: string };
   OrdersAddons: {
+    addonId: number;
     unitPrice: number;
     addon: { name: string };
   }[];
@@ -170,7 +176,10 @@ export function buildEntryBill<Time>(rounds: BillSourceRound<Time>[]) {
     acceptedRounds: accepted.map((round) => ({
       orderNumber: round.orderNumber,
       time: round.createdAt,
-      lines: round.orders.map((line) => ({
+      // Table rounds keep one row per customer per line; the Backoffice
+      // shows identical lines merged ("Iced Latte ×2") — display only,
+      // the total is unchanged.
+      lines: mergeLinesForDisplay(round.orders).map((line) => ({
         id: line.id,
         lineTotal: orderLineTotal(line),
         // Item, then one row per add-on — what BillLineRows renders.

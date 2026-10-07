@@ -9,13 +9,31 @@ import { formatAmount } from "@/app/lib/orderFormat";
 
 import { ORDER_STATUS_CHIP } from "./OrderReceipt";
 
+interface HistoryItem {
+  quantity: number;
+  name: string;
+}
+
 interface OrderHistoryCardProps {
   /** The order's receipt page — the whole card is the link. */
   href: string;
   orderNumber: string;
   status: string;
-  items: { quantity: number; name: string }[];
+  items: HistoryItem[];
+  /** Table QR: the same items per person ("You", "Customer 2"…), one
+   *  summary line each with that person's subtotal. Counter: absent. */
+  groups?: { key: string; label: string; items: HistoryItem[]; subtotal: number }[];
   total: number;
+}
+
+/** "1 × Latte, 1 × Cake +2 more" — a one-line summary of some items. */
+function summarize(items: HistoryItem[]) {
+  const shown = items
+    .slice(0, SUMMARY_ITEMS)
+    .map((item) => `${item.quantity} × ${item.name}`)
+    .join(", ");
+  const hidden = items.length - SUMMARY_ITEMS;
+  return `${shown}${hidden > 0 ? ` +${hidden} more` : ""}`;
 }
 
 /** How many item names the one-line summary spells out before
@@ -33,17 +51,13 @@ export default function OrderHistoryCard({
   orderNumber,
   status,
   items,
+  groups,
   total,
 }: OrderHistoryCardProps) {
   const chip = ORDER_STATUS_CHIP[status] ?? {
     label: status,
     color: "default" as const,
   };
-  const shown = items
-    .slice(0, SUMMARY_ITEMS)
-    .map((item) => `${item.quantity} × ${item.name}`)
-    .join(", ");
-  const hidden = items.length - SUMMARY_ITEMS;
 
   return (
     <Card
@@ -63,7 +77,6 @@ export default function OrderHistoryCard({
         minWidth: { xs: "100%", sm: 320 },
         maxWidth: { xs: "100%", sm: 720 },
         minHeight: { xs: 88, sm: 104 },
-        maxHeight: { xs: 168, sm: 200 },
         transition: "transform 0.2s ease, box-shadow 0.2s ease",
         [hoverCapableMedia]: {
           "&:hover": {
@@ -86,15 +99,42 @@ export default function OrderHistoryCard({
             </Typography>
             <Chip label={chip.label} color={chip.color} size="small" />
           </Stack>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            noWrap
-            sx={{ mb: 0.75 }}
-          >
-            {shown}
-            {hidden > 0 ? ` +${hidden} more` : ""}
-          </Typography>
+          {groups ? (
+            // One line per person, so each customer finds their own.
+            <Box sx={{ mb: 0.75 }}>
+              {groups.map((group) => (
+                <Stack
+                  key={group.key}
+                  direction="row"
+                  spacing={1}
+                  sx={{ justifyContent: "space-between" }}
+                >
+                  <Typography variant="body2" color="text.secondary" noWrap>
+                    <Box component="span" sx={{ fontWeight: 700 }}>
+                      {group.label}:
+                    </Box>{" "}
+                    {summarize(group.items)}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ flexShrink: 0 }}
+                  >
+                    {formatAmount(group.subtotal)}
+                  </Typography>
+                </Stack>
+              ))}
+            </Box>
+          ) : (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              noWrap
+              sx={{ mb: 0.75 }}
+            >
+              {summarize(items)}
+            </Typography>
+          )}
           <Stack direction="row" sx={{ justifyContent: "space-between" }}>
             <Typography variant="caption" color="text.secondary">
               {items.length} {items.length === 1 ? "item" : "items"}

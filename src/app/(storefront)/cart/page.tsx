@@ -9,7 +9,11 @@ import {
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/contributorToken";
-import { toCartLine, toDraftLine } from "@/app/lib/roundLine";
+import {
+  toCartLine,
+  toDraftLine,
+  toLabelledCartLine,
+} from "@/app/lib/roundLine";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import { approvalTiming } from "@/app/lib/approvalTiming";
 import CartPageClient from "@/app/components/orderUI/CartPageClient";
@@ -66,22 +70,29 @@ export default async function CartPage({
       ));
     if (contributorToken && isTokenCurrent) {
       const locationId = Number(locationIdParam);
-      const [draftItems, activeRound, shopName, shortages, rejectedRound] =
-        await Promise.all([
-          TableDraftService.getDraftItemsForTable(tableId),
-          OrderSessionService.getActiveRoundWithOrdersForTable(tableId),
-          LocationService.getShopNameForLocation(locationId),
-          TableDraftService.getShortagesForTable(tableId, locationId),
-          OrderSessionService.getRejectedRoundForTable(tableId),
-        ]);
+      const [
+        draftItems,
+        activeRound,
+        shopName,
+        shortages,
+        rejectedRound,
+        labels,
+      ] = await Promise.all([
+        TableDraftService.getDraftItemsForTable(tableId),
+        OrderSessionService.getActiveRoundWithOrdersForTable(tableId),
+        LocationService.getShopNameForLocation(locationId),
+        TableDraftService.getShortagesForTable(tableId, locationId),
+        OrderSessionService.getRejectedRoundForTable(tableId),
+        // Who's who as labels — the tokens stay on the server.
+        TableDraftService.getContributorLabels(tableId, contributorToken),
+      ]);
 
       return (
         <TableCartPageClient
           tableId={tableId}
           locationId={locationId}
           shopName={shopName}
-          myContributorToken={contributorToken}
-          initialDraftItems={draftItems.map(toDraftLine)}
+          initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}
           initialActiveRound={
             activeRound
               ? {
@@ -95,7 +106,11 @@ export default async function CartPage({
                 }
               : null
           }
-          initialRoundItems={activeRound?.orders.map(toCartLine) ?? []}
+          initialRoundItems={
+            activeRound?.orders.map((order) =>
+              toLabelledCartLine(order, labels),
+            ) ?? []
+          }
           initialShortages={shortages}
           initialRejectedRound={rejectedRound}
         />
