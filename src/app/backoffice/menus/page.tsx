@@ -28,7 +28,8 @@ export default async function MenusPage() {
   const locationName = locationRow?.name ?? "this location";
 
   return (
-    <Box>
+    // The same page padding and header spacing as the Tables page.
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
       {/* Title first, then which location the switches act on (they
           are per location). Create Menu sits beside it from lg; below
           lg it's the floating "+". */}
@@ -38,8 +39,7 @@ export default async function MenusPage() {
           alignItems: "flex-start",
           justifyContent: "space-between",
           gap: 2,
-          px: { xs: 1, sm: 2, md: 3 },
-          pt: { xs: 2, md: 3 },
+          mb: 3,
         }}
       >
         <Box sx={{ minWidth: 0 }}>
@@ -73,9 +73,7 @@ export default async function MenusPage() {
         )}
       </Box>
       {menus.length === 0 ? (
-        <Box sx={{ p: 3 }}>
-          <Typography color="text.secondary">No menu items yet.</Typography>
-        </Box>
+        <Typography color="text.secondary">No menu items yet.</Typography>
       ) : (
         <MenuGrid
           menus={menus.map((menu) => ({

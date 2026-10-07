@@ -35,7 +35,6 @@ export default function MenuGrid({
             sm: "repeat(auto-fill, minmax(220px, 1fr))",
           },
           gap: { xs: 1, sm: 1.5, md: 2 },
-          p: { xs: 1, sm: 2, md: 3 },
         }}
       >
         {menus.map((menu) => (

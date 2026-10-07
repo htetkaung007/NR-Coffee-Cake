@@ -7,8 +7,8 @@ import {
   Box,
   Typography,
   Chip,
-  Button,
   FormControlLabel,
+  IconButton,
   Switch,
   Tooltip,
 } from "@mui/material";
@@ -17,6 +17,7 @@ import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { menuCardStatus } from "@/app/lib/menuCardStatus";
+import { moneyToneSx } from "@/app/backoffice/order/orderTypography";
 import MenuThumb from "./MenuThumb";
 import type { StatusMessage } from "./StatusSnackbar";
 import { useCan } from "./StaffAccessProvider";
@@ -50,7 +51,22 @@ interface MenuCardProps {
   onNotify: (message: StatusMessage) => void;
 }
 
-const DESCRIPTION_PREVIEW_LENGTH = 40;
+/** Visually hidden but still read by screen readers. */
+const SCREEN_READER_ONLY = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  m: -0.125,
+  p: 0,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+} as const;
+
+/** The footer label hides (screen readers keep it) when the card itself
+ *  is narrower than this — a container query, so the row never wraps. */
+const NARROW_CARD = "@container (max-width: 219.95px)";
 const HIDDEN_HERE_HINT =
   "Not shown at this location — change it in the menu's form (owner)";
 
@@ -101,11 +117,6 @@ export default function BOMenuCard({
     });
   }
   const description = item.description ?? "";
-  const isDescriptionTruncated =
-    description.length > DESCRIPTION_PREVIEW_LENGTH;
-  const descriptionPreview = isDescriptionTruncated
-    ? description.slice(0, DESCRIPTION_PREVIEW_LENGTH).trimEnd() + "…"
-    : description;
 
   return (
     <Card
@@ -119,6 +130,8 @@ export default function BOMenuCard({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        // Lets the footer react to the card's own width (NARROW_CARD).
+        containerType: "inline-size",
       }}
     >
       {/* Image — a short fixed ratio (capped on desktop) keeps the grid
@@ -143,7 +156,11 @@ export default function BOMenuCard({
             transition: "opacity 150ms ease-out, filter 150ms ease-out",
           }}
         >
-          <MenuThumb name={item.name} imageUrl={item.imageUrl} alt={item.name} />
+          <MenuThumb
+            name={item.name}
+            imageUrl={item.imageUrl}
+            alt={item.name}
+          />
         </Box>
         <Chip
           label={
@@ -219,7 +236,8 @@ export default function BOMenuCard({
         )}
       </Box>
 
-      {/* Body */}
+      {/* Body: name → price → description (1 line) → "N left", with
+          the footer pinned to the bottom so cards in a row line up. */}
       <CardContent
         sx={{
           flexGrow: 1,
@@ -227,70 +245,108 @@ export default function BOMenuCard({
           flexDirection: "column",
           gap: 0.5,
           p: 1,
-          "&:last-child": { pb: 1 },
+          "&:last-child": { pb: 0.5 },
         }}
       >
-        <Typography
-          variant="body1"
+        {/* Phones: price on its own line under the name. From sm: name
+            left, price right. */}
+        <Box
           sx={{
-            lineHeight: 1.3,
-            color: "text.primary",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "flex-start", sm: "baseline" },
+            justifyContent: "space-between",
+            columnGap: 1,
           }}
         >
-          {item.name}
-        </Typography>
+          <Typography
+            variant="body1"
+            title={item.name}
+            sx={{
+              flex: { sm: 1 },
+              minWidth: 0,
+              maxWidth: "100%",
+              lineHeight: 1.3,
+              color: "text.primary",
+              // At most 2 lines, never broken inside a word.
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {item.name}
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              ...moneyToneSx("price"),
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {formatAmount(item.price)}
+          </Typography>
+        </Box>
 
         {description && (
-          <Typography variant="body2" color="text.secondary">
-            {descriptionPreview}
-            {isDescriptionTruncated && canEdit && (
-              <Typography
-                component={Link}
-                href={`/backoffice/menus/${item.id}`}
-                variant="body2"
-                sx={{
-                  color: "primary.main",
-                  fontWeight: 600,
-                  ml: 0.5,
-                  textDecoration: "none",
-                }}
-              >
-                See more
-              </Typography>
-            )}
+          // One line at every width; the full text is in the title and on
+          // the Edit page. nowrap + ellipsis works for Myanmar too (no
+          // reliance on spaces).
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            title={description}
+            sx={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {description}
           </Typography>
         )}
 
-        {/* Money is neutral (DESIGN.md Rule 13). */}
-        <Typography variant="subtitle2" color="text.primary">
-          {formatAmount(item.price)}
-        </Typography>
         <Typography variant="body2" color="text.secondary">
           {Math.max(0, item.stockQuantity)} left
         </Typography>
 
+        {item.isHiddenHere && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            id={hiddenHintId}
+          >
+            {HIDDEN_HERE_HINT}
+          </Typography>
+        )}
+
         <Box sx={{ flexGrow: 1 }} />
+
+        {/* Footer — one row: the switch (+ label) left, Edit right. */}
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 1,
+            flexWrap: "nowrap",
+            gap: 0.5,
+            minWidth: 0,
           }}
         >
-          {/* On/off at the selected location only. Not inside any link,
-              so it never opens Edit. The span keeps the tooltip working
-              while the switch is disabled. */}
+          {/* On/off at the selected location only. The span keeps the
+              tooltip working while the switch is disabled. */}
           <Tooltip title={permissionHint}>
-            <Box component="span">
+            <Box component="span" sx={{ minWidth: 0 }}>
               <FormControlLabel
                 label={
-                  <Typography variant="body2" component="span">
+                  <Typography
+                    variant="body2"
+                    component="span"
+                    sx={{ [NARROW_CARD]: SCREEN_READER_ONLY }}
+                  >
                     {isSwitchedOn ? "Available" : "Unavailable"}
                   </Typography>
                 }
@@ -309,41 +365,33 @@ export default function BOMenuCard({
                     }}
                   />
                 }
-                sx={{ minHeight: 44, m: 0, mr: 1 }}
+                sx={{ minHeight: 44, m: 0, minWidth: 0, whiteSpace: "nowrap" }}
               />
             </Box>
           </Tooltip>
 
           {/* Editing a menu is the owner's (its page checks too). */}
           {canEdit && (
-            <Button
-              component={Link}
-              href={`/backoffice/menus/${item.id}`}
-              size="small"
-              variant="outlined"
-              startIcon={<EditIcon fontSize="small" />}
-              sx={{
-                minHeight: 44,
-                borderColor: "inputBorder",
-                color: "text.primary",
-                [hoverCapableMedia]: {
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
+            <Tooltip title="Edit">
+              <IconButton
+                component={Link}
+                href={`/backoffice/menus/${item.id}`}
+                aria-label={`Edit ${item.name}`}
+                sx={{
+                  width: 44,
+                  height: 44,
+                  flexShrink: 0,
+                  color: "text.primary",
+                  [hoverCapableMedia]: {
+                    "&:hover": { bgcolor: "action.hover" },
                   },
-                },
-              }}
-            >
-              Edit
-            </Button>
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           )}
         </Box>
-        {item.isHiddenHere && (
-          <Typography variant="caption" color="text.secondary" id={hiddenHintId}>
-            {HIDDEN_HERE_HINT}
-          </Typography>
-        )}
       </CardContent>
     </Card>
   );

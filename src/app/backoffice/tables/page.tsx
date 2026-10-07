@@ -16,9 +16,7 @@ export default async function TablesPage() {
 
   // Tables are scoped to whichever location the user currently has
   // selected — same "selected location" concept the Menu list uses.
-  const tables = await TableService.getTablesByLocation(
-    location.locationId,
-  );
+  const tables = await TableService.getTablesByLocation(location.locationId);
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
@@ -48,14 +46,35 @@ export default async function TablesPage() {
         <Box
           sx={{
             display: "grid",
-            // As many ≥ 240px columns as fit (one on a 320px phone).
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))",
+            // Phones: one full-width column. From sm: as many ~260–300px
+            // cards as fit (two from ~600px).
+            gridTemplateColumns: {
+              xs: "minmax(0, 1fr)",
+              sm: "repeat(auto-fill, minmax(260px, 300px))",
+            },
             gap: { xs: 1, sm: 1.5 },
           }}
         >
-          {tables.map((table) => (
-            <TableCard key={table.id} table={table} />
-          ))}
+          {/* The Counter QR first, then the tables in order. */}
+          {[...tables]
+            .sort(
+              (a, b) =>
+                Number(b.isCounter === true) - Number(a.isCounter === true),
+            )
+            .map((table) => (
+              // Only what the card shows — never the whole row: the access
+              // key (counterAccessKey) must not reach the browser.
+              <TableCard
+                key={table.id}
+                table={{
+                  id: table.id,
+                  name: table.name,
+                  qrcodeImageUrl: table.qrcodeImageUrl,
+                  isArchived: table.isArchived,
+                  isCounter: table.isCounter === true,
+                }}
+              />
+            ))}
         </Box>
       )}
     </Box>
