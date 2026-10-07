@@ -6,13 +6,14 @@ import { useTheme } from "@mui/material/styles";
 const SIDE_DRAWER_WIDTH = 400;
 
 /**
- * Where OrderSidePanel's content opens below its breakpoint (from
- * OrderBottomBar): a right-hand drawer on tablets, a bottom sheet on
- * phones (rounded top, grab handle, capped at 85vh). The close (×)
- * button is the content's own; Escape and a tap outside close it too
- * (MUI's defaults). MUI's own slide transition only — nothing extra.
+ * Where a master–detail page's side panel opens below its breakpoint
+ * (the order pages' OrderSidePanel via OrderBottomBar, the Add-ons
+ * group panel): a right-hand drawer on tablets, a bottom sheet on phones
+ * (rounded top, grab handle, capped at 85vh). The close (×) button is
+ * the content's own; Escape and a tap outside close it too (MUI's
+ * defaults). MUI's own slide transition only — nothing extra.
  */
-export default function OrderPanelDrawer({
+export default function SidePanelDrawer({
   open,
   onClose,
   label,

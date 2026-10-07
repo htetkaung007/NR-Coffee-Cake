@@ -49,3 +49,17 @@ export const updateAddonGroupSchema = z.object({
 });
 
 export type UpdateAddonGroupInput = z.infer<typeof updateAddonGroupSchema>;
+
+/** The Add-ons panel's on/off switch for one option. */
+export const setAddonAvailableSchema = z.object({
+  addonId: z.number().int().positive(),
+  isAvailable: z.boolean(),
+});
+export type SetAddonAvailableInput = z.infer<typeof setAddonAvailableSchema>;
+
+/** The Add-ons panel's Required switch for a group. */
+export const setAddonGroupRequiredSchema = z.object({
+  addonCategoryId: z.number().int().positive(),
+  isRequired: z.boolean(),
+});
+export type SetAddonGroupRequiredInput = z.infer<typeof setAddonGroupRequiredSchema>;

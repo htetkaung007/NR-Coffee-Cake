@@ -9,7 +9,7 @@ import { topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
  * page's bill, the New Order page's current order. Capped at the
  * viewport's height; the content inside scrolls its own middle part
  * and keeps its footer (total + main action) pinned at the bottom.
- * Below `showFrom` the same content opens in OrderPanelDrawer from
+ * Below `showFrom` the same content opens in SidePanelDrawer from
  * OrderBottomBar instead.
  */
 export default function OrderSidePanel({

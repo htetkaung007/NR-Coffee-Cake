@@ -13,28 +13,21 @@ import {
   type CreateLocationInput,
   type UpdateLocationInput,
 } from "@/app/lib/schemas/locationSchema";
+import { requireAdmin } from "@/app/lib/roleGuard";
 import { getSessionContext } from "@/app/lib/session";
 import { LocationService } from "@/app/services";
 
 /** Every write in this file starts by confirming the caller is an
  *  Admin — Managers have no Location-management access at all (their
- *  location is fixed, assigned by an Admin elsewhere). Kept as a small
- *  repeated check rather than a shared helper: four call sites, and
- *  each one's error message/context is specific enough that a shared
- *  wrapper wouldn't save much. */
-async function requireAdmin() {
-  const { companyId, role } = await getSessionContext();
-  if (!companyId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
-  if (role !== "ADMIN") {
-    throw new AppError("Only Admins can manage locations.", "FORBIDDEN");
-  }
+ *  location is fixed, assigned by an Admin elsewhere). The check itself
+ *  is the shared requireAdmin (lib/roleGuard.ts). */
+async function requireLocationAdmin() {
+  const { companyId } = await requireAdmin("Only Admins can manage locations.");
   return companyId;
 }
 
 const safeCreateLocation = toSafeResult(async (input: CreateLocationInput) => {
-  const companyId = await requireAdmin();
+  const companyId = await requireLocationAdmin();
   return LocationService.createLocation(companyId, input.name);
 });
 
@@ -53,7 +46,7 @@ export async function createLocationAction(formData: FormData) {
 
 const safeUpdateLocationName = toSafeResult(
   async (input: UpdateLocationInput & { locationId: number }) => {
-    await requireAdmin();
+    await requireLocationAdmin();
     return LocationService.updateLocationName(input.locationId, input.name);
   },
 );
@@ -80,7 +73,7 @@ export async function updateLocationNameAction(
 
 const safeToggleArchive = toSafeResult(
   async (input: { locationId: number; isArchived: boolean }) => {
-    await requireAdmin();
+    await requireLocationAdmin();
     return LocationService.toggleLocationArchive(
       input.locationId,
       input.isArchived,
@@ -105,7 +98,7 @@ export async function toggleLocationArchiveAction(
 }
 
 const safeHardDelete = toSafeResult(async (locationId: number) => {
-  await requireAdmin();
+  await requireLocationAdmin();
   return LocationService.hardDeleteLocation(locationId);
 });
 

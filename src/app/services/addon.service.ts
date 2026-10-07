@@ -1,6 +1,6 @@
 import { prisma } from "../utils/prisma";
 import type { Prisma } from "../../../prisma/generated/client";
-import { ValidationError } from "../lib/errors";
+import { NotFoundError, ValidationError } from "../lib/errors";
 
 type Tx = Prisma.TransactionClient;
 
@@ -28,6 +28,67 @@ export class AddonService {
         },
       },
     });
+  }
+
+  /** The Add-ons page's list + detail panel: every live group with its
+   *  live options (incl. isAvailable — off options stay listed so they
+   *  can be turned back on) and the menus using it — only the viewer's
+   *  OWN company's live menus (groups are shared across companies, see
+   *  the class comment, so another company's menu names never show). */
+  static async getAddonGroupsOverview(companyId: number) {
+    const groups = await prisma.addonCategories.findMany({
+      where: { isArchived: false },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        name: true,
+        isRequired: true,
+        addons: {
+          where: { isArchived: false },
+          orderBy: { id: "asc" },
+          select: { id: true, name: true, price: true, isAvailable: true },
+        },
+        menuAddonCategory: {
+          where: {
+            isArchived: false,
+            menu: {
+              isArchived: false,
+              menuMenuCategory: { some: { menuCategory: { companyId } } },
+            },
+          },
+          orderBy: { menuId: "asc" },
+          select: { menu: { select: { id: true, name: true } } },
+        },
+      },
+    });
+    return groups.map(({ menuAddonCategory, ...group }) => ({
+      ...group,
+      menus: menuAddonCategory.map((link) => link.menu),
+    }));
+  }
+
+  /** Turns one add-on on or off for now (e.g. out of oat milk) — the
+   *  customer app shows an off option disabled and every add/submit
+   *  refuses it (findAddonSelectionProblem). Never archives: an archived
+   *  add-on is deleted and couldn't be turned back on. */
+  static async setAddonAvailable(addonId: number, isAvailable: boolean) {
+    const { count } = await prisma.addon.updateMany({
+      where: { id: addonId, isArchived: false },
+      data: { isAvailable },
+    });
+    if (count === 0) throw new NotFoundError("Add-on", addonId);
+    return { id: addonId, isAvailable };
+  }
+
+  /** Makes a group Required (customers must pick one of its options) or
+   *  optional. */
+  static async setAddonGroupRequired(addonCategoryId: number, isRequired: boolean) {
+    const { count } = await prisma.addonCategories.updateMany({
+      where: { id: addonCategoryId, isArchived: false },
+      data: { isRequired },
+    });
+    if (count === 0) throw new NotFoundError("Add-on group", addonCategoryId);
+    return { id: addonCategoryId, isRequired };
   }
 
   /** Single category + its addons, for populating the Edit form. */

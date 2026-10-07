@@ -17,7 +17,7 @@ import MenuDetailDialog, {
   type MenuDetailEditingSelection,
 } from "@/app/components/orderUI/MenuDetailDialog";
 import OrderBottomBar from "../OrderBottomBar";
-import OrderPanelDrawer from "../OrderPanelDrawer";
+import SidePanelDrawer from "@/app/components/SidePanelDrawer";
 import OrderSidePanel from "../OrderSidePanel";
 import { moneySx } from "../orderTypography";
 import {
@@ -63,7 +63,7 @@ function isPlainLine(line: Line, menuId: number) {
 /**
  * POS-style New Order page: the menu on the left, the current order
  * always in view on the right from md up (a bottom bar + drawer / sheet
- * below md — the same OrderSidePanel / OrderBottomBar / OrderPanelDrawer
+ * below md — the same OrderSidePanel / OrderBottomBar / SidePanelDrawer
  * pieces as the order detail page's bill).
  *
  * Sessions: picking a table starts a staff session right away (as
@@ -448,14 +448,14 @@ export default function StaffOrderClient({
         </Typography>
       </OrderBottomBar>
 
-      <OrderPanelDrawer
+      <SidePanelDrawer
         label="Current order"
         // Never over the side panel if the window widens while it's open.
         open={isOrderOpen && !isDesktop}
         onClose={() => setIsOrderOpen(false)}
       >
         {renderPanel(true)}
-      </OrderPanelDrawer>
+      </SidePanelDrawer>
 
       <MenuDetailDialog
         open={dialog !== null}

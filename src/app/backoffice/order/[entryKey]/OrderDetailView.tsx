@@ -16,7 +16,7 @@ import {
 } from "../action";
 import MarkPaidDialog from "../MarkPaidDialog";
 import OrderBottomBar from "../OrderBottomBar";
-import OrderPanelDrawer from "../OrderPanelDrawer";
+import SidePanelDrawer from "@/app/components/SidePanelDrawer";
 import OrderSidePanel from "../OrderSidePanel";
 import BillContent from "./BillContent";
 import EntryHeader from "./EntryHeader";
@@ -179,14 +179,14 @@ export default function OrderDetailView({
         )}
       </OrderBottomBar>
 
-      <OrderPanelDrawer
+      <SidePanelDrawer
         label="Bill"
         // Never over the side panel if the window widens while it's open.
         open={isBillOpen && !isWide}
         onClose={() => setIsBillOpen(false)}
       >
         {renderBill(() => setIsBillOpen(false))}
-      </OrderPanelDrawer>
+      </SidePanelDrawer>
 
       <MarkPaidDialog
         open={isConfirmOpen}

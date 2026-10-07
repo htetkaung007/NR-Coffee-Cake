@@ -1,7 +1,7 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { normalizeOrderNote } from "@/app/lib/orderNote";
 import { lineMergeKey } from "@/app/lib/orderLineMerge";
-import { findUnpickedRequiredGroup } from "@/app/lib/addonSelection";
+import { findAddonSelectionProblem } from "@/app/lib/addonSelection";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 import { PriceSnapshotService } from "../priceSnapshot.service";
@@ -221,41 +221,69 @@ export class OrderSessionCartService {
     });
   }
 
-  /** Every required addon category linked to this menu (see
-   *  MenuAddonCategories) must have AT LEAST ONE of its own addons
-   *  present in the given addonIds (the rule itself lives in
-   *  findUnpickedRequiredGroup, shared with the browser-cart check
-   *  validateCartLines; this loads the groups from the DB) — same rule the client-side radio
-   *  group enforces, re-checked here since a client can't be trusted
-   *  to have actually enforced it (see addItemToCart's comment).
+  /** Every picked add-on must be ON and not deleted, and every
+   *  required addon category linked to this menu (see
+   *  MenuAddonCategories) must have AT LEAST ONE of its AVAILABLE addons
+   *  present in the given addonIds (the rule lives in
+   *  findAddonSelectionProblem, built on findUnpickedRequiredGroup —
+   *  shared with the browser-cart check validateCartLines; this loads
+   *  the add-ons from the DB) — the same rules the menu dialog enforces,
+   *  re-checked here since a client (or a stale screen) can't be trusted
+   *  to have actually enforced them (see addItemToCart's comment).
    *  Doesn't check that every id in addonIds actually belongs to this
    *  menu's addon categories — a stray/unrelated addon id just gets
    *  attached to the order harmlessly, no different in kind from a
    *  customer being able to pick any menu's addons today. */
   static async validateAddonSelection(menuId: number, addonIds: number[]) {
-    const requiredCategoryLinks = await prisma.menuAddonCategories.findMany({
-      where: {
-        menuId,
-        isArchived: false,
-        addonCategory: { isRequired: true, isArchived: false },
-      },
-      include: {
-        addonCategory: {
-          include: { addons: { where: { isArchived: false } } },
+    const optionSelect = {
+      id: true,
+      name: true,
+      isAvailable: true,
+      isArchived: true,
+    } as const;
+    const [pickedAddons, requiredCategoryLinks] = await Promise.all([
+      prisma.addon.findMany({
+        where: { id: { in: addonIds } },
+        select: optionSelect,
+      }),
+      prisma.menuAddonCategories.findMany({
+        where: {
+          menuId,
+          isArchived: false,
+          addonCategory: { isRequired: true, isArchived: false },
         },
-      },
-    });
+        select: {
+          addonCategory: {
+            select: {
+              name: true,
+              addons: { where: { isArchived: false }, select: optionSelect },
+            },
+          },
+        },
+      }),
+    ]);
 
-    const unpicked = findUnpickedRequiredGroup(
+    // One rule for every caller (findAddonSelectionProblem): a turned-off
+    // or deleted add-on is refused, and a required group counts only an
+    // available option as a pick.
+    const problem = findAddonSelectionProblem(
       addonIds,
+      pickedAddons,
       requiredCategoryLinks.map((link) => ({
         name: link.addonCategory.name,
-        addonIds: link.addonCategory.addons.map((addon) => addon.id),
+        options: link.addonCategory.addons,
       })),
     );
-    if (unpicked) {
+    if (problem?.kind === "unavailable") {
       throw new ValidationError(
-        `Please choose an option for "${unpicked.name}".`,
+        problem.name
+          ? `"${problem.name}" is not available right now.`
+          : "That add-on is not available right now.",
+      );
+    }
+    if (problem?.kind === "unpicked") {
+      throw new ValidationError(
+        `Please choose an option for "${problem.groupName}".`,
       );
     }
   }

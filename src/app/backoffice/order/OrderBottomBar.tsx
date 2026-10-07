@@ -5,7 +5,7 @@ import { Box, Button } from "@mui/material";
 /**
  * Below the width where OrderSidePanel shows (`hideFrom`): a summary
  * (children — e.g. the total to pay) and one primary action that opens
- * the panel's content in OrderPanelDrawer — pinned to the bottom of the
+ * the panel's content in SidePanelDrawer — pinned to the bottom of the
  * viewport.
  *
  * Sticky at the end of the page's content column rather than
