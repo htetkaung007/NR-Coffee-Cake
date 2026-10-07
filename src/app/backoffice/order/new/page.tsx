@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { getSessionContext } from "@/app/lib/session";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import { LocationService, MenuService, TableService } from "@/app/services";
 import StaffOrderClient from "./StaffOrderClient";
 
@@ -11,10 +10,12 @@ import StaffOrderClient from "./StaffOrderClient";
  * via User.locationId, an Admin's via their switched SelectedLocation.
  */
 export default async function NewStaffOrderPage() {
-  const { userId } = await getSessionContext();
-  if (!userId) {
-    redirect("/auth/signIn");
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "Please sign in to place an order.",
+    access: "staff",
+  });
+  if (!scope) return fallback;
+  const { userId } = scope;
 
   const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {

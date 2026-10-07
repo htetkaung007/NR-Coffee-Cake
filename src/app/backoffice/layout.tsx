@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "../utils/config/authOptions";
 import { BackofficeShell } from "../components/BackofficeShell";
-import { AppService, LocationService } from "../services";
+import { AppService, LocationService, PermissionService } from "../services";
+import { StaffAccessProvider } from "../components/StaffAccessProvider";
 import { getSessionContext } from "../lib/session";
 import { Box } from "@mui/material";
 import { SurfaceThemeProvider } from "../lib/theme/ThemeModeProvider";
@@ -32,12 +33,20 @@ export default async function BackOfficeLayout({ children }: Props) {
   const locationName = selectedLocation
     ? await LocationService.getShopNameForLocation(selectedLocation.locationId)
     : null;
+  // A manager's grants, read fresh on every request — for the display
+  // hints only (hidden sidebar items, disabled switches); every action,
+  // page and route checks again on the server.
+  const permissions =
+    role === "MANAGER" && userId
+      ? await PermissionService.getGrantedPermissions(userId)
+      : [];
 
   return (
     <SurfaceThemeProvider surface="bo">
       {/* Wraps the whole shell (not just the page) so it stays mounted
           across Backoffice navigation and the top/side bars can read it. */}
       <OrderAlertsProvider>
+        <StaffAccessProvider role={role} permissions={permissions}>
         <Box>
           <BackofficeShell
             companyName={companyName}
@@ -67,6 +76,7 @@ export default async function BackOfficeLayout({ children }: Props) {
             </Box>
           </BackofficeShell>
         </Box>
+        </StaffAccessProvider>
       </OrderAlertsProvider>
     </SurfaceThemeProvider>
   );

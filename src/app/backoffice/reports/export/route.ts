@@ -8,7 +8,8 @@ import {
   linesCsv,
 } from "@/app/lib/exportLines";
 import { reportExportInputSchema } from "@/app/lib/schemas/reportSchema";
-import { getSessionContext } from "@/app/lib/session";
+import { requirePermission } from "@/app/lib/roleGuard";
+import type { StaffScope } from "@/app/lib/rolePolicy";
 import { LocationService, ReportService } from "@/app/services";
 
 const plain = (status: number, message: string) =>
@@ -23,16 +24,26 @@ const plain = (status: number, message: string) =>
 /**
  * The Reports page's CSV downloads for the period on screen:
  *   GET ?type=lines|cancelled&period=week|month&day=YYYY-MM-DD
- * (type defaults to lines). Admins only, like the page. The company and
+ * (type defaults to lines). REPORTS_VIEW, like the page. The company and
  * location come from the session — never the query string. Everything in
  * the file goes through exportLines + csv.ts (every text cell guarded
  * against formula injection). Signed-out requests never get here: the
  * middleware sends them to sign-in.
  */
 export async function GET(request: NextRequest) {
-  const { companyId, userId, role } = await getSessionContext();
-  if (!companyId || !userId) return plain(401, "Please sign in.");
-  if (role !== "ADMIN") return plain(403, "Reports are available to admins.");
+  // The same check as the Reports page and actions: the owner, or a
+  // manager granted REPORTS_VIEW (read from the database each time).
+  let scope: StaffScope;
+  try {
+    scope = await requirePermission("REPORTS_VIEW");
+  } catch (error) {
+    if (error instanceof AppError && error.code === "UNAUTHORIZED") {
+      return plain(401, "Please sign in.");
+    }
+    if (error instanceof AppError) return plain(403, error.message);
+    throw error;
+  }
+  const { companyId, userId } = scope;
 
   const { searchParams } = new URL(request.url);
   const parsed = reportExportInputSchema.safeParse({

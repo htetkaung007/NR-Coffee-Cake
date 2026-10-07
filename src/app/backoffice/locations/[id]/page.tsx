@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { LocationService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import EditLocation from "./EditLocation";
 
 export default async function EditLocationPage({
@@ -11,16 +11,11 @@ export default async function EditLocationPage({
   const { id } = await params;
   const locationId = Number(id);
 
-  const { role } = await getSessionContext();
-  if (role !== "ADMIN") {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Only Admins can manage locations.
-        </Typography>
-      </Box>
-    );
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "Please sign in to manage locations.",
+    access: "owner",
+  });
+  if (!scope) return fallback;
 
   const location = await LocationService.getLocationById(locationId);
   if (!location) {

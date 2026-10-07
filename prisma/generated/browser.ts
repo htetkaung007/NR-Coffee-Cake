@@ -130,3 +130,14 @@ export type Bill = Prisma.BillModel
  *  * session: no updateTime/isArchived, deleted with it.
  */
 export type OrderCancellation = Prisma.OrderCancellationModel
+/**
+ * Model UserPermission
+ * *
+ *  * One permission an owner granted one MANAGER — a row means "allowed",
+ *  * no row means "not allowed". ADMIN (owner) is never checked against
+ *  * this table: an owner can do everything. Only grantable permissions are
+ *  * stored (see Permission); a user's rows go with the user (Cascade), and
+ *  * `grantedBy` is kept as history but cleared if that owner is deleted
+ *  * (SetNull).
+ */
+export type UserPermission = Prisma.UserPermissionModel

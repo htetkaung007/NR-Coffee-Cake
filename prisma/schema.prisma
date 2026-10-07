@@ -27,6 +27,11 @@ model User {
   createdAt          DateTime           @default(now())
   updateTime         DateTime           @updatedAt
   isArchived         Boolean            @default(false)
+  // What the owner has granted this MANAGER (see UserPermission). Never
+  // read for an ADMIN.
+  permissions        UserPermission[]   @relation("UserPermissions")
+  // Grants this user (an owner) has given — for "granted by".
+  permissionGrants   UserPermission[]   @relation("PermissionGrants")
 }
 
 model Company {
@@ -480,4 +485,40 @@ enum RejectReason {
 enum UserRole {
   ADMIN
   MANAGER
+}
+
+// What an owner can grant a MANAGER — one value per tickable box in
+// Settings (lib/permissions.ts is the catalog: labels, groups, defaults).
+// Only GRANTABLE permissions exist here: "take and manage orders" is
+// always allowed for any signed-in staff and is never stored, and
+// owner-only actions (locations, managers & permissions, company
+// settings, menu setup, menu categories, add-on groups) can never be
+// granted, so they have no value.
+enum Permission {
+  ORDERS_MARK_PAID // Mark a bill as paid (take money)
+  MENU_AVAILABILITY // Turn menus on/off at their own location
+  ADDON_AVAILABILITY // Turn add-on options on/off
+  TABLES_MANAGE // Create/edit/delete tables, QR codes
+  REPORTS_VIEW // Reports + CSV/PDF export
+}
+
+/**
+ * One permission an owner granted one MANAGER — a row means "allowed",
+ * no row means "not allowed". ADMIN (owner) is never checked against
+ * this table: an owner can do everything. Only grantable permissions are
+ * stored (see Permission); a user's rows go with the user (Cascade), and
+ * `grantedBy` is kept as history but cleared if that owner is deleted
+ * (SetNull).
+ */
+model UserPermission {
+  id          Int        @id @default(autoincrement())
+  user        User       @relation("UserPermissions", fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  permission  Permission
+  grantedBy   User?      @relation("PermissionGrants", fields: [grantedById], references: [id], onDelete: SetNull)
+  grantedById Int?
+  createdAt   DateTime   @default(now())
+
+  @@unique([userId, permission])
+  @@index([userId])
 }

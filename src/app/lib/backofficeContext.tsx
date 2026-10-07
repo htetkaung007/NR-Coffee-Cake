@@ -1,7 +1,14 @@
 import type { ReactElement } from "react";
 import { Box, Typography } from "@mui/material";
 import { LocationService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { AppError } from "@/app/lib/errors";
+import type { AccessRule, PermissionKey } from "@/app/lib/permissions";
+import type { StaffScope } from "@/app/lib/rolePolicy";
+import {
+  requireOwner,
+  requirePermission,
+  requireStaff,
+} from "@/app/lib/roleGuard";
 
 type SelectedLocation = NonNullable<
   Awaited<ReturnType<typeof LocationService.getSelectedLocation>>
@@ -23,6 +30,64 @@ function BackofficeNotice({ message }: { message: string }) {
   );
 }
 
+/** Who may open a Backoffice page — the shared AccessRule. */
+type PageAccess = AccessRule;
+
+/** The notice a manager without access sees, per page area. */
+const PERMISSION_AREA: Partial<Record<PermissionKey, string>> = {
+  REPORTS_VIEW: "Reports",
+  TABLES_MANAGE: "Tables",
+};
+
+function forbiddenMessage(access: PageAccess) {
+  if (access === "owner") return "Only the owner can open this page.";
+  const area = access === "staff" ? undefined : PERMISSION_AREA[access];
+  return area
+    ? `Ask the owner for access to ${area}.`
+    : "Ask the owner for access to this page.";
+}
+
+/** The same server-side check the Server Actions run (lib/roleGuard). */
+function checkAccess(access: PageAccess): Promise<StaffScope> {
+  if (access === "staff") return requireStaff();
+  if (access === "owner") return requireOwner();
+  return requirePermission(access);
+}
+
+/**
+ * The access check every Backoffice page starts with — on the SERVER,
+ * from the session (and, for a permission, the database), never from
+ * anything the browser sent. Pages don't throw or redirect: they render
+ * a plain notice in place (signed out, or not allowed), so this hands
+ * back either the user's scope or that notice:
+ *
+ *   const { scope, fallback } = await requireBackofficeAccess({
+ *     signedOut: "Please sign in to view settings.",
+ *     access: "owner",
+ *   });
+ *   if (!scope) return fallback;
+ */
+export async function requireBackofficeAccess(options: {
+  signedOut: string;
+  access: PageAccess;
+  /** Overrides the default "not allowed" notice. */
+  forbidden?: string;
+}): Promise<
+  | { scope: StaffScope; fallback: null }
+  | { scope: null; fallback: ReactElement }
+> {
+  try {
+    return { scope: await checkAccess(options.access), fallback: null };
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error;
+    const message =
+      error.code === "UNAUTHORIZED"
+        ? options.signedOut
+        : (options.forbidden ?? forbiddenMessage(options.access));
+    return { scope: null, fallback: <BackofficeNotice message={message} /> };
+  }
+}
+
 /**
  * Session → companyId/userId → selected location, the sequence every
  * location-scoped Backoffice page starts with. Pages don't redirect when
@@ -34,9 +99,9 @@ function BackofficeNotice({ message }: { message: string }) {
  *   });
  *   if (!context) return fallback;
  *
- * A page only Admins may see passes `forbidden` (the notice a Manager
- * gets); the role is checked right after sign-in, before the location,
- * so a Manager is never asked to pick one for a page they can't open.
+ * `access` (default "staff") is checked first — requireBackofficeAccess —
+ * before the location, so a manager is never asked to pick one for a
+ * page they can't open.
  *
  * Lives in lib/ next to getSessionContext for the same reason: reading
  * the session is a Controller-layer concern (Rule 1).
@@ -44,24 +109,20 @@ function BackofficeNotice({ message }: { message: string }) {
 export async function requireBackofficeContext(messages: {
   signedOut: string;
   noLocation?: string;
+  access?: PageAccess;
+  /** Overrides the default "not allowed" notice. */
   forbidden?: string;
 }): Promise<
   | { context: BackofficeContext; fallback: null }
   | { context: null; fallback: ReactElement }
 > {
-  const { companyId, userId, role } = await getSessionContext();
-  if (!companyId || !userId) {
-    return {
-      context: null,
-      fallback: <BackofficeNotice message={messages.signedOut} />,
-    };
-  }
-  if (messages.forbidden !== undefined && role !== "ADMIN") {
-    return {
-      context: null,
-      fallback: <BackofficeNotice message={messages.forbidden} />,
-    };
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: messages.signedOut,
+    access: messages.access ?? "staff",
+    forbidden: messages.forbidden,
+  });
+  if (!scope) return { context: null, fallback };
+  const { companyId, userId, role } = scope;
 
   const location = await LocationService.getSelectedLocation(userId);
   if (!location) {

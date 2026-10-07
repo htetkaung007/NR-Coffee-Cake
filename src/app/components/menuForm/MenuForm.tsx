@@ -27,6 +27,7 @@ import ConnectedAddonsSection from "./ConnectedAddonsSection";
 import MenuCategoryChips, { MenuCategoryOption } from "./MenuCategoryChips";
 import MenuImageUploader from "./MenuImageUploader";
 import StockQuantityStepper from "./StockQuantityStepper";
+import LocationChecklist, { type LocationOption } from "./LocationChecklist";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 
 interface MenuFormInitialData {
@@ -39,6 +40,8 @@ interface MenuFormInitialData {
   categoryIds: number[];
   addonCategoryIds: number[];
   imageUrl: string | null;
+  /** The active locations it shows at now. */
+  shownLocationIds: number[];
 }
 
 interface MenuFormProps {
@@ -47,15 +50,35 @@ interface MenuFormProps {
   /** Omitted for create; passed for edit, to pre-fill the form with
    *  the menu's current values instead of starting from a blank slate. */
   initialData?: MenuFormInitialData;
+  /** The company's active locations, for "Show at locations". */
+  locations: LocationOption[];
+  /** The selected location — pre-ticked on create, and the one whose
+   *  stock the edit form changes. */
+  currentLocation: LocationOption;
 }
 
 export default function MenuForm({
   categories,
   addonCategories,
   initialData,
+  locations,
+  currentLocation,
 }: MenuFormProps) {
   const router = useRouter();
   const isEditMode = Boolean(initialData);
+  // One active location: no choice to make — it shows there (as before
+  // locations could be picked), and the section is hidden.
+  const hasLocationChoice = locations.length > 1;
+  const [shownLocationIds, setShownLocationIds] = useState<number[]>(
+    initialData?.shownLocationIds ??
+      locations
+        .filter((location) => location.locationId === currentLocation.locationId)
+        .map((location) => location.locationId),
+  );
+  const submittedLocationIds = hasLocationChoice
+    ? shownLocationIds
+    : locations.map((location) => location.locationId);
+  const isMissingLocation = hasLocationChoice && shownLocationIds.length === 0;
   const [name, setName] = useState(initialData?.name ?? "");
   const [description, setDescription] = useState(
     initialData?.description ?? "",
@@ -123,6 +146,9 @@ export default function MenuForm({
     );
     selectedAddonCategoryIds.forEach((id) =>
       formData.append("addonCategoryIds", String(id)),
+    );
+    submittedLocationIds.forEach((id) =>
+      formData.append("shownLocationIds", String(id)),
     );
     if (imageFile) formData.set("image", imageFile);
 
@@ -265,8 +291,24 @@ export default function MenuForm({
               <StockQuantityStepper
                 quantity={quantity}
                 onChange={setQuantity}
+                label={
+                  isEditMode
+                    ? `Stock at ${currentLocation.name}`
+                    : hasLocationChoice
+                      ? "Starting stock (each selected location)"
+                      : "Starting stock"
+                }
               />
             </Box>
+
+            {hasLocationChoice && (
+              <LocationChecklist
+                locations={locations}
+                currentLocationId={currentLocation.locationId}
+                selectedIds={shownLocationIds}
+                onChange={setShownLocationIds}
+              />
+            )}
 
             <MenuImageUploader
               imagePreviewUrl={imagePreviewUrl}
@@ -311,7 +353,7 @@ export default function MenuForm({
             <Button
               type="submit"
               variant="contained"
-              disabled={isPending}
+              disabled={isPending || isMissingLocation}
               sx={{ alignSelf: "flex-start", px: 3 }}
             >
               {isPending

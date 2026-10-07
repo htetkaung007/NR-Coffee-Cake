@@ -1,5 +1,6 @@
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
+import { MenuLocationService } from "./menuLocation.service";
 
 const HARD_DELETE_GRACE_DAYS = 60;
 
@@ -58,8 +59,23 @@ export class LocationService {
    *  callers that also want it selected call setSelectedLocation
    *  themselves afterward, rather than this method reaching into a
    *  different concern. */
-  static async createLocation(companyId: number, name: string) {
-    return prisma.location.create({ data: { name, companyId } });
+  /** Creates the location and its starting menus in one transaction
+   *  (MenuLocationService.setUpNewLocation): "ALL" shows every menu
+   *  there with stock 0, "EMPTY" hides every one until turned on. */
+  static async createLocation(
+    companyId: number,
+    name: string,
+    startingMenus: "ALL" | "EMPTY",
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const location = await tx.location.create({ data: { name, companyId } });
+      await MenuLocationService.setUpNewLocation(tx, {
+        locationId: location.id,
+        companyId,
+        startingMenus,
+      });
+      return location;
+    });
   }
 
   /** Does one thing: renames. Does not touch isArchived/archivedAt —
@@ -176,12 +192,6 @@ export class LocationService {
       where: { userId },
       update: { locationId },
       create: { userId, locationId },
-    });
-  }
-
-  static async getDisabledLocationMenus(selectedLocationId: number) {
-    return prisma.disableLocationMenus.findMany({
-      where: { locationId: selectedLocationId },
     });
   }
 }

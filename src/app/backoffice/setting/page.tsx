@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import { Box, Card, Stack, Typography } from "@mui/material";
-import { AppService, LocationService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { Box, Card, Divider, Stack, Typography } from "@mui/material";
+import { AppService, LocationService, PermissionService } from "@/app/services";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import OrdersPageHeader from "../order/OrdersPageHeader";
 import { sectionHeadingSx } from "../order/orderTypography";
 import AddManagerForm from "./AddManagerForm";
 import CompanyNameForm from "./CompanyNameForm";
+import ManagersSection from "./ManagersSection";
 
 /** One Settings section: a card with a heading and a one-line
  *  description, then its form. */
@@ -38,33 +39,27 @@ function SettingsSection({
   );
 }
 
-export default async function SettingsPage() {
-  const { companyId, role } = await getSessionContext();
+/** ?manager=<id> opens that manager's access editor. */
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ manager?: string }>;
+}) {
+  const { manager } = await searchParams;
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "Please sign in to view settings.",
+    access: "owner",
+  });
+  if (!scope) return fallback;
+  const { companyId } = scope;
 
-  if (!companyId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to view settings.
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (role !== "ADMIN") {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Only Admins can access Settings.
-        </Typography>
-      </Box>
-    );
-  }
-
-  const [locations, companyName] = await Promise.all([
+  const [locations, companyName, managers] = await Promise.all([
     LocationService.getActiveLocations(companyId),
     AppService.getCompanyNameByCompanyId(companyId),
+    PermissionService.listManagers(companyId),
   ]);
+  const selectedManagerId =
+    manager && /^\d+$/.test(manager) ? Number(manager) : null;
 
   return (
     <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, pb: 3 }}>
@@ -82,8 +77,13 @@ export default async function SettingsPage() {
         <SettingsSection
           id="settings-managers"
           title="Managers"
-          description="Managers work at one assigned location: they take and approve orders and can edit menus, add-ons and tables, but can't open Reports, Locations or Settings."
+          description="Managers work at their assigned location. Choose what each one can do."
         >
+          <ManagersSection managers={managers} selectedId={selectedManagerId} />
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
+            Add a manager
+          </Typography>
           <AddManagerForm locations={locations} />
         </SettingsSection>
       </Stack>

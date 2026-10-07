@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { findActiveHref, visibleNavSections } from "./backofficeNav";
+import { canAccess, type AccessRule } from "./permissions";
 
 const hrefs = [
   "/backoffice/order",
@@ -41,26 +42,39 @@ describe("visibleNavSections", () => {
   const sections = [
     {
       title: "Service",
-      items: [{ href: "/a" }, { href: "/b", roles: ["ADMIN" as const] }],
+      items: [
+        { href: "/a", access: "staff" as const },
+        { href: "/b", access: "TABLES_MANAGE" as const },
+      ],
     },
     {
       title: "Business",
-      items: [{ href: "/c", roles: ["ADMIN" as const] }],
+      items: [{ href: "/c", access: "owner" as const }],
     },
   ];
+  // A manager granted nothing but the always-allowed work.
+  const manager = (rule: AccessRule) => canAccess("MANAGER", [], rule);
+  const owner = (rule: AccessRule) => canAccess("ADMIN", [], rule);
 
-  it("shows items without a roles list to everyone", () => {
-    const result = visibleNavSections(sections, "MANAGER");
+  it("shows staff items to every manager", () => {
+    const result = visibleNavSections(sections, manager);
     expect(result[0].items.map((item) => item.href)).toEqual(["/a"]);
   });
 
-  it("shows role-restricted items to roles on their list", () => {
-    const result = visibleNavSections(sections, "ADMIN");
+  it("shows a permission item to a manager granted it", () => {
+    const result = visibleNavSections(sections, (rule) =>
+      canAccess("MANAGER", ["TABLES_MANAGE"], rule),
+    );
+    expect(result[0].items.map((item) => item.href)).toEqual(["/a", "/b"]);
+  });
+
+  it("shows everything to the owner", () => {
+    const result = visibleNavSections(sections, owner);
     expect(result.flatMap((section) => section.items).length).toBe(3);
   });
 
-  it("drops a section that has no visible items for the role", () => {
-    const result = visibleNavSections(sections, "MANAGER");
+  it("drops a section that has no visible items", () => {
+    const result = visibleNavSections(sections, manager);
     expect(result.map((section) => section.title)).toEqual(["Service"]);
   });
 });

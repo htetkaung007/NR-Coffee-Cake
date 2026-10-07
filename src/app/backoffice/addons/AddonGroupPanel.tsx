@@ -17,6 +17,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { addonGroupAvailability } from "@/app/lib/addonSelection";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { OWNER_ONLY_MESSAGE } from "@/app/lib/rolePolicy";
+import { ASK_OWNER_HINTS } from "@/app/lib/permissions";
 import RequiredChip from "./RequiredChip";
 
 export interface AddonGroup {
@@ -33,6 +34,8 @@ interface AddonGroupPanelProps {
   /** The signed-in user is an Admin (owner): may change Required and see
    *  Edit. Display only — the Server Action checks the session itself. */
   isOwner: boolean;
+  /** The owner, or a manager granted ADDON_AVAILABILITY. Display only. */
+  canToggleAvailability: boolean;
   /** A switch's request is in flight (its key: `addon-<id>` /
    *  `required-<id>`) — that switch is disabled meanwhile. */
   pendingKeys: ReadonlySet<string>;
@@ -58,6 +61,7 @@ function listNames(names: readonly string[]) {
 export default function AddonGroupPanel({
   group,
   isOwner,
+  canToggleAvailability,
   pendingKeys,
   onToggleAddon,
   onToggleRequired,
@@ -140,6 +144,11 @@ export default function AddonGroupPanel({
       <Typography variant="overline" color="text.secondary" component="h3">
         Options
       </Typography>
+      {!canToggleAvailability && group.addons.length > 0 && (
+        <Typography variant="body2" color="text.secondary">
+          {ASK_OWNER_HINTS.ADDON_AVAILABILITY}
+        </Typography>
+      )}
       {group.addons.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No options yet — add some on the Edit page.
@@ -182,7 +191,9 @@ export default function AddonGroupPanel({
               </Typography>
               <Switch
                 checked={addon.isAvailable}
-                disabled={pendingKeys.has(`addon-${addon.id}`)}
+                disabled={
+                  !canToggleAvailability || pendingKeys.has(`addon-${addon.id}`)
+                }
                 onChange={(event) => onToggleAddon(addon.id, event.target.checked)}
                 slotProps={{
                   input: { "aria-label": `${addon.name} available` },

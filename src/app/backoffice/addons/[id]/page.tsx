@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { AddonService, MenuService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import NewAddon from "../new/NewAddon";
 
 export default async function EditAddonGroupPage({
@@ -11,16 +11,12 @@ export default async function EditAddonGroupPage({
   const { id } = await params;
   const addonCategoryId = Number(id);
 
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to edit an addon group.
-        </Typography>
-      </Box>
-    );
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "Please sign in to edit an addon group.",
+    access: "owner",
+  });
+  if (!scope) return fallback;
+  const { companyId } = scope;
 
   const [category, menusData, connectedMenuIds] = await Promise.all([
     AddonService.getAddonCategoryWithAddons(addonCategoryId),

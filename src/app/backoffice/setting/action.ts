@@ -6,8 +6,7 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { AppError } from "@/app/lib/errors";
-import { requireAdmin } from "@/app/lib/roleGuard";
+import { requireOwner } from "@/app/lib/roleGuard";
 import {
   createManagerSchema,
   type CreateManagerInput,
@@ -16,47 +15,81 @@ import {
   updateCompanyNameSchema,
   type UpdateCompanyNameInput,
 } from "@/app/lib/schemas/companyNameSchema";
-import { getSessionContext } from "@/app/lib/session";
-import { AppService, CompanyService, LocationService } from "@/app/services";
+import {
+  setManagerPermissionsSchema,
+  type SetManagerPermissionsInput,
+} from "@/app/lib/schemas/managerPermissionsSchema";
+import {
+  AppService,
+  CompanyService,
+  LocationService,
+  PermissionService,
+} from "@/app/services";
 
 const safeCreateManager = toSafeResult(async (input: CreateManagerInput) => {
-  const { companyId } = await requireAdmin("Only Admins can add Manager accounts.");
+  const { companyId, userId } = await requireOwner();
 
   return AppService.createManagerForLocation({
     email: input.email,
     password: input.password,
     companyId,
     locationId: input.locationId,
+    ownerId: userId,
+    permissions: input.permissions,
   });
 });
 
-export async function createManagerAction(formData: FormData) {
-  const result = await validateWith(createManagerSchema, {
-    email: formData.get("email"),
-    password: formData.get("password"),
-    locationId: formData.get("locationId"),
-  }).asyncAndThen(safeCreateManager);
+/** A plain object, not FormData: "no permissions ticked" (an empty list)
+ *  must stay different from "not sent" (→ the defaults). */
+export async function createManagerAction(input: CreateManagerInput) {
+  const result = await validateWith(createManagerSchema, input).asyncAndThen(
+    safeCreateManager,
+  );
 
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath("/backoffice/settings");
+    revalidatePath("/backoffice/setting");
   }
 
   return actionResult;
 }
 
-const safeSetSelectedLocation = toSafeResult(
-  async (input: { userId: number | null; locationId: number }) => {
-    if (!input.userId) {
-      throw new AppError("You must be signed in.", "UNAUTHORIZED");
-    }
-    return LocationService.setSelectedLocation(input.userId, input.locationId);
+/** The company and the granting owner come from the session — the input
+ *  only names the manager and the ticks. */
+const safeSetManagerPermissions = toSafeResult(
+  async (input: SetManagerPermissionsInput) => {
+    const { companyId, userId } = await requireOwner();
+    return PermissionService.setManagerPermissions({
+      companyId,
+      ownerId: userId,
+      managerId: input.managerId,
+      permissions: input.permissions,
+    });
   },
 );
 
+export async function setManagerPermissionsAction(
+  input: SetManagerPermissionsInput,
+) {
+  const result = await validateWith(setManagerPermissionsSchema, input).asyncAndThen(
+    safeSetManagerPermissions,
+  );
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath("/backoffice/setting");
+  }
+
+  return actionResult;
+}
+
+const safeSetSelectedLocation = toSafeResult(async (locationId: number) => {
+  const { userId } = await requireOwner();
+  return LocationService.setSelectedLocation(userId, locationId);
+});
+
 export async function setSelectedLocationAction(locationId: number) {
-  const { userId } = await getSessionContext();
-  const result = await safeSetSelectedLocation({ userId, locationId });
+  const result = await safeSetSelectedLocation(locationId);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     // Every page that reads getSelectedLocation needs to reflect the
@@ -69,9 +102,7 @@ export async function setSelectedLocationAction(locationId: number) {
 
 /** The company to rename is ALWAYS the signed-in Admin's own — taken from
  *  the session, never from the client's input. */
-const safeRequireCompanyAdmin = toSafeResult(() =>
-  requireAdmin("Only Admins can rename the company."),
-);
+const safeRequireCompanyAdmin = toSafeResult(() => requireOwner());
 
 const safeUpdateCompanyName = toSafeResult(
   async (input: UpdateCompanyNameInput & { companyId: number }) =>

@@ -9,6 +9,7 @@ export default async function TablesPage() {
   const { context, fallback } = await requireBackofficeContext({
     signedOut: "Please sign in to view tables.",
     noLocation: "Select a location first to view its tables.",
+    access: "TABLES_MANAGE",
   });
   if (!context) return fallback;
   const { location } = context;
@@ -47,13 +48,9 @@ export default async function TablesPage() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(2, 1fr)",
-              sm: "repeat(3, 1fr)",
-              md: "repeat(4, 1fr)",
-              lg: "repeat(5, 1fr)",
-            },
-            gap: { xs: 1.5, sm: 2, md: 2.5 },
+            // As many ≥ 240px columns as fit (one on a 320px phone).
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))",
+            gap: { xs: 1, sm: 1.5 },
           }}
         >
           {tables.map((table) => (

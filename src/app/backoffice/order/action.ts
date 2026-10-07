@@ -6,20 +6,16 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { AppError } from "@/app/lib/errors";
+import { requirePermission, requireStaff } from "@/app/lib/roleGuard";
 import {
   rejectRoundSchema,
   type RejectRound,
   type RejectRoundInput,
 } from "@/app/lib/schemas/rejectRoundSchema";
-import { getSessionContext } from "@/app/lib/session";
 import { LocationService, OrderSessionApprovalService } from "@/app/services";
 
 const safeGetPendingApprovals = toSafeResult(async () => {
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  const { userId } = await requireStaff();
   const selectedLocation = await LocationService.getSelectedLocation(userId);
   // No location chosen yet: nothing can be pending there — the pages
   // themselves already tell the user to pick one.
@@ -38,10 +34,7 @@ export async function getPendingApprovalsAction() {
 }
 
 const safeAccept = toSafeResult(async (sessionId: number) => {
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  await requireStaff();
   return OrderSessionApprovalService.acceptCounterSession(sessionId);
 });
 
@@ -61,10 +54,7 @@ export async function acceptCounterSessionAction(sessionId: number) {
 }
 
 const safeReject = toSafeResult(async (input: RejectRound) => {
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  await requireStaff();
   return OrderSessionApprovalService.rejectCounterSession(
     input.sessionId,
     input.details,
@@ -90,10 +80,8 @@ export async function rejectCounterSessionAction(input: RejectRoundInput) {
 }
 
 const safeMarkEntryPaid = toSafeResult(async (sessionIds: number[]) => {
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  // Taking money: the owner, or a manager the owner let mark bills paid.
+  await requirePermission("ORDERS_MARK_PAID");
   return OrderSessionApprovalService.markSessionsPaid(sessionIds);
 });
 

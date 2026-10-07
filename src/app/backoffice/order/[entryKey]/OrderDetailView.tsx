@@ -6,6 +6,8 @@ import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useTheme } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
+import { ASK_OWNER_HINTS } from "@/app/lib/permissions";
+import { useCan } from "@/app/components/StaffAccessProvider";
 import type { RejectReason } from "@/app/lib/rejectReason";
 import { canPrintBill, type EntryBill } from "@/app/lib/orderTotals";
 import { formatAmount, formatMoneyDelta } from "@/app/lib/orderFormat";
@@ -95,8 +97,11 @@ export default function OrderDetailView({
   }
 
   const pendingNumbers = bill.pendingRounds.map((round) => round.orderNumber);
-  const payBlockedReason =
-    pendingNumbers.length > 0
+  // Display only — markEntryPaidAction checks the permission itself.
+  const canTakePayment = useCan("ORDERS_MARK_PAID");
+  const payBlockedReason = !canTakePayment
+    ? ASK_OWNER_HINTS.ORDERS_MARK_PAID
+    : pendingNumbers.length > 0
       ? `Accept or reject ${pendingNumbers.length === 1 ? "order" : "orders"} ${pendingNumbers.join(", ")} first`
       : null;
 

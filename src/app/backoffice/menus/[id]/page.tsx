@@ -1,5 +1,11 @@
 import { Box, Typography } from "@mui/material";
-import { AddonService, MenuCategoryService, MenuService } from "@/app/services";
+import {
+  AddonService,
+  LocationService,
+  MenuCategoryService,
+  MenuLocationService,
+  MenuService,
+} from "@/app/services";
 import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 import MenuForm from "@/app/components/menuForm/MenuForm";
 
@@ -13,15 +19,19 @@ export default async function EditMenuPage({
 
   const { context, fallback } = await requireBackofficeContext({
     signedOut: "Please sign in to edit a menu.",
+    access: "owner",
   });
   if (!context) return fallback;
   const { companyId, location } = context;
 
-  const [categories, addonCategories, menu] = await Promise.all([
-    MenuCategoryService.getMenuCategories(companyId),
-    AddonService.getAddonCategoriesWithAddonsList(),
-    MenuService.getMenuById(menuId, location.locationId),
-  ]);
+  const [categories, addonCategories, menu, menuLocations, currentLocation] =
+    await Promise.all([
+      MenuCategoryService.getMenuCategories(companyId),
+      AddonService.getAddonCategoriesWithAddonsList(),
+      MenuService.getMenuById(menuId, location.locationId),
+      MenuLocationService.getMenuLocations(menuId, companyId),
+      LocationService.getLocationById(location.locationId),
+    ]);
 
   if (!menu) {
     return (
@@ -35,7 +45,17 @@ export default async function EditMenuPage({
     <MenuForm
       categories={categories}
       addonCategories={addonCategories}
-      initialData={menu}
+      initialData={{
+        ...menu,
+        shownLocationIds: menuLocations
+          .filter((entry) => entry.isShown)
+          .map((entry) => entry.locationId),
+      }}
+      locations={menuLocations.map(({ locationId, name }) => ({ locationId, name }))}
+      currentLocation={{
+        locationId: location.locationId,
+        name: currentLocation?.name ?? "this location",
+      }}
     />
   );
 }

@@ -4,6 +4,7 @@ import { lineMergeKey } from "@/app/lib/orderLineMerge";
 import { findAddonSelectionProblem } from "@/app/lib/addonSelection";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
+import { CartValidationService } from "../cartValidation.service";
 import { PriceSnapshotService } from "../priceSnapshot.service";
 
 type Tx = Prisma.TransactionClient;
@@ -53,6 +54,9 @@ export class OrderSessionCartService {
       throw new ValidationError("This order can no longer be edited.");
     }
 
+    // Not a menu hidden at the session's location (the staff POS list
+    // doesn't show it; this refuses a direct call too).
+    await CartValidationService.assertMenusListed(session.locationId, [menuId]);
     await OrderSessionCartService.validateAddonSelection(menuId, addonIds);
 
     return prisma.$transaction(async (tx: Tx) => {

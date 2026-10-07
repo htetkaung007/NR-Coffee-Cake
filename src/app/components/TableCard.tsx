@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Card, Box, Typography, Chip, Button } from "@mui/material";
+import {
+  Card,
+  Box,
+  Typography,
+  Chip,
+  Button,
+  Stack,
+  Tooltip,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
 import { downloadQrCode } from "../lib/qr/downloadQrCode";
+import { hoverCapableMedia } from "../lib/theme/sharedThemeTokens";
 
 export interface TableCardData {
   id: number;
@@ -42,63 +51,86 @@ function handlePrintQrCode(qrcodeImageUrl: string, tableName: string) {
   printWindow.document.close();
 }
 
+/** Why Print / Save QR are off: the table has no QR image yet. The
+ *  sign-up "Default Table" is created without one; uploading a logo in
+ *  Edit generates it. */
+const NO_QR_HINT = "No QR code yet — upload a logo in Edit to create it";
+
+/** One QR action — normal contrast when enabled; when the table has no
+ *  QR image, disabled with the reason in a tooltip (the span keeps the
+ *  tooltip working on a disabled button). */
+function QrActionButton({
+  label,
+  icon,
+  isEnabled,
+  onClick,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  isEnabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip title={isEnabled ? "" : NO_QR_HINT}>
+      <Box component="span">
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={icon}
+          disabled={!isEnabled}
+          onClick={onClick}
+          sx={actionButtonSx}
+        >
+          {label}
+        </Button>
+      </Box>
+    </Tooltip>
+  );
+}
+
+const actionButtonSx = {
+  minHeight: 44,
+  borderColor: "inputBorder",
+  color: "text.primary",
+  [hoverCapableMedia]: {
+    "&:hover": { borderColor: "primary.main", bgcolor: "action.hover" },
+  },
+} as const;
+
+/**
+ * A compact table row-card: icon + name (+ Archived) on top, then Print
+ * QR · Save QR · Edit on one line where it fits (wrapping on phones).
+ * The QR image itself is shown on the table's Edit page.
+ */
 export default function TableCard({ table }: TableCardProps) {
+  const qrcodeImageUrl = table.qrcodeImageUrl || null;
   return (
     <Card
       elevation={0}
       sx={{
         border: "1px solid",
         borderColor: "divider",
-        borderRadius: { xs: 2, md: 2.5 },
+        borderRadius: 2,
         bgcolor: "background.paper",
-        p: { xs: 1.5, sm: 2 },
+        p: 1.5,
         opacity: table.isArchived ? 0.6 : 1,
         display: "flex",
         flexDirection: "column",
         gap: 1,
       }}
     >
-      {/* Shows the actual QR code (logo included, since the logo is
-          baked into this same image — see lib/qrCode.ts) rather than a
-          generic icon, so a glance at the card confirms both "does
-          this table have a QR code" and "what does it look like".
-          Falls back to the table icon only if generation somehow
-          hasn't produced a URL yet. */}
-      <Box
-        sx={{
-          width: "100%",
-          aspectRatio: "1 / 1",
-          borderRadius: 1.5,
-          bgcolor: "action.hover",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-        }}
-      >
-        {table.qrcodeImageUrl ? (
-          <Box
-            component="img"
-            src={table.qrcodeImageUrl}
-            alt={`QR code for ${table.name}`}
-            sx={{ width: "100%", height: "100%", objectFit: "contain" }}
-          />
-        ) : (
-          <TableRestaurantOutlinedIcon
-            sx={{ fontSize: 32, color: "text.secondary" }}
-          />
-        )}
-      </Box>
-
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 1,
-        }}
-      >
-        <Typography variant="body1">{table.name}</Typography>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+        <TableRestaurantOutlinedIcon
+          fontSize="small"
+          aria-hidden
+          sx={{ color: "text.secondary", flexShrink: 0 }}
+        />
+        <Typography
+          variant="body1"
+          sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}
+        >
+          {table.name}
+        </Typography>
         {table.isArchived && (
           <Chip
             label={
@@ -110,48 +142,36 @@ export default function TableCard({ table }: TableCardProps) {
             color="default"
           />
         )}
-      </Box>
+      </Stack>
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+        <QrActionButton
+          label="Print QR"
+          icon={<PrintOutlinedIcon fontSize="small" />}
+          isEnabled={qrcodeImageUrl !== null}
+          onClick={() =>
+            qrcodeImageUrl && handlePrintQrCode(qrcodeImageUrl, table.name)
+          }
+        />
+        <QrActionButton
+          label="Save QR"
+          icon={<DownloadOutlinedIcon fontSize="small" />}
+          isEnabled={qrcodeImageUrl !== null}
+          onClick={() =>
+            qrcodeImageUrl && downloadQrCode(qrcodeImageUrl, table.name)
+          }
+        />
         <Button
+          component={Link}
+          href={`/backoffice/tables/${table.id}`}
           size="small"
           variant="outlined"
-          startIcon={<PrintOutlinedIcon sx={{ fontSize: 14 }} />}
-          disabled={!table.qrcodeImageUrl}
-          onClick={() =>
-            table.qrcodeImageUrl &&
-            handlePrintQrCode(table.qrcodeImageUrl, table.name)
-          }
-          sx={{ fontSize: "0.75rem" }}
+          startIcon={<EditIcon fontSize="small" />}
+          sx={actionButtonSx}
         >
-          Print QR Code
-        </Button>
-
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<DownloadOutlinedIcon sx={{ fontSize: 14 }} />}
-          disabled={!table.qrcodeImageUrl}
-          onClick={() =>
-            table.qrcodeImageUrl &&
-            downloadQrCode(table.qrcodeImageUrl, table.name)
-          }
-          sx={{ fontSize: "0.75rem" }}
-        >
-          Save QR
+          Edit
         </Button>
       </Box>
-
-      <Button
-        component={Link}
-        href={`/backoffice/tables/${table.id}`}
-        size="small"
-        variant="outlined"
-        startIcon={<EditIcon sx={{ fontSize: 14 }} />}
-        sx={{ alignSelf: "flex-start", fontSize: "0.75rem" }}
-      >
-        Edit
-      </Button>
     </Card>
   );
 }

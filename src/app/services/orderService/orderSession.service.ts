@@ -2,6 +2,7 @@ import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 import type { RejectDetails } from "@/app/lib/rejectReason";
+import { CartValidationService } from "../cartValidation.service";
 import { MenuStockService } from "../menuStock.service";
 import { orderLinesTotal } from "@/app/lib/orderTotals";
 import { shownCancelReason } from "@/app/lib/roundOutcome";
@@ -835,6 +836,15 @@ export class OrderSessionService {
         "This order has already been submitted or is no longer editable.",
       );
     }
+    // A line added before its menu was hidden here can't be sent.
+    const lines = await prisma.order.findMany({
+      where: { orderSessionId: sessionId, isArchived: false },
+      select: { menuId: true },
+    });
+    await CartValidationService.assertMenusListed(
+      session.locationId,
+      lines.map((line) => line.menuId),
+    );
 
     return prisma.$transaction(async (tx: Tx) => {
       await decrementStockForSession(tx, sessionId, session.locationId);

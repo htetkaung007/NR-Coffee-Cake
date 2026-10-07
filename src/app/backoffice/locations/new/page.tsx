@@ -1,19 +1,12 @@
-import { getSessionContext } from "@/app/lib/session";
-import { Box, Typography } from "@mui/material";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import NewLocation from "./NewLocation";
 
 export default async function NewLocationPage() {
-  const { role } = await getSessionContext();
-
-  if (role !== "ADMIN") {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Only Admins can create locations.
-        </Typography>
-      </Box>
-    );
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "Please sign in to create a location.",
+    access: "owner",
+  });
+  if (!scope) return fallback;
 
   return <NewLocation />;
 }

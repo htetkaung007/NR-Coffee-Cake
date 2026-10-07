@@ -5,8 +5,8 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
+import { requireStaff } from "@/app/lib/roleGuard";
 import { AppError } from "@/app/lib/errors";
-import { getSessionContext } from "@/app/lib/session";
 import {
   historyDetailInputSchema,
   historyListInputSchema,
@@ -22,10 +22,7 @@ import { LocationService, OrderHistoryService } from "@/app/services";
  *  addition — Rule 3 colocation) instead of repeating this in all
  *  three action bodies. */
 async function resolveLocationId(): Promise<number> {
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  const { userId } = await requireStaff();
 
   const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {

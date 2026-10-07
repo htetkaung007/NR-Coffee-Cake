@@ -5,7 +5,6 @@ import {
   validateWith,
   toActionResult,
 } from "@/app/lib/actionHelper";
-import { AppError } from "@/app/lib/errors";
 import {
   CreateAddonGroupInput,
   createAddonGroupSchema,
@@ -16,20 +15,12 @@ import {
   UpdateAddonGroupInput,
   updateAddonGroupSchema,
 } from "@/app/lib/schemas/addonSchema";
-import { ADDON_CHANGE_ROLES, OWNER_ONLY_MESSAGE } from "@/app/lib/rolePolicy";
-import { requireRole } from "@/app/lib/roleGuard";
-import { getSessionContext } from "@/app/lib/session";
+import { requireOwner, requirePermission } from "@/app/lib/roleGuard";
 import { AddonService } from "@/app/services";
 import { revalidatePath } from "next/cache";
 
 const CreateAddonGroup = toSafeResult(async (input: CreateAddonGroupInput) => {
-  const { userId } = await getSessionContext();
-  if (!userId) {
-    throw new AppError(
-      "You must be signed in to create an addon group.",
-      "UNAUTHORIZED",
-    );
-  }
+  await requireOwner();
 
   return AddonService.createAddonCategoryWithAddons(input);
 });
@@ -50,13 +41,7 @@ export async function createAddonGroupAction(input: unknown) {
 
 const UpdateAddonGroup = toSafeResult(
   async (input: UpdateAddonGroupInput & { addonCategoryId: number }) => {
-    const { userId } = await getSessionContext();
-    if (!userId) {
-      throw new AppError(
-        "You must be signed in to update an addon group.",
-        "UNAUTHORIZED",
-      );
-    }
+    await requireOwner();
 
     return AddonService.updateAddonCategoryWithAddons(
       input.addonCategoryId,
@@ -83,9 +68,9 @@ export async function updateAddonGroupAction(
 }
 
 const safeSetAddonAvailable = toSafeResult(async (input: SetAddonAvailableInput) => {
-  // Admins and Managers — daily operations (ran out of oat milk). The
-  // role is the session's, never the client's.
-  await requireRole(ADDON_CHANGE_ROLES.availability, OWNER_ONLY_MESSAGE);
+  // Daily operations (ran out of oat milk): the owner, or a manager the
+  // owner let turn add-ons on/off. Checked against the session + DB.
+  await requirePermission("ADDON_AVAILABILITY");
   return AddonService.setAddonAvailable(input.addonId, input.isAvailable);
 });
 
@@ -102,9 +87,9 @@ export async function setAddonAvailableAction(addonId: number, isAvailable: bool
 
 const safeSetAddonGroupRequired = toSafeResult(
   async (input: SetAddonGroupRequiredInput) => {
-    // Admins only — it changes the ordering rules of every menu using
+    // Owner only — it changes the ordering rules of every menu using
     // the group.
-    await requireRole(ADDON_CHANGE_ROLES.required, OWNER_ONLY_MESSAGE);
+    await requireOwner();
     return AddonService.setAddonGroupRequired(
       input.addonCategoryId,
       input.isRequired,

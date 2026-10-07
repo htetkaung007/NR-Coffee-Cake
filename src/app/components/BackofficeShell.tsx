@@ -40,7 +40,6 @@ export function BackofficeShell({
         <BackofficeSideBar
           mobileOpen={mobileOpen}
           onClose={() => setMobileOpen(false)}
-          role={role}
         />
       </Box>
 

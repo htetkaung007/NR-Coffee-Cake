@@ -5,6 +5,7 @@ import {
   validateWith,
   toActionResult,
 } from "@/app/lib/actionHelper";
+import { requireOwner } from "@/app/lib/roleGuard";
 import { AppError } from "@/app/lib/errors";
 import {
   CreateMenuCategoryInput,
@@ -14,19 +15,12 @@ import {
   UpdateMenuCategoryInput,
   updateMenuCategorySchema,
 } from "@/app/lib/schemas/menu_menuCategorySchema";
-import { getSessionContext } from "@/app/lib/session";
 import { LocationService, MenuCategoryService } from "@/app/services";
 import { revalidatePath } from "next/cache";
 
 const CreateMenuCategory = toSafeResult(
   async (input: CreateMenuCategoryInput) => {
-    const { companyId, userId } = await getSessionContext();
-    if (!companyId || !userId) {
-      throw new AppError(
-        "You must be signed in to create a category.",
-        "UNAUTHORIZED",
-      );
-    }
+    const { companyId, userId } = await requireOwner();
 
     const selectedLocation = await LocationService.getSelectedLocation(userId);
     if (!selectedLocation) {
@@ -65,13 +59,7 @@ export async function createMenuCategoryAction(input: unknown) {
 
 const UpdateMenuCategory = toSafeResult(
   async (input: UpdateMenuCategoryInput & { menuCategoryId: number }) => {
-    const { userId } = await getSessionContext();
-    if (!userId) {
-      throw new AppError(
-        "You must be signed in to update a category.",
-        "UNAUTHORIZED",
-      );
-    }
+    const { userId } = await requireOwner();
 
     const selectedLocation = await LocationService.getSelectedLocation(userId);
     if (!selectedLocation) {
@@ -112,13 +100,7 @@ export async function updateMenuCategoryAction(
  *  category order is company-wide, but which categories are being
  *  reordered depends on the location (see MenuCategoryService.reorder). */
 async function resolveCompanyAndLocation() {
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) {
-    throw new AppError(
-      "You must be signed in to reorder categories.",
-      "UNAUTHORIZED",
-    );
-  }
+  const { companyId, userId } = await requireOwner();
 
   const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {

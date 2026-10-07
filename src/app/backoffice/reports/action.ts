@@ -5,6 +5,7 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
+import { requirePermission } from "@/app/lib/roleGuard";
 import { AppError } from "@/app/lib/errors";
 import {
   reportPairingInputSchema,
@@ -12,20 +13,13 @@ import {
   type ReportPairingInput,
   type ReportPeriodInput,
 } from "@/app/lib/schemas/reportSchema";
-import { getSessionContext } from "@/app/lib/session";
 import { LocationService, ReportService } from "@/app/services";
 
-/** Reports are for Admins only — and always about the location the user
- *  currently has selected, never one named by the client. Kept local, as
- *  in the other action files (menus, tables, history). */
+/** Reports: the owner, or a manager the owner let view reports — and
+ *  always about the location the user currently has selected, never one
+ *  named by the client. Kept local, as in the other action files. */
 async function requireReportScope() {
-  const { companyId, userId, role } = await getSessionContext();
-  if (!companyId || !userId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
-  if (role !== "ADMIN") {
-    throw new AppError("Only Admins can view reports.", "FORBIDDEN");
-  }
+  const { companyId, userId } = await requirePermission("REPORTS_VIEW");
 
   const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {

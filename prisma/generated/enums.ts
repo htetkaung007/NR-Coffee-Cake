@@ -47,3 +47,14 @@ export const UserRole = {
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
+
+
+export const Permission = {
+  ORDERS_MARK_PAID: 'ORDERS_MARK_PAID',
+  MENU_AVAILABILITY: 'MENU_AVAILABILITY',
+  ADDON_AVAILABILITY: 'ADDON_AVAILABILITY',
+  TABLES_MANAGE: 'TABLES_MANAGE',
+  REPORTS_VIEW: 'REPORTS_VIEW'
+} as const
+
+export type Permission = (typeof Permission)[keyof typeof Permission]

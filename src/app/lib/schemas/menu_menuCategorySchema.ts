@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
+import { NO_LOCATION_MESSAGE } from "@/app/lib/menuLocations";
+
+/** Most locations one company can tick on a menu form. */
+const MAX_SHOWN_LOCATIONS = 50;
 
 export const createMenuSchema = z.object({
   name: z
@@ -28,6 +32,13 @@ export const createMenuSchema = z.object({
     .array(z.coerce.number().int().positive())
     .optional()
     .transform((ids) => [...new Set(ids ?? [])]),
+  /** Where the menu shows — company/active-location membership is
+   *  checked by MenuLocationService.setMenuLocations. */
+  shownLocationIds: z
+    .array(z.coerce.number().int().positive())
+    .min(1, NO_LOCATION_MESSAGE)
+    .max(MAX_SHOWN_LOCATIONS)
+    .transform((ids) => [...new Set(ids)]),
   image: z
     .custom<File | null>((value) => value === null || value instanceof File, {
       message: "Image upload is invalid.",
@@ -45,6 +56,14 @@ export const createMenuSchema = z.object({
 });
 
 export type CreateMenuInput = z.infer<typeof createMenuSchema>;
+
+/** The menu card's on/off switch at the selected location. The location
+ *  is never part of the input — it comes from the session. */
+export const setMenuAvailableSchema = z.object({
+  menuId: z.number().int().positive(),
+  isAvailable: z.boolean(),
+});
+export type SetMenuAvailableInput = z.infer<typeof setMenuAvailableSchema>;
 
 export const createMenuCategorySchema = z.object({
   name: z.string().trim().min(1, "Category name is required.").max(50),

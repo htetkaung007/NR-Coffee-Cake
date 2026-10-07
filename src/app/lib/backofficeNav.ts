@@ -1,4 +1,5 @@
 import type { Session } from "next-auth";
+import type { AccessRule } from "./permissions";
 
 export type NavRole = Session["user"]["role"];
 
@@ -23,18 +24,19 @@ export function findActiveHref(
   return active;
 }
 
-/** Items without `roles` are shown to everyone; a section left with no
- *  items for this role is dropped entirely (no orphan caption). */
+/** Items the user may open (`isAllowed(item.access)` — the shared
+ *  canAccess rule); a section left with no items is dropped entirely (no
+ *  orphan caption). */
 export function visibleNavSections<
-  Item extends { roles?: readonly NavRole[] },
-  Section extends { items: readonly Item[] },
->(sections: readonly Section[], role: NavRole): (Section & { items: Item[] })[] {
+  Section extends { items: readonly { access: AccessRule }[] },
+>(
+  sections: readonly Section[],
+  isAllowed: (rule: AccessRule) => boolean,
+): (Section & { items: Section["items"][number][] })[] {
   return sections
     .map((section) => ({
       ...section,
-      items: section.items.filter(
-        (item) => !item.roles || item.roles.includes(role),
-      ),
+      items: section.items.filter((item) => isAllowed(item.access)),
     }))
     .filter((section) => section.items.length > 0);
 }

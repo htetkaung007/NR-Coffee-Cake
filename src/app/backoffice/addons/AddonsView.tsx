@@ -3,19 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Alert,
-  Box,
-  Snackbar,
-  Stack,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
+import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import SidePanelDrawer from "@/app/components/SidePanelDrawer";
+import StatusSnackbar, {
+  type StatusMessage,
+} from "@/app/components/StatusSnackbar";
+import { useCan } from "@/app/components/StaffAccessProvider";
 import { addonGroupAvailability } from "@/app/lib/addonSelection";
-import { hoverCapableMedia, topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
+import {
+  hoverCapableMedia,
+  topBarHeight,
+} from "@/app/lib/theme/sharedThemeTokens";
 import AddonGroupPanel, { type AddonGroup } from "./AddonGroupPanel";
 import RequiredChip from "./RequiredChip";
 import { setAddonAvailableAction, setAddonGroupRequiredAction } from "./action";
@@ -42,7 +42,13 @@ function applyOverrides(groups: readonly AddonGroup[], overrides: Overrides) {
 /** One group in the list: name, Required/Optional, "3 of 4 on", and a
  *  warning when a required group has nothing on. The whole card is ONE
  *  link (?group=<id>) — selecting keeps the view state in the URL. */
-function GroupCard({ group, selected }: { group: AddonGroup; selected: boolean }) {
+function GroupCard({
+  group,
+  selected,
+}: {
+  group: AddonGroup;
+  selected: boolean;
+}) {
   const { onCount, total, isBlocked } = addonGroupAvailability(
     group.isRequired,
     group.addons,
@@ -76,7 +82,10 @@ function GroupCard({ group, selected }: { group: AddonGroup; selected: boolean }
       })}
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <Typography variant="body1" sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
+        <Typography
+          variant="body1"
+          sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}
+        >
           {group.name}
         </Typography>
         <RequiredChip isRequired={group.isRequired} />
@@ -121,12 +130,13 @@ export default function AddonsView({
   const router = useRouter();
   const theme = useTheme();
   const isWide = useMediaQuery(theme.breakpoints.up("md"));
+  // Display only — setAddonAvailableAction checks the permission itself.
+  const canToggleAvailability = useCan("ADDON_AVAILABILITY");
   const [overrides, setOverrides] = useState<Overrides>({});
-  const [pendingKeys, setPendingKeys] = useState<ReadonlySet<string>>(new Set());
-  const [message, setMessage] = useState<{
-    text: string;
-    severity: "success" | "error";
-  } | null>(null);
+  const [pendingKeys, setPendingKeys] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  const [message, setMessage] = useState<StatusMessage | null>(null);
 
   const shown = applyOverrides(groups, overrides);
   const selected = shown.find((group) => group.id === selectedId) ?? null;
@@ -169,10 +179,12 @@ export default function AddonsView({
     <AddonGroupPanel
       group={group}
       isOwner={isOwner}
+      canToggleAvailability={canToggleAvailability}
       pendingKeys={pendingKeys}
       onClose={onClose}
       onToggleAddon={(addonId, isAvailable) => {
-        const name = group.addons.find((addon) => addon.id === addonId)?.name ?? "Option";
+        const name =
+          group.addons.find((addon) => addon.id === addonId)?.name ?? "Option";
         void toggle(
           `addon-${addonId}`,
           isAvailable,
@@ -203,7 +215,11 @@ export default function AddonsView({
       >
         <Stack component="nav" aria-label="Add-on groups" spacing={1.5}>
           {shown.map((group) => (
-            <GroupCard key={group.id} group={group} selected={group.id === selectedId} />
+            <GroupCard
+              key={group.id}
+              group={group}
+              selected={group.id === selectedId}
+            />
           ))}
         </Stack>
 
@@ -242,20 +258,7 @@ export default function AddonsView({
         {selected && panel(selected, closeDrawer)}
       </SidePanelDrawer>
 
-      <Snackbar
-        open={message !== null}
-        autoHideDuration={2000}
-        onClose={() => setMessage(null)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          severity={message?.severity ?? "success"}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {message?.text}
-        </Alert>
-      </Snackbar>
+      <StatusSnackbar message={message} onClose={() => setMessage(null)} />
     </>
   );
 }

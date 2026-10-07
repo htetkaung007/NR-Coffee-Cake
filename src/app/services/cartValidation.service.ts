@@ -1,6 +1,10 @@
 import { prisma } from "../utils/prisma";
-import { NotFoundError } from "../lib/errors";
-import { isMenuOrderable } from "../lib/menuOrderability";
+import { NotFoundError, ValidationError } from "../lib/errors";
+import {
+  isMenuListed,
+  isMenuOrderable,
+  notAvailableHereMessage,
+} from "../lib/menuOrderability";
 import {
   validateCartLines,
   type CartCatalog,
@@ -183,20 +187,36 @@ export class CartValidationService {
     );
     const soldHere = menus.filter((menu) => companyMenuIds.has(menu.id));
     const soldHereById = new Map(soldHere.map((menu) => [menu.id, menu]));
-    const isOrderable = (menuId: number) => {
+    const factsFor = (menuId: number) => {
       const menu = soldHereById.get(menuId);
-      return (
-        menu !== undefined &&
-        isMenuOrderable({
-          isArchived: menu.isArchived,
-          isManuallyDisabled: stockByMenuId.get(menuId)?.isManuallyDisabled ?? false,
-          isDisabledHere: disabledMenuIds.has(menuId),
-          hasVisibleCategory: visibleMenuIds.has(menuId),
-        })
-      );
+      return menu === undefined
+        ? null
+        : {
+            isArchived: menu.isArchived,
+            isManuallyDisabled:
+              stockByMenuId.get(menuId)?.isManuallyDisabled ?? false,
+            isDisabledHere: disabledMenuIds.has(menuId),
+            hasVisibleCategory: visibleMenuIds.has(menuId),
+          };
+    };
+    const isOrderable = (menuId: number) => {
+      const facts = factsFor(menuId);
+      return facts !== null && isMenuOrderable(facts);
+    };
+    /** On the menu here at all (isMenuListed) — a switched-off menu is. */
+    const isListed = (menuId: number) => {
+      const facts = factsFor(menuId);
+      return facts !== null && isMenuListed(facts);
     };
 
-    return { menus: soldHere, stockByMenuId, visibleCategories, isOrderable };
+    return {
+      menus: soldHere,
+      allMenus: menus,
+      stockByMenuId,
+      visibleCategories,
+      isOrderable,
+      isListed,
+    };
   }
 
   /** The ids of every menu orderable at this location right now (see
@@ -216,6 +236,44 @@ export class CartValidationService {
         .map((menu) => menu.id),
       visibleCategories: orderability.visibleCategories,
     };
+  }
+
+  /**
+   * The server-side refusal for adding or sending a menu that isn't
+   * listed at this location — hidden here, archived, in no category
+   * visible here, or not this company's (isMenuListed, the listing half
+   * of isMenuOrderable). Used by the Table draft add / Send to Kitchen
+   * and the staff POS cart add / submit, whose own UI only lists
+   * listed menus. A switched-off or stock-0 menu passes here; stock is
+   * still enforced at submit by the atomic decrement.
+   *
+   * Throws ValidationError `"<name>" isn't available at this location.`
+   * for the first such menu; NotFoundError for an unknown menu or
+   * location.
+   */
+  static async assertMenusListed(locationId: number, menuIds: readonly number[]) {
+    const ids = [...new Set(menuIds)];
+    if (ids.length === 0) return;
+    const location = await prisma.location.findFirst({
+      where: { id: locationId, isArchived: false },
+      select: { companyId: true },
+    });
+    if (!location) throw new NotFoundError("Location", locationId);
+
+    const orderability = await CartValidationService.loadOrderability(
+      location.companyId,
+      locationId,
+      ids,
+    );
+    const nameById = new Map(
+      orderability.allMenus.map((menu) => [menu.id, menu.name]),
+    );
+    for (const menuId of ids) {
+      if (orderability.isListed(menuId)) continue;
+      const name = nameById.get(menuId);
+      if (name === undefined) throw new NotFoundError("Menu", menuId);
+      throw new ValidationError(notAvailableHereMessage(name));
+    }
   }
 
   /** loadCatalog for the cart's menus, then THE cart rules

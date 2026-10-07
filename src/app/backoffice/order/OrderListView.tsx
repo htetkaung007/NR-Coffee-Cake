@@ -12,6 +12,7 @@ import {
   Chip,
   Grid,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import StorefrontIcon from "@mui/icons-material/Storefront";
@@ -32,6 +33,8 @@ import {
 import { markEntryPaidAction } from "./action";
 import ApprovalCountdown from "./ApprovalCountdown";
 import MarkPaidDialog from "./MarkPaidDialog";
+import { useCan } from "@/app/components/StaffAccessProvider";
+import { ASK_OWNER_HINTS } from "@/app/lib/permissions";
 import PrintBillButton from "./PrintBillButton";
 import NewOrderToast, {
   describeNewRounds,
@@ -110,6 +113,8 @@ function EntryCard({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  // Display only — markEntryPaidAction checks the permission itself.
+  const canTakePayment = useCan("ORDERS_MARK_PAID");
 
   const SourceIcon = entry.isTableGroup ? TableRestaurantIcon : StorefrontIcon;
   const sourceAccent = entry.isTableGroup ? TABLE_ACCENT : COUNTER_ACCENT;
@@ -279,16 +284,26 @@ function EntryCard({
             entryKey={entry.key}
             disabled={!canPrintBill(entry.sessions)}
           />
-          <Button
-            variant="contained"
-            color="success"
-            aria-label={`Paid: ${entry.title}`}
-            disabled={isPending || entry.hasPendingApproval}
-            onClick={() => setIsConfirmOpen(true)}
-            sx={{ minHeight: 44, minWidth: 72 }}
-          >
-            Paid
-          </Button>
+          {/* Without the permission: disabled, saying why (a disabled
+             button inside a Tooltip needs the span — DESIGN.md Rule 22). */}
+          <Tooltip title={canTakePayment ? "" : ASK_OWNER_HINTS.ORDERS_MARK_PAID}>
+            <span>
+              <Button
+                variant="contained"
+                color="success"
+                aria-label={
+                  canTakePayment
+                    ? `Paid: ${entry.title}`
+                    : `Paid: ${entry.title} — ${ASK_OWNER_HINTS.ORDERS_MARK_PAID}`
+                }
+                disabled={!canTakePayment || isPending || entry.hasPendingApproval}
+                onClick={() => setIsConfirmOpen(true)}
+                sx={{ minHeight: 44, minWidth: 72 }}
+              >
+                Paid
+              </Button>
+            </span>
+          </Tooltip>
         </Stack>
       </Card>
 

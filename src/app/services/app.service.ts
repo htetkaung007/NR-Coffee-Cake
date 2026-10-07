@@ -3,6 +3,10 @@ import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
 import { NotFoundError, ValidationError } from "../lib/errors";
 import { MenuService } from "./menu.service";
+import {
+  DEFAULT_MANAGER_PERMISSIONS,
+  type PermissionKey,
+} from "../lib/permissions";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
@@ -115,7 +119,14 @@ export class AppService {
     password: string;
     companyId: number;
     locationId: number;
+    /** The owner creating the manager — recorded as who granted. */
+    ownerId: number;
+    /** What the new manager may do (default: the catalog's defaults). */
+    permissions?: readonly PermissionKey[];
   }) {
+    const permissions = [
+      ...new Set(input.permissions ?? DEFAULT_MANAGER_PERMISSIONS),
+    ];
     const existingUser = await AppService.getUserByEmail(input.email);
     if (existingUser) {
       throw new ValidationError("Email is already registered.");
@@ -134,6 +145,21 @@ export class AppService {
         input.locationId,
       );
 
+      // In the same transaction: a manager must never exist without the
+      // grants the owner picked.
+      if (permissions.length > 0) {
+        await tx.userPermission.createMany({
+          data: permissions.map((permission) => ({
+            userId: manager.id,
+            permission,
+            grantedById: input.ownerId,
+          })),
+        });
+      }
+
+      // Stock rows only (quantity 0, existing ones untouched). It never
+      // touches DisableLocationMenus, so a menu hidden at this location
+      // stays hidden — a stock row alone doesn't list it there.
       if (companyMenus.length > 0) {
         await tx.menuStock.createMany({
           data: companyMenus.map((menu) => ({

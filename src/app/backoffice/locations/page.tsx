@@ -2,31 +2,16 @@ import Link from "next/link";
 import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { LocationService } from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import LocationCard from "@/app/components/LocationCard";
 
 export default async function LocationsPage() {
-  const { companyId, userId, role } = await getSessionContext();
-
-  if (!companyId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Please sign in to view locations.
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (role !== "ADMIN") {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          Only Admins can access Locations.
-        </Typography>
-      </Box>
-    );
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "Please sign in to view locations.",
+    access: "owner",
+  });
+  if (!scope) return fallback;
+  const { companyId, userId } = scope;
 
   const [locations, selectedLocation] = await Promise.all([
     LocationService.getAllLocationsForCompany(companyId),

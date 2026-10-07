@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const createLocationSchema = z.object({
   name: z.string().trim().min(1, "Location name is required.").max(120),
+  /** ALL: every current menu shows there (stock 0). EMPTY: none yet. */
+  startingMenus: z.enum(["ALL", "EMPTY"], "Choose the starting menus."),
 });
 
 export type CreateLocationInput = z.infer<typeof createLocationSchema>;

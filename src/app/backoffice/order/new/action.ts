@@ -6,8 +6,7 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { AppError } from "@/app/lib/errors";
-import { getSessionContext } from "@/app/lib/session";
+import { requireStaff } from "@/app/lib/roleGuard";
 import {
   staffAddCartItemSchema,
   staffUpdateCartItemSchema,
@@ -23,7 +22,7 @@ import {
 /**
  * Design doc section 7 ("staff place a new order directly") — the one
  * customer-order code path that authenticates via NextAuth
- * (getSessionContext) instead of a QR-scan cookie, since there's no
+ * (requireStaff — the session) instead of a QR-scan cookie, since there's no
  * physical scan involved: a manager is placing this order themselves,
  * from inside the Backoffice. Everything downstream of session
  * creation (Order rows, OrdersAddon rows, status transitions) reuses
@@ -34,10 +33,7 @@ import {
  */
 
 const safeStartStaffOrder = toSafeResult(async (tableId: number) => {
-  const { userId } = await getSessionContext();
-  if (!userId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  await requireStaff();
 
   const table = await TableService.getTableById(tableId);
   return OrderSessionService.startStaffSession(table);
@@ -50,10 +46,7 @@ export async function startStaffOrderAction(tableId: number) {
 
 const safeAddStaffCartItem = toSafeResult(
   async (input: StaffAddCartItemInput) => {
-    const { userId } = await getSessionContext();
-    if (!userId) {
-      throw new AppError("You must be signed in.", "UNAUTHORIZED");
-    }
+    await requireStaff();
 
     // The same cart method (and so the same note handling and line-merge
     // rule) the customer flow uses.
@@ -89,10 +82,7 @@ export async function addStaffCartItemAction(
 
 const safeUpdateStaffCartItem = toSafeResult(
   async (input: StaffUpdateCartItemInput) => {
-    const { userId } = await getSessionContext();
-    if (!userId) {
-      throw new AppError("You must be signed in.", "UNAUTHORIZED");
-    }
+    await requireStaff();
 
     return OrderSessionCartService.updateItemInCart(
       input.sessionId,
@@ -126,10 +116,7 @@ export async function updateStaffCartItemAction(
 
 const safeRemoveStaffCartItem = toSafeResult(
   async (input: { sessionId: number; orderId: number }) => {
-    const { userId } = await getSessionContext();
-    if (!userId) {
-      throw new AppError("You must be signed in.", "UNAUTHORIZED");
-    }
+    await requireStaff();
 
     return OrderSessionCartService.removeItemFromCart(
       input.sessionId,
@@ -147,10 +134,7 @@ export async function removeStaffCartItemAction(
 }
 
 const safeSubmitStaffOrder = toSafeResult(async (sessionId: number) => {
-  const { userId } = await getSessionContext();
-  if (!userId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  await requireStaff();
 
   return OrderSessionService.submitStaffOrder(sessionId);
 });

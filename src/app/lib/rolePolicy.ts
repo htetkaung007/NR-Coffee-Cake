@@ -15,15 +15,6 @@ export interface StaffScope {
 /** The FORBIDDEN message for owner-only changes on the add-ons page. */
 export const OWNER_ONLY_MESSAGE = "Only the owner can change this.";
 
-/** Who may change what on the add-ons page: turning an add-on on/off is
- *  daily operations (out of oat milk) — Admins and Managers; making a
- *  group Required changes the ordering rules of every menu using it —
- *  Admins (owners) only. */
-export const ADDON_CHANGE_ROLES = {
-  availability: ["ADMIN", "MANAGER"],
-  required: ["ADMIN"],
-} as const satisfies Record<string, readonly StaffRole[]>;
-
 /**
  * THE role check for Server Actions, pure: signed in (company + user),
  * and one of `allowed` — otherwise a safe AppError (UNAUTHORIZED /

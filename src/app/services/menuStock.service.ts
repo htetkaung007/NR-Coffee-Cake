@@ -67,17 +67,23 @@ export class MenuStockService {
   }
 
   /**
-   * Staff "Available / Unavailable" toggle from the menu card. Independent
-   * of quantity — a menu can have stock left but still be manually paused
-   * (e.g. the espresso machine is down).
+   * The menu card's on/off switch — marks the menu available or not AT
+   * THIS LOCATION only (sold out for today, the machine is down).
+   * Independent of quantity: a menu can have stock left but still be
+   * switched off. Sets the value it is given instead of flipping the
+   * stored one, so two people pressing at once can't undo each other.
+   * Upserts because a location may never have had a stock row; a new
+   * row starts at quantity 0 (the column default).
    */
-  static async toggleManualDisable(menuId: number, locationId: number) {
-    const existing = await MenuStockService.getStock(menuId, locationId);
-
+  static async setManualDisabled(
+    menuId: number,
+    locationId: number,
+    isDisabled: boolean,
+  ) {
     return prisma.menuStock.upsert({
       where: { menuId_locationId: { menuId, locationId } },
-      update: { isManuallyDisabled: !existing?.isManuallyDisabled },
-      create: { menuId, locationId, isManuallyDisabled: true },
+      update: { isManuallyDisabled: isDisabled },
+      create: { menuId, locationId, quantity: 0, isManuallyDisabled: isDisabled },
     });
   }
 

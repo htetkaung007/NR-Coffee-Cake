@@ -25,7 +25,7 @@ export default async function ReportsPage({
 
   const { context, fallback } = await requireBackofficeContext({
     signedOut: "Please sign in to view reports.",
-    forbidden: "Reports are available to admins",
+    access: "REPORTS_VIEW",
   });
   if (!context) return fallback;
 

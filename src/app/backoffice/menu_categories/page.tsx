@@ -5,6 +5,7 @@ import MenuCategoryOrderView from "./MenuCategoryOrderView";
 export default async function MenuCategoriesPage() {
   const { context, fallback } = await requireBackofficeContext({
     signedOut: "Please sign in to view menu categories.",
+    access: "owner",
   });
   if (!context) return fallback;
   const { companyId, location } = context;

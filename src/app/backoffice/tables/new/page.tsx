@@ -1,19 +1,12 @@
-import { getSessionContext } from "@/app/lib/session";
-import { Box, Typography } from "@mui/material";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import NewTable from "./NewTable";
 
 export default async function NewTablePage() {
-  const { companyId } = await getSessionContext();
-
-  if (!companyId) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">
-          You must be signed in to create a table.
-        </Typography>
-      </Box>
-    );
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "You must be signed in to create a table.",
+    access: "TABLES_MANAGE",
+  });
+  if (!scope) return fallback;
 
   return <NewTable />;
 }

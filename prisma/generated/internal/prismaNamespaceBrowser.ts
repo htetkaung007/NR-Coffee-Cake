@@ -69,7 +69,8 @@ export const ModelName = {
   OrdersAddon: 'OrdersAddon',
   OrderSession: 'OrderSession',
   Bill: 'Bill',
-  OrderCancellation: 'OrderCancellation'
+  OrderCancellation: 'OrderCancellation',
+  UserPermission: 'UserPermission'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -344,6 +345,17 @@ export const OrderCancellationScalarFieldEnum = {
 } as const
 
 export type OrderCancellationScalarFieldEnum = (typeof OrderCancellationScalarFieldEnum)[keyof typeof OrderCancellationScalarFieldEnum]
+
+
+export const UserPermissionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  permission: 'permission',
+  grantedById: 'grantedById',
+  createdAt: 'createdAt'
+} as const
+
+export type UserPermissionScalarFieldEnum = (typeof UserPermissionScalarFieldEnum)[keyof typeof UserPermissionScalarFieldEnum]
 
 
 export const SortOrder = {

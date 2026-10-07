@@ -6,6 +6,7 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
+import { requirePermission } from "@/app/lib/roleGuard";
 import { AppError } from "@/app/lib/errors";
 import {
   createTableSchema,
@@ -13,19 +14,12 @@ import {
   type CreateTableInput,
   type UpdateTableInput,
 } from "@/app/lib/schemas/tableSchema";
-import { getSessionContext } from "@/app/lib/session";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 
 import { LocationService, TableService } from "@/app/services";
 
 const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) {
-    throw new AppError(
-      "You must be signed in to create a table.",
-      "UNAUTHORIZED",
-    );
-  }
+  const { userId } = await requirePermission("TABLES_MANAGE");
 
   // Same "which location am I working in" lookup Menu creation uses —
   // Admins get their SelectedLocation, Managers get their fixed
@@ -76,10 +70,7 @@ export async function createTableAction(formData: FormData) {
 
 const safeUpdateTable = toSafeResult(
   async (input: UpdateTableInput & { tableId: number }) => {
-    const { companyId } = await getSessionContext();
-    if (!companyId) {
-      throw new AppError("You must be signed in.", "UNAUTHORIZED");
-    }
+    await requirePermission("TABLES_MANAGE");
 
     const existingTable = await TableService.getTableById(input.tableId);
     await TableService.updateTableName(input.tableId, input.name);
@@ -130,10 +121,7 @@ export async function updateTableAction(tableId: number, formData: FormData) {
  * truth, so it goes first.
  */
 const safeDeleteTable = toSafeResult(async (tableId: number) => {
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  await requirePermission("TABLES_MANAGE");
 
   const table = await TableService.getTableById(tableId);
   await TableService.deleteTable(tableId);
@@ -173,10 +161,7 @@ export async function deleteTableAction(tableId: number) {
  * can re-upload the logo afterward via updateTableAction if needed.
  */
 const safeRotateAccessKey = toSafeResult(async (tableId: number) => {
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
+  await requirePermission("TABLES_MANAGE");
 
   const rotated = await TableService.rotateAccessKey(tableId);
   await TableService.regenerateQrImage(rotated, null);

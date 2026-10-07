@@ -67,6 +67,7 @@ export default async function OrderHistoryPage({
 
   const { context, fallback } = await requireBackofficeContext({
     signedOut: "Please sign in to view order history.",
+    access: "staff",
   });
   if (!context) return fallback;
   const { location } = context;

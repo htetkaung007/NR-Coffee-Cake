@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { isMenuOrderable, type MenuOrderabilityFacts } from "./menuOrderability";
+import {
+  isMenuListed,
+  isMenuOrderable,
+  notAvailableHereMessage,
+  type MenuOrderabilityFacts,
+} from "./menuOrderability";
 
 /** A menu that can be ordered; each test spoils exactly one thing. */
 const orderable: MenuOrderabilityFacts = {
@@ -28,5 +33,35 @@ describe("isMenuOrderable", () => {
 
   it("is false when none of the menu's categories is visible here", () => {
     expect(isMenuOrderable({ ...orderable, hasVisibleCategory: false })).toBe(false);
+  });
+});
+
+describe("isMenuListed (on the menu here at all)", () => {
+  it("lists a switched-off menu — it shows as unavailable, not missing", () => {
+    const switchedOff = { ...orderable, isManuallyDisabled: true };
+    expect(isMenuListed(switchedOff)).toBe(true);
+  });
+
+  it("doesn't list a menu hidden at this location", () => {
+    expect(isMenuListed({ ...orderable, isDisabledHere: true })).toBe(false);
+  });
+
+  it("doesn't list an archived menu, or one with no category visible here", () => {
+    expect(isMenuListed({ ...orderable, isArchived: true })).toBe(false);
+    expect(isMenuListed({ ...orderable, hasVisibleCategory: false })).toBe(false);
+  });
+
+  it("an unlisted menu is never orderable", () => {
+    const hidden = { ...orderable, isDisabledHere: true };
+    expect(isMenuListed(hidden)).toBe(false);
+    expect(isMenuOrderable(hidden)).toBe(false);
+  });
+});
+
+describe("notAvailableHereMessage", () => {
+  it("names the menu", () => {
+    expect(notAvailableHereMessage("Iced Latte")).toBe(
+      '"Iced Latte" isn\'t available at this location.',
+    );
   });
 });

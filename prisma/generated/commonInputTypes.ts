@@ -283,6 +283,23 @@ export type EnumRejectReasonNullableWithAggregatesFilter<$PrismaModel = never> =
   _max?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
 }
 
+export type EnumPermissionFilter<$PrismaModel = never> = {
+  equals?: $Enums.Permission | Prisma.EnumPermissionFieldRefInput<$PrismaModel>
+  in?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPermissionFilter<$PrismaModel> | $Enums.Permission
+}
+
+export type EnumPermissionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Permission | Prisma.EnumPermissionFieldRefInput<$PrismaModel>
+  in?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPermissionWithAggregatesFilter<$PrismaModel> | $Enums.Permission
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPermissionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPermissionFilter<$PrismaModel>
+}
+
 export type NestedIntFilter<$PrismaModel = never> = {
   equals?: number | Prisma.IntFieldRefInput<$PrismaModel>
   in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
@@ -563,6 +580,23 @@ export type NestedEnumRejectReasonNullableWithAggregatesFilter<$PrismaModel = ne
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumPermissionFilter<$PrismaModel = never> = {
+  equals?: $Enums.Permission | Prisma.EnumPermissionFieldRefInput<$PrismaModel>
+  in?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPermissionFilter<$PrismaModel> | $Enums.Permission
+}
+
+export type NestedEnumPermissionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Permission | Prisma.EnumPermissionFieldRefInput<$PrismaModel>
+  in?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPermissionWithAggregatesFilter<$PrismaModel> | $Enums.Permission
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPermissionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPermissionFilter<$PrismaModel>
 }
 
 

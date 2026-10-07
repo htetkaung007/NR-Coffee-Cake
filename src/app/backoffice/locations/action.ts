@@ -6,39 +6,36 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { AppError } from "@/app/lib/errors";
 import {
   createLocationSchema,
   updateLocationSchema,
   type CreateLocationInput,
   type UpdateLocationInput,
 } from "@/app/lib/schemas/locationSchema";
-import { requireAdmin } from "@/app/lib/roleGuard";
-import { getSessionContext } from "@/app/lib/session";
+import { requireOwner } from "@/app/lib/roleGuard";
 import { LocationService } from "@/app/services";
 
-/** Every write in this file starts by confirming the caller is an
- *  Admin — Managers have no Location-management access at all (their
- *  location is fixed, assigned by an Admin elsewhere). The check itself
- *  is the shared requireAdmin (lib/roleGuard.ts). */
-async function requireLocationAdmin() {
-  const { companyId } = await requireAdmin("Only Admins can manage locations.");
-  return companyId;
-}
-
 const safeCreateLocation = toSafeResult(async (input: CreateLocationInput) => {
-  const companyId = await requireLocationAdmin();
-  return LocationService.createLocation(companyId, input.name);
+  // Every action in this file is the owner's: managers have no
+  // Location access at all (their location is fixed by the owner).
+  const { companyId } = await requireOwner();
+  return LocationService.createLocation(
+    companyId,
+    input.name,
+    input.startingMenus,
+  );
 });
 
 export async function createLocationAction(formData: FormData) {
   const result = await validateWith(createLocationSchema, {
     name: formData.get("name"),
+    startingMenus: formData.get("startingMenus"),
   }).asyncAndThen(safeCreateLocation);
 
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice/locations");
+    revalidatePath("/backoffice/menus");
   }
 
   return actionResult;
@@ -46,7 +43,7 @@ export async function createLocationAction(formData: FormData) {
 
 const safeUpdateLocationName = toSafeResult(
   async (input: UpdateLocationInput & { locationId: number }) => {
-    await requireLocationAdmin();
+    await requireOwner();
     return LocationService.updateLocationName(input.locationId, input.name);
   },
 );
@@ -73,7 +70,7 @@ export async function updateLocationNameAction(
 
 const safeToggleArchive = toSafeResult(
   async (input: { locationId: number; isArchived: boolean }) => {
-    await requireLocationAdmin();
+    await requireOwner();
     return LocationService.toggleLocationArchive(
       input.locationId,
       input.isArchived,
@@ -98,7 +95,7 @@ export async function toggleLocationArchiveAction(
 }
 
 const safeHardDelete = toSafeResult(async (locationId: number) => {
-  await requireLocationAdmin();
+  await requireOwner();
   return LocationService.hardDeleteLocation(locationId);
 });
 
@@ -112,18 +109,14 @@ export async function hardDeleteLocationAction(locationId: number) {
   return actionResult;
 }
 
-const safeSetSelected = toSafeResult(
-  async (input: { userId: number; locationId: number }) =>
-    LocationService.setSelectedLocation(input.userId, input.locationId),
-);
+const safeSetSelected = toSafeResult(async (locationId: number) => {
+  // Switching location is the owner's — a manager's is fixed.
+  const { userId } = await requireOwner();
+  return LocationService.setSelectedLocation(userId, locationId);
+});
 
 export async function selectLocationAction(locationId: number) {
-  const { userId } = await getSessionContext();
-  if (!userId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
-  }
-
-  const result = await safeSetSelected({ userId, locationId });
+  const result = await safeSetSelected(locationId);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice", "layout");

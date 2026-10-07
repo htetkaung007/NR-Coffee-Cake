@@ -1,9 +1,8 @@
-import { redirect } from "next/navigation";
 import { Box, Typography } from "@mui/material";
 import { LocationService, ReportService } from "@/app/services";
 import { buildItemList, reportHref } from "@/app/lib/reportView";
 import { reportPeriodInputSchema } from "@/app/lib/schemas/reportSchema";
-import { getSessionContext } from "@/app/lib/session";
+import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
 import { formatShopDateTime } from "@/app/lib/shopDay";
 import ReportSheet from "./ReportSheet";
 
@@ -20,8 +19,8 @@ function Message({ children }: { children: React.ReactNode }) {
 }
 
 /** The week's or month's report on A4, to print or "Save as PDF" — the
- *  same access checks as the receipt routes (signed out → sign-in; the
- *  rest a plain notice in place), Admins only like the Reports page.
+ *  same server-side access check as the Reports page (REPORTS_VIEW: the
+ *  owner, or a manager granted it — a plain notice in place otherwise).
  *  Company and location come from the session, never the URL. The
  *  numbers come from ReportService.getPrintableReport — getOverview and
  *  getItems, the very methods behind the Reports page — so the paper
@@ -33,11 +32,12 @@ export default async function PrintReportPage({
 }) {
   const raw = await searchParams;
 
-  const { companyId, userId, role } = await getSessionContext();
-  if (!companyId || !userId) redirect("/auth/signIn");
-  if (role !== "ADMIN") {
-    return <Message>Reports are available to admins.</Message>;
-  }
+  const { scope, fallback } = await requireBackofficeAccess({
+    signedOut: "Please sign in to view reports.",
+    access: "REPORTS_VIEW",
+  });
+  if (!scope) return fallback;
+  const { companyId, userId } = scope;
 
   const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {

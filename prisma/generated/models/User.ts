@@ -267,6 +267,8 @@ export type UserWhereInput = {
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
   location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
+  permissions?: Prisma.UserPermissionListRelationFilter
+  permissionGrants?: Prisma.UserPermissionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -283,6 +285,8 @@ export type UserOrderByWithRelationInput = {
   company?: Prisma.CompanyOrderByWithRelationInput
   selectedLocations?: Prisma.SelectedLocationOrderByRelationAggregateInput
   location?: Prisma.LocationOrderByWithRelationInput
+  permissions?: Prisma.UserPermissionOrderByRelationAggregateInput
+  permissionGrants?: Prisma.UserPermissionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -302,6 +306,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
   location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
+  permissions?: Prisma.UserPermissionListRelationFilter
+  permissionGrants?: Prisma.UserPermissionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -349,6 +355,8 @@ export type UserCreateInput = {
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
+  permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -363,6 +371,8 @@ export type UserUncheckedCreateInput = {
   updateTime?: Date | string
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
+  permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserUpdateInput = {
@@ -376,6 +386,8 @@ export type UserUpdateInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
+  permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -390,6 +402,8 @@ export type UserUncheckedUpdateInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
+  permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -492,6 +506,11 @@ export type UserOrderByRelationAggregateInput = {
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -628,6 +647,36 @@ export type UserUpdateOneRequiredWithoutSelectedLocationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSelectedLocationsInput, Prisma.UserUpdateWithoutSelectedLocationsInput>, Prisma.UserUncheckedUpdateWithoutSelectedLocationsInput>
 }
 
+export type UserCreateNestedOneWithoutPermissionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPermissionsInput, Prisma.UserUncheckedCreateWithoutPermissionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPermissionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutPermissionGrantsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPermissionGrantsInput, Prisma.UserUncheckedCreateWithoutPermissionGrantsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPermissionGrantsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPermissionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPermissionsInput, Prisma.UserUncheckedCreateWithoutPermissionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPermissionsInput
+  upsert?: Prisma.UserUpsertWithoutPermissionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPermissionsInput, Prisma.UserUpdateWithoutPermissionsInput>, Prisma.UserUncheckedUpdateWithoutPermissionsInput>
+}
+
+export type UserUpdateOneWithoutPermissionGrantsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPermissionGrantsInput, Prisma.UserUncheckedCreateWithoutPermissionGrantsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPermissionGrantsInput
+  upsert?: Prisma.UserUpsertWithoutPermissionGrantsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPermissionGrantsInput, Prisma.UserUpdateWithoutPermissionGrantsInput>, Prisma.UserUncheckedUpdateWithoutPermissionGrantsInput>
+}
+
 export type UserCreateWithoutCompanyInput = {
   email: string
   name?: string | null
@@ -638,6 +687,8 @@ export type UserCreateWithoutCompanyInput = {
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
+  permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserUncheckedCreateWithoutCompanyInput = {
@@ -651,6 +702,8 @@ export type UserUncheckedCreateWithoutCompanyInput = {
   updateTime?: Date | string
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
+  permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserCreateOrConnectWithoutCompanyInput = {
@@ -705,6 +758,8 @@ export type UserCreateWithoutLocationInput = {
   isArchived?: boolean
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
+  permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserUncheckedCreateWithoutLocationInput = {
@@ -718,6 +773,8 @@ export type UserUncheckedCreateWithoutLocationInput = {
   updateTime?: Date | string
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
+  permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserCreateOrConnectWithoutLocationInput = {
@@ -756,6 +813,8 @@ export type UserCreateWithoutSelectedLocationsInput = {
   isArchived?: boolean
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
+  permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserUncheckedCreateWithoutSelectedLocationsInput = {
@@ -769,6 +828,8 @@ export type UserUncheckedCreateWithoutSelectedLocationsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
 }
 
 export type UserCreateOrConnectWithoutSelectedLocationsInput = {
@@ -797,6 +858,8 @@ export type UserUpdateWithoutSelectedLocationsInput = {
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
+  permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSelectedLocationsInput = {
@@ -810,6 +873,156 @@ export type UserUncheckedUpdateWithoutSelectedLocationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
+}
+
+export type UserCreateWithoutPermissionsInput = {
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  company: Prisma.CompanyCreateNestedOneWithoutUsersInput
+  selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
+  location?: Prisma.LocationCreateNestedOneWithoutManagersInput
+  permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
+}
+
+export type UserUncheckedCreateWithoutPermissionsInput = {
+  id?: number
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  companyId: number
+  locationId?: number | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
+}
+
+export type UserCreateOrConnectWithoutPermissionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPermissionsInput, Prisma.UserUncheckedCreateWithoutPermissionsInput>
+}
+
+export type UserCreateWithoutPermissionGrantsInput = {
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  company: Prisma.CompanyCreateNestedOneWithoutUsersInput
+  selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
+  location?: Prisma.LocationCreateNestedOneWithoutManagersInput
+  permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPermissionGrantsInput = {
+  id?: number
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  companyId: number
+  locationId?: number | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
+  permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPermissionGrantsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPermissionGrantsInput, Prisma.UserUncheckedCreateWithoutPermissionGrantsInput>
+}
+
+export type UserUpsertWithoutPermissionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPermissionsInput, Prisma.UserUncheckedUpdateWithoutPermissionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPermissionsInput, Prisma.UserUncheckedCreateWithoutPermissionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPermissionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPermissionsInput, Prisma.UserUncheckedUpdateWithoutPermissionsInput>
+}
+
+export type UserUpdateWithoutPermissionsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
+  selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
+  location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
+  permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPermissionsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
+}
+
+export type UserUpsertWithoutPermissionGrantsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPermissionGrantsInput, Prisma.UserUncheckedUpdateWithoutPermissionGrantsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPermissionGrantsInput, Prisma.UserUncheckedCreateWithoutPermissionGrantsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPermissionGrantsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPermissionGrantsInput, Prisma.UserUncheckedUpdateWithoutPermissionGrantsInput>
+}
+
+export type UserUpdateWithoutPermissionGrantsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
+  selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
+  location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
+  permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPermissionGrantsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
+  permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyCompanyInput = {
@@ -834,6 +1047,8 @@ export type UserUpdateWithoutCompanyInput = {
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
+  permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCompanyInput = {
@@ -847,6 +1062,8 @@ export type UserUncheckedUpdateWithoutCompanyInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
+  permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutCompanyInput = {
@@ -883,6 +1100,8 @@ export type UserUpdateWithoutLocationInput = {
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
+  permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLocationInput = {
@@ -896,6 +1115,8 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
+  permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutLocationInput = {
@@ -917,10 +1138,14 @@ export type UserUncheckedUpdateManyWithoutLocationInput = {
 
 export type UserCountOutputType = {
   selectedLocations: number
+  permissions: number
+  permissionGrants: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   selectedLocations?: boolean | UserCountOutputTypeCountSelectedLocationsArgs
+  permissions?: boolean | UserCountOutputTypeCountPermissionsArgs
+  permissionGrants?: boolean | UserCountOutputTypeCountPermissionGrantsArgs
 }
 
 /**
@@ -940,6 +1165,20 @@ export type UserCountOutputTypeCountSelectedLocationsArgs<ExtArgs extends runtim
   where?: Prisma.SelectedLocationWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPermissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserPermissionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPermissionGrantsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserPermissionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -955,6 +1194,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.User$selectedLocationsArgs<ExtArgs>
   location?: boolean | Prisma.User$locationArgs<ExtArgs>
+  permissions?: boolean | Prisma.User$permissionsArgs<ExtArgs>
+  permissionGrants?: boolean | Prisma.User$permissionGrantsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1006,6 +1247,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.User$selectedLocationsArgs<ExtArgs>
   location?: boolean | Prisma.User$locationArgs<ExtArgs>
+  permissions?: boolean | Prisma.User$permissionsArgs<ExtArgs>
+  permissionGrants?: boolean | Prisma.User$permissionGrantsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1023,6 +1266,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     company: Prisma.$CompanyPayload<ExtArgs>
     selectedLocations: Prisma.$SelectedLocationPayload<ExtArgs>[]
     location: Prisma.$LocationPayload<ExtArgs> | null
+    permissions: Prisma.$UserPermissionPayload<ExtArgs>[]
+    permissionGrants: Prisma.$UserPermissionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1432,6 +1677,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   selectedLocations<T extends Prisma.User$selectedLocationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$selectedLocationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SelectedLocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   location<T extends Prisma.User$locationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$locationArgs<ExtArgs>>): Prisma.Prisma__LocationClient<runtime.Types.Result.GetResult<Prisma.$LocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  permissions<T extends Prisma.User$permissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$permissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  permissionGrants<T extends Prisma.User$permissionGrantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$permissionGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1912,6 +2159,54 @@ export type User$locationArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    */
   include?: Prisma.LocationInclude<ExtArgs> | null
   where?: Prisma.LocationWhereInput
+}
+
+/**
+ * User.permissions
+ */
+export type User$permissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserPermission
+   */
+  select?: Prisma.UserPermissionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserPermission
+   */
+  omit?: Prisma.UserPermissionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserPermissionInclude<ExtArgs> | null
+  where?: Prisma.UserPermissionWhereInput
+  orderBy?: Prisma.UserPermissionOrderByWithRelationInput | Prisma.UserPermissionOrderByWithRelationInput[]
+  cursor?: Prisma.UserPermissionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserPermissionScalarFieldEnum | Prisma.UserPermissionScalarFieldEnum[]
+}
+
+/**
+ * User.permissionGrants
+ */
+export type User$permissionGrantsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserPermission
+   */
+  select?: Prisma.UserPermissionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserPermission
+   */
+  omit?: Prisma.UserPermissionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserPermissionInclude<ExtArgs> | null
+  where?: Prisma.UserPermissionWhereInput
+  orderBy?: Prisma.UserPermissionOrderByWithRelationInput | Prisma.UserPermissionOrderByWithRelationInput[]
+  cursor?: Prisma.UserPermissionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserPermissionScalarFieldEnum | Prisma.UserPermissionScalarFieldEnum[]
 }
 
 /**

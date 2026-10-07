@@ -9,7 +9,13 @@ import {
   Snackbar,
   Stack,
   TextField,
+  Typography,
 } from "@mui/material";
+import {
+  DEFAULT_MANAGER_PERMISSIONS,
+  type PermissionKey,
+} from "@/app/lib/permissions";
+import PermissionChecklist from "./PermissionChecklist";
 import { createManagerAction } from "./action";
 
 interface LocationOption {
@@ -25,6 +31,9 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [locationId, setLocationId] = useState("");
+  const [permissions, setPermissions] = useState<PermissionKey[]>([
+    ...DEFAULT_MANAGER_PERMISSIONS,
+  ]);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -33,13 +42,13 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
     event.preventDefault();
     setError(null);
 
-    const formData = new FormData();
-    formData.set("email", email);
-    formData.set("password", password);
-    formData.set("locationId", locationId);
-
     startTransition(async () => {
-      const result = await createManagerAction(formData);
+      const result = await createManagerAction({
+        email,
+        password,
+        locationId: Number(locationId),
+        permissions,
+      });
       if (!result.success) {
         setError(result.error.message);
         return;
@@ -49,6 +58,7 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
       setEmail("");
       setPassword("");
       setLocationId("");
+      setPermissions([...DEFAULT_MANAGER_PERMISSIONS]);
     });
   }
 
@@ -98,6 +108,17 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
               </MenuItem>
             ))}
           </TextField>
+
+          <Box>
+            <Typography variant="subtitle2" component="h3" sx={{ mb: 1 }}>
+              What this manager can do
+            </Typography>
+            <PermissionChecklist
+              value={permissions}
+              onChange={setPermissions}
+              disabled={isPending}
+            />
+          </Box>
 
           <Button
             type="submit"

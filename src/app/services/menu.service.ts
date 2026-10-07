@@ -4,11 +4,70 @@ import {
   MENU_CATEGORY_ORDER,
   MenuCategoryService,
 } from "./menuCategory.service";
+import { NotFoundError } from "../lib/errors";
+import { isMenuListed } from "../lib/menuOrderability";
+import { MenuLocationService } from "./menuLocation.service";
 
 type Tx = Prisma.TransactionClient;
 
+type CategoryRef = { id: number; name: string };
+
+/** getMenusForLocation's list, pure (unit-tested): only menus LISTED
+ *  here (isMenuListed — not hidden at the location, in at least one
+ *  category visible here), each keeping only its visible categories, in
+ *  category order (first visible category's position, then id); plus
+ *  the visible categories that hold at least one of them, in company
+ *  order. Exported for its tests only. */
+export function listMenusAtLocation<
+  Menu extends { id: number; isHiddenHere: boolean; categoryRefs: CategoryRef[] },
+>(menus: readonly Menu[], visibleCategories: readonly CategoryRef[]) {
+  const positionById = new Map(
+    visibleCategories.map((category, index) => [category.id, index]),
+  );
+
+  const listed = menus
+    .map((menu) => {
+      const visibleRefs = menu.categoryRefs.filter((category) =>
+        positionById.has(category.id),
+      );
+      return {
+        menu: {
+          ...menu,
+          categoryRefs: visibleRefs,
+          categories: visibleRefs.map((category) => category.name),
+        },
+        // categoryRefs is already in company order, so the first one
+        // is the menu's earliest visible category.
+        position:
+          visibleRefs.length > 0 ? positionById.get(visibleRefs[0].id)! : -1,
+      };
+    })
+    .filter(({ menu }) =>
+      isMenuListed({
+        isArchived: false, // getMenus loads live menus only
+        isDisabledHere: menu.isHiddenHere,
+        hasVisibleCategory: menu.categoryRefs.length > 0,
+      }),
+    )
+    .sort((a, b) => a.position - b.position || a.menu.id - b.menu.id)
+    .map((entry) => entry.menu);
+
+  const usedIds = new Set(
+    listed.flatMap((menu) => menu.categoryRefs.map((ref) => ref.id)),
+  );
+  return {
+    menus: listed,
+    categories: visibleCategories
+      .filter((category) => usedIds.has(category.id))
+      .map((category) => ({ id: category.id, name: category.name })),
+  };
+}
+
 export class MenuService {
-  //create Menus
+  /** Creates the menu, its category/add-on links and where it shows
+   *  (MenuLocationService.setMenuLocations) in one transaction: a stock
+   *  row with the starting `quantity` at every shown location, a hide
+   *  row at every other active location. */
   static async createMenu(input: {
     name: string;
     price: number;
@@ -17,7 +76,8 @@ export class MenuService {
     isAvailable: boolean;
     categoryIds: number[];
     addonCategoryIds: number[];
-    locationId: number;
+    companyId: number;
+    shownLocationIds: number[];
   }) {
     return prisma.$transaction(async (tx: Tx) => {
       const menu = await tx.menu.create({
@@ -45,14 +105,20 @@ export class MenuService {
         });
       }
 
-      await tx.menuStock.create({
-        data: {
-          menuId: menu.id,
-          locationId: input.locationId,
-          quantity: input.quantity,
-          isManuallyDisabled: !input.isAvailable,
-        },
+      await MenuLocationService.setMenuLocations(tx, {
+        menuId: menu.id,
+        companyId: input.companyId,
+        shownLocationIds: input.shownLocationIds,
+        startingStock: input.quantity,
       });
+      // The form's "available" switch starts every new stock row (they
+      // are all this menu's — it was created just above).
+      if (!input.isAvailable) {
+        await tx.menuStock.updateMany({
+          where: { menuId: menu.id },
+          data: { isManuallyDisabled: true },
+        });
+      }
 
       return menu;
     });
@@ -142,6 +208,12 @@ export class MenuService {
         imageUrl: menu.assetUrl || null,
         stockQuantity: stock?.quantity ?? 0,
         isManuallyDisabled: stock?.isManuallyDisabled ?? false,
+        // An active DisableLocationMenus row here. The Backoffice list
+        // still shows the menu ("Hidden here"); getMenusForLocation —
+        // what customers and the staff POS see — leaves it out.
+        isHiddenHere: menu.disableLocationMenus.some(
+          (row) => row.locationId === locationId && !row.isArchived,
+        ),
         hasAddonGroups: menuIdsWithAddons.has(menu.id),
       };
     });
@@ -152,10 +224,12 @@ export class MenuService {
    *  callers only ever have a locationId (from the URL / the selected
    *  location), never a companyId, so this looks the company up first.
    *
-   *  Categories hidden at this location are applied via
-   *  MenuCategoryService.getVisibleCategories (the one visibility rule):
-   *  each menu keeps only its visible categories, and a menu with none
-   *  left is dropped. Menus come back in category order (their first
+   *  Only menus LISTED here are returned — isMenuListed, the listing
+   *  half of isMenuOrderable: a menu hidden at this location, or with no
+   *  category visible here (MenuCategoryService.getVisibleCategories,
+   *  the one category-visibility rule), is left out. A switched-off or
+   *  stock-0 menu stays, shown as sold out / unavailable. Each menu keeps
+   *  only its visible categories. Menus come back in category order (their first
    *  visible category's position, then id), and `categories` is the tab
    *  list in company order — the visible categories that hold at least
    *  one of these menus — so clients render it as-is, never re-sorted.
@@ -170,40 +244,7 @@ export class MenuService {
       MenuService.getMenusWithDetails(location.companyId, locationId),
       MenuCategoryService.getVisibleCategories(location.companyId, locationId),
     ]);
-    const positionById = new Map(
-      visibleCategories.map((category, index) => [category.id, index]),
-    );
-
-    const orderable = menus
-      .map((menu) => {
-        const visibleRefs = menu.categoryRefs.filter((category) =>
-          positionById.has(category.id),
-        );
-        return {
-          menu: {
-            ...menu,
-            categoryRefs: visibleRefs,
-            categories: visibleRefs.map((category) => category.name),
-          },
-          // categoryRefs is already in company order, so the first one
-          // is the menu's earliest visible category.
-          position:
-            visibleRefs.length > 0 ? positionById.get(visibleRefs[0].id)! : -1,
-        };
-      })
-      .filter((entry) => entry.position >= 0)
-      .sort((a, b) => a.position - b.position || a.menu.id - b.menu.id)
-      .map((entry) => entry.menu);
-
-    const usedIds = new Set(
-      orderable.flatMap((menu) => menu.categoryRefs.map((ref) => ref.id)),
-    );
-    return {
-      menus: orderable,
-      categories: visibleCategories
-        .filter((category) => usedIds.has(category.id))
-        .map((category) => ({ id: category.id, name: category.name })),
-    };
+    return listMenusAtLocation(menus, visibleCategories);
   }
 
   /** Customer-facing detail view — full nested addon data (category
@@ -259,6 +300,23 @@ export class MenuService {
     };
   }
 
+  /** Chain lookup — the menu, if it belongs to this company (scoped
+   *  through its categories, as getMenus and the add-on list do).
+   *  Throws NotFoundError otherwise, so an id from another company is
+   *  indistinguishable from one that doesn't exist. */
+  static async getCompanyMenu(menuId: number, companyId: number) {
+    const menu = await prisma.menu.findFirst({
+      where: {
+        id: menuId,
+        isArchived: false,
+        menuMenuCategory: { some: { menuCategory: { companyId } } },
+      },
+      select: { id: true, name: true },
+    });
+    if (!menu) throw new NotFoundError("Menu", menuId);
+    return menu;
+  }
+
   static async getMenuById(menuId: number, locationId: number) {
     const menu = await prisma.menu.findFirst({
       where: { id: menuId, isArchived: false },
@@ -299,7 +357,10 @@ export class MenuService {
       isAvailable: boolean;
       categoryIds: number[];
       addonCategoryIds: number[];
+      /** The selected location — the only one whose stock this edits. */
       locationId: number;
+      companyId: number;
+      shownLocationIds: number[];
     },
   ) {
     return prisma.$transaction(async (tx: Tx) => {
@@ -330,6 +391,14 @@ export class MenuService {
         });
       }
 
+      // Where it shows first (a newly shown location gets a stock row at
+      // 0), then this location's own stock, as before.
+      await MenuLocationService.setMenuLocations(tx, {
+        menuId,
+        companyId: input.companyId,
+        shownLocationIds: input.shownLocationIds,
+      });
+
       await tx.menuStock.upsert({
         where: {
           menuId_locationId: { menuId, locationId: input.locationId },
@@ -348,24 +417,5 @@ export class MenuService {
 
       return menu;
     });
-  }
-
-  static async getMenusByCategories(categoryIds: number[]) {
-    const links = await prisma.menuMenuCategory.findMany({
-      where: { menuCategoryId: { in: categoryIds } },
-    });
-    const menuIds = links.map((link) => link.menuId);
-
-    const menus = await prisma.menu.findMany({
-      where: { id: { in: menuIds }, isArchived: false },
-      include: { disableLocationMenus: true },
-    });
-
-    const disabledMenus = await prisma.disableLocationMenus.findMany({
-      where: { menuId: { in: menuIds } },
-    });
-    const disabledMenuIds = new Set(disabledMenus.map((d) => d.menuId));
-
-    return menus.filter((menu) => !disabledMenuIds.has(menu.id));
   }
 }

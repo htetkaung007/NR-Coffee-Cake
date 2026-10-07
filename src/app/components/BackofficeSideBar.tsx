@@ -26,11 +26,9 @@ import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import {
-  findActiveHref,
-  visibleNavSections,
-  type NavRole,
-} from "@/app/lib/backofficeNav";
+import { findActiveHref, visibleNavSections } from "@/app/lib/backofficeNav";
+import type { AccessRule } from "@/app/lib/permissions";
+import { useAccessCheck } from "./StaffAccessProvider";
 import { markSeen, useSeenFlag } from "@/app/lib/hooks/useSeenFlag";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
 
@@ -40,8 +38,9 @@ type NavItem = {
   label: string;
   href: string;
   icon: SvgIconComponent;
-  /** Only these roles see the item; omitted = everyone. */
-  roles?: readonly NavRole[];
+  /** Who sees the item (the same rule its page checks on the server):
+   *  any staff, the owner only, or a manager granted that permission. */
+  access: AccessRule;
   /** A pill after the label, hidden for good once the item's page has
    *  been opened in this browser (remembered under `seenKey`). */
   badge?: { text: string; seenKey: string };
@@ -54,32 +53,46 @@ const navSections: readonly NavSection[] = [
   {
     title: "Service",
     items: [
-      { label: "Orders", href: "/backoffice/order", icon: ReceiptLongOutlinedIcon },
+      {
+        label: "Orders",
+        href: "/backoffice/order",
+        icon: ReceiptLongOutlinedIcon,
+        access: "staff",
+      },
       {
         label: "New order",
         href: "/backoffice/order/new",
         icon: AddShoppingCartOutlinedIcon,
+        access: "staff",
       },
       {
         label: "Tables",
         href: "/backoffice/tables",
         icon: TableRestaurantOutlinedIcon,
+        access: "TABLES_MANAGE",
       },
     ],
   },
   {
     title: "Menu",
     items: [
-      { label: "Menus", href: "/backoffice/menus", icon: RestaurantOutlinedIcon },
+      {
+        label: "Menus",
+        href: "/backoffice/menus",
+        icon: RestaurantOutlinedIcon,
+        access: "staff",
+      },
       {
         label: "Menu categories",
         href: "/backoffice/menu_categories",
         icon: GridViewOutlinedIcon,
+        access: "owner",
       },
       {
         label: "Add-ons",
         href: "/backoffice/addons",
         icon: AddCircleOutlineOutlinedIcon,
+        access: "staff",
       },
     ],
   },
@@ -90,15 +103,21 @@ const navSections: readonly NavSection[] = [
         label: "Reports",
         href: "/backoffice/reports",
         icon: BarChartOutlinedIcon,
-        roles: ["ADMIN"],
+        access: "REPORTS_VIEW",
         badge: { text: "New", seenKey: "backoffice:seen:reports" },
       },
       {
         label: "Locations",
         href: "/backoffice/locations",
         icon: LocationOnOutlinedIcon,
+        access: "owner",
       },
-      { label: "Settings", href: "/backoffice/setting", icon: TuneOutlinedIcon },
+      {
+        label: "Settings",
+        href: "/backoffice/setting",
+        icon: TuneOutlinedIcon,
+        access: "owner",
+      },
     ],
   },
 ];
@@ -238,14 +257,11 @@ function NavSectionList({
   );
 }
 
-function SidebarContent({
-  role,
-  onNavigate,
-}: {
-  role: NavRole;
-  onNavigate?: () => void;
-}) {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  // Display only: items the user can't open are hidden — their pages
+  // check again on the server.
+  const isAllowed = useAccessCheck();
   const activeHref = findActiveHref(pathname, allHrefs);
 
   // Both drawers' paper starts at the top of the screen, under the fixed
@@ -277,7 +293,7 @@ function SidebarContent({
           py: 2,
         }}
       >
-        {visibleNavSections(navSections, role).map((section) => (
+        {visibleNavSections(navSections, isAllowed).map((section) => (
           <NavSectionList
             key={section.title}
             section={section}
@@ -293,13 +309,11 @@ function SidebarContent({
 type BackofficeSideBarProps = {
   mobileOpen: boolean;
   onClose: () => void;
-  role: NavRole;
 };
 
 export function BackofficeSideBar({
   mobileOpen,
   onClose,
-  role,
 }: BackofficeSideBarProps) {
   return (
     <Box
@@ -323,7 +337,7 @@ export function BackofficeSideBar({
           },
         }}
       >
-        <SidebarContent role={role} onNavigate={onClose} />
+        <SidebarContent onNavigate={onClose} />
       </Drawer>
 
       <Drawer
@@ -339,7 +353,7 @@ export function BackofficeSideBar({
           },
         }}
       >
-        <SidebarContent role={role} />
+        <SidebarContent />
       </Drawer>
     </Box>
   );

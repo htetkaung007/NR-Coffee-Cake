@@ -15,6 +15,8 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 interface StockQuantityStepperProps {
   quantity: number;
   onChange: (nextQuantity: number) => void;
+  /** What the number is, e.g. "Stock at Yangon Branch". */
+  label?: string;
 }
 
 const QUICK_ADD_AMOUNTS = [5, 10, 25];
@@ -22,6 +24,7 @@ const QUICK_ADD_AMOUNTS = [5, 10, 25];
 export default function StockQuantityStepper({
   quantity,
   onChange,
+  label = "Stock quantity",
 }: StockQuantityStepperProps) {
   function updateQuantity(change: number) {
     onChange(Math.max(0, quantity + change));
@@ -41,7 +44,7 @@ export default function StockQuantityStepper({
         <Inventory2OutlinedIcon
           sx={{ verticalAlign: "text-bottom", mr: 0.5 }}
         />
-        Stock quantity
+        {label}
       </Typography>
       <Stack
         direction="row"
@@ -55,7 +58,7 @@ export default function StockQuantityStepper({
           <RemoveIcon />
         </IconButton>
         <TextField
-          aria-label="Stock quantity"
+          aria-label={label}
           type="number"
           value={quantity}
           onChange={(event) =>

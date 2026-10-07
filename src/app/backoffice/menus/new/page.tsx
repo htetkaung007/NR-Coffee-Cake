@@ -1,13 +1,19 @@
 // backoffice/menus/new/page.tsx (Server Component)
-import { getSessionContext } from "@/app/lib/session";
+import { requireBackofficeContext } from "@/app/lib/backofficeContext";
 
 import NewMenu from "./NewMenu";
 
 export default async function NewMenuPage() {
-  const { companyId } = await getSessionContext();
-  if (!companyId) {
-    return null;
-  }
+  const { context, fallback } = await requireBackofficeContext({
+    signedOut: "Please sign in to create a menu.",
+    access: "owner",
+  });
+  if (!context) return fallback;
 
-  return <NewMenu />;
+  return (
+    <NewMenu
+      companyId={context.companyId}
+      currentLocationId={context.location.locationId}
+    />
+  );
 }

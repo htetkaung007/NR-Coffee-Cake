@@ -6,23 +6,23 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
+import { requireOwner, requirePermission } from "@/app/lib/roleGuard";
 import { AppError } from "@/app/lib/errors";
 import {
   createMenuSchema,
+  setMenuAvailableSchema,
   type CreateMenuInput,
+  type SetMenuAvailableInput,
 } from "@/app/lib/schemas/menu_menuCategorySchema";
-import { getSessionContext } from "@/app/lib/session";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
-import { LocationService, MenuService } from "@/app/services";
+import {
+  LocationService,
+  MenuService,
+  MenuStockService,
+} from "@/app/services";
 
 const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) {
-    throw new AppError(
-      "You must be signed in to create a menu item.",
-      "UNAUTHORIZED",
-    );
-  }
+  const { userId, companyId } = await requireOwner();
 
   const selectedLocation = await LocationService.getSelectedLocation(userId);
   if (!selectedLocation) {
@@ -40,7 +40,8 @@ const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
     isAvailable: input.isAvailable,
     categoryIds: input.categoryIds,
     addonCategoryIds: input.addonCategoryIds,
-    locationId: selectedLocation.locationId,
+    companyId,
+    shownLocationIds: input.shownLocationIds,
   });
 
   if (input.image) {
@@ -69,6 +70,7 @@ export async function createMenuAction(formData: FormData) {
     isAvailable: formData.get("isAvailable") === "true",
     categoryIds: formData.getAll("categoryIds"),
     addonCategoryIds: formData.getAll("addonCategoryIds"),
+    shownLocationIds: formData.getAll("shownLocationIds"),
     image,
   }).asyncAndThen(safeCreateMenu);
 
@@ -78,13 +80,7 @@ export async function createMenuAction(formData: FormData) {
 }
 const safeUpdateMenu = toSafeResult(
   async (input: CreateMenuInput & { menuId: number }) => {
-    const { companyId, userId } = await getSessionContext();
-    if (!companyId || !userId) {
-      throw new AppError(
-        "You must be signed in to update a menu item.",
-        "UNAUTHORIZED",
-      );
-    }
+    const { userId, companyId } = await requireOwner();
 
     const selectedLocation = await LocationService.getSelectedLocation(userId);
     if (!selectedLocation) {
@@ -103,6 +99,8 @@ const safeUpdateMenu = toSafeResult(
       categoryIds: input.categoryIds,
       addonCategoryIds: input.addonCategoryIds,
       locationId: selectedLocation.locationId,
+      companyId,
+      shownLocationIds: input.shownLocationIds,
     });
 
     if (input.image) {
@@ -131,6 +129,7 @@ export async function updateMenuAction(menuId: number, formData: FormData) {
     isAvailable: formData.get("isAvailable") === "true",
     categoryIds: formData.getAll("categoryIds"),
     addonCategoryIds: formData.getAll("addonCategoryIds"),
+    shownLocationIds: formData.getAll("shownLocationIds"),
     image,
   }).asyncAndThen((data) => safeUpdateMenu({ ...data, menuId }));
 
@@ -139,6 +138,48 @@ export async function updateMenuAction(menuId: number, formData: FormData) {
     revalidatePath("/backoffice/menus");
     revalidatePath(`/backoffice/menus/${menuId}`);
   }
+
+  return actionResult;
+}
+
+const safeSetMenuAvailable = toSafeResult(
+  async (input: SetMenuAvailableInput) => {
+    // Daily operations (sold out for today, the machine is down): the
+    // owner, or a manager the owner let turn menus on/off.
+    const { userId, companyId } = await requirePermission("MENU_AVAILABILITY");
+
+    // The location comes from the session (a manager's own location),
+    // never from the input.
+    const selectedLocation = await LocationService.getSelectedLocation(userId);
+    if (!selectedLocation) {
+      throw new AppError(
+        "Select a location before turning a menu on or off.",
+        "NO_SELECTED_LOCATION",
+      );
+    }
+
+    await MenuService.getCompanyMenu(input.menuId, companyId);
+    await MenuStockService.setManualDisabled(
+      input.menuId,
+      selectedLocation.locationId,
+      !input.isAvailable,
+    );
+
+    return { menuId: input.menuId, isAvailable: input.isAvailable };
+  },
+);
+
+/** The menu card's on/off switch — at the selected location only. */
+export async function setMenuAvailableAction(input: {
+  menuId: number;
+  isAvailable: boolean;
+}) {
+  const result = await validateWith(setMenuAvailableSchema, input).asyncAndThen(
+    safeSetMenuAvailable,
+  );
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) revalidatePath("/backoffice/menus");
 
   return actionResult;
 }

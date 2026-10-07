@@ -5,6 +5,7 @@ import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../prisma/generated/client";
 import { getTokenEpoch } from "../lib/contributorToken";
 import { contributorLabelsById } from "../lib/contributors";
+import { CartValidationService } from "./cartValidation.service";
 import { MenuStockService } from "./menuStock.service";
 import { PriceSnapshotService } from "./priceSnapshot.service";
 import { generateOrderNumber } from "./orderService/orderSession.service";
@@ -74,6 +75,14 @@ export class TableDraftService {
     addonIds: number[] = [],
     note?: string,
   ) {
+    const table = await prisma.table.findFirst({
+      where: { id: tableId, isArchived: false },
+      select: { locationId: true },
+    });
+    if (!table) throw new NotFoundError("Table", tableId);
+    // A menu hidden at this table's location can't be added, even by
+    // calling the action directly (the menu list doesn't show it).
+    await CartValidationService.assertMenusListed(table.locationId, [menuId]);
     await OrderSessionCartService.validateAddonSelection(menuId, addonIds);
 
     return prisma.$transaction(async (tx: Tx) => {
@@ -340,6 +349,11 @@ export class TableDraftService {
     if (draftItems.length === 0) {
       throw new ValidationError("Nothing to submit yet.");
     }
+    // A draft picked before its menu was hidden here can't be sent.
+    await CartValidationService.assertMenusListed(
+      locationId,
+      draftItems.map((item) => item.menuId),
+    );
 
     const { lines, stockByMenu } = groupDraftsForSubmit(
       draftItems.map((item) => ({
