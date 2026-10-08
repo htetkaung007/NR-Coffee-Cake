@@ -11,7 +11,7 @@ import StatusSnackbar, {
   type StatusMessage,
 } from "@/app/components/StatusSnackbar";
 import { useCan } from "@/app/components/StaffAccessProvider";
-import { addonGroupAvailability } from "@/app/lib/addonSelection";
+import { addonGroupAvailability } from "@/app/lib/cart/addonSelection";
 import {
   hoverCapableMedia,
   topBarHeight,

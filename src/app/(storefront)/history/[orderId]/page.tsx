@@ -1,19 +1,23 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { OrderSessionService, TableDraftService } from "@/app/services";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
-import { getContributorToken } from "@/app/lib/contributorToken";
+import {
+  CounterSessionService,
+  TableDraftService,
+  TableSessionService,
+} from "@/app/services";
+import { COUNTER_SESSION_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
+import { getContributorToken } from "@/app/lib/storefront/contributorToken";
 import {
   cartLineTotal,
   orderLineTotal,
   orderLinesTotal,
-} from "@/app/lib/orderTotals";
+} from "@/app/lib/order/orderTotals";
 import {
   contributorGroupHeading,
   groupByContributor,
   type ContributorLabel,
-} from "@/app/lib/contributors";
-import { toLabelledCartLine } from "@/app/lib/roundLine";
+} from "@/app/lib/order/contributors";
+import { toLabelledCartLine } from "@/app/lib/order/roundLine";
 import OrderReceipt, {
   type ReceiptLine,
 } from "@/app/components/orderUI/OrderReceipt";
@@ -48,7 +52,7 @@ export default async function OrderReceiptPage({
   const tableId = tableIdParam ? Number(tableIdParam) : null;
 
   let round: Awaited<
-    ReturnType<typeof OrderSessionService.getRoundDetailForTable>
+    ReturnType<typeof TableSessionService.getRoundDetailForTable>
   > = null;
   let isCounterRound = false;
   // Table QR still shows each round's own number (unchanged) — Counter
@@ -68,7 +72,7 @@ export default async function OrderReceiptPage({
       ));
     if (contributorToken && isTokenCurrent) {
       [round, labels] = await Promise.all([
-        OrderSessionService.getRoundDetailForTable(tableId, roundId),
+        TableSessionService.getRoundDetailForTable(tableId, roundId),
         TableDraftService.getContributorLabels(tableId, contributorToken),
       ]);
     }
@@ -79,7 +83,7 @@ export default async function OrderReceiptPage({
     const cookieStore = await cookies();
     const token = cookieStore.get(COUNTER_SESSION_COOKIE)?.value;
     const session = token
-      ? await OrderSessionService.getActiveSessionByToken(token)
+      ? await CounterSessionService.getActiveSessionByToken(token)
       : null;
     if (!session) {
       notFound();
@@ -90,7 +94,7 @@ export default async function OrderReceiptPage({
     // one bill into several rounds (see OrderSession.billSessionId's
     // own schema comment), and /history now links to every one of
     // them (see getBillForSession), not just the newest.
-    const bill = await OrderSessionService.getBillForSession(session);
+    const bill = await CounterSessionService.getBillForSession(session);
     const billRound = bill.rounds.find((candidate) => candidate.id === roundId);
     if (!billRound) {
       notFound();

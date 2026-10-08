@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { TableService } from "@/app/services";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
-import TableCard from "@/app/components/TableCard";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
+import TableCard from "./TableCard";
 
 export default async function TablesPage() {
   const { context, fallback } = await requireBackofficeContext({

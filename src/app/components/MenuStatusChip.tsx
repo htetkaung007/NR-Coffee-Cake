@@ -1,6 +1,6 @@
 import { Chip, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
-import type { MenuCardStatus } from "@/app/lib/menuCardStatus";
+import type { MenuCardStatus } from "@/app/lib/menu/menuCardStatus";
 
 /** The words for each menuCardStatus — the Backoffice's one set. */
 const MENU_STATUS_LABELS: Record<MenuCardStatus, string> = {

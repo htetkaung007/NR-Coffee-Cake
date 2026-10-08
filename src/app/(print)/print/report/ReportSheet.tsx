@@ -5,7 +5,7 @@ import { Box, Button, GlobalStyles, Stack, Typography } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
 import type { ReportItems, ReportOverview } from "@/app/backoffice/reports/action";
 import { formatAmount } from "@/app/lib/orderFormat";
-import { formatRejectReasonCounts } from "@/app/lib/rejectReason";
+import { formatRejectReasonCounts } from "@/app/lib/order/rejectReason";
 import {
   barRatio,
   formatDelta,
@@ -13,7 +13,7 @@ import {
   printableReportTitle,
   REPORT_FOOTNOTE,
   type ItemListRow,
-} from "@/app/lib/reportView";
+} from "@/app/lib/report/reportView";
 import { moneySx } from "@/app/backoffice/order/orderTypography";
 
 // Paper is black on white whatever the app's light/dark mode (DESIGN.md

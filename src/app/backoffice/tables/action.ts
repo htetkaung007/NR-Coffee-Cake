@@ -6,8 +6,7 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { requirePermission } from "@/app/lib/roleGuard";
-import { AppError } from "@/app/lib/errors";
+import { requirePermission } from "@/app/lib/access/roleGuard";
 import {
   createTableSchema,
   updateTableSchema,
@@ -16,24 +15,18 @@ import {
 } from "@/app/lib/schemas/tableSchema";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 
-import { LocationService, TableService } from "@/app/services";
+import { TableService } from "@/app/services";
 
 const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
-  const { userId } = await requirePermission("TABLES_MANAGE");
-
   // Same "which location am I working in" lookup Menu creation uses —
   // Admins get their SelectedLocation, Managers get their fixed
   // User.locationId. See LocationService.getSelectedLocation.
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    throw new AppError(
-      "Select a location before creating a table.",
-      "NO_SELECTED_LOCATION",
-    );
-  }
+  const { locationId } = await requirePermission("TABLES_MANAGE", {
+    withLocation: true,
+  });
 
   const table = await TableService.createTable(
-    selectedLocation.locationId,
+    locationId,
     input.name,
     input.isCounter,
   );
@@ -149,7 +142,7 @@ export async function deleteTableAction(tableId: number) {
  * (Counter or regular) and reprints the QR image around it. Every
  * previously-printed copy of the old QR — screenshot, saved photo, or
  * the physical sticker until it's swapped — stops resolving
- * immediately (OrderSessionService.resolveCounterQrScan /
+ * immediately (CounterSessionService.resolveCounterQrScan /
  * resolveTableQrScan will no longer find a Table matching the old
  * key). Use this if a table's QR is suspected to have been
  * copied/shared beyond its physical spot, or just on a periodic

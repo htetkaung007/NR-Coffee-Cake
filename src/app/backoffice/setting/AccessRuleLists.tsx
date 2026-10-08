@@ -1,7 +1,7 @@
 import { List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { ALWAYS_ALLOWED, OWNER_ONLY } from "@/app/lib/permissions";
+import { ALWAYS_ALLOWED, OWNER_ONLY } from "@/app/lib/access/permissions";
 
 /** A read-only list with a heading — the words come from the catalog;
  *  the icons are decorative (the heading says what the list means). */

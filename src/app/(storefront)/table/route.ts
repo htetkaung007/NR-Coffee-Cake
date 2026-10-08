@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OrderSessionService } from "@/app/services";
-import { CONTRIBUTOR_TOKEN_COOKIE } from "@/app/lib/orderSessionCookie";
+import { TableSessionService } from "@/app/services";
+import { CONTRIBUTOR_TOKEN_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
 import {
   MAX_TABLES_REMEMBERED,
   parseContributorTokenMap,
   mintContributorToken,
   getTokenEpoch,
-} from "@/app/lib/contributorToken";
+} from "@/app/lib/storefront/contributorToken";
 
 /**
  * Table QR entry point (e.g. /table?locationId=1&tableId=5&key=xxx) —
@@ -16,7 +16,7 @@ import {
  *
  * Per the per-customer draft redesign: this no longer creates or
  * resolves an OrderSession at all (see
- * OrderSessionService.resolveTableQrScan's own comment) — it only
+ * TableSessionService.resolveTableQrScan's own comment) — it only
  * confirms the key is real/current, then mints (or reuses) this
  * browser's own CONTRIBUTOR_TOKEN_COOKIE entry for this table. tableId
  * itself now travels in the /menu URL (not a session cookie), since
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(menuUrl);
   }
 
-  const result = await OrderSessionService.resolveTableQrScan(tableId, key);
+  const result = await TableSessionService.resolveTableQrScan(tableId, key);
 
   if (result.status === "invalid_key") {
     // Wrong or rotated key — fail closed without revealing why, same

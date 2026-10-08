@@ -6,7 +6,7 @@ import {
   countWords,
   limitWords,
   MAX_ORDER_NOTE_WORDS,
-} from "@/app/lib/orderNote";
+} from "@/app/lib/order/orderNote";
 
 import { SHEET_TEXT } from "./sheetText";
 import type { MenuDetailVariant } from "./types";

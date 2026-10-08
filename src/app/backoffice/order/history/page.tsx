@@ -1,5 +1,5 @@
 import { OrderHistoryService } from "@/app/services";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { todayInShop } from "@/app/lib/shopDay";
 import { config } from "@/app/utils/config";
 import HistoryView from "./HistoryView";

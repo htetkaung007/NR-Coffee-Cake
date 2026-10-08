@@ -5,8 +5,7 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { requireStaff } from "@/app/lib/roleGuard";
-import { AppError } from "@/app/lib/errors";
+import { requireStaff } from "@/app/lib/access/roleGuard";
 import {
   historyDetailInputSchema,
   historyListInputSchema,
@@ -15,23 +14,15 @@ import {
   type HistoryListInput,
   type HistorySummaryInput,
 } from "@/app/lib/schemas/orderHistorySchema";
-import { LocationService, OrderHistoryService } from "@/app/services";
+import { OrderHistoryService } from "@/app/services";
 
 /** Every action below needs the same thing: the signed-in user's
  *  currently-selected location. One local helper (not a global lib
  *  addition — Rule 3 colocation) instead of repeating this in all
  *  three action bodies. */
 async function resolveLocationId(): Promise<number> {
-  const { userId } = await requireStaff();
-
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    throw new AppError(
-      "Select a location before viewing order history.",
-      "NO_SELECTED_LOCATION",
-    );
-  }
-  return selectedLocation.locationId;
+  const { locationId } = await requireStaff({ withLocation: true });
+  return locationId;
 }
 
 /** A list row as it crosses the Server Action boundary — every Date
@@ -39,7 +30,9 @@ async function resolveLocationId(): Promise<number> {
  *  order/page.tsx and order/[entryKey]/page.tsx: "dates cross the
  *  Server→Client boundary as ISO strings"). */
 export type PaidBillListItem = Omit<
-  Awaited<ReturnType<typeof OrderHistoryService.listPaidBills>>["items"][number],
+  Awaited<
+    ReturnType<typeof OrderHistoryService.listPaidBills>
+  >["items"][number],
   "paidAt" | "openedAt"
 > & { paidAt: string; openedAt: string };
 
@@ -63,26 +56,22 @@ const safeGetHistoryList = toSafeResult(async (input: HistoryListInput) => {
     const page = await OrderHistoryService.listPaidBills(args);
     return {
       nextCursor: page.nextCursor,
-      items: page.items.map(
-        (item): PaidBillListItem => ({
-          ...item,
-          paidAt: item.paidAt.toISOString(),
-          openedAt: item.openedAt.toISOString(),
-        }),
-      ),
+      items: page.items.map((item): PaidBillListItem => ({
+        ...item,
+        paidAt: item.paidAt.toISOString(),
+        openedAt: item.openedAt.toISOString(),
+      })),
     };
   }
 
   const page = await OrderHistoryService.listCancelledRounds(args);
   return {
     nextCursor: page.nextCursor,
-    items: page.items.map(
-      (item): CancelledRoundListItem => ({
-        ...item,
-        cancelledAt: item.cancelledAt.toISOString(),
-        createdAt: item.createdAt.toISOString(),
-      }),
-    ),
+    items: page.items.map((item): CancelledRoundListItem => ({
+      ...item,
+      cancelledAt: item.cancelledAt.toISOString(),
+      createdAt: item.createdAt.toISOString(),
+    })),
   };
 });
 
@@ -93,10 +82,9 @@ export async function getHistoryListAction(input: {
   search?: string;
   cursor?: string;
 }) {
-  const result = await validateWith(
-    historyListInputSchema,
-    input,
-  ).asyncAndThen(safeGetHistoryList);
+  const result = await validateWith(historyListInputSchema, input).asyncAndThen(
+    safeGetHistoryList,
+  );
   return toActionResult(result);
 }
 
@@ -142,39 +130,37 @@ export type CancelledRoundDetail = Omit<
   "cancelledAt" | "createdAt"
 > & { cancelledAt: string; createdAt: string };
 
-const safeGetHistoryDetail = toSafeResult(
-  async (input: HistoryDetailInput) => {
-    const locationId = await resolveLocationId();
+const safeGetHistoryDetail = toSafeResult(async (input: HistoryDetailInput) => {
+  const locationId = await resolveLocationId();
 
-    if (input.tab === "paid") {
-      const bill = await OrderHistoryService.getPaidBillDetail({
-        locationId,
-        billId: input.id,
-      });
-      const detail: PaidBillDetail = {
-        ...bill,
-        paidAt: bill.paidAt.toISOString(),
-        startedAt: bill.startedAt.toISOString(),
-        rounds: bill.rounds.map((round) => ({
-          ...round,
-          time: round.time.toISOString(),
-        })),
-      };
-      return detail;
-    }
-
-    const session = await OrderHistoryService.getCancelledRoundDetail({
+  if (input.tab === "paid") {
+    const bill = await OrderHistoryService.getPaidBillDetail({
       locationId,
-      sessionId: input.id,
+      billId: input.id,
     });
-    const detail: CancelledRoundDetail = {
-      ...session,
-      cancelledAt: session.cancelledAt.toISOString(),
-      createdAt: session.createdAt.toISOString(),
+    const detail: PaidBillDetail = {
+      ...bill,
+      paidAt: bill.paidAt.toISOString(),
+      startedAt: bill.startedAt.toISOString(),
+      rounds: bill.rounds.map((round) => ({
+        ...round,
+        time: round.time.toISOString(),
+      })),
     };
     return detail;
-  },
-);
+  }
+
+  const session = await OrderHistoryService.getCancelledRoundDetail({
+    locationId,
+    sessionId: input.id,
+  });
+  const detail: CancelledRoundDetail = {
+    ...session,
+    cancelledAt: session.cancelledAt.toISOString(),
+    createdAt: session.createdAt.toISOString(),
+  };
+  return detail;
+});
 
 /** A row's full breakdown — the detail drawer/dialog opened from
  *  either tab's list. */

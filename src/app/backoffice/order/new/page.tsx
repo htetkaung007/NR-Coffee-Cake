@@ -1,4 +1,4 @@
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import { LocationService, MenuService, TableService } from "@/app/services";
 import StaffOrderClient from "./StaffOrderClient";
 

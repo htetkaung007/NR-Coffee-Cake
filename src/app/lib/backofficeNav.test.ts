@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { findActiveHref, visibleNavSections } from "./backofficeNav";
-import { canAccess, type AccessRule } from "./permissions";
+import { canAccess, type AccessRule } from "./access/permissions";
 
 const hrefs = [
   "/backoffice/order",

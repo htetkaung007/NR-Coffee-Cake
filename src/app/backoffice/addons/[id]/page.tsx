@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { AddonService, MenuService } from "@/app/services";
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import NewAddon from "../new/NewAddon";
 
 export default async function EditAddonGroupPage({

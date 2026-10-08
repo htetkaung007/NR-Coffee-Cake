@@ -1,8 +1,8 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
-import { formatDelta } from "@/app/lib/reportView";
-import type { ReportPeriodKind } from "@/app/lib/reportPeriod";
+import { formatDelta } from "@/app/lib/report/reportView";
+import type { ReportPeriodKind } from "@/app/lib/report/reportPeriod";
 import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
 
 /** A change on the previous period: "▲ 12% vs last week" — an arrow AND

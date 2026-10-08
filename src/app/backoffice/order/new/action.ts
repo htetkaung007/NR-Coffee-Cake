@@ -6,18 +6,14 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { requireStaff } from "@/app/lib/roleGuard";
+import { requireStaff } from "@/app/lib/access/roleGuard";
 import {
   staffAddCartItemSchema,
   staffUpdateCartItemSchema,
   type StaffAddCartItemInput,
   type StaffUpdateCartItemInput,
 } from "@/app/lib/schemas/staffOrderSchema";
-import {
-  OrderSessionCartService,
-  OrderSessionService,
-  TableService,
-} from "@/app/services";
+import { OrderSessionCartService, StaffOrderService, TableService } from "@/app/services";
 
 /**
  * Design doc section 7 ("staff place a new order directly") — the one
@@ -36,7 +32,7 @@ const safeStartStaffOrder = toSafeResult(async (tableId: number) => {
   await requireStaff();
 
   const table = await TableService.getTableById(tableId);
-  return OrderSessionService.startStaffSession(table);
+  return StaffOrderService.startStaffSession(table);
 });
 
 export async function startStaffOrderAction(tableId: number) {
@@ -136,7 +132,7 @@ export async function removeStaffCartItemAction(
 const safeSubmitStaffOrder = toSafeResult(async (sessionId: number) => {
   await requireStaff();
 
-  return OrderSessionService.submitStaffOrder(sessionId);
+  return StaffOrderService.submitStaffOrder(sessionId);
 });
 
 export async function submitStaffOrderAction(sessionId: number) {

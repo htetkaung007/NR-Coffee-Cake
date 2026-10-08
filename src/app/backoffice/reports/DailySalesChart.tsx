@@ -24,7 +24,7 @@ import {
   formatAmount,
   formatCompactAmount,
 } from "@/app/lib/orderFormat";
-import { periodLabel, type ReportPeriod } from "@/app/lib/reportPeriod";
+import { periodLabel, type ReportPeriod } from "@/app/lib/report/reportPeriod";
 import {
   axisLabelIndexes,
   barLabel,
@@ -33,7 +33,7 @@ import {
   formatReportDay,
   niceMax,
   progressCaption,
-} from "@/app/lib/reportView";
+} from "@/app/lib/report/reportView";
 import {
   hoverCapableMedia,
   visuallyHiddenSx,

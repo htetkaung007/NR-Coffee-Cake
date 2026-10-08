@@ -23,7 +23,7 @@ import { keyframes } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
 import { useDocumentTitle } from "@/app/lib/hooks/useDocumentTitle";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { canPrintBill } from "@/app/lib/orderTotals";
+import { canPrintBill } from "@/app/lib/order/orderTotals";
 import {
   useFeedPendingFromList,
   useNewPendingRoundsListener,
@@ -34,7 +34,7 @@ import { markEntryPaidAction } from "./action";
 import ApprovalCountdown from "./ApprovalCountdown";
 import MarkPaidDialog from "./MarkPaidDialog";
 import { useCan } from "@/app/components/StaffAccessProvider";
-import { ASK_OWNER_HINTS } from "@/app/lib/permissions";
+import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
 import PrintBillButton from "./PrintBillButton";
 import NewOrderToast, {
   describeNewRounds,

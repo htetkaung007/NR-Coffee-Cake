@@ -4,7 +4,7 @@ import { Card, Divider, Stack, Typography } from "@mui/material";
 import {
   contributorGroupHeading,
   groupByContributor,
-} from "@/app/lib/contributors";
+} from "@/app/lib/order/contributors";
 import { formatAmount } from "@/app/lib/orderFormat";
 import {
   CartLineRow,

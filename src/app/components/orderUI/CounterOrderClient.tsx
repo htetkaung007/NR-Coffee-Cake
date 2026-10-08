@@ -9,7 +9,7 @@ import OrderBotBar from "./OrderBotBar";
 import MenuBrowser, { MenuOption } from "./MenuBrowser";
 import type { MenuDetail } from "./menuDetail/types";
 
-import { toBrowserCartLine } from "@/app/lib/browserCart";
+import { toBrowserCartLine } from "@/app/lib/cart/browserCart";
 import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import {

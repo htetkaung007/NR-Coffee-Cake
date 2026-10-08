@@ -1,4 +1,4 @@
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import NewTable from "./NewTable";
 
 export default async function NewTablePage() {

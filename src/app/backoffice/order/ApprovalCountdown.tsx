@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Typography } from "@mui/material";
-import { remainingSeconds } from "@/app/lib/approvalCountdown";
+import { remainingSeconds } from "@/app/lib/approval/approvalCountdown";
 
 // One shared 1-second clock for every countdown on the page instead of
 // an interval per card. The interval only exists while at least one

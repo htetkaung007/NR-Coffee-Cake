@@ -9,8 +9,8 @@ import {
   sentAgoLabel,
   waitingAnnouncement,
   waitingCopy,
-} from "@/app/lib/approvalCountdown";
-import type { ApprovalTiming } from "@/app/lib/approvalTiming";
+} from "@/app/lib/approval/approvalCountdown";
+import type { ApprovalTiming } from "@/app/lib/approval/approvalTiming";
 import { useMonotonicElapsed } from "@/app/lib/hooks/useMonotonicElapsed";
 import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
 

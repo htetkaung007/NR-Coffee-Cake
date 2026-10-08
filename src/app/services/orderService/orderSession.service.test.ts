@@ -40,7 +40,10 @@ describe("isPastApprovalWindow", () => {
 
   it("is false once the counter has decided, whatever the old window said", () => {
     expect(
-      isPastApprovalWindow({ status: "PENDING", approvalExpiresAt: BEFORE }, NOW),
+      isPastApprovalWindow(
+        { status: "PENDING", approvalExpiresAt: BEFORE },
+        NOW,
+      ),
     ).toBe(false);
   });
 });

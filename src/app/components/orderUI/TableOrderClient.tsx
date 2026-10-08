@@ -13,8 +13,8 @@ import {
   pollTableAction,
 } from "@/app/(storefront)/table/action";
 import { DraftLine } from "@/app/(storefront)/cart/CartList";
-import { applyAddedLine, sumQuantities } from "@/app/lib/orderTotals";
-import { toLineAddons } from "@/app/lib/roundLine";
+import { applyAddedLine, sumQuantities } from "@/app/lib/order/orderTotals";
+import { toLineAddons } from "@/app/lib/order/roundLine";
 import { useRefreshOnVisible } from "@/app/lib/hooks/useRefreshOnVisible";
 import { usePolling } from "@/app/lib/hooks/usePolling";
 import { dismissConfirmedRound } from "@/app/lib/hooks/useRoundDismissed";

@@ -1,15 +1,16 @@
 import { cookies } from "next/headers";
 import {
-  OrderSessionService,
-  MenuService,
+  CounterSessionService,
   LocationService,
+  MenuService,
   TableDraftService,
+  TableSessionService,
 } from "@/app/services";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
-import { getContributorToken } from "@/app/lib/contributorToken";
+import { COUNTER_SESSION_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
+import { getContributorToken } from "@/app/lib/storefront/contributorToken";
 import CounterOrderClient from "@/app/components/orderUI/CounterOrderClient";
 import TableOrderClient from "@/app/components/orderUI/TableOrderClient";
-import { toDraftLine } from "@/app/lib/roundLine";
+import { toDraftLine } from "@/app/lib/order/roundLine";
 
 // Session/cart state can change between one visit and the next (a
 // customer's own submit, or another contributor's draft add) —
@@ -92,7 +93,7 @@ export default async function MenuPage({
           MenuService.getMenusForLocation(locationId),
           LocationService.getShopNameForLocation(locationId),
           TableDraftService.getDraftItemsForTable(tableId),
-          OrderSessionService.getActiveRoundForTable(tableId),
+          TableSessionService.getActiveRoundForTable(tableId),
           // Who's who as labels — the tokens stay on the server.
           TableDraftService.getContributorLabels(tableId, contributorToken),
         ]);
@@ -116,7 +117,7 @@ export default async function MenuPage({
   const token = cookieStore.get(COUNTER_SESSION_COOKIE)?.value;
 
   const session = token
-    ? await OrderSessionService.getActiveSessionByToken(token)
+    ? await CounterSessionService.getActiveSessionByToken(token)
     : null;
 
   // Session ရှိရင် session ရဲ့ locationId ကို ယုံ (query param ကို
@@ -129,7 +130,7 @@ export default async function MenuPage({
     // "Order More" can split one bill into several rounds — the
     // header shows the BILL's number (matches the cashier's Order
     // List card), never this particular round's own number.
-    session ? OrderSessionService.getBillForSession(session) : null,
+    session ? CounterSessionService.getBillForSession(session) : null,
   ]);
 
   return (

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PERMISSION_KEYS } from "@/app/lib/permissions";
+import { PERMISSION_KEYS } from "@/app/lib/access/permissions";
 
 /** The permissions an owner ticked: only catalog keys, at most one entry
  *  per catalog key's worth (duplicates are tolerated, then ignored by the

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { getMenuDetailAction } from "@/app/(storefront)/menu/action";
-import { lineTotal } from "@/app/lib/orderTotals";
+import { lineTotal } from "@/app/lib/order/orderTotals";
 
 import MenuDetailBody from "./menuDetail/MenuDetailBody";
 import MenuDetailCenteredDialog from "./menuDetail/MenuDetailCenteredDialog";

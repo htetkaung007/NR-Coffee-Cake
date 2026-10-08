@@ -4,13 +4,13 @@ import {
   isMenuListed,
   isMenuOrderable,
   notAvailableHereMessage,
-} from "../lib/menuOrderability";
+} from "../lib/menu/menuOrderability";
 import {
   validateCartLines,
   type CartCatalog,
   type CartLineInput,
   type CatalogMenu,
-} from "../lib/cartValidation";
+} from "../lib/cart/cartValidation";
 import { MenuCategoryService } from "./menuCategory.service";
 
 /**

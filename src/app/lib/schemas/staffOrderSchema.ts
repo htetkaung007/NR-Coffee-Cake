@@ -1,10 +1,6 @@
 import { z } from "zod";
-import {
-  addonIds,
-  orderNoteSchema,
-  positiveInt,
-  quantity,
-} from "./customerOrderSchema";
+import { idSchema } from "./common";
+import { addonIds, orderNoteSchema, quantity } from "./customerOrderSchema";
 
 // The staff New Order page's cart actions — the same primitives (and the
 // same note rule: trimmed, MAX_ORDER_NOTE_WORDS words) as the customer
@@ -12,9 +8,9 @@ import {
 // (there's no QR cookie to read them from).
 
 export const staffAddCartItemSchema = z.object({
-  sessionId: positiveInt,
-  tableId: positiveInt,
-  menuId: positiveInt,
+  sessionId: idSchema,
+  tableId: idSchema,
+  menuId: idSchema,
   quantity,
   addonIds,
   note: orderNoteSchema,
@@ -22,8 +18,8 @@ export const staffAddCartItemSchema = z.object({
 export type StaffAddCartItemInput = z.infer<typeof staffAddCartItemSchema>;
 
 export const staffUpdateCartItemSchema = z.object({
-  sessionId: positiveInt,
-  orderId: positiveInt,
+  sessionId: idSchema,
+  orderId: idSchema,
   quantity,
   addonIds,
   note: orderNoteSchema,

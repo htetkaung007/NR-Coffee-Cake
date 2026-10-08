@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Avatar, Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 
-import type { ShownCancelReason } from "@/app/lib/roundOutcome";
-import BackCircleButton from "./BackCircleButton";
+import type { ShownCancelReason } from "@/app/lib/order/roundOutcome";
+import OutcomeScreenShell from "./OutcomeScreenShell";
 
 const TITLE = "Your last order wasn't accepted";
 
@@ -51,90 +51,71 @@ export default function OrderRejectedScreen({
   }, []);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
-        p: 3,
-        position: "relative",
-      }}
-    >
-      <BackCircleButton
-        ariaLabel="Back to menu"
-        onClick={onBack}
-        sx={{ position: "absolute", top: 16, left: 16 }}
-      />
-      <Box
-        role="status"
-        aria-live="polite"
-        sx={{
-          position: "absolute",
-          width: 1,
-          height: 1,
-          overflow: "hidden",
-          clip: "rect(0 0 0 0)",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {announcement}
-      </Box>
-      <Stack sx={{ width: "100%", maxWidth: 400, alignItems: "center" }}>
-        <Avatar
+    <OutcomeScreenShell
+      onBack={onBack}
+      tone="warning"
+      icon={<ErrorOutlineRoundedIcon aria-hidden sx={{ fontSize: 52 }} />}
+      beforeContent={
+        <Box
+          role="status"
+          aria-live="polite"
           sx={{
-            width: 96,
-            height: 96,
-            mb: 3,
-            bgcolor: "warning.main",
-            color: "warning.contrastText",
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+            whiteSpace: "nowrap",
           }}
         >
-          <ErrorOutlineRoundedIcon aria-hidden sx={{ fontSize: 52 }} />
-        </Avatar>
+          {announcement}
+        </Box>
+      }
+    >
+      <Typography
+        variant="h6"
+        component="h1"
+        sx={{ mb: 1, textAlign: "center" }}
+      >
+        {TITLE}
+      </Typography>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ textAlign: "center", mb: 1 }}
+      >
+        {reason === "REJECTED"
+          ? `Order ${orderNumber} was not accepted by the counter.`
+          : `The counter didn't confirm Order ${orderNumber} in time.`}
+      </Typography>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ textAlign: "center", mb: 3 }}
+      >
+        {nextStep}
+      </Typography>
 
-        <Typography variant="h6" component="h1" sx={{ mb: 1, textAlign: "center" }}>
-          {TITLE}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ textAlign: "center", mb: 1 }}
-        >
-          {reason === "REJECTED"
-            ? `Order ${orderNumber} was not accepted by the counter.`
-            : `The counter didn't confirm Order ${orderNumber} in time.`}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ textAlign: "center", mb: 3 }}
-        >
-          {nextStep}
-        </Typography>
-
-        <Stack spacing={1.5} sx={{ width: "100%" }}>
-          {secondaryLabel && onSecondary && (
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={onSecondary}
-              sx={{ borderRadius: 999, py: 1.25, minHeight: 44 }}
-            >
-              {secondaryLabel}
-            </Button>
-          )}
+      <Stack spacing={1.5} sx={{ width: "100%" }}>
+        {secondaryLabel && onSecondary && (
           <Button
-            variant="contained"
+            variant="outlined"
             fullWidth
-            onClick={onPrimary}
+            onClick={onSecondary}
             sx={{ borderRadius: 999, py: 1.25, minHeight: 44 }}
           >
-            {primaryLabel}
+            {secondaryLabel}
           </Button>
-        </Stack>
+        )}
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={onPrimary}
+          sx={{ borderRadius: 999, py: 1.25, minHeight: 44 }}
+        >
+          {primaryLabel}
+        </Button>
       </Stack>
-    </Box>
+    </OutcomeScreenShell>
   );
 }

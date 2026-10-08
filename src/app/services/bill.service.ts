@@ -1,5 +1,5 @@
 import { ValidationError } from "../lib/errors";
-import { orderLinesTotal } from "../lib/orderTotals";
+import { orderLinesTotal } from "../lib/order/orderTotals";
 import type { Prisma } from "../../../prisma/generated/client";
 
 type Tx = Prisma.TransactionClient;
@@ -19,7 +19,7 @@ interface PayableSession {
 
 /**
  * Bill creation — one immutable Bill row per PAID bill (see Bill's own
- * schema comment). Split out from OrderSessionApprovalService (which
+ * schema comment). Split out from OrderPaymentService (which
  * calls into this, not the other way around) because bills have their
  * own reason to change going forward (billing history/search queries),
  * distinct from approval/payment workflow — see CLAUDE.md Rule 14.
@@ -59,7 +59,7 @@ export class BillService {
   }
 
   /** Creates the ONE Bill row for a set of sessions being paid together
-   *  — called from inside OrderSessionApprovalService's markSessionsPaid
+   *  — called from inside OrderPaymentService.markSessionsPaid
    *  transaction, before those sessions are written to
    *  PAID, so a Bill-creation failure rolls back the whole payment (no
    *  session ends up PAID without a bill). billNumber/locationId/total

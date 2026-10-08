@@ -5,7 +5,8 @@ import {
   MenuCategoryService,
 } from "./menuCategory.service";
 import { NotFoundError } from "../lib/errors";
-import { isMenuListed } from "../lib/menuOrderability";
+import { getFileStorageService } from "../lib/storage/getFileStorageService";
+import { isMenuListed } from "../lib/menu/menuOrderability";
 import { MenuLocationService } from "./menuLocation.service";
 
 type Tx = Prisma.TransactionClient;
@@ -131,6 +132,21 @@ export class MenuService {
       where: { id: menuId },
       data: { assetUrl: url },
     });
+  }
+
+  /** A new photo for a saved menu: upload it to file storage, then store
+   *  its URL (setMenuAsset) — after the menu's own DB write, never inside
+   *  its transaction (an object-store PUT can't be rolled back; CLAUDE.md
+   *  Rule 7). */
+  static async saveMenuImage(menuId: number, image: File) {
+    const storage = getFileStorageService();
+    const { url } = await storage.upload(
+      Buffer.from(await image.arrayBuffer()),
+      image.type,
+      "menu",
+      menuId,
+    );
+    await MenuService.setMenuAsset(menuId, url);
   }
 
   static async getMenus(companyId: number) {

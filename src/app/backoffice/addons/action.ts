@@ -15,7 +15,7 @@ import {
   UpdateAddonGroupInput,
   updateAddonGroupSchema,
 } from "@/app/lib/schemas/addonSchema";
-import { requireOwner, requirePermission } from "@/app/lib/roleGuard";
+import { requireOwner, requirePermission } from "@/app/lib/access/roleGuard";
 import { AddonService } from "@/app/services";
 import { revalidatePath } from "next/cache";
 

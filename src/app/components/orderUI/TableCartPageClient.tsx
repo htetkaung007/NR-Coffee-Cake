@@ -2,18 +2,10 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Alert,
-  Box,
-  Button,
-  Divider,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Divider, Stack, Typography } from "@mui/material";
 
-import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { cartLinesTotal } from "@/app/lib/orderTotals";
-import { toLineAddons } from "@/app/lib/roundLine";
+import { cartLinesTotal } from "@/app/lib/order/orderTotals";
+import { toLineAddons } from "@/app/lib/order/roundLine";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 import ApprovalWaitingPanel from "./ApprovalWaitingPanel";
 import DraftList from "./DraftList";
@@ -30,7 +22,7 @@ import {
   useConfirmedRoundDismissed,
   useRejectedRoundDismissed,
 } from "@/app/lib/hooks/useRoundDismissed";
-import type { ShownCancelReason } from "@/app/lib/roundOutcome";
+import type { ShownCancelReason } from "@/app/lib/order/roundOutcome";
 import {
   pollTableAction,
   removeDraftItemAction,
@@ -42,6 +34,7 @@ import type {
   LabelledCartLine,
   Shortage,
 } from "@/app/(storefront)/cart/CartList";
+import { AddMoreButton, CartListPanel, CartPageShell } from "./CartPageParts";
 import { formatAmount } from "@/app/lib/orderFormat";
 
 const POLL_INTERVAL_MS = 4000;
@@ -58,7 +51,7 @@ interface TableCartPageClientProps {
   initialRoundItems: LabelledCartLine[];
   initialShortages: Shortage[];
   /** The table's last round, if the counter turned it down or let it
-   *  expire (see OrderSessionService.getRejectedRoundForTable). */
+   *  expire (see TableSessionService.getRejectedRoundForTable). */
   initialRejectedRound: RejectedRound | null;
 }
 
@@ -147,10 +140,7 @@ export default function TableCartPageClient({
       ? "PENDING_APPROVAL"
       : "CART";
 
-  const draftTotal = useMemo(
-    () => cartLinesTotal(draftItems),
-    [draftItems],
-  );
+  const draftTotal = useMemo(() => cartLinesTotal(draftItems), [draftItems]);
   const hasShortage = shortages.length > 0;
 
   // The − / + on one of MY lines: save the new quantity (same addons and
@@ -283,25 +273,12 @@ export default function TableCartPageClient({
   // Nothing to review: no draft and no round still in flight (none yet, or
   // the last one is approved and already dismissed).
   if (draftItems.length === 0 && (!showingRound || isRoundApproved)) {
-    return (
-      <EmptyCartState onBack={goBackToMenu} onBrowseMenu={goBackToMenu} />
-    );
+    return <EmptyCartState onBack={goBackToMenu} onBrowseMenu={goBackToMenu} />;
   }
 
   return (
-    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
-      <Box
-        sx={{
-          p: { xs: 2, sm: 3 },
-          maxWidth: 720,
-          mx: "auto",
-          width: "100%",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-        }}
-      >
+    <>
+      <CartPageShell>
         <Stack
           direction="row"
           spacing={1.5}
@@ -337,27 +314,18 @@ export default function TableCartPageClient({
         )}
 
         <Box
-          sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
         >
-          <Box
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 3,
-              p: 1.5,
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0,
-            }}
-          >
+          <CartListPanel>
             <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
               {showingRound ? (
                 <>
-                  <Typography
-                    variant="body2"
-                    sx={{ mb: 0.5, fontWeight: 700 }}
-                  >
+                  <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 700 }}>
                     Sent to kitchen · {activeRound?.orderNumber ?? ""}
                   </Typography>
                   {/* Same per-person cards as before Send, read-only. */}
@@ -388,24 +356,7 @@ export default function TableCartPageClient({
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1}>
-                <Button
-                  variant="outlined"
-                  sx={{
-                    flex: 1,
-                    whiteSpace: "nowrap",
-                    transition:
-                      "transform 0.15s ease, background-color 0.15s ease",
-                    [hoverCapableMedia]: {
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        bgcolor: "action.hover",
-                      },
-                    },
-                  }}
-                  onClick={goBackToMenu}
-                >
-                  Add More
-                </Button>
+                <AddMoreButton onClick={goBackToMenu} />
                 <Box sx={{ flex: 2 }}>
                   <CartButton
                     status={buttonStatus}
@@ -421,7 +372,7 @@ export default function TableCartPageClient({
                 </Box>
               </Stack>
             </Box>
-          </Box>
+          </CartListPanel>
           {hasShortage && !showingRound && (
             <Typography
               variant="caption"
@@ -433,7 +384,7 @@ export default function TableCartPageClient({
             </Typography>
           )}
         </Box>
-      </Box>
+      </CartPageShell>
 
       <MenuDetailDialog
         open={editingItem !== null}
@@ -480,6 +431,6 @@ export default function TableCartPageClient({
           return null;
         }}
       />
-    </Box>
+    </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { Box, Typography } from "@mui/material";
 import BillLineRows from "@/app/components/BillLineRows";
-import type { EntryBill } from "@/app/lib/orderTotals";
+import type { EntryBill } from "@/app/lib/order/orderTotals";
 import { formatClockTime } from "@/app/lib/orderFormat";
 
 type BillRound = EntryBill["acceptedRounds"][number];

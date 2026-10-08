@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { TableService } from "@/app/services";
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import EditTable from "./EditTable";
 
 export default async function EditTablePage({

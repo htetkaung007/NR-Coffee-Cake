@@ -1,14 +1,18 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
-import { normalizeOrderNote } from "@/app/lib/orderNote";
-import { groupDraftsForSubmit, lineMergeKey } from "@/app/lib/orderLineMerge";
+import { normalizeOrderNote } from "@/app/lib/order/orderNote";
+import {
+  groupDraftsForSubmit,
+  lineMergeKey,
+} from "@/app/lib/order/orderLineMerge";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../prisma/generated/client";
-import { getTokenEpoch } from "../lib/contributorToken";
-import { contributorLabelsById } from "../lib/contributors";
+import { getTokenEpoch } from "../lib/storefront/contributorToken";
+import { contributorLabelsById } from "../lib/order/contributors";
 import { CartValidationService } from "./cartValidation.service";
 import { MenuStockService } from "./menuStock.service";
 import { PriceSnapshotService } from "./priceSnapshot.service";
 import { generateOrderNumber } from "./orderService/orderSession.service";
+import { ORDER_LINE_INCLUDE } from "./orderService/orderLineQuery";
 import { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 
 type Tx = Prisma.TransactionClient;
@@ -232,12 +236,12 @@ export class TableDraftService {
    *  own picks — grouped per person (design mock's "Your order" /
    *  "Customer 2 order" split), with Edit/Cancel only on the viewer's
    *  own. The rows include contributorToken: callers turn it into
-   *  labels (lib/contributors.ts) before anything reaches the client. */
+   *  labels (lib/order/contributors.ts) before anything reaches the client. */
   static async getDraftItemsForTable(tableId: number) {
     return prisma.order.findMany({
       where: { tableId, orderSessionId: null, isArchived: false },
       orderBy: { id: "asc" },
-      include: { menu: true, OrdersAddons: { include: { addon: true } } },
+      include: ORDER_LINE_INCLUDE,
     });
   }
 

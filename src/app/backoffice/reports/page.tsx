@@ -1,6 +1,6 @@
 import { AppError } from "@/app/lib/errors";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
-import { parseReportParams } from "@/app/lib/reportView";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
+import { parseReportParams } from "@/app/lib/report/reportView";
 import { todayInShop } from "@/app/lib/shopDay";
 import { ReportService } from "@/app/services";
 import { config } from "@/app/utils/config";

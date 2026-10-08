@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Box } from "@mui/material";
-import BOMenuCard, { type MenuCardData } from "@/app/components/BoMenuCard";
+import MenuGridCard, { type MenuCardData } from "./MenuGridCard";
 import StatusSnackbar, {
   type StatusMessage,
 } from "@/app/components/StatusSnackbar";
@@ -38,7 +38,7 @@ export default function MenuGrid({
         }}
       >
         {menus.map((menu) => (
-          <BOMenuCard
+          <MenuGridCard
             key={menu.id}
             item={menu}
             canToggle={canToggle}

@@ -1,5 +1,5 @@
 import { LocationService, MenuCategoryService } from "@/app/services";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import MenuCategoryOrderView from "./MenuCategoryOrderView";
 
 export default async function MenuCategoriesPage() {

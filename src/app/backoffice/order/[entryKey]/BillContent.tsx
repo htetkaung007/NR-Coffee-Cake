@@ -5,7 +5,7 @@ import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import type { EntryBill } from "@/app/lib/orderTotals";
+import type { EntryBill } from "@/app/lib/order/orderTotals";
 import { countLabel, formatMoneyDelta } from "@/app/lib/orderFormat";
 import BillTotal from "../BillTotal";
 import PrintBillButton from "../PrintBillButton";

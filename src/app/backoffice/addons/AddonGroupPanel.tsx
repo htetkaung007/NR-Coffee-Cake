@@ -14,10 +14,10 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import { addonGroupAvailability } from "@/app/lib/addonSelection";
+import { addonGroupAvailability } from "@/app/lib/cart/addonSelection";
 import { formatAmount } from "@/app/lib/orderFormat";
-import { OWNER_ONLY_MESSAGE } from "@/app/lib/rolePolicy";
-import { ASK_OWNER_HINTS } from "@/app/lib/permissions";
+import { OWNER_ONLY_MESSAGE } from "@/app/lib/access/rolePolicy";
+import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
 import RequiredChip from "./RequiredChip";
 
 export interface AddonGroup {

@@ -1,9 +1,9 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { formatDuration, type CancellationDetail } from "@/app/lib/cancellation";
+import { formatDuration, type CancellationDetail } from "@/app/lib/order/cancellation";
 import { formatClockTime } from "@/app/lib/orderFormat";
-import { rejectReasonLabel } from "@/app/lib/rejectReason";
+import { rejectReasonLabel } from "@/app/lib/order/rejectReason";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);

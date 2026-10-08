@@ -2,7 +2,7 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
 import { AddonService } from "@/app/services";
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import AddonsView from "./AddonsView";
 
 /** Add-ons: every group, and the selected one's quick settings (?group=

@@ -7,16 +7,17 @@ import {
   type CartLineInput,
   type CartValidationResult,
   type ValidatedCartLine,
-} from "../lib/cartValidation";
-import { lineMergeKey, type PricedAddon } from "../lib/orderLineMerge";
-import { normalizeOrderNote } from "../lib/orderNote";
-import { shownCancelReason } from "../lib/roundOutcome";
+} from "../lib/cart/cartValidation";
+import { lineMergeKey, type PricedAddon } from "../lib/order/orderLineMerge";
+import { normalizeOrderNote } from "../lib/order/orderNote";
+import { shownCancelReason } from "../lib/order/roundOutcome";
 import { CartValidationService } from "./cartValidation.service";
 import { PriceSnapshotService } from "./priceSnapshot.service";
 import {
   OrderSessionService,
   isPastApprovalWindow,
 } from "./orderService/orderSession.service";
+import { CounterSessionService } from "./orderService/counterSession.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -203,12 +204,12 @@ export class CartSubmitService {
     if (!token) return null;
     const active =
       lookup === "resolve"
-        ? await OrderSessionService.getActiveSessionByToken(token)
-        : await OrderSessionService.peekActiveSessionByToken(token);
+        ? await CounterSessionService.getActiveSessionByToken(token)
+        : await CounterSessionService.peekActiveSessionByToken(token);
     const session =
       active ??
-      (await OrderSessionService.getSessionByToken(token).then((ended) =>
-        ended ? OrderSessionService.getOpenBillRoot(ended) : null,
+      (await CounterSessionService.getSessionByToken(token).then((ended) =>
+        ended ? CounterSessionService.getOpenBillRoot(ended) : null,
       ));
     const isThisShopsCounter =
       session?.isCounter === true && session.locationId === locationId;
@@ -349,9 +350,7 @@ export class CartSubmitService {
       const checked = validated[index];
       const priceMoved =
         menuPrice !== checked.unitPrice ||
-        addons.some(
-          (addon, i) => addon.unitPrice !== checked.addonPrices[i],
-        );
+        addons.some((addon, i) => addon.unitPrice !== checked.addonPrices[i]);
       if (priceMoved) throw new CartChangedDuringSubmit();
 
       const key = lineMergeKey(line.menuId, menuPrice, addons, line.note);

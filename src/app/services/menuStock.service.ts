@@ -1,6 +1,6 @@
 import { prisma } from "../utils/prisma";
 import type { Prisma } from "../../../prisma/generated/client";
-import { ValidationError, InsufficientStockError } from "../lib/errors";
+import { InsufficientStockError } from "../lib/errors";
 
 /**
  * Location-scoped menu stock. The same menu can have different stock at
@@ -8,63 +8,6 @@ import { ValidationError, InsufficientStockError } from "../lib/errors";
  * for menu visibility.
  */
 export class MenuStockService {
-  /** Creates the first location-specific stock row inside the menu transaction. */
-  static async createInitialStock(
-    tx: Prisma.TransactionClient,
-    menuId: number,
-    locationId: number,
-    quantity: number,
-    isAvailable: boolean,
-  ) {
-    if (quantity < 0) {
-      throw new ValidationError("Stock quantity cannot be negative.");
-    }
-
-    return tx.menuStock.create({
-      data: {
-        menuId,
-        locationId,
-        quantity,
-        isManuallyDisabled: !isAvailable,
-      },
-    });
-  }
-
-  /** Optional lookup — a menu/location pair may not have a stock row yet
-   *  (e.g. never restocked), so absence is a normal state, not an error. */
-  static async getStock(menuId: number, locationId: number) {
-    return prisma.menuStock.findFirst({ where: { menuId, locationId } });
-  }
-
-  /** All stock rows for a location, for the backoffice stock list page. */
-  static async getStockForLocation(locationId: number) {
-    return prisma.menuStock.findMany({
-      where: { locationId, isArchived: false },
-      include: { menu: true },
-      orderBy: { id: "asc" },
-    });
-  }
-
-  /**
-   * Staff-entered restock / manual correction. Upserts because the first
-   * time a location gets a quantity set, no row exists yet — creating one
-   * on the fly is simpler than forcing a separate "initialize stock" step.
-   */
-  static async setStockQuantity(
-    menuId: number,
-    locationId: number,
-    quantity: number,
-  ) {
-    if (quantity < 0) {
-      throw new ValidationError("Stock quantity cannot be negative.");
-    }
-
-    return prisma.menuStock.upsert({
-      where: { menuId_locationId: { menuId, locationId } },
-      update: { quantity },
-      create: { menuId, locationId, quantity },
-    });
-  }
 
   /**
    * The menu card's on/off switch — marks the menu available or not AT

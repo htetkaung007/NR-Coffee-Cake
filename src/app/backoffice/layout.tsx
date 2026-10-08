@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "../utils/config/authOptions";
 import { BackofficeShell } from "../components/BackofficeShell";
-import { AppService, LocationService, PermissionService } from "../services";
+import { CompanyService, LocationService, PermissionService } from "@/app/services";
 import { StaffAccessProvider } from "../components/StaffAccessProvider";
-import { getSessionContext } from "../lib/session";
+import { getSessionContext } from "../lib/access/session";
 import { Box } from "@mui/material";
 import { SurfaceThemeProvider } from "../lib/theme/ThemeModeProvider";
 import { OrderAlertsProvider } from "./OrderAlertsProvider";
@@ -20,7 +20,7 @@ export default async function BackOfficeLayout({ children }: Props) {
   const email = session?.user?.email;
   if (!email) redirect("/auth/signIn");
 
-  const company = await AppService.getCompanyByEmail(email);
+  const company = await CompanyService.getByUserEmail(email);
   if (!company) redirect("/auth/signIn");
   const companyName = company.name;
 

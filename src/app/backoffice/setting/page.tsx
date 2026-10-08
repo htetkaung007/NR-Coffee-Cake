@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
-import { AppService, LocationService, PermissionService } from "@/app/services";
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { CompanyService, LocationService, ManagerService } from "@/app/services";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import OrdersPageHeader from "../order/OrdersPageHeader";
 import { sectionHeadingSx } from "../order/orderTypography";
 import AddManagerForm from "./AddManagerForm";
@@ -55,8 +55,8 @@ export default async function SettingsPage({
 
   const [locations, companyName, managers] = await Promise.all([
     LocationService.getActiveLocations(companyId),
-    AppService.getCompanyNameByCompanyId(companyId),
-    PermissionService.listManagers(companyId),
+    CompanyService.getName(companyId),
+    ManagerService.listManagers(companyId),
   ]);
   const selectedManagerId =
     manager && /^\d+$/.test(manager) ? Number(manager) : null;

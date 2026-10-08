@@ -1,6 +1,6 @@
 import { LocationService, MenuService, PermissionService } from "@/app/services";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
-import { ASK_OWNER_HINTS, hasPermission } from "@/app/lib/permissions";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
+import { ASK_OWNER_HINTS, hasPermission } from "@/app/lib/access/permissions";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";

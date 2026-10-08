@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { requiredName } from "./authSchema";
 
-export const COMPANY_NAME_MAX_LENGTH = 60;
+const COMPANY_NAME_MAX_LENGTH = 60;
 
 /** The company's name as staff see it in the Backoffice top bar: trimmed,
  *  inner whitespace collapsed to single spaces, not empty, and at most 60

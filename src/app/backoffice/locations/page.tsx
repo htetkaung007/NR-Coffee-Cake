@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { LocationService } from "@/app/services";
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
-import LocationCard from "@/app/components/LocationCard";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
+import LocationCard from "./LocationCard";
 
 export default async function LocationsPage() {
   const { scope, fallback } = await requireBackofficeAccess({

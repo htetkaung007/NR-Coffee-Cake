@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReportPeriodKind } from "@/app/lib/reportPeriod";
+import type { ReportPeriodKind } from "@/app/lib/report/reportPeriod";
 import { getReportItemsAction, type ReportItems } from "./action";
 import { useKeyedResource, type ResourceState } from "./useKeyedResource";
 

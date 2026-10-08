@@ -2,15 +2,16 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Box, Stack, Typography } from "@mui/material";
 import {
+  CounterSessionService,
   LocationService,
-  OrderSessionService,
   TableDraftService,
+  TableSessionService,
 } from "@/app/services";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
-import { getContributorToken } from "@/app/lib/contributorToken";
-import { cartLinesTotal, orderLinesTotal } from "@/app/lib/orderTotals";
-import { groupByContributor } from "@/app/lib/contributors";
-import { toLabelledCartLine } from "@/app/lib/roundLine";
+import { COUNTER_SESSION_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
+import { getContributorToken } from "@/app/lib/storefront/contributorToken";
+import { cartLinesTotal, orderLinesTotal } from "@/app/lib/order/orderTotals";
+import { groupByContributor } from "@/app/lib/order/contributors";
+import { toLabelledCartLine } from "@/app/lib/order/roundLine";
 import { formatAmount } from "@/app/lib/orderFormat";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
@@ -27,12 +28,12 @@ export const dynamic = "force-dynamic";
  * Branches the same way /menu and /cart do: a tableId with a matching
  * contributorToken means Table QR, where "history" is every round
  * already sent to the kitchen for this table's still-open tab (see
- * OrderSessionService.getRoundHistoryForTable — that's exactly the set
+ * TableSessionService.getRoundHistoryForTable — that's exactly the set
  * markSessionsPaid later settles together in one bill, so this is the
  * customer's own running total so far). Everything else falls through
  * to Counter QR, where "Order More" can split one bill into several
  * rounds too (see OrderSession.billSessionId's own schema comment) —
- * OrderSessionService.getBillForSession is Counter's counterpart to
+ * CounterSessionService.getBillForSession is Counter's counterpart to
  * getRoundHistoryForTable, walking billSessionId instead of tableId.
  */
 export default async function HistoryPage({
@@ -61,7 +62,7 @@ export default async function HistoryPage({
     if (contributorToken && isTokenCurrent) {
       const locationId = Number(locationIdParam);
       const [rounds, shopName, labels] = await Promise.all([
-        OrderSessionService.getRoundHistoryForTable(tableId),
+        TableSessionService.getRoundHistoryForTable(tableId),
         LocationService.getShopNameForLocation(locationId),
         // Who's who as labels — the tokens stay on the server.
         TableDraftService.getContributorLabels(tableId, contributorToken),
@@ -197,7 +198,7 @@ export default async function HistoryPage({
   const cookieStore = await cookies();
   const token = cookieStore.get(COUNTER_SESSION_COOKIE)?.value;
   const session = token
-    ? await OrderSessionService.getActiveSessionByToken(token)
+    ? await CounterSessionService.getActiveSessionByToken(token)
     : null;
 
   if (!session || session.status === "CART") {
@@ -225,7 +226,7 @@ export default async function HistoryPage({
 
   const [shopName, bill] = await Promise.all([
     LocationService.getShopNameForLocation(session.locationId),
-    OrderSessionService.getBillForSession(session),
+    CounterSessionService.getBillForSession(session),
   ]);
 
   return (

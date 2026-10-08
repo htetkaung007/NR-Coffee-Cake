@@ -14,7 +14,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import type { ManagerSummary } from "@/app/services";
-import type { PermissionKey } from "@/app/lib/permissions";
+import type { PermissionKey } from "@/app/lib/access/permissions";
 import { AlwaysAllowedList, OwnerOnlyList } from "./AccessRuleLists";
 import PermissionChecklist from "./PermissionChecklist";
 import { setManagerPermissionsAction } from "./action";

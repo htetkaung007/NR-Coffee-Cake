@@ -4,13 +4,13 @@ import {
   buildEntryBill,
   orderLinesTotal,
   sumQuantities,
-} from "../lib/orderTotals";
+} from "../lib/order/orderTotals";
 import { dayRangeUtc, toShopDay } from "../lib/shopDay";
 import {
   toCancellationDetail,
   type CancellationDetail,
-} from "../lib/cancellation";
-import { summarizeRejectReasons } from "../lib/rejectReason";
+} from "../lib/order/cancellation";
+import { summarizeRejectReasons } from "../lib/order/rejectReason";
 import { Prisma } from "../../../prisma/generated/client";
 
 /** A page of cursor-paginated rows, oldest-cursor-last — see

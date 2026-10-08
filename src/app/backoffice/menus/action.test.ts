@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NotFoundError } from "@/app/lib/errors";
 
-// The session and every Service are stubbed (as in lib/roleGuard.test.ts)
+// The session and every Service are stubbed (as in lib/access/roleGuard.test.ts)
 // — the real requirePermission and the action's own steps run.
 const getSessionContext = vi.fn();
 const getGrantedPermissions = vi.fn();
 const getSelectedLocation = vi.fn();
 const getCompanyMenu = vi.fn();
 const setManualDisabled = vi.fn();
-vi.mock("@/app/lib/session", () => ({
+vi.mock("@/app/lib/access/session", () => ({
   getSessionContext: () => getSessionContext(),
 }));
 vi.mock("@/app/services", () => ({

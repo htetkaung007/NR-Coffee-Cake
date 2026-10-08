@@ -10,7 +10,7 @@ import {
 import {
   COUNTER_SESSION_COOKIE,
   counterSessionCookieOptions,
-} from "@/app/lib/orderSessionCookie";
+} from "@/app/lib/storefront/orderSessionCookie";
 import {
   submitCartSchema,
   submittedOutcomeSchema,

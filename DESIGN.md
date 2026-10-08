@@ -246,6 +246,21 @@ double-taps), or an optimistic update. A disabled control shows WHY
   and up; below `lg`, a bottom bar (total + action) that opens a right
   Drawer on tablets and a bottom sheet / full-screen Dialog on phones.
 - Remember the permanent Backoffice sidebar when judging available width.
+- **Backoffice menu card states** (one status rule,
+  `lib/menu/menuCardStatus.ts`; stock words from `lib/menu/stockLevel.ts`, shared
+  with the customer card's "low" threshold):
+  - **Unavailable** — switched off on purpose: neutral "Unavailable"
+    pill centred on the image, image greyed and dimmed; the rest of the
+    card stays full contrast.
+  - **Hidden here** — not shown at this location: neutral chip,
+    bottom-left of the image; not dimmed.
+  - Stock badge, **bottom-right of the image**, always shown (solid,
+    ≥ 4.5:1): **"Sold out"** (stock 0, error role), **"N left"** (1–4,
+    warning role), **"N in stock"** (5+, neutral).
+- **Dialog vs page:** a **dialog** for short tasks — about 1–3 fields,
+  confirmations, and quick creates that must not lose the form behind
+  them (e.g. "New category" from the menu form). A **page** for long
+  forms (menu, add-on group) and anything that needs its own URL.
 
 ## 19. Safe areas (iOS / PWA)
 

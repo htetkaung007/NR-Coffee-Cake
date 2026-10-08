@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { idSchema } from "./common";
 import { RejectReason } from "../../../../prisma/generated/enums";
 import {
   REJECT_NOTE_MAX_LENGTH,
   type RejectDetails,
-} from "@/app/lib/rejectReason";
+} from "@/app/lib/order/rejectReason";
 
 /** The cashier's optional note: trimmed, every whitespace run (newlines
  *  too) collapsed to one space, empty → null, at most 120 characters
@@ -14,7 +15,8 @@ const rejectNoteSchema = z
   .nullish()
   .transform((note) => (note ?? "").replace(/\s+/g, " ").trim() || null)
   .refine(
-    (note) => note === null || Array.from(note).length <= REJECT_NOTE_MAX_LENGTH,
+    (note) =>
+      note === null || Array.from(note).length <= REJECT_NOTE_MAX_LENGTH,
     `Keep the note under ${REJECT_NOTE_MAX_LENGTH} characters.`,
   );
 
@@ -24,7 +26,7 @@ const rejectNoteSchema = z
  *  accepts (RejectDetails). */
 export const rejectRoundSchema = z
   .object({
-    sessionId: z.number().int().positive(),
+    sessionId: idSchema,
     rejectReason: z.enum(RejectReason),
     note: rejectNoteSchema,
   })

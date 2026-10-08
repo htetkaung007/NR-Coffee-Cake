@@ -19,7 +19,7 @@ import { getPendingApprovalsAction } from "./order/action";
 /** One round (OrderSession) awaiting the cashier's Accept/Reject. */
 export interface PendingApprovalRound {
   sessionId: number;
-  /** Its Order List entry — see OrderSessionApprovalService.entryKeyFor. */
+  /** Its Order List entry — see OrderListService.entryKeyFor. */
   entryKey: string;
   title: string;
   isTableGroup: boolean;

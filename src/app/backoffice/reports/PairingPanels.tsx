@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Skeleton, Stack, Typography } from "@mui/material";
-import { addonPairingView, menuPairingView } from "@/app/lib/reportView";
+import { addonPairingView, menuPairingView } from "@/app/lib/report/reportView";
 import PairRows from "./PairRows";
 import { ErrorRetry } from "./ReportStates";
 import type { PairingState } from "./usePairing";

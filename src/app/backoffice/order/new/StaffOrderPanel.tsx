@@ -19,7 +19,7 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import RemoveIcon from "@mui/icons-material/Remove";
-import { lineBreakdown, type LineAddon } from "@/app/lib/orderTotals";
+import { lineBreakdown, type LineAddon } from "@/app/lib/order/orderTotals";
 import BillLineRows from "@/app/components/BillLineRows";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import BillTotal from "../BillTotal";

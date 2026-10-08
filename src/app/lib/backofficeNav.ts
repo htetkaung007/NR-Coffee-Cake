@@ -1,5 +1,5 @@
 import type { Session } from "next-auth";
-import type { AccessRule } from "./permissions";
+import type { AccessRule } from "./access/permissions";
 
 export type NavRole = Session["user"]["role"];
 

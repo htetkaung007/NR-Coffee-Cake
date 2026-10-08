@@ -68,6 +68,15 @@ this file exists before creating a new one — a duplicate
 `validateWith(schema, input) → .asyncAndThen(toSafeResult(serviceFn))
 → toActionResult(result)`.
 
+**`lib/` is grouped by domain folders** (`approval/`, `order/`, `cart/`,
+`storefront/`, `menu/`, `report/`, `access/`, `location/`, plus `hooks/`,
+`qr/`, `schemas/`, `storage/`, `theme/`); app-wide helpers (`actionHelper`,
+`actionResult`, `errors`, `orderFormat`, `shopDay`, `isPlainLeftClick`,
+`backofficeNav`) stay at the root. **No barrel (`index.ts`) files in
+`lib/`** — it mixes server-only modules (`access/roleGuard`,
+`access/session`) with client-safe ones (`cart/browserCart`), and a barrel
+could pull server code into a client bundle. Import each file directly.
+
 ## 4. Static method binding — call via ClassName.method(), never this.method()
 
 ```typescript
@@ -133,7 +142,9 @@ left in a broken/inconsistent state?"
   after the DB row is created. Sequence: DB write, then external
   upload, then a second separate DB write to store the resulting URL.
 - **Cancelling a round has ONE writer:**
-  `OrderSessionService.cancelSession` (in the caller's transaction) is
+  `OrderSessionService.cancelSession`
+  (`services/orderService/orderSession.service.ts`, in the caller's
+  transaction) is
   the only code that writes status CANCELLED / `cancelReason`, gives the
   stock back, and creates the `OrderCancellation` row (REJECTED and
   EXPIRED only — never UNSUBMITTED, never accepted rounds). Every cancel
@@ -144,7 +155,7 @@ left in a broken/inconsistent state?"
 - **The cancellation `note` is staff-typed free text** (Other only,
   ≤ 120 characters, normalised by `rejectRoundSchema`). Never put it in a
   URL (query string, path, redirect).
-- **CSV exports (`lib/csv.ts`, `lib/exportLines.ts`):** every TEXT cell
+- **CSV exports (`lib/report/csv.ts`, `lib/report/exportLines.ts`):** every TEXT cell
   goes through `csvText` — it quotes, and guards against formula
   injection (a leading `=`, `+`, `-`, `@`, tab or CR gets an apostrophe);
   numbers go through `csvNumber`. Never build a CSV line by hand. Exports
@@ -172,7 +183,7 @@ to our own variables/functions, not established library idioms.
 - authorize() should be thin: Zod-validate the credentials shape,
   delegate to a Service method.
 - Cache session-derived lookups (companyId, userId, role) in the
-  JWT during the jwt callback — see lib/session.ts's
+  JWT during the jwt callback — see lib/access/session.ts's
   getSessionContext(), the single place that reads
   companyId/userId/role from the session. Use it instead of
   repeating getServerSession(authOptions) plus manual field
@@ -281,7 +292,7 @@ independently of the app config). Everything else still goes through
 - Menu hard-delete (soft-delete via isArchived exists; permanent
   delete is not yet built). Locations have no grace period any more:
   one with no sales history and no managers is deleted at once, one
-  with sales can only be archived (lib/locationDeletion.ts).
+  with sales can only be archived (lib/location/locationDeletion.ts).
 
 ## 14. Service imports — always via the barrel file, never the concrete path
 
@@ -314,10 +325,29 @@ business reason?"
   is the only thing that ever touches it.
 - Methods with **distinct, unrelated reasons to change** get split out
   **even if there are only two or three of them** — e.g.
-  setSelectedLocation/getSelectedLocation (a User's active-location
-  pointer — Location-domain data) and getDisabledLocationMenus (menu
-  visibility — a different concern) don't belong in the same file just
-  because both mention "location."
+  LocationService (a location's own record and a User's
+  selected-location pointer) and MenuLocationService (which locations a
+  menu shows at — menu visibility, a different concern) don't belong in
+  the same file just because both mention "location."
+- Current splits worth knowing: **ManagerService** owns manager
+  accounts (createManagerForLocation, listManagers,
+  setManagerPermissions); **PermissionService** keeps only
+  getGrantedPermissions, the per-request check the guards call.
+  **CompanyService** owns company reads/renames (getName,
+  getByUserEmail, updateName); **AppService** is sign-up/onboarding
+  only (registerUser, createDefaultSetup and its helpers,
+  verifyCredentials, getUserByEmail for auth).
+- **The order services** (`services/orderService/`) are split the same
+  way: **OrderSessionService** is the shared round lifecycle only
+  (cancelSession — the one cancel writer, Rule 7 — the CART submit,
+  next round, status); **TableSessionService** (Table QR scan and a
+  table's rounds), **CounterSessionService** (Counter QR scan, the
+  cookie's session and its bill), **StaffOrderService** (the staff New
+  Order screen), **OrderApprovalService** (accept / reject / expire),
+  **OrderPaymentService** (mark paid + after-payment clean-up) and
+  **OrderListService** (the Backoffice Order List reads) each call down
+  into OrderSessionService, never the other way round — no import
+  cycles. OrderSessionCartService (cart lines) is unchanged.
 - "Frequently called together in one workflow" is **not** a reason to
   put two Services' logic in the same file — that's what the
   Controller (action.ts) is for: it orchestrates calls across
@@ -331,12 +361,35 @@ business reason?"
   before in this project and is a correctness risk, not just
   untidiness.
 
-## 15. Testing
+## 15. Permissions
+
+- **Roles:** ADMIN (the owner — can do everything, never checked
+  against grants) and MANAGER (fixed to one location via
+  User.locationId).
+- **Grantable permissions live in `lib/access/permissions.ts`** — the catalog
+  (GRANTABLE_PERMISSIONS) is the single source: enforcement, the
+  Settings → Managers checklist and the "Ask the owner …" hints all read
+  it. A compile-time check ties it to the Prisma `Permission` enum.
+- **Every Server Action calls a guard FIRST** — `requireStaff`,
+  `requireOwner` or `requirePermission(key)` from `lib/access/roleGuard.ts`,
+  against the session, never the client's input.
+  `backoffice/actionGuards.test.ts` parses every Backoffice `action.ts`
+  and fails if an exported action can't reach a guard.
+- **Pages** start with `requireBackofficeContext({ access })` (or
+  `requireBackofficeAccess`) from `lib/access/backofficeContext.tsx`, which runs
+  the same guard and renders a notice instead of throwing.
+- **Grants are read from the database on every check**
+  (PermissionService.getGrantedPermissions) — never cached in the JWT —
+  so revoking takes effect on the next request. Anything a page passes
+  to the client about permissions (`canToggle`, `useCan`) is display
+  only; the action enforces.
+
+## 16. Testing
 
 - **Vitest** (`vitest.config.mts` at the repo root). Run `npm test` once,
   or `npm run test:watch` while working.
 - Test files sit **next to the module they test**, named `*.test.ts`
-  (e.g. `lib/orderTotals.test.ts` beside `lib/orderTotals.ts`). Import
+  (e.g. `lib/order/orderTotals.test.ts` beside `lib/order/orderTotals.ts`). Import
   `describe`/`it`/`expect` from `"vitest"` explicitly — no globals.
 - For now only **pure logic** is unit-tested: no database, Prisma,
   network or React. If a pure function lives in a module that imports

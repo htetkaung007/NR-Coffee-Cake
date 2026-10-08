@@ -20,10 +20,16 @@ export {
   OrderSessionService,
   isSessionTerminal,
 } from "./orderService/orderSession.service";
-export { OrderSessionApprovalService } from "./orderService/orderSessionApproval.service";
+export { TableSessionService } from "./orderService/tableSession.service";
+export { CounterSessionService } from "./orderService/counterSession.service";
+export { StaffOrderService } from "./orderService/staffOrder.service";
+export { OrderApprovalService } from "./orderService/orderApproval.service";
+export { OrderPaymentService } from "./orderService/orderPayment.service";
+export { OrderListService } from "./orderService/orderList.service";
 export { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 export { TableDraftService } from "./tableDraft.service";
 export { CartValidationService } from "./cartValidation.service";
 export { CartSubmitService } from "./cartSubmit.service";
 export { ReportService } from "./report.service";
-export { PermissionService, type ManagerSummary } from "./permission.service";
+export { PermissionService } from "./permission.service";
+export { ManagerService, type ManagerSummary } from "./manager.service";

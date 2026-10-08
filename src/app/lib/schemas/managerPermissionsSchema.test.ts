@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PERMISSION_KEYS } from "@/app/lib/permissions";
+import { PERMISSION_KEYS } from "@/app/lib/access/permissions";
 import { setManagerPermissionsSchema } from "./managerPermissionsSchema";
 
 describe("setManagerPermissionsSchema", () => {
@@ -41,9 +41,9 @@ describe("setManagerPermissionsSchema", () => {
       setManagerPermissionsSchema.safeParse({ managerId: 0, permissions: [] })
         .success,
     ).toBe(false);
-    expect(setManagerPermissionsSchema.safeParse({ permissions: [] }).success).toBe(
-      false,
-    );
+    expect(
+      setManagerPermissionsSchema.safeParse({ permissions: [] }).success,
+    ).toBe(false);
   });
 
   it("ignores a companyId or ownerId sent by the client", () => {

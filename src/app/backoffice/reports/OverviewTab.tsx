@@ -3,7 +3,7 @@
 import { Box, Stack } from "@mui/material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import EmptyState from "@/app/components/EmptyState";
-import { reportHref, type ReportParams } from "@/app/lib/reportView";
+import { reportHref, type ReportParams } from "@/app/lib/report/reportView";
 import type { ReportOverview } from "./action";
 import CancelledCard from "./CancelledCard";
 import ChannelsCard from "./ChannelsCard";

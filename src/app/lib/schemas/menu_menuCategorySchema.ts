@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { idListSchema, idSchema, optionalIdListSchema } from "./common";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
-import { NO_LOCATION_MESSAGE } from "@/app/lib/menuLocations";
+import { NO_LOCATION_MESSAGE } from "@/app/lib/menu/menuLocations";
 
 /** Most locations one company can tick on a menu form. */
 const MAX_SHOWN_LOCATIONS = 50;
@@ -24,21 +25,18 @@ export const createMenuSchema = z.object({
     .int("Stock quantity must be a whole number.")
     .min(0, "Stock quantity cannot be negative."),
   isAvailable: z.boolean(),
-  categoryIds: z
-    .array(z.coerce.number().int().positive())
-    .min(1, "Select at least one menu category.")
-    .transform((ids) => [...new Set(ids)]),
-  addonCategoryIds: z
-    .array(z.coerce.number().int().positive())
-    .optional()
-    .transform((ids) => [...new Set(ids ?? [])]),
+  categoryIds: idListSchema({
+    min: 1,
+    minMessage: "Select at least one menu category.",
+  }),
+  addonCategoryIds: optionalIdListSchema(),
   /** Where the menu shows — company/active-location membership is
    *  checked by MenuLocationService.setMenuLocations. */
-  shownLocationIds: z
-    .array(z.coerce.number().int().positive())
-    .min(1, NO_LOCATION_MESSAGE)
-    .max(MAX_SHOWN_LOCATIONS)
-    .transform((ids) => [...new Set(ids)]),
+  shownLocationIds: idListSchema({
+    min: 1,
+    minMessage: NO_LOCATION_MESSAGE,
+    max: MAX_SHOWN_LOCATIONS,
+  }),
   image: z
     .custom<File | null>((value) => value === null || value instanceof File, {
       message: "Image upload is invalid.",
@@ -60,7 +58,7 @@ export type CreateMenuInput = z.infer<typeof createMenuSchema>;
 /** The menu card's on/off switch at the selected location. The location
  *  is never part of the input — it comes from the session. */
 export const setMenuAvailableSchema = z.object({
-  menuId: z.number().int().positive(),
+  menuId: idSchema,
   isAvailable: z.boolean(),
 });
 export type SetMenuAvailableInput = z.infer<typeof setMenuAvailableSchema>;
@@ -78,7 +76,7 @@ export const updateMenuCategorySchema = createMenuCategorySchema.extend({
   /** Menus staged for removal from this category in the Edit dialog —
    *  applied with the rename/enable in one transaction. */
   removeMenuIds: z
-    .array(z.number().int().positive())
+    .array(idSchema)
     .max(200)
     .refine((ids) => new Set(ids).size === ids.length, "Each menu only once.")
     .default([]),
@@ -89,7 +87,7 @@ export type UpdateMenuCategoryInput = z.infer<typeof updateMenuCategorySchema>;
 /** The new order of the categories visible at the selected location —
  *  the Service checks it's exactly that set (MenuCategoryService.reorder). */
 export const reorderMenuCategoriesSchema = z.object({
-  orderedIds: z.array(z.number().int().positive()).min(1).max(500),
+  orderedIds: z.array(idSchema).min(1).max(500),
 });
 
 export type ReorderMenuCategoriesInput = z.infer<

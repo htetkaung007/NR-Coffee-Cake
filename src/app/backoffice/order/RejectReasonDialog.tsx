@@ -20,7 +20,7 @@ import {
   REJECT_REASONS,
   rejectReasonLabel,
   type RejectReason,
-} from "@/app/lib/rejectReason";
+} from "@/app/lib/order/rejectReason";
 
 // The "Other" note step appears in place: a short fade + lift,
 // transform/opacity only (DESIGN.md Rule 2), none under reduced motion.

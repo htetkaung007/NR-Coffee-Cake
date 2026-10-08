@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { LocationService } from "@/app/services";
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import EditLocation from "./EditLocation";
 
 export default async function EditLocationPage({

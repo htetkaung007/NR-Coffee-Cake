@@ -7,7 +7,7 @@ import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 
-import type { ValidatedCartLine } from "@/app/lib/cartValidation";
+import type { ValidatedCartLine } from "@/app/lib/cart/cartValidation";
 import { formatAmount } from "@/app/lib/orderFormat";
 
 interface CartLineNoticeProps {

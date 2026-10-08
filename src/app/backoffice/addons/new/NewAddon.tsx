@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
   Box,
   Button,
   IconButton,
-  Snackbar,
   Stack,
   Switch,
   TextField,
@@ -16,9 +15,9 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import { createAddonGroupAction, updateAddonGroupAction } from "../action";
-import MenuMultiSelect, {
-  MenuOption,
-} from "@/app/components/MenuMultiSelected";
+import { SuccessSnackbar } from "@/app/components/FormCard";
+import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
+import MenuMultiSelect, { MenuOption } from "../MenuMultiSelected";
 
 interface OptionRow {
   id?: number; // present only for options that already exist (edit mode)
@@ -45,6 +44,8 @@ interface NewAddonProps {
 
 export default function NewAddon({ menus, initialData }: NewAddonProps) {
   const router = useRouter();
+  const { error, setError, isPending, showSuccess, closeSuccess, save } =
+    useSaveThenNavigate();
   const isEditMode = Boolean(initialData);
 
   const [groupName, setGroupName] = useState(initialData?.groupName ?? "");
@@ -63,9 +64,6 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
         }))
       : [emptyRow(), emptyRow()],
   );
-  const [error, setError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [isPending, startTransition] = useTransition();
 
   function updateOption(index: number, field: "name" | "price", value: string) {
     setOptions((rows) =>
@@ -98,22 +96,13 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
       menuIds: selectedMenuIds,
     };
 
-    startTransition(async () => {
-      const result =
+    save(
+      () =>
         isEditMode && initialData
-          ? await updateAddonGroupAction(initialData.id, payload)
-          : await createAddonGroupAction(payload);
-
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-
-      setShowSuccess(true);
-      setTimeout(() => {
-        router.push("/backoffice/addons");
-      }, 1000);
-    });
+          ? updateAddonGroupAction(initialData.id, payload)
+          : createAddonGroupAction(payload),
+      "/backoffice/addons",
+    );
   }
 
   return (
@@ -293,18 +282,15 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
         </Box>
       </Box>
 
-      <Snackbar
+      <SuccessSnackbar
         open={showSuccess}
-        autoHideDuration={1000}
-        onClose={() => setShowSuccess(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert severity="success" variant="filled" sx={{ width: "100%" }}>
-          {isEditMode
+        onClose={closeSuccess}
+        message={
+          isEditMode
             ? "Add-on group updated successfully!"
-            : "Add-on group created successfully!"}
-        </Alert>
-      </Snackbar>
+            : "Add-on group created successfully!"
+        }
+      />
     </>
   );
 }

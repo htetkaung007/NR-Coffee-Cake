@@ -27,7 +27,7 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { findActiveHref, visibleNavSections } from "@/app/lib/backofficeNav";
-import type { AccessRule } from "@/app/lib/permissions";
+import type { AccessRule } from "@/app/lib/access/permissions";
 import { useAccessCheck } from "./StaffAccessProvider";
 import { markSeen, useSeenFlag } from "@/app/lib/hooks/useSeenFlag";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";

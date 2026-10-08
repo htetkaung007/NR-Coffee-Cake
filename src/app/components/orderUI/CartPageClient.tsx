@@ -2,40 +2,35 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Alert,
-  Box,
-  Button,
-  Divider,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Divider, Stack, Typography } from "@mui/material";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
-import type { ApprovalTiming } from "@/app/lib/approvalTiming";
+import type { ApprovalTiming } from "@/app/lib/approval/approvalTiming";
 import ApprovalWaitingPanel from "./ApprovalWaitingPanel";
 import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 import { useCartValidation } from "@/app/lib/hooks/useCartValidation";
-import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { cartLineTotal, cartLinesTotal } from "@/app/lib/orderTotals";
+import { cartLineTotal, cartLinesTotal } from "@/app/lib/order/orderTotals";
 import {
   toBrowserCartLine,
   toServerLines,
   type BrowserCartLine,
-} from "@/app/lib/browserCart";
+} from "@/app/lib/cart/browserCart";
 import {
   decideSubmit,
   type SendState,
   type ValidatedCartLine,
-} from "@/app/lib/cartValidation";
+} from "@/app/lib/cart/cartValidation";
 import { formatAmount } from "@/app/lib/orderFormat";
 
 import {
   getSubmittedOrderOutcomeAction,
   submitCartAction,
 } from "@/app/(storefront)/cart/action";
-import { shownCancelReason, type ShownCancelReason } from "@/app/lib/roundOutcome";
+import {
+  shownCancelReason,
+  type ShownCancelReason,
+} from "@/app/lib/order/roundOutcome";
 import CartList, {
   CartLineRow,
   type CartLine,
@@ -47,6 +42,7 @@ import BackCircleButton from "./BackCircleButton";
 import OrderConfirmedScreen from "./OrderConfirmedScreen";
 import OrderRejectedScreen from "./OrderRejectedScreen";
 import EmptyCartState from "./EmptyCartState";
+import { AddMoreButton, CartListPanel, CartPageShell } from "./CartPageParts";
 import CounterQrScannerDialog from "./CounterQrScannerDialog";
 
 interface CartPageClientProps {
@@ -194,7 +190,10 @@ export default function CartPageClient({
   // became of the remembered submission — by then the scan cookie may be
   // gone, the request id is not.
   const lastRequestId = cart.lastSubmitted?.clientRequestId;
-  const latest = useRef({ handleRejected, forget: browserCart.forgetLastSubmitted });
+  const latest = useRef({
+    handleRejected,
+    forget: browserCart.forgetLastSubmitted,
+  });
   useEffect(() => {
     latest.current = {
       handleRejected,
@@ -259,12 +258,16 @@ export default function CartPageClient({
 
   const rowLines = cart.lines.map(toRowLine);
   const result = validation.result;
-  const checkedLines = cart.lines.map((_, index) => result?.lines[index] ?? null);
+  const checkedLines = cart.lines.map(
+    (_, index) => result?.lines[index] ?? null,
+  );
   // Server numbers once the check is in; until then, what was shown when
   // each item was added.
   const total = result ? result.total : cartLinesTotal(rowLines);
   const decision = result ? decideSubmit(result) : null;
-  const blockedCount = checkedLines.filter((line) => !canBeOrdered(line)).length;
+  const blockedCount = checkedLines.filter(
+    (line) => !canBeOrdered(line),
+  ).length;
   const removableIndexes = checkedLines.flatMap((line, index) =>
     line?.status === "soldOut" || line?.status === "unavailable" ? [index] : [],
   );
@@ -363,7 +366,11 @@ export default function CartPageClient({
   }
 
   // Accepted by the counter, and no new cart started yet.
-  if (session && (status === "PENDING" || status === "COOKING") && cart.lines.length === 0) {
+  if (
+    session &&
+    (status === "PENDING" || status === "COOKING") &&
+    cart.lines.length === 0
+  ) {
     return (
       <OrderConfirmedScreen
         orderNumber={session.billNumber}
@@ -377,9 +384,7 @@ export default function CartPageClient({
   }
 
   if (status !== "PENDING_APPROVAL" && cart.lines.length === 0) {
-    return (
-      <EmptyCartState onBack={goBackToMenu} onBrowseMenu={goBackToMenu} />
-    );
+    return <EmptyCartState onBack={goBackToMenu} onBrowseMenu={goBackToMenu} />;
   }
 
   const sendDisabledReason =
@@ -391,19 +396,8 @@ export default function CartPageClient({
   const editingLine = editingIndex !== null ? cart.lines[editingIndex] : null;
 
   return (
-    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
-      <Box
-        sx={{
-          p: { xs: 2, sm: 3 },
-          maxWidth: 720,
-          mx: "auto",
-          width: "100%",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-        }}
-      >
+    <>
+      <CartPageShell>
         <Stack
           direction="row"
           spacing={1.5}
@@ -473,26 +467,15 @@ export default function CartPageClient({
                   </Button>
                 }
               >
-                Couldn&apos;t check the latest prices. You can still send —
-                the counter checks them again.
+                Couldn&apos;t check the latest prices. You can still send — the
+                counter checks them again.
               </Alert>
             )}
             {error && <Alert severity="error">{error}</Alert>}
           </Stack>
         )}
 
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 3,
-            p: 1.5,
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-          }}
-        >
+        <CartListPanel>
           <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
             {isWaiting ? (
               <CartList cart={roundLines} />
@@ -526,7 +509,9 @@ export default function CartPageClient({
                             sx={{
                               fontWeight: 700,
                               whiteSpace: "nowrap",
-                              color: blocked ? "text.secondary" : "text.primary",
+                              color: blocked
+                                ? "text.secondary"
+                                : "text.primary",
                               textDecoration: blocked ? "line-through" : "none",
                             }}
                           >
@@ -583,24 +568,7 @@ export default function CartPageClient({
                 {validation.checking ? "Checking latest prices…" : ""}
               </Typography>
               <Stack direction="row" spacing={1}>
-                <Button
-                  variant="outlined"
-                  sx={{
-                    flex: 1,
-                    whiteSpace: "nowrap",
-                    transition:
-                      "transform 0.15s ease, background-color 0.15s ease",
-                    [hoverCapableMedia]: {
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        bgcolor: "action.hover",
-                      },
-                    },
-                  }}
-                  onClick={goBackToMenu}
-                >
-                  Add More
-                </Button>
+                <AddMoreButton onClick={goBackToMenu} />
                 <Box sx={{ flex: 2 }}>
                   {sendState === "needsScan" ? (
                     <Button
@@ -640,8 +608,8 @@ export default function CartPageClient({
               )}
             </Box>
           )}
-        </Box>
-      </Box>
+        </CartListPanel>
+      </CartPageShell>
 
       {scannerOpen && <CounterQrScannerDialog onClose={closeScanner} />}
 
@@ -669,6 +637,6 @@ export default function CartPageClient({
           return null;
         }}
       />
-    </Box>
+    </>
   );
 }

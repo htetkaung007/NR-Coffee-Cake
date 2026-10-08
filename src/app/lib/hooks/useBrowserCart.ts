@@ -17,12 +17,12 @@ import {
   updateLine,
   type BrowserCart,
   type BrowserCartLine,
-} from "@/app/lib/browserCart";
-import type { CartValidationResult } from "@/app/lib/cartValidation";
+} from "@/app/lib/cart/browserCart";
+import type { CartValidationResult } from "@/app/lib/cart/cartValidation";
 
 /**
  * The Counter customer's cart, kept in this browser (localStorage) — a
- * thin shell around the pure functions in lib/browserCart.ts.
+ * thin shell around the pure functions in lib/cart/browserCart.ts.
  *
  * One copy per location and tab lives in `current`: it's the snapshot
  * useSyncExternalStore hands out (the same object until something

@@ -6,13 +6,18 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { requirePermission, requireStaff } from "@/app/lib/roleGuard";
+import { requirePermission, requireStaff } from "@/app/lib/access/roleGuard";
 import {
   rejectRoundSchema,
   type RejectRound,
   type RejectRoundInput,
 } from "@/app/lib/schemas/rejectRoundSchema";
-import { LocationService, OrderSessionApprovalService } from "@/app/services";
+import {
+  LocationService,
+  OrderApprovalService,
+  OrderListService,
+  OrderPaymentService,
+} from "@/app/services";
 
 const safeGetPendingApprovals = toSafeResult(async () => {
   const { userId } = await requireStaff();
@@ -20,7 +25,7 @@ const safeGetPendingApprovals = toSafeResult(async () => {
   // No location chosen yet: nothing can be pending there — the pages
   // themselves already tell the user to pick one.
   if (!selectedLocation) return [];
-  return OrderSessionApprovalService.getPendingApprovalSummary(
+  return OrderListService.getPendingApprovalSummary(
     selectedLocation.locationId,
   );
 });
@@ -35,11 +40,11 @@ export async function getPendingApprovalsAction() {
 
 const safeAccept = toSafeResult(async (sessionId: number) => {
   await requireStaff();
-  return OrderSessionApprovalService.acceptCounterSession(sessionId);
+  return OrderApprovalService.acceptCounterSession(sessionId);
 });
 
 /** Cashier accepts a Counter QR session — see
- *  OrderSessionApprovalService.acceptCounterSession. The customer's page,
+ *  OrderApprovalService.acceptCounterSession. The customer's page,
  *  polling in the background (CounterOrderClient), picks this up
  *  within a few seconds without any push mechanism — see the design
  *  discussion's polling-vs-websocket tradeoff for why that's enough
@@ -55,14 +60,14 @@ export async function acceptCounterSessionAction(sessionId: number) {
 
 const safeReject = toSafeResult(async (input: RejectRound) => {
   await requireStaff();
-  return OrderSessionApprovalService.rejectCounterSession(
+  return OrderApprovalService.rejectCounterSession(
     input.sessionId,
     input.details,
   );
 });
 
 /** Cashier rejects a Counter QR session — see
- *  OrderSessionApprovalService.rejectCounterSession. No cookie cleanup needed
+ *  OrderApprovalService.rejectCounterSession. No cookie cleanup needed
  *  here: this is the cashier's browser, not the customer's — the
  *  customer's own next poll (pollOrderStatusAction) is what clears
  *  their cookie once it sees the resulting CANCELLED status. The
@@ -82,11 +87,11 @@ export async function rejectCounterSessionAction(input: RejectRoundInput) {
 const safeMarkEntryPaid = toSafeResult(async (sessionIds: number[]) => {
   // Taking money: the owner, or a manager the owner let mark bills paid.
   await requirePermission("ORDERS_MARK_PAID");
-  return OrderSessionApprovalService.markSessionsPaid(sessionIds);
+  return OrderPaymentService.markSessionsPaid(sessionIds);
 });
 
 /** Whole-entry version for the grouped Order List (see
- *  OrderSessionApprovalService.markSessionsPaid) — one confirm click
+ *  OrderPaymentService.markSessionsPaid) — one confirm click
  *  settles every open round of a table's tab at once, rather than the
  *  cashier repeating Mark-as-Paid per round. */
 export async function markEntryPaidAction(sessionIds: number[]) {

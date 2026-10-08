@@ -3,8 +3,8 @@
 import { Box, Card, IconButton, Skeleton, Stack, Typography } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { periodLabel, type ReportPeriod } from "@/app/lib/reportPeriod";
-import { navigationDays, pairingMonthCaption } from "@/app/lib/reportView";
+import { periodLabel, type ReportPeriod } from "@/app/lib/report/reportPeriod";
+import { navigationDays, pairingMonthCaption } from "@/app/lib/report/reportView";
 import { ErrorRetry } from "./ReportStates";
 import type { PairingState } from "./usePairing";
 import { sectionHeadingSx } from "../order/orderTypography";

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OrderSessionService } from "@/app/services";
+import { CounterSessionService } from "@/app/services";
 import {
   COUNTER_SESSION_COOKIE,
   counterSessionCookieOptions,
-} from "@/app/lib/orderSessionCookie";
+} from "@/app/lib/storefront/orderSessionCookie";
 
 /**
  * Design doc "Step 1: QR Scan & URL Validation". A GET here is the
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   const existingToken =
     request.cookies.get(COUNTER_SESSION_COOKIE)?.value ?? null;
 
-  const result = await OrderSessionService.resolveCounterQrScan(
+  const result = await CounterSessionService.resolveCounterQrScan(
     tableId,
     key,
     existingToken,
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   if (result.status === "invalid_key") {
     // Wrong or rotated key — fail closed without revealing why (see
-    // OrderSessionService.resolveCounterQrScan). The given locationId
+    // CounterSessionService.resolveCounterQrScan). The given locationId
     // still came from the QR content itself, not a DB lookup, so it's
     // safe to reuse for the view-only redirect.
     return NextResponse.redirect(menuUrl);
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Cookie's session is terminal (PAID/etc.) — see design doc
     // section 4/6. Clear the now-useless cookie and send them to
     // read-only browsing; there is deliberately no "order again" path
-    // from here (see OrderSessionService.resolveCounterSession).
+    // from here (see CounterSessionService.resolveCounterSession).
     const response = NextResponse.redirect(menuUrl);
     response.cookies.set(COUNTER_SESSION_COOKIE, "", { maxAge: 0 });
     return response;

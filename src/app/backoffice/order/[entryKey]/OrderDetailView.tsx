@@ -6,10 +6,10 @@ import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useTheme } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
-import { ASK_OWNER_HINTS } from "@/app/lib/permissions";
+import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
 import { useCan } from "@/app/components/StaffAccessProvider";
-import type { RejectReason } from "@/app/lib/rejectReason";
-import { canPrintBill, type EntryBill } from "@/app/lib/orderTotals";
+import type { RejectReason } from "@/app/lib/order/rejectReason";
+import { canPrintBill, type EntryBill } from "@/app/lib/order/orderTotals";
 import { formatAmount, formatMoneyDelta } from "@/app/lib/orderFormat";
 import {
   acceptCounterSessionAction,
@@ -26,7 +26,7 @@ import type { Round } from "./RoundCard";
 import RoundTimeline from "./RoundTimeline";
 
 interface OrderDetailViewProps {
-  /** This entry's key — see OrderSessionApprovalService.entryKeyFor. */
+  /** This entry's key — see OrderListService.entryKeyFor. */
   entryKey: string;
   title: string;
   isTableGroup: boolean;

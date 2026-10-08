@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { Box, Typography } from "@mui/material";
 import {
-  AppService,
+  CompanyService,
   LocationService,
   OrderHistoryService,
 } from "@/app/services";
 import { NotFoundError } from "@/app/lib/errors";
-import { getSessionContext } from "@/app/lib/session";
+import { getSessionContext } from "@/app/lib/access/session";
 import { toShopDay } from "@/app/lib/shopDay";
 import ReceiptLayout from "../../ReceiptLayout";
 
@@ -57,7 +57,7 @@ export default async function PrintPaidBillPage({
   }
 
   const [shopName, location] = await Promise.all([
-    AppService.getCompanyNameByCompanyId(companyId),
+    CompanyService.getName(companyId),
     LocationService.getLocationById(selectedLocation.locationId),
   ]);
 

@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { OrderSessionApprovalService } from "@/app/services";
-import { approvalDeadline } from "@/app/lib/approvalDeadline";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
-import { buildEntryBillFromSessions } from "@/app/lib/orderTotals";
-import { mergeLinesForDisplay } from "@/app/lib/orderLineMerge";
+import { OrderListService } from "@/app/services";
+import { approvalDeadline } from "@/app/lib/approval/approvalDeadline";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
+import { buildEntryBillFromSessions } from "@/app/lib/order/orderTotals";
+import { mergeLinesForDisplay } from "@/app/lib/order/orderLineMerge";
 import OrderDetailView from "./OrderDetailView";
 
 // Awaiting approval first (oldest first — closest to expiring), then everything else newest first.
@@ -51,7 +51,7 @@ export default async function OrderDetailPage({
   if (!context) return fallback;
   const { location } = context;
 
-  const entry = await OrderSessionApprovalService.getOpenEntry(
+  const entry = await OrderListService.getOpenEntry(
     location.locationId,
     entryKey,
   );

@@ -1,7 +1,7 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
-import { normalizeOrderNote } from "@/app/lib/orderNote";
-import { lineMergeKey } from "@/app/lib/orderLineMerge";
-import { findAddonSelectionProblem } from "@/app/lib/addonSelection";
+import { normalizeOrderNote } from "@/app/lib/order/orderNote";
+import { lineMergeKey } from "@/app/lib/order/orderLineMerge";
+import { findAddonSelectionProblem } from "@/app/lib/cart/addonSelection";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 import { CartValidationService } from "../cartValidation.service";
@@ -31,7 +31,7 @@ export class OrderSessionCartService {
    *
    *  Identical lines merge: if THIS session's cart already has a line
    *  that is the same line — same menu, same add-on set, same note as
-   *  far as lineMergeKey (lib/orderLineMerge.ts, the rule Table QR's
+   *  far as lineMergeKey (lib/order/orderLineMerge.ts, the rule Table QR's
    *  submitDraft also uses) can tell — its quantity goes up by
    *  `quantity` and that line is returned; otherwise a new line is
    *  created. Only ever within one session, never across customers.
@@ -125,7 +125,7 @@ export class OrderSessionCartService {
     return tx.order.findUniqueOrThrow({
       where: { id: orderId },
       // Returned to the client by Server Actions: never the token (it's
-      // the key to editing a Table draft — see lib/contributors.ts).
+      // the key to editing a Table draft — see lib/order/contributors.ts).
       omit: { contributorToken: true },
       include: { OrdersAddons: { include: { addon: true } } },
     });

@@ -20,13 +20,13 @@ import EmptyState from "@/app/components/EmptyState";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import { useDebouncedValue } from "@/app/lib/hooks/useDebouncedValue";
 import { formatAmount } from "@/app/lib/orderFormat";
-import { periodFor, periodLabel } from "@/app/lib/reportPeriod";
+import { periodFor, periodLabel } from "@/app/lib/report/reportPeriod";
 import {
   buildItemList,
   reportHref,
   type ReportParams,
   type ReportSortBy,
-} from "@/app/lib/reportView";
+} from "@/app/lib/report/reportView";
 import type { ReportOverview } from "./action";
 import AddonsCard from "./AddonsCard";
 import ItemRow, { ItemsListHeader } from "./ItemRow";

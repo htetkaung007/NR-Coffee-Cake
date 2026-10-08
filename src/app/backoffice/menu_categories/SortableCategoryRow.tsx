@@ -12,7 +12,7 @@ import {
   categoryPreviewLine,
   NO_MENUS_TEXT,
   type CategoryMenu,
-} from "@/app/lib/categoryMenus";
+} from "@/app/lib/menu/categoryMenus";
 
 /** ↑ / ↓: outlined squares (1px divider border, theme radius), 44px;
  *  the disabled end fades out. */

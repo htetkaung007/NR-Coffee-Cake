@@ -3,13 +3,13 @@
 import { Box, Stack } from "@mui/material";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import StickyPageHeader from "@/app/components/StickyPageHeader";
-import type { ReportPeriod } from "@/app/lib/reportPeriod";
+import type { ReportPeriod } from "@/app/lib/report/reportPeriod";
 import {
   printableReportHref,
   reportExportHref,
   reportHref,
   type ReportParams,
-} from "@/app/lib/reportView";
+} from "@/app/lib/report/reportView";
 import OrdersPageHeader from "../order/OrdersPageHeader";
 import PeriodNavigator from "./PeriodNavigator";
 import ReportExportMenu from "./ReportExportMenu";

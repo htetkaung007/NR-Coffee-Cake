@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Box, Button, Card, Stack, Typography } from "@mui/material";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
 import { formatAmount } from "@/app/lib/orderFormat";
-import { buildItemList } from "@/app/lib/reportView";
+import { buildItemList } from "@/app/lib/report/reportView";
 import { ErrorRetry, PreviewRowsSkeleton } from "./ReportStates";
 import type { ItemsState } from "./useReportItems";
 import {

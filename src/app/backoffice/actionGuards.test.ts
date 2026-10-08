@@ -6,7 +6,7 @@ import ts from "typescript";
 /**
  * Every exported Server Action in src/app/backoffice/** /action.ts must
  * check who's calling — requireStaff / requireOwner / requirePermission
- * (lib/roleGuard.ts) — so a new action can't quietly skip it.
+ * (lib/access/roleGuard.ts) — so a new action can't quietly skip it.
  *
  * Why a static scan (and not, say, a GUARDS record each file exports):
  * a "use server" file may only export async functions — exporting an

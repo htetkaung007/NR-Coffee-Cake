@@ -4,7 +4,7 @@ import { NotFoundError, ValidationError } from "../lib/errors";
 import {
   LOCATION_DELETION_MESSAGES,
   locationDeletion,
-} from "../lib/locationDeletion";
+} from "../lib/location/locationDeletion";
 import { getFileStorageService } from "../lib/storage/getFileStorageService";
 import { MenuLocationService } from "./menuLocation.service";
 
@@ -108,7 +108,7 @@ export class LocationService {
     });
   }
 
-  /** What the delete rule needs (lib/locationDeletion), read with `db` —
+  /** What the delete rule needs (lib/location/locationDeletion), read with `db` —
    *  the client, or the delete's own transaction. Chain lookup: a
    *  location that isn't this company's is NotFoundError. */
   private static async deletionFacts(
@@ -142,7 +142,7 @@ export class LocationService {
 
   /**
    * Deletes a location with no sales history and no managers, right
-   * away (lib/locationDeletion — a location with sales can only ever be
+   * away (lib/location/locationDeletion — a location with sales can only ever be
    * archived). One transaction, rule re-checked inside it: its setup rows
    * go first — draft picks at its tables (no round was ever sent there,
    * so every Order at them is a draft), the tables, stock rows and both

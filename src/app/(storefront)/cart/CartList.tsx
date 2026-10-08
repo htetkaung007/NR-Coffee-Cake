@@ -15,9 +15,9 @@ import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 
 import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { cartLineTotal, type LineAddon } from "@/app/lib/orderTotals";
+import { cartLineTotal, type LineAddon } from "@/app/lib/order/orderTotals";
 import { formatAmount } from "@/app/lib/orderFormat";
-import type { ContributorLabel } from "@/app/lib/contributors";
+import type { ContributorLabel } from "@/app/lib/order/contributors";
 
 export interface CartLine {
   id: number;
@@ -46,7 +46,7 @@ export interface Shortage {
 }
 
 /** A Table QR line (draft or submitted) with WHO ordered it — as a label
- *  (lib/contributors.ts), never the token, which stays on the server.
+ *  (lib/order/contributors.ts), never the token, which stays on the server.
  *  DraftList and the round views group by it ("You", "Customer 2"). */
 export type LabelledCartLine = CartLine & ContributorLabel;
 

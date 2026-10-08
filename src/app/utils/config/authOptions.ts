@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 import { ensureDefaultSetup } from "./ensureDefaultSetup";
 import { loginSchema } from "@/app/lib/schemas/authSchema";
-import { AppService } from "@/app/services";
+import { AppService, CompanyService } from "@/app/services";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
       // Sign-in ချိန်မှာပဲ companyId ကို token ထဲ ထည့်ထား — request တိုင်း
       // database ကို ပြန်မထိုးတော့ဘဲ token (encrypted cookie) ထဲကနေပဲ ဖတ်.
       if (user?.email) {
-        const company = await AppService.getCompanyByEmail(user.email);
+        const company = await CompanyService.getByUserEmail(user.email);
         token.companyId = company.id;
 
         // Prisma User.id (number) ကို token ထဲ cache — Google OAuth ရဲ့

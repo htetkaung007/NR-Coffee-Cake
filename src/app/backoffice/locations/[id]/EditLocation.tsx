@@ -7,12 +7,6 @@ import {
   Alert,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Stack,
   Switch,
   TextField,
   Typography,
@@ -20,12 +14,14 @@ import {
 import {
   LOCATION_DELETION_MESSAGES,
   type LocationDeletion,
-} from "@/app/lib/locationDeletion";
+} from "@/app/lib/location/locationDeletion";
 import {
   toggleLocationArchiveAction,
   updateLocationNameAction,
   hardDeleteLocationAction,
 } from "../action";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
+import FormCard from "@/app/components/FormCard";
 
 interface EditLocationProps {
   location: {
@@ -37,7 +33,10 @@ interface EditLocationProps {
   deletion: LocationDeletion;
 }
 
-export default function EditLocation({ location, deletion }: EditLocationProps) {
+export default function EditLocation({
+  location,
+  deletion,
+}: EditLocationProps) {
   const router = useRouter();
   const [name, setName] = useState(location.name);
   const [isArchived, setIsArchived] = useState(location.isArchived);
@@ -46,17 +45,12 @@ export default function EditLocation({ location, deletion }: EditLocationProps) 
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  // The owner types the location's name to enable Delete.
-  const [typedName, setTypedName] = useState("");
 
   const [isSavingName, startSavingName] = useTransition();
   const [isTogglingArchive, startTogglingArchive] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
 
-  const isNameConfirmed = typedName.trim() === location.name.trim();
-
   function openDeleteDialog() {
-    setTypedName("");
     setDeleteDialogOpen(true);
   }
 
@@ -107,36 +101,28 @@ export default function EditLocation({ location, deletion }: EditLocationProps) 
       </Typography>
 
       {/* Rename — its own form, its own submit, its own error */}
-      <Box
-        component="form"
+      <FormCard
         onSubmit={handleSaveName}
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 3,
-          p: { xs: 2, sm: 3 },
-          mb: 3,
-        }}
+        error={nameError}
+        spacing={2}
+        sx={{ mb: 3 }}
       >
-        <Stack spacing={2}>
-          {nameError && <Alert severity="error">{nameError}</Alert>}
-          <TextField
-            label="Location Name"
-            required
-            fullWidth
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSavingName || !name.trim()}
-            sx={{ alignSelf: "flex-start", px: 3 }}
-          >
-            {isSavingName ? "Saving..." : "Save Name"}
-          </Button>
-        </Stack>
-      </Box>
+        <TextField
+          label="Location Name"
+          required
+          fullWidth
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={isSavingName || !name.trim()}
+          sx={{ alignSelf: "flex-start", px: 3 }}
+        >
+          {isSavingName ? "Saving..." : "Save Name"}
+        </Button>
+      </FormCard>
 
       {/* Archive toggle — separate control, separate action */}
       <Box
@@ -180,7 +166,7 @@ export default function EditLocation({ location, deletion }: EditLocationProps) 
         </Box>
       </Box>
 
-      {/* Danger zone — permanent delete (lib/locationDeletion): only a
+      {/* Danger zone — permanent delete (lib/location/locationDeletion): only a
           location with no sales history and no managers; right away,
           archived or not. */}
       <Box
@@ -236,41 +222,18 @@ export default function EditLocation({ location, deletion }: EditLocationProps) 
         )}
       </Box>
 
-      <Dialog
+      <ConfirmDialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="delete-location-title"
-      >
-        <DialogTitle id="delete-location-title">
-          Delete {location.name} permanently?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            This removes the location with its tables, their QR codes and its
-            stock. It can&apos;t be undone. Type the location&apos;s name to
-            confirm.
-          </DialogContentText>
-          <TextField
-            label="Location name"
-            autoFocus
-            fullWidth
-            value={typedName}
-            onChange={(event) => setTypedName(event.target.value)}
-            helperText={`Type: ${location.name}`}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button
-            color="error"
-            variant="contained"
-            disabled={!isNameConfirmed || isDeleting}
-            onClick={handleHardDelete}
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title={`Delete ${location.name} permanently?`}
+        message="This removes the location with its tables, their QR codes and its stock. It can't be undone. Type the location's name to confirm."
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        destructive
+        pending={isDeleting}
+        requireTypedText={{ text: location.name, label: "Location name" }}
+        onConfirm={handleHardDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
     </Box>
   );
 }

@@ -10,7 +10,10 @@ const errorOf = (input: Record<string, unknown>) => {
 
 describe("rejectRoundSchema — note", () => {
   it("keeps a note on Other, trimmed", () => {
-    const result = parse({ rejectReason: "OTHER", note: "  coffee machine broken  " });
+    const result = parse({
+      rejectReason: "OTHER",
+      note: "  coffee machine broken  ",
+    });
     expect(result.data).toEqual({
       sessionId: 7,
       details: { rejectReason: "OTHER", note: "coffee machine broken" },
@@ -18,14 +21,19 @@ describe("rejectRoundSchema — note", () => {
   });
 
   it("collapses inner whitespace runs to one space", () => {
-    expect(parse({ rejectReason: "OTHER", note: "coffee   \t machine" }).data?.details).toEqual({
+    expect(
+      parse({ rejectReason: "OTHER", note: "coffee   \t machine" }).data
+        ?.details,
+    ).toEqual({
       rejectReason: "OTHER",
       note: "coffee machine",
     });
   });
 
   it("turns a newline inside the note into a space", () => {
-    expect(parse({ rejectReason: "OTHER", note: "coffee\nmachine" }).data?.details).toEqual({
+    expect(
+      parse({ rejectReason: "OTHER", note: "coffee\nmachine" }).data?.details,
+    ).toEqual({
       rejectReason: "OTHER",
       note: "coffee machine",
     });
@@ -42,7 +50,9 @@ describe("rejectRoundSchema — note", () => {
   );
 
   it("accepts exactly 120 characters", () => {
-    expect(parse({ rejectReason: "OTHER", note: "a".repeat(120) }).success).toBe(true);
+    expect(
+      parse({ rejectReason: "OTHER", note: "a".repeat(120) }).success,
+    ).toBe(true);
   });
 
   it("rejects 121 characters", () => {
@@ -53,12 +63,15 @@ describe("rejectRoundSchema — note", () => {
 
   it("counts the length after trimming", () => {
     expect(
-      parse({ rejectReason: "OTHER", note: `   ${"a".repeat(120)}   ` }).success,
+      parse({ rejectReason: "OTHER", note: `   ${"a".repeat(120)}   ` })
+        .success,
     ).toBe(true);
   });
 
   it("keeps Myanmar text", () => {
-    expect(parse({ rejectReason: "OTHER", note: "ကော်ဖီစက် ပျက်နေ" }).data?.details).toEqual({
+    expect(
+      parse({ rejectReason: "OTHER", note: "ကော်ဖီစက် ပျက်နေ" }).data?.details,
+    ).toEqual({
       rejectReason: "OTHER",
       note: "ကော်ဖီစက် ပျက်နေ",
     });

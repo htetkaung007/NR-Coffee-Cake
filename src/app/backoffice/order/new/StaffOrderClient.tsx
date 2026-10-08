@@ -10,9 +10,9 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { applyAddedLine, cartLinesTotal, sumQuantities } from "@/app/lib/orderTotals";
+import { applyAddedLine, cartLinesTotal, sumQuantities } from "@/app/lib/order/orderTotals";
 import { countLabel, formatAmount } from "@/app/lib/orderFormat";
-import { toLineAddons } from "@/app/lib/roundLine";
+import { toLineAddons } from "@/app/lib/order/roundLine";
 import MenuDetailDialog, {
   type MenuDetailEditingSelection,
 } from "@/app/components/orderUI/MenuDetailDialog";

@@ -74,7 +74,7 @@ vi.mock("@/app/utils/prisma", () => ({
 import { CartValidationService } from "./cartValidation.service";
 import { TableDraftService } from "./tableDraft.service";
 import { OrderSessionCartService } from "./orderService/orderSessionCart.service";
-import { OrderSessionService } from "./orderService/orderSession.service";
+import { StaffOrderService } from "./orderService/staffOrder.service";
 
 const HIDDEN_MESSAGE = '"Mocha" isn\'t available at this location.';
 
@@ -134,7 +134,7 @@ describe("sending a menu hidden at the location is refused on the server", () =>
 
   it("staff POS: submit refuses a line added before the menu was hidden", async () => {
     db.orders = [{ menuId: 2 }];
-    await expect(OrderSessionService.submitStaffOrder(7)).rejects.toMatchObject({
+    await expect(StaffOrderService.submitStaffOrder(7)).rejects.toMatchObject({
       message: HIDDEN_MESSAGE,
     });
     expect(transaction).not.toHaveBeenCalled();

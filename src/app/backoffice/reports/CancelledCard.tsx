@@ -2,7 +2,7 @@
 
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
 import { formatAmount } from "@/app/lib/orderFormat";
-import { formatRejectReasonCounts } from "@/app/lib/rejectReason";
+import { formatRejectReasonCounts } from "@/app/lib/order/rejectReason";
 import type { ReportOverview } from "./action";
 import { moneyToneSx, sectionHeadingSx } from "../order/orderTypography";
 

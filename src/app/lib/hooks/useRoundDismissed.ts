@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { readStorage, useStoredValue, writeStorage } from "./useStoredValue";
 
 /**
  * Remembers, per table and per browser, that the customer has moved on
@@ -16,38 +16,18 @@ import { useSyncExternalStore } from "react";
  * has its own key, so dismissing one never hides the other.
  */
 
-const CHANGE_EVENT = "round-dismissed-change";
 const inMemory = new Map<string, number>();
 
 /** Highest round id dismissed under this key (0 = none). */
 function getDismissedUpTo(key: string) {
-  let stored = 0;
-  try {
-    stored = Number(window.localStorage.getItem(key)) || 0;
-  } catch {
-    // storage blocked — fall through to the in-memory copy
-  }
+  const stored = Number(readStorage(key)) || 0;
   return Math.max(stored, inMemory.get(key) ?? 0);
 }
 
 function dismissRound(key: string, roundId: number) {
   if (roundId <= getDismissedUpTo(key)) return;
   inMemory.set(key, roundId);
-  try {
-    window.localStorage.setItem(key, String(roundId));
-  } catch {
-    // storage blocked — the in-memory copy still covers this session
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGE_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGE_EVENT, onChange);
-  };
+  writeStorage(key, String(roundId));
 }
 
 /** True once the customer has moved on from this round's screen. `null`
@@ -58,10 +38,9 @@ function useRoundDismissed(
   key: string,
   roundId: number | undefined,
 ): boolean | null {
-  const dismissedUpTo = useSyncExternalStore<number | null>(
-    subscribe,
+  const dismissedUpTo = useStoredValue<number | null>(
     () => getDismissedUpTo(key),
-    () => null,
+    null,
   );
   if (dismissedUpTo === null) return null;
   return roundId !== undefined && roundId <= dismissedUpTo;

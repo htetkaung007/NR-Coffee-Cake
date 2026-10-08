@@ -1,17 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { OrderSessionService, TableDraftService } from "@/app/services";
+import { TableDraftService, TableSessionService } from "@/app/services";
 import { AppError } from "@/app/lib/errors";
 import {
   toActionResult,
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { getContributorToken } from "@/app/lib/contributorToken";
-import { toDraftLine, toLabelledCartLine } from "@/app/lib/roundLine";
-import { orderLinesTotal } from "@/app/lib/orderTotals";
-import { approvalTiming } from "@/app/lib/approvalTiming";
+import { getContributorToken } from "@/app/lib/storefront/contributorToken";
+import { toDraftLine, toLabelledCartLine } from "@/app/lib/order/roundLine";
+import { orderLinesTotal } from "@/app/lib/order/orderTotals";
+import { approvalTiming } from "@/app/lib/approval/approvalTiming";
 import {
   addDraftItemSchema,
   removeDraftItemSchema,
@@ -236,14 +236,14 @@ export async function pollTableAction(tableId: number, locationId: number) {
   const [draftItems, activeRound, shortages, rejectedRound, labels] =
     await Promise.all([
       TableDraftService.getDraftItemsForTable(parsed.data.tableId),
-      OrderSessionService.getActiveRoundWithOrdersForTable(parsed.data.tableId),
+      TableSessionService.getActiveRoundWithOrdersForTable(parsed.data.tableId),
       TableDraftService.getShortagesForTable(
         parsed.data.tableId,
         parsed.data.locationId,
       ),
       // The table's last round, if the counter turned it down / let it
       // expire — shown once on the cart page (see OrderRejectedScreen).
-      OrderSessionService.getRejectedRoundForTable(parsed.data.tableId),
+      TableSessionService.getRejectedRoundForTable(parsed.data.tableId),
       // Who's who as labels — the tokens stay on the server.
       TableDraftService.getContributorLabels(
         parsed.data.tableId,

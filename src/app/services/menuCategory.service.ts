@@ -4,7 +4,7 @@ import { AppError, NotFoundError, ValidationError } from "../lib/errors";
 import {
   groupCategoryMenus,
   planCategoryMenuRemoval,
-} from "../lib/categoryMenus";
+} from "../lib/menu/categoryMenus";
 
 type Tx = Prisma.TransactionClient;
 
@@ -98,7 +98,7 @@ export class MenuCategoryService {
     });
   }
 
-  /** Every category's menus for the categories page (lib/categoryMenus:
+  /** Every category's menus for the categories page (lib/menu/categoryMenus:
    *  status at this location, other-category counts), with four queries
    *  for the whole page: the company's active links (link, menu and
    *  category live — the same set "N items" counts), the stock rows and

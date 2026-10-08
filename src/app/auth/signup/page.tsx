@@ -1,4 +1,4 @@
-import { SignUpForm } from "@/app/components/SignUpForm";
+import { SignUpForm } from "./SignUpForm";
 
 import { Suspense } from "react";
 

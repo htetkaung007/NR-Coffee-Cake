@@ -21,7 +21,7 @@ import {
   classifyCameraError,
   parseCounterQrUrl,
   type CameraFailure,
-} from "@/app/lib/counterQrScan";
+} from "@/app/lib/storefront/counterQrScan";
 
 type Phase =
   | { kind: "scanning" }

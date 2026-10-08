@@ -1,12 +1,8 @@
 import { redirect } from "next/navigation";
 import { Box, Typography } from "@mui/material";
-import {
-  AppService,
-  LocationService,
-  OrderSessionApprovalService,
-} from "@/app/services";
-import { getSessionContext } from "@/app/lib/session";
-import { buildEntryBillFromSessions } from "@/app/lib/orderTotals";
+import { CompanyService, LocationService, OrderListService } from "@/app/services";
+import { getSessionContext } from "@/app/lib/access/session";
+import { buildEntryBillFromSessions } from "@/app/lib/order/orderTotals";
 import ReceiptLayout from "../../ReceiptLayout";
 
 function Message({ children }: { children: React.ReactNode }) {
@@ -39,14 +35,14 @@ export default async function PrintOrderPage({
     );
   }
 
-  const entry = await OrderSessionApprovalService.getOpenEntry(
+  const entry = await OrderListService.getOpenEntry(
     selectedLocation.locationId,
     entryKey,
   );
   if (!entry) return <Message>This bill is no longer open.</Message>;
 
   const [shopName, location] = await Promise.all([
-    AppService.getCompanyNameByCompanyId(companyId),
+    CompanyService.getName(companyId),
     LocationService.getLocationById(selectedLocation.locationId),
   ]);
 

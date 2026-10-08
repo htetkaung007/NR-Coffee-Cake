@@ -1,5 +1,5 @@
-import { OrderSessionApprovalService } from "@/app/services";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
+import { OrderListService } from "@/app/services";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import OrderListView from "./OrderListView";
 
 export default async function OrderPage() {
@@ -10,7 +10,7 @@ export default async function OrderPage() {
   if (!context) return fallback;
   const { location } = context;
 
-  const entries = await OrderSessionApprovalService.getOpenEntries(
+  const entries = await OrderListService.getOpenEntries(
     location.locationId,
   );
 

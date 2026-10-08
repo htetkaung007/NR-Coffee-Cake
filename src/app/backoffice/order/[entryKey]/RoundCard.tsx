@@ -16,7 +16,7 @@ import MenuThumb from "@/app/components/MenuThumb";
 import StatusChip, { StatusDot } from "./StatusChip";
 import RejectReasonDialog from "../RejectReasonDialog";
 import type { ActionResult } from "@/app/lib/actionResult";
-import type { RejectReason } from "@/app/lib/rejectReason";
+import type { RejectReason } from "@/app/lib/order/rejectReason";
 import { countLabel, formatClockTime } from "@/app/lib/orderFormat";
 
 export interface RoundLine {

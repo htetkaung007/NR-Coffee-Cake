@@ -14,7 +14,7 @@ import {
 import {
   DEFAULT_MANAGER_PERMISSIONS,
   type PermissionKey,
-} from "@/app/lib/permissions";
+} from "@/app/lib/access/permissions";
 import PermissionChecklist from "./PermissionChecklist";
 import { createManagerAction } from "./action";
 

@@ -1,13 +1,13 @@
 "use client";
 
 import CalendarNavigator from "@/app/components/CalendarNavigator";
-import type { ReportPeriod } from "@/app/lib/reportPeriod";
-import { periodLabel } from "@/app/lib/reportPeriod";
+import type { ReportPeriod } from "@/app/lib/report/reportPeriod";
+import { periodLabel } from "@/app/lib/report/reportPeriod";
 import {
   navigationDays,
   reportHref,
   type ReportParams,
-} from "@/app/lib/reportView";
+} from "@/app/lib/report/reportView";
 
 interface PeriodNavigatorProps {
   params: ReportParams;

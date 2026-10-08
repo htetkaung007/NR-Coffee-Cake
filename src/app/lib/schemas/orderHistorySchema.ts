@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { idSchema } from "./common";
 import { isRealCalendarDay, todayInShop } from "@/app/lib/shopDay";
 
 const DAY_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
@@ -32,6 +33,6 @@ export type HistorySummaryInput = z.infer<typeof historySummaryInputSchema>;
 
 export const historyDetailInputSchema = z.object({
   tab: historyTabSchema,
-  id: z.number().int().positive(),
+  id: idSchema,
 });
 export type HistoryDetailInput = z.infer<typeof historyDetailInputSchema>;

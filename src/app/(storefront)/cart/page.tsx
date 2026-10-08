@@ -3,19 +3,20 @@ import Link from "next/link";
 import { Box, Typography } from "@mui/material";
 import {
   CartSubmitService,
+  CounterSessionService,
   LocationService,
-  OrderSessionService,
   TableDraftService,
+  TableSessionService,
 } from "@/app/services";
-import { COUNTER_SESSION_COOKIE } from "@/app/lib/orderSessionCookie";
-import { getContributorToken } from "@/app/lib/contributorToken";
+import { COUNTER_SESSION_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
+import { getContributorToken } from "@/app/lib/storefront/contributorToken";
 import {
   toCartLine,
   toDraftLine,
   toLabelledCartLine,
-} from "@/app/lib/roundLine";
-import { orderLinesTotal } from "@/app/lib/orderTotals";
-import { approvalTiming } from "@/app/lib/approvalTiming";
+} from "@/app/lib/order/roundLine";
+import { orderLinesTotal } from "@/app/lib/order/orderTotals";
+import { approvalTiming } from "@/app/lib/approval/approvalTiming";
 import CartPageClient from "@/app/components/orderUI/CartPageClient";
 import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
@@ -79,10 +80,10 @@ export default async function CartPage({
         labels,
       ] = await Promise.all([
         TableDraftService.getDraftItemsForTable(tableId),
-        OrderSessionService.getActiveRoundWithOrdersForTable(tableId),
+        TableSessionService.getActiveRoundWithOrdersForTable(tableId),
         LocationService.getShopNameForLocation(locationId),
         TableDraftService.getShortagesForTable(tableId, locationId),
-        OrderSessionService.getRejectedRoundForTable(tableId),
+        TableSessionService.getRejectedRoundForTable(tableId),
         // Who's who as labels — the tokens stay on the server.
         TableDraftService.getContributorLabels(tableId, contributorToken),
       ]);
@@ -122,7 +123,7 @@ export default async function CartPage({
   const token = cookieStore.get(COUNTER_SESSION_COOKIE)?.value;
 
   const session = token
-    ? await OrderSessionService.getActiveSessionByToken(token)
+    ? await CounterSessionService.getActiveSessionByToken(token)
     : null;
   // The session's location when there is one (the query param could be
   // edited), otherwise the page's own — the browser cart is kept per
@@ -163,7 +164,7 @@ export default async function CartPage({
     // "Order More" can split one bill into several rounds — the header
     // (and the Order-confirmed screen it feeds) shows the BILL's number,
     // matching the cashier's Order List card, never this round's own.
-    session ? OrderSessionService.getBillForSession(session) : null,
+    session ? CounterSessionService.getBillForSession(session) : null,
   ]);
 
   return (

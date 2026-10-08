@@ -12,7 +12,7 @@ import {
   FormLabel,
   Stack,
 } from "@mui/material";
-import { NO_LOCATION_MESSAGE } from "@/app/lib/menuLocations";
+import { NO_LOCATION_MESSAGE } from "@/app/lib/menu/menuLocations";
 
 export interface LocationOption {
   locationId: number;

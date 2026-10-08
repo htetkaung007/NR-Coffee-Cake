@@ -1,5 +1,5 @@
 // backoffice/menus/new/page.tsx (Server Component)
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 
 import NewMenu from "./NewMenu";
 

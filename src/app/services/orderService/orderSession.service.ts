@@ -1,13 +1,13 @@
 import { NotFoundError, ValidationError } from "@/app/lib/errors";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
-import type { RejectDetails } from "@/app/lib/rejectReason";
-import { CartValidationService } from "../cartValidation.service";
+import type { RejectDetails } from "@/app/lib/order/rejectReason";
 import { MenuStockService } from "../menuStock.service";
-import { orderLinesTotal } from "@/app/lib/orderTotals";
-import { shownCancelReason } from "@/app/lib/roundOutcome";
-import { deriveDecidedAt, deriveRequestedAt } from "@/app/lib/cancellation";
-import { APPROVAL_WINDOW_MINUTES } from "@/app/lib/approvalWindow";
+import {
+  deriveDecidedAt,
+  deriveRequestedAt,
+} from "@/app/lib/order/cancellation";
+import { APPROVAL_WINDOW_MINUTES } from "@/app/lib/approval/approvalWindow";
 
 type Tx = Prisma.TransactionClient;
 
@@ -18,35 +18,6 @@ type CancelArgs =
   | [reason: "REJECTED", details: RejectDetails]
   | [reason: "EXPIRED"]
   | [reason: "UNSUBMITTED"];
-
-/** Shared by submitCartRoundForApproval and submitStaffOrder — both need
- *  to atomically decrement stock for every one of the session's CART
- *  items before actually transitioning it out of CART (see the
- *  "decrement at submit, not at add-to-cart/draft" design discussion);
- *  only the target status and whether an approval window gets set
- *  differ between the two, which each keeps as its own small
- *  transaction body around this. A shortage on even one item throws
- *  inside the transaction, rolling back the whole submit — no status
- *  change, no partial decrement left behind. */
-async function decrementStockForSession(
-  tx: Tx,
-  sessionId: number,
-  locationId: number,
-) {
-  const orders = await tx.order.findMany({
-    where: { orderSessionId: sessionId, isArchived: false },
-    include: { menu: true },
-  });
-  for (const order of orders) {
-    await MenuStockService.decrementStock(
-      tx,
-      order.menuId,
-      order.menu.name,
-      locationId,
-      order.quantity,
-    );
-  }
-}
 
 // A session that has reached one of these statuses is "done" — a new
 // scan (Table QR) or a new cookie-matched visit (Counter QR) must not
@@ -65,7 +36,6 @@ export function isSessionTerminal(status: string) {
   return (TERMINAL_STATUSES as readonly string[]).includes(status);
 }
 
-
 // A session still sitting in CART this long after being created — no
 // order ever submitted through it — is treated as abandoned (customer
 // scanned and never came back to it). Checked lazily wherever a
@@ -77,13 +47,16 @@ export function isSessionTerminal(status: string) {
 // add-to-cart/submit attempt — not the instant the 40 minutes elapse.
 const CART_ABANDON_MINUTES = 5;
 
-/** A session that has ever left CART (submitted at least once, even
+/** Exported for CounterSessionService's cookie lookups — the one
+ *  definition, shared with getOrStartCartRound below.
+ *
+ *  A session that has ever left CART (submitted at least once, even
  *  if that submission was later rejected) is no longer at risk of
  *  being treated as "abandoned" — see CART_ABANDON_MINUTES. Only a
  *  session that has NEVER been submitted can still be sitting in CART
  *  by the time this runs, so checking the current status is enough;
  *  no separate "has this ever been submitted" flag is needed. */
-function isAbandonedCart(session: { status: string; createdAt: Date }) {
+export function isAbandonedCart(session: { status: string; createdAt: Date }) {
   if (session.status !== "CART") return false;
   const ageMs = Date.now() - session.createdAt.getTime();
   return ageMs > CART_ABANDON_MINUTES * 60_000;
@@ -115,13 +88,19 @@ export function generateOrderNumber(sessionId: number) {
 }
 
 /**
- * OrderSession domain — the layer that groups Order (line-item) rows
- * into one customer-facing receipt, and resolves which session a QR
- * scan or a returning cookie should land in. The cashier-approval /
- * kitchen-facing half (accept, reject, mark paid, expire stale
- * approvals, list for the Order List page) lives in the sibling
- * OrderSessionApprovalService — see that file's class comment for why
- * it's split out.
+ * OrderSession domain — the round LIFECYCLE every flow shares: the one
+ * cancel writer (cancelSession), the CART -> PENDING_APPROVAL submit,
+ * starting the next round, and the lazily-expiring status read. The
+ * flows that create and look up rounds live beside it, each split by
+ * its own reason to change (CLAUDE.md Rule 14):
+ *  - TableSessionService — Table QR scans and a table's rounds;
+ *  - CounterSessionService — Counter QR scans, the cookie's session and
+ *    its bill;
+ *  - StaffOrderService — the staff New Order screen;
+ *  - OrderApprovalService / OrderPaymentService / OrderListService —
+ *    the Backoffice's accept/reject/expire, mark paid, and Order List.
+ * They call down into this one (never the other way round), so there
+ * are no import cycles.
  *
  * Table QR and Counter QR are still two distinct scan entry points
  * (resolveTableQrScan / resolveCounterQrScan) — Table QR's scan no
@@ -132,6 +111,35 @@ export function generateOrderNumber(sessionId: number) {
  * shared scan function still wouldn't make sense even now.
  */
 export class OrderSessionService {
+  /** Shared by submitCartRoundForApproval and submitStaffOrder — both need
+   *  to atomically decrement stock for every one of the session's CART
+   *  items before actually transitioning it out of CART (see the
+   *  "decrement at submit, not at add-to-cart/draft" design discussion);
+   *  only the target status and whether an approval window gets set
+   *  differ between the two, which each keeps as its own small
+   *  transaction body around this. A shortage on even one item throws
+   *  inside the transaction, rolling back the whole submit — no status
+   *  change, no partial decrement left behind. */
+  static async decrementStockForSession(
+    tx: Tx,
+    sessionId: number,
+    locationId: number,
+  ) {
+    const orders = await tx.order.findMany({
+      where: { orderSessionId: sessionId, isArchived: false },
+      include: { menu: true },
+    });
+    for (const order of orders) {
+      await MenuStockService.decrementStock(
+        tx,
+        order.menuId,
+        order.menu.name,
+        locationId,
+        order.quantity,
+      );
+    }
+  }
+
   /** The one place a session is written CANCELLED — every cancel path
    *  (abandoned cart, reject, lazy/batch approval expiry, a leftover
    *  CART round closed at payment) goes through here so the status,
@@ -222,151 +230,6 @@ export class OrderSessionService {
       });
     }
     return true;
-  }
-
-  /** Used by startStaffSession (a staff-placed order, no scan/cookie
-   *  involved) to create a Table-QR-shaped session directly. No longer
-   *  called from the customer-facing scan flow (see
-   *  resolveTableQrScan's own comment) — drafts replaced that path,
-   *  but a staff member manually opening a tab for a walk-in table
-   *  still needs a real session to exist right away, so this stays. */
-  static async startNewTableSession(table: { id: number; locationId: number }) {
-    return prisma.$transaction(async (tx: Tx) => {
-      const session = await tx.orderSession.create({
-        data: {
-          locationId: table.locationId,
-          tableId: table.id,
-          isCounter: false,
-          status: "CART",
-          orderNumber: "",
-        },
-      });
-
-      const numbered = await tx.orderSession.update({
-        where: { id: session.id },
-        data: { orderNumber: generateOrderNumber(session.id) },
-      });
-
-      // This write is what "opens the gate" for the table — see design
-      // doc section 3, rule 2.
-      await tx.table.update({
-        where: { id: table.id },
-        data: { activeSessionId: session.id },
-      });
-
-      return numbered;
-    });
-  }
-
-  /** Table QR — validates the table's rotating key
-   *  (Table.counterAccessKey), same check Counter's key gets, but no
-   *  longer resolves or creates an OrderSession here. With drafts
-   *  decoupled from any session (see TableDraftService), a scan only
-   *  needs to confirm this is a real, current table link — the scan
-   *  Route Handler uses the returned table's id to set up this
-   *  browser's contributorToken (getOrCreateContributorToken), and a
-   *  session only ever gets created later, at Send to Kitchen
-   *  (TableDraftService.submitDraft). */
-  static async resolveTableQrScan(tableId: number, key: string) {
-    const table = await prisma.table.findFirst({
-      where: {
-        id: tableId,
-        counterAccessKey: key,
-        isArchived: false,
-        isCounter: false,
-      },
-    });
-    if (!table) {
-      return { status: "invalid_key" as const };
-    }
-    return { status: "valid" as const, table };
-  }
-
-  /** Read-only — does NOT create a session if none exists (unlike the
-   *  pre-draft Table flow this replaced). Lets the browsing/cart UI
-   *  show "Round 1 — confirmed, cooking" alongside the draft-adding
-   *  UI for whatever round comes next. A terminal session (PAID/
-   *  CANCELLED/COMPLETED) is treated the same as "no active round" —
-   *  same reasoning markSessionsPaid's own comment describes: the
-   *  table's activeSessionId pointer is left as-is on payment, and
-   *  every reader is expected to treat a terminal session behind it
-   *  as stale rather than requiring a second write to clear it. */
-  static async getActiveRoundForTable(tableId: number) {
-    const table = await prisma.table.findFirst({
-      where: { id: tableId, isArchived: false },
-    });
-    if (!table?.activeSessionId) return null;
-
-    const current = await prisma.orderSession.findFirst({
-      where: { id: table.activeSessionId, isArchived: false },
-    });
-    if (!current || isSessionTerminal(current.status)) return null;
-    return current;
-  }
-
-  /** The table's latest round, if the counter turned it down or let it
-   *  expire (see shownCancelReason) — for the Table cart page's "wasn't
-   *  accepted" screen. The table's activeSessionId keeps pointing at a
-   *  round after it ends (see getActiveRoundForTable), so this is that
-   *  round read as-is. Read-only; null for anything else. */
-  static async getRejectedRoundForTable(tableId: number) {
-    const table = await prisma.table.findFirst({
-      where: { id: tableId, isArchived: false },
-      select: { activeSessionId: true },
-    });
-    if (!table?.activeSessionId) return null;
-
-    const round = await prisma.orderSession.findFirst({
-      where: { id: table.activeSessionId, isArchived: false },
-      select: { id: true, orderNumber: true, status: true, cancelReason: true },
-    });
-    const reason = round
-      ? shownCancelReason(round.status, round.cancelReason)
-      : null;
-    return round && reason
-      ? { id: round.id, orderNumber: round.orderNumber, cancelReason: reason }
-      : null;
-  }
-
-  /** getActiveRoundForTable plus the round's line items — for the
-   *  Table cart page, which keeps showing what was just sent to the
-   *  kitchen (with the approval status on its button) instead of
-   *  going blank once the draft has been merged into a round. */
-  static async getActiveRoundWithOrdersForTable(tableId: number) {
-    const round = await OrderSessionService.getActiveRoundForTable(tableId);
-    if (!round) return null;
-
-    const orders = await prisma.order.findMany({
-      where: { orderSessionId: round.id, isArchived: false },
-      orderBy: { id: "asc" },
-      include: { menu: true, OrdersAddons: { include: { addon: true } } },
-    });
-    return { ...round, orders };
-  }
-
-  /** One round of a table's still-open tab, for the receipt page. The
-   *  tableId is part of the lookup (not just the id) so a round id from
-   *  another table — ids are sequential and guessable — matches nothing;
-   *  null covers "no such round", "not this table's" and "already
-   *  finished/never submitted" alike (same set getRoundHistoryForTable
-   *  lists). The caller still has to have checked the viewer's
-   *  contributor token for tableId. */
-  static async getRoundDetailForTable(tableId: number, roundId: number) {
-    return prisma.orderSession.findFirst({
-      where: {
-        id: roundId,
-        tableId,
-        isArchived: false,
-        status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
-      },
-      include: {
-        orders: {
-          where: { isArchived: false },
-          orderBy: { id: "asc" },
-          include: { menu: true, OrdersAddons: { include: { addon: true } } },
-        },
-      },
-    });
   }
 
   /**
@@ -511,372 +374,6 @@ export class OrderSessionService {
     return OrderSessionService.startNextRound(session);
   }
 
-  /** For a session whose bill was split into multiple rounds
-   *  (billSessionId set) — the bill's first round ("root"), but only
-   *  if it's still open. Used the moment THIS session has just gone
-   *  terminal (rejected, timed out, or paid) to decide whether the
-   *  customer's cookie/scan should recover onto a still-open sibling
-   *  round instead of being treated as "nothing left" (see
-   *  pollOrderStatusAction and resolveCounterSession, both of which
-   *  call this before clearing a cookie or locking a scan).
-   *
-   *  Returns null in two cases: billSessionId is null (this session
-   *  IS the bill's own first round — there's nothing before it to
-   *  recover onto), or the root itself is also terminal (e.g. the
-   *  whole bill was just paid together — see cleanUpAfterPayment,
-   *  which is exactly what keeps this from ever finding a stale
-   *  "open" root after a payment). */
-  static async getOpenBillRoot(session: { billSessionId: number | null }) {
-    if (session.billSessionId === null) return null;
-
-    const root = await prisma.orderSession.findFirst({
-      where: { id: session.billSessionId, isArchived: false },
-    });
-    if (!root || isSessionTerminal(root.status)) return null;
-    return root;
-  }
-
-  /** Counter QR — the printed URL carries a rotating `key`
-   *  (Table.counterAccessKey). This is checked FIRST, before cookie logic
-   *  even runs: a wrong/stale key (old reprint, tampered URL) is
-   *  rejected outright rather than falling through to session
-   *  resolution. Returns "invalid_key" rather than throwing, so the
-   *  Route Handler can fail closed to a generic error/view-only page
-   *  without leaking *why* it failed. */
-  static async resolveCounterQrScan(
-    tableId: number,
-    key: string,
-    cookieToken: string | null,
-  ) {
-    const table = await prisma.table.findFirst({
-      where: {
-        id: tableId,
-        counterAccessKey: key,
-        isArchived: false,
-        isCounter: true,
-      },
-    });
-    if (!table) {
-      return { status: "invalid_key" as const };
-    }
-
-    return OrderSessionService.resolveCounterSession(
-      table.locationId,
-      table.id,
-      cookieToken,
-    );
-  }
-
-  /** Counter QR (design doc section 4). Session identity is carried by
-   *  a browser cookie (OrderSession.token, an opaque cuid — never the
-   *  numeric id) instead of the Table row, since many unrelated
-   *  customers share the same physical Counter QR.
-   *
-   *  Deliberately does NOT auto-start a new session once the cookie's
-   *  session is terminal (e.g. PAID) — and there is NO customer-facing
-   *  way to reopen it either. Once a cookie's order is paid, that
-   *  browser is permanently shown the read-only menu view (design doc
-   *  section 6) until either (a) the cookie's 24h expiry passes and
-   *  the very next visit is treated as a first-time scan, or (b) staff
-   *  place a new order for that customer directly (design doc section
-   *  7). There is no online payment at this business, so a
-   *  self-service "order again" affordance on a cookie the server
-   *  can't verify is physically at the counter would let a
-   *  paid-and-gone customer's browser place further orders no one
-   *  asked for. */
-  static async resolveCounterSession(
-    locationId: number,
-    counterTableId: number,
-    cookieToken: string | null,
-  ) {
-    if (!cookieToken) {
-      const session = await OrderSessionService.startNewCounterSession(
-        locationId,
-        counterTableId,
-      );
-      return { status: "active" as const, session };
-    }
-
-    const current = await prisma.orderSession.findFirst({
-      where: { token: cookieToken, isArchived: false },
-    });
-
-    if (!current) {
-      // Cookie pointed at a session that no longer exists — treat as
-      // a first visit rather than erroring out.
-      const session = await OrderSessionService.startNewCounterSession(
-        locationId,
-        counterTableId,
-      );
-      return { status: "active" as const, session };
-    }
-
-    if (!isSessionTerminal(current.status)) {
-      return { status: "active" as const, session: current };
-    }
-
-    // Terminal, but this might just be one round of a still-open bill
-    // going terminal on its own (Rejected/timed-out "Order More"
-    // round — see getOpenBillRoot) rather than the whole bill being
-    // settled — recover onto the bill's still-open first round
-    // instead of locking the customer out of a bill that was never
-    // actually paid.
-    const root = await OrderSessionService.getOpenBillRoot(current);
-    if (root) {
-      return { status: "active" as const, session: root };
-    }
-
-    // Terminal and no way back for this browser — see the method
-    // comment above. The caller should clear the cookie (Max-Age=0)
-    // and render/redirect to the read-only menu view.
-    return { status: "locked" as const, lastSession: current };
-  }
-
-  /** "History" page (Table QR only) — lets a customer waiting to pay
-   *  review every round already sent to the kitchen for this table's
-   *  tab, not just whichever one getActiveRoundForTable calls "the"
-   *  active round. Mirrors markSessionsPaid's own grouping: a table's
-   *  tab can be several OrderSession rows deep ("Order More" starts a
-   *  new round without touching one already cooking), all settled
-   *  together in one bill — so this is everything on that bill so far.
-   *
-   *  Excludes CART (nothing submitted yet — that's the live draft,
-   *  shown on the menu/cart pages instead) and every terminal status.
-   *  A caller only reaches this after requireContributorToken/
-   *  isTokenCurrentForTable passes, and that check itself already goes
-   *  stale the moment the table is paid (Table.contributorEpoch bumps
-   *  — see its own comment), so in practice "authorized to call this"
-   *  and "table's tab is still open" are the same condition; no
-   *  PAID/CANCELLED/COMPLETED round can still be legitimately reachable
-   *  here. */
-  static async getRoundHistoryForTable(tableId: number) {
-    return prisma.orderSession.findMany({
-      where: {
-        tableId,
-        isArchived: false,
-        status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
-      },
-      orderBy: { id: "asc" },
-      include: {
-        orders: {
-          where: { isArchived: false },
-          include: { menu: true, OrdersAddons: { include: { addon: true } } },
-        },
-      },
-    });
-  }
-
-  /** Counter QR's counterpart to getRoundHistoryForTable — "Order
-   *  More" splits one bill into several OrderSession rounds (see
-   *  billSessionId's own schema comment), but the customer should see
-   *  ONE bill number and ONE running total throughout, the same way
-   *  the cashier's Order List card already does (see
-   *  OrderSessionApprovalService.groupSessionsForDisplay). Every
-   *  Counter customer screen that used to show a round's own
-   *  orderNumber calls this instead.
-   *
-   *  billNumber is the root round's orderNumber — the session ITSELF
-   *  if billSessionId is null (it IS the bill's first round), looked
-   *  up fresh rather than trusted from the caller so this stays
-   *  correct even if the caller only has a stale/partial session row.
-   *
-   *  rounds mirrors getRoundHistoryForTable exactly (same status
-   *  filter, same orders include, oldest first) so the same history
-   *  UI (OrderHistoryCard) can render either one — root plus every
-   *  round whose billSessionId equals the root's id, excluding CART
-   *  (nothing submitted yet) and every terminal status.
-   *
-   *  combinedTotal reuses orderLinesTotal per round — no separate
-   *  total math (Rule: reuse orderTotals helpers). */
-  static async getBillForSession(session: {
-    id: number;
-    billSessionId: number | null;
-  }) {
-    const rootId = session.billSessionId ?? session.id;
-
-    const [root, rounds] = await Promise.all([
-      prisma.orderSession.findFirst({
-        where: { id: rootId, isArchived: false },
-      }),
-      prisma.orderSession.findMany({
-        where: {
-          OR: [{ id: rootId }, { billSessionId: rootId }],
-          isArchived: false,
-          status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
-        },
-        orderBy: { id: "asc" },
-        include: {
-          orders: {
-            where: { isArchived: false },
-            include: { menu: true, OrdersAddons: { include: { addon: true } } },
-          },
-        },
-      }),
-    ]);
-
-    const billNumber = root?.orderNumber ?? generateOrderNumber(rootId);
-    const combinedTotal = rounds.reduce(
-      (sum, round) => sum + orderLinesTotal(round.orders),
-      0,
-    );
-
-    return { billNumber, rounds, combinedTotal };
-  }
-
-  /** Read-only lookup for a page load that already has a cookie (i.e.
-   *  after the scan Route Handler has already run) — unlike
-   *  resolveCounterSession, this never starts a new session; it just
-   *  reports what the cookie currently points to (or null). Includes
-   *  the session's current cart/order rows so the page has everything
-   *  it needs in one call. */
-  static async getSessionByToken(token: string) {
-    return prisma.orderSession.findFirst({
-      where: { token, isArchived: false },
-      include: {
-        orders: {
-          where: { isArchived: false },
-          include: { menu: true, OrdersAddons: { include: { addon: true } } },
-          orderBy: { id: "asc" },
-        },
-      },
-    });
-  }
-
-  /** "Give me a usable session for this token, or nothing" — the one
-   *  place Controllers (page.tsx / action.ts) should ask this,
-   *  instead of each combining getSessionByToken with their own
-   *  terminal-status check. Null covers "no such session", "session
-   *  exists but is terminal", AND "session has sat unsubmitted in
-   *  CART past the abandonment window" (see isAbandonedCart) — a
-   *  Controller redirecting/erroring on a cookie doesn't need to
-   *  distinguish any of those cases, it just has nothing usable
-   *  either way. */
-  static async getActiveSessionByToken(token: string) {
-    const session = await OrderSessionService.getSessionByToken(token);
-    if (!session) return null;
-
-    if (isAbandonedCart(session)) {
-      await prisma.$transaction((tx: Tx) =>
-        OrderSessionService.cancelSession(tx, session.id, "UNSUBMITTED"),
-      );
-      return null;
-    }
-
-    if (isSessionTerminal(session.status)) return null;
-    return session;
-  }
-
-  /** getActiveSessionByToken's answer WITHOUT its write: an abandoned
-   *  CART session reads as null here but is left for
-   *  getActiveSessionByToken to cancel. For read-only checks (e.g. the
-   *  cart page's "can this browser send?"), which must never change
-   *  anything. */
-  static async peekActiveSessionByToken(token: string) {
-    const session = await OrderSessionService.getSessionByToken(token);
-    if (!session) return null;
-    if (isAbandonedCart(session) || isSessionTerminal(session.status)) {
-      return null;
-    }
-    return session;
-  }
-
-  /** Adds one line item to a session's cart — only while the session
-   *  is still CART (i.e. before "Submit Order"); refuses once it's
-   *  PENDING_APPROVAL or beyond, since editing an order the cashier
-   *  is already looking at would be confusing at best. */
-  /** addonIds is the FLAT list of every addon the customer picked
-   *  across all of this menu's addon categories (required + optional
-   *  combined) — the client doesn't need to group them by category to
-   *  call this, but the SERVER re-derives the grouping from
-   *  MenuAddonCategories to validate required-category selection.
-   *  This validation is a security boundary, not just UX polish: the
-   *  client-side "Add to Cart" button being disabled until required
-   *  categories are picked can be bypassed by anyone calling this
-   *  action directly, so the real enforcement has to live here (same
-   *  reasoning as requireSessionFromCookie in customer/menu/action.ts). */
-
-  static async startNewCounterSession(
-    locationId: number,
-    counterTableId: number,
-  ) {
-    return prisma.$transaction(async (tx: Tx) => {
-      const session = await tx.orderSession.create({
-        data: {
-          locationId,
-          tableId: counterTableId,
-          isCounter: true,
-          status: "CART",
-          orderNumber: "",
-        },
-      });
-
-      return tx.orderSession.update({
-        where: { id: session.id },
-        data: { orderNumber: generateOrderNumber(session.id) },
-      });
-    });
-  }
-
-  /** Staff Order-taking page equivalent of submitCartRoundForApproval —
-   *  CART -> PENDING directly, skipping PENDING_APPROVAL entirely.
-   *  There's no cashier to approve a manager's own order against
-   *  (they ARE the person who'd be approving it), so the 2-minute
-   *  approval window would just be a pointless wait before the
-   *  kitchen sees it. Everything downstream (kitchen sees it in
-   *  PENDING, gets marked COOKING, eventually markSessionsPaid) is
-   *  unchanged and identical to a normal accepted order — this only
-   *  removes the approval STEP, not any of the states after it. */
-  static async submitStaffOrder(sessionId: number) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
-    if (session.status !== "CART") {
-      throw new ValidationError(
-        "This order has already been submitted or is no longer editable.",
-      );
-    }
-    // A line added before its menu was hidden here can't be sent.
-    const lines = await prisma.order.findMany({
-      where: { orderSessionId: sessionId, isArchived: false },
-      select: { menuId: true },
-    });
-    await CartValidationService.assertMenusListed(
-      session.locationId,
-      lines.map((line) => line.menuId),
-    );
-
-    return prisma.$transaction(async (tx: Tx) => {
-      await decrementStockForSession(tx, sessionId, session.locationId);
-      return tx.orderSession.update({
-        where: { id: sessionId },
-        data: { status: "PENDING" },
-      });
-    });
-  }
-
-  /** Counter QR's counterpart to TableDraftService.getShortagesForTable
-   *  — same informational-only pre-check (see MenuStockService.
-   *  findShortages's own comment for why this isn't the real guard),
-   *  just against a single session's CART items instead of a table's
-   *  merged draft picks, since Counter never had multiple
-   *  contributors to merge across. */
-  static async getShortagesForSession(sessionId: number, locationId: number) {
-    const orders = await prisma.order.findMany({
-      where: { orderSessionId: sessionId, isArchived: false },
-      include: { menu: true },
-    });
-
-    return MenuStockService.findShortages(
-      locationId,
-      orders.map((order) => ({
-        menuId: order.menuId,
-        menuName: order.menu.name,
-        quantity: order.quantity,
-      })),
-    );
-  }
-
   /** The CART -> PENDING_APPROVAL step itself, inside the CALLER's
    *  transaction: decrements stock for every line of the round (the
    *  atomic guard — a shortage throws InsufficientStockError and rolls
@@ -892,7 +389,11 @@ export class OrderSessionService {
     const approvalExpiresAt = new Date(
       Date.now() + APPROVAL_WINDOW_MINUTES * 60_000,
     );
-    await decrementStockForSession(tx, round.id, round.locationId);
+    await OrderSessionService.decrementStockForSession(
+      tx,
+      round.id,
+      round.locationId,
+    );
     return tx.orderSession.update({
       where: { id: round.id },
       data: { status: "PENDING_APPROVAL", approvalExpiresAt },
@@ -922,20 +423,5 @@ export class OrderSessionService {
     }
 
     return session;
-  }
-
-  /** For the Staff Order-taking page (design doc section 7) — starts a
-   *  session with no scan/cookie/key involved at all, since a
-   *  staff-placed order has no restriction. Reuses
-   *  startNewTableSession / startNewCounterSession so the resulting
-   *  row looks identical to one a real scan would have produced. */
-  static async startStaffSession(table: {
-    id: number;
-    locationId: number;
-    isCounter: boolean | null;
-  }) {
-    return table.isCounter
-      ? OrderSessionService.startNewCounterSession(table.locationId, table.id)
-      : OrderSessionService.startNewTableSession(table);
   }
 }

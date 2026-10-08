@@ -12,7 +12,7 @@ import {
   type CreateLocationInput,
   type UpdateLocationInput,
 } from "@/app/lib/schemas/locationSchema";
-import { requireOwner } from "@/app/lib/roleGuard";
+import { requireOwner } from "@/app/lib/access/roleGuard";
 import { LocationService } from "@/app/services";
 
 const safeCreateLocation = toSafeResult(async (input: CreateLocationInput) => {

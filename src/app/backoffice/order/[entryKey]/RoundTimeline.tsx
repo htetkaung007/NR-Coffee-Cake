@@ -1,7 +1,7 @@
 "use client";
 
 import type { ActionResult } from "@/app/lib/actionResult";
-import type { RejectReason } from "@/app/lib/rejectReason";
+import type { RejectReason } from "@/app/lib/order/rejectReason";
 import { Box, Typography } from "@mui/material";
 import RoundCard, { type Round } from "./RoundCard";
 import { formatClockTime } from "@/app/lib/orderFormat";

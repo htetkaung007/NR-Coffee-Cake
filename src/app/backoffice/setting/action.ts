@@ -6,7 +6,7 @@ import {
   toSafeResult,
   validateWith,
 } from "@/app/lib/actionHelper";
-import { requireOwner } from "@/app/lib/roleGuard";
+import { requireOwner } from "@/app/lib/access/roleGuard";
 import {
   createManagerSchema,
   type CreateManagerInput,
@@ -19,17 +19,12 @@ import {
   setManagerPermissionsSchema,
   type SetManagerPermissionsInput,
 } from "@/app/lib/schemas/managerPermissionsSchema";
-import {
-  AppService,
-  CompanyService,
-  LocationService,
-  PermissionService,
-} from "@/app/services";
+import { CompanyService, ManagerService } from "@/app/services";
 
 const safeCreateManager = toSafeResult(async (input: CreateManagerInput) => {
   const { companyId, userId } = await requireOwner();
 
-  return AppService.createManagerForLocation({
+  return ManagerService.createManagerForLocation({
     email: input.email,
     password: input.password,
     companyId,
@@ -59,7 +54,7 @@ export async function createManagerAction(input: CreateManagerInput) {
 const safeSetManagerPermissions = toSafeResult(
   async (input: SetManagerPermissionsInput) => {
     const { companyId, userId } = await requireOwner();
-    return PermissionService.setManagerPermissions({
+    return ManagerService.setManagerPermissions({
       companyId,
       ownerId: userId,
       managerId: input.managerId,
@@ -78,23 +73,6 @@ export async function setManagerPermissionsAction(
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice/setting");
-  }
-
-  return actionResult;
-}
-
-const safeSetSelectedLocation = toSafeResult(async (locationId: number) => {
-  const { userId } = await requireOwner();
-  return LocationService.setSelectedLocation(userId, locationId);
-});
-
-export async function setSelectedLocationAction(locationId: number) {
-  const result = await safeSetSelectedLocation(locationId);
-  const actionResult = toActionResult(result);
-  if (actionResult.success) {
-    // Every page that reads getSelectedLocation needs to reflect the
-    // change — menus list/create/edit all depend on it.
-    revalidatePath("/backoffice", "layout");
   }
 
   return actionResult;

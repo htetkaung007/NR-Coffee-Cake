@@ -5,8 +5,7 @@ import {
   validateWith,
   toActionResult,
 } from "@/app/lib/actionHelper";
-import { requireOwner } from "@/app/lib/roleGuard";
-import { AppError } from "@/app/lib/errors";
+import { requireOwner } from "@/app/lib/access/roleGuard";
 import {
   CreateMenuCategoryInput,
   createMenuCategorySchema,
@@ -15,25 +14,19 @@ import {
   UpdateMenuCategoryInput,
   updateMenuCategorySchema,
 } from "@/app/lib/schemas/menu_menuCategorySchema";
-import { LocationService, MenuCategoryService } from "@/app/services";
+import { MenuCategoryService } from "@/app/services";
 import { revalidatePath } from "next/cache";
 
 const CreateMenuCategory = toSafeResult(
   async (input: CreateMenuCategoryInput) => {
-    const { companyId, userId } = await requireOwner();
-
-    const selectedLocation = await LocationService.getSelectedLocation(userId);
-    if (!selectedLocation) {
-      throw new AppError(
-        "No location selected. Please choose a location first.",
-        "VALIDATION",
-      );
-    }
+    const { companyId, locationId } = await requireOwner({
+      withLocation: true,
+    });
 
     return MenuCategoryService.createMenuCategory(
       companyId,
       input.name,
-      selectedLocation.locationId,
+      locationId,
       input.isEnabled,
     );
   },
@@ -59,20 +52,14 @@ export async function createMenuCategoryAction(input: unknown) {
 
 const UpdateMenuCategory = toSafeResult(
   async (input: UpdateMenuCategoryInput & { menuCategoryId: number }) => {
-    const { companyId, userId } = await requireOwner();
-
-    const selectedLocation = await LocationService.getSelectedLocation(userId);
-    if (!selectedLocation) {
-      throw new AppError(
-        "No location selected. Please choose a location first.",
-        "VALIDATION",
-      );
-    }
+    const { companyId, locationId } = await requireOwner({
+      withLocation: true,
+    });
 
     return MenuCategoryService.updateMenuCategory(input.menuCategoryId, {
       companyId,
       name: input.name,
-      locationId: selectedLocation.locationId,
+      locationId,
       isEnabled: input.isEnabled,
       removeMenuIds: input.removeMenuIds,
     });
@@ -98,22 +85,6 @@ export async function updateMenuCategoryAction(
   return actionResult;
 }
 
-/** The signed-in user's company and currently selected location — the
- *  category order is company-wide, but which categories are being
- *  reordered depends on the location (see MenuCategoryService.reorder). */
-async function resolveCompanyAndLocation() {
-  const { companyId, userId } = await requireOwner();
-
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
-  if (!selectedLocation) {
-    throw new AppError(
-      "No location selected. Please choose a location first.",
-      "VALIDATION",
-    );
-  }
-  return { companyId, locationId: selectedLocation.locationId };
-}
-
 /** Everywhere the category order shows: this page, the menu list and
  *  menu form chips, the customer menu, and the staff New Order screen. */
 function revalidateCategoryOrder() {
@@ -126,7 +97,11 @@ function revalidateCategoryOrder() {
 
 const ReorderMenuCategories = toSafeResult(
   async (input: ReorderMenuCategoriesInput) => {
-    const { companyId, locationId } = await resolveCompanyAndLocation();
+    // The category order is company-wide, but which categories are being
+    // reordered depends on the location (see MenuCategoryService.reorder).
+    const { companyId, locationId } = await requireOwner({
+      withLocation: true,
+    });
     return MenuCategoryService.reorder(companyId, locationId, input.orderedIds);
   },
 );
@@ -147,7 +122,7 @@ export async function reorderMenuCategoriesAction(input: {
 }
 
 const SortMenuCategoriesAlphabetically = toSafeResult(async () => {
-  const { companyId, locationId } = await resolveCompanyAndLocation();
+  const { companyId, locationId } = await requireOwner({ withLocation: true });
   return MenuCategoryService.sortAlphabetically(companyId, locationId);
 });
 

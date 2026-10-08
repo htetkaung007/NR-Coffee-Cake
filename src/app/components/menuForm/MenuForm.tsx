@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
-  Alert,
   Box,
   Button,
   Divider,
   InputAdornment,
-  Snackbar,
-  Stack,
   Switch,
   TextField,
   Typography,
@@ -32,6 +28,8 @@ import CreateMenuCategoryDialog, {
   type CreatedMenuCategory,
 } from "../menuCategory/CreateMenuCategoryDialog";
 import StatusSnackbar, { type StatusMessage } from "../StatusSnackbar";
+import FormCard, { SuccessSnackbar } from "../FormCard";
+import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 
 interface MenuFormInitialData {
@@ -68,7 +66,8 @@ export default function MenuForm({
   locations,
   currentLocation,
 }: MenuFormProps) {
-  const router = useRouter();
+  const { error, setError, isPending, showSuccess, closeSuccess, save } =
+    useSaveThenNavigate();
   const isEditMode = Boolean(initialData);
   // One active location: no choice to make — it shows there (as before
   // locations could be picked), and the section is hidden.
@@ -104,8 +103,6 @@ export default function MenuForm({
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(
     initialData?.imageUrl ?? null,
   );
-  const [error, setError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   // "+ New category" creates in a dialog: the new one joins the chips
   // and is selected, and nothing typed in the form is touched. Kept
   // apart from the server's list so a refresh can't show it twice.
@@ -122,7 +119,6 @@ export default function MenuForm({
       (created) => !categories.some((category) => category.id === created.id),
     ),
   ];
-  const [isPending, startTransition] = useTransition();
 
   const MAX_NAME_LENGTH = 50;
   const MAX_DESCRIPTION_LENGTH = 100;
@@ -185,21 +181,13 @@ export default function MenuForm({
     );
     if (imageFile) formData.set("image", imageFile);
 
-    startTransition(async () => {
-      const result = isEditMode
-        ? await updateMenuAction(initialData!.id, formData)
-        : await createMenuAction(formData);
-
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-
-      setShowSuccess(true);
-      setTimeout(() => {
-        router.push("/backoffice/menus");
-      }, 1000);
-    });
+    save(
+      () =>
+        isEditMode
+          ? updateMenuAction(initialData!.id, formData)
+          : createMenuAction(formData),
+      "/backoffice/menus",
+    );
   }
 
   const previewData: MenuCardData = {
@@ -233,174 +221,149 @@ export default function MenuForm({
           },
         }}
       >
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 3,
-            p: { xs: 2, sm: 3 },
+        <FormCard
+          header={{
+            icon: <EditOutlinedIcon color="primary" />,
+            title: isEditMode ? "Edit Menu Item" : "Menu Item Details",
+            subtitle: isEditMode
+              ? "Update this item's information, price, category, and stock."
+              : "Configure item information, price, category, and stock.",
           }}
+          error={error}
         >
+          <TextField
+            label="Dish / Item Name"
+            required
+            fullWidth
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            slotProps={{
+              htmlInput: { maxLength: MAX_NAME_LENGTH },
+            }}
+            helperText={`${name.length}/${MAX_NAME_LENGTH} characters`}
+          />
+          <TextField
+            label="Description"
+            multiline
+            minRows={2}
+            maxRows={3}
+            fullWidth
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            slotProps={{
+              htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH },
+            }}
+            helperText={`${description.length}/${MAX_DESCRIPTION_LENGTH} characters`}
+          />
+
+          <MenuCategoryChips
+            categories={categoryOptions}
+            selectedCategoryIds={selectedCategoryIds}
+            onToggle={toggleCategory}
+            onCreateCategory={() => setIsCreatingCategory(true)}
+          />
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+              gap: 2,
+            }}
+          >
+            <TextField
+              label="Selling Price"
+              required
+              type="number"
+              value={price}
+              onChange={(event) => setPrice(event.target.value)}
+              slotProps={{
+                htmlInput: { min: 1, step: 1 },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {CURRENCY_LABEL}
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <StockQuantityStepper
+              quantity={quantity}
+              onChange={setQuantity}
+              label={
+                isEditMode
+                  ? `Stock at ${currentLocation.name}`
+                  : hasLocationChoice
+                    ? "Starting stock (each selected location)"
+                    : "Starting stock"
+              }
+            />
+          </Box>
+
+          {hasLocationChoice && (
+            <LocationChecklist
+              locations={locations}
+              currentLocationId={currentLocation.locationId}
+              selectedIds={shownLocationIds}
+              onChange={setShownLocationIds}
+            />
+          )}
+
+          <MenuImageUploader
+            imagePreviewUrl={imagePreviewUrl}
+            onFileSelected={handleFileSelected}
+            onRemove={handleRemoveImage}
+            onError={setError}
+          />
+
+          <ConnectedAddonsSection
+            addonCategories={addonCategories}
+            selectedAddonCategoryIds={selectedAddonCategoryIds}
+            onChangeSelectedAddonCategoryIds={setSelectedAddonCategoryIds}
+          />
+
           <Box
             sx={{
               display: "flex",
-              alignItems: "flex-start",
-              gap: 1,
-              pb: 2,
-              mb: 2.5,
-              borderBottom: "1px solid",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              border: "1px solid",
               borderColor: "divider",
+              borderRadius: 2,
+              p: 1.5,
             }}
           >
-            <EditOutlinedIcon color="primary" />
             <Box>
-              <Typography variant="h6">
-                {isEditMode ? "Edit Menu Item" : "Menu Item Details"}
-              </Typography>
+              <Typography variant="body2">Is Available</Typography>
               <Typography variant="caption" color="text.secondary">
-                {isEditMode
-                  ? "Update this item's information, price, category, and stock."
-                  : "Configure item information, price, category, and stock."}
+                Show this item in the digital menu for customer ordering.
               </Typography>
             </Box>
+            <Switch
+              checked={isAvailable}
+              onChange={(event) => setIsAvailable(event.target.checked)}
+              slotProps={{
+                input: { "aria-label": "Make menu item available" },
+              }}
+            />
           </Box>
 
-          <Stack spacing={2.5}>
-            {error && <Alert severity="error">{error}</Alert>}
-            <TextField
-              label="Dish / Item Name"
-              required
-              fullWidth
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              slotProps={{
-                htmlInput: { maxLength: MAX_NAME_LENGTH },
-              }}
-              helperText={`${name.length}/${MAX_NAME_LENGTH} characters`}
-            />
-            <TextField
-              label="Description"
-              multiline
-              minRows={2}
-              maxRows={3}
-              fullWidth
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              slotProps={{
-                htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH },
-              }}
-              helperText={`${description.length}/${MAX_DESCRIPTION_LENGTH} characters`}
-            />
-
-            <MenuCategoryChips
-              categories={categoryOptions}
-              selectedCategoryIds={selectedCategoryIds}
-              onToggle={toggleCategory}
-              onCreateCategory={() => setIsCreatingCategory(true)}
-            />
-
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
-                gap: 2,
-              }}
-            >
-              <TextField
-                label="Selling Price"
-                required
-                type="number"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                slotProps={{
-                  htmlInput: { min: 1, step: 1 },
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        {CURRENCY_LABEL}
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              <StockQuantityStepper
-                quantity={quantity}
-                onChange={setQuantity}
-                label={
-                  isEditMode
-                    ? `Stock at ${currentLocation.name}`
-                    : hasLocationChoice
-                      ? "Starting stock (each selected location)"
-                      : "Starting stock"
-                }
-              />
-            </Box>
-
-            {hasLocationChoice && (
-              <LocationChecklist
-                locations={locations}
-                currentLocationId={currentLocation.locationId}
-                selectedIds={shownLocationIds}
-                onChange={setShownLocationIds}
-              />
-            )}
-
-            <MenuImageUploader
-              imagePreviewUrl={imagePreviewUrl}
-              onFileSelected={handleFileSelected}
-              onRemove={handleRemoveImage}
-              onError={setError}
-            />
-
-            <ConnectedAddonsSection
-              addonCategories={addonCategories}
-              selectedAddonCategoryIds={selectedAddonCategoryIds}
-              onChangeSelectedAddonCategoryIds={setSelectedAddonCategoryIds}
-            />
-
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 2,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                p: 1.5,
-              }}
-            >
-              <Box>
-                <Typography variant="body2">Is Available</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Show this item in the digital menu for customer ordering.
-                </Typography>
-              </Box>
-              <Switch
-                checked={isAvailable}
-                onChange={(event) => setIsAvailable(event.target.checked)}
-                slotProps={{
-                  input: { "aria-label": "Make menu item available" },
-                }}
-              />
-            </Box>
-
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isPending || isMissingLocation}
-              sx={{ alignSelf: "flex-start", px: 3 }}
-            >
-              {isPending
-                ? isEditMode
-                  ? "Saving..."
-                  : "Creating..."
-                : isEditMode
-                  ? "Save Changes"
-                  : "Create Menu"}
-            </Button>
-          </Stack>
-        </Box>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isPending || isMissingLocation}
+            sx={{ alignSelf: "flex-start", px: 3 }}
+          >
+            {isPending
+              ? isEditMode
+                ? "Saving..."
+                : "Creating..."
+              : isEditMode
+                ? "Save Changes"
+                : "Create Menu"}
+          </Button>
+        </FormCard>
 
         <Box
           sx={{ position: { lg: "sticky" }, top: { lg: 24 }, minWidth: 360 }}
@@ -434,18 +397,15 @@ export default function MenuForm({
         </Box>
       </Box>
 
-      <Snackbar
+      <SuccessSnackbar
         open={showSuccess}
-        autoHideDuration={1000}
-        onClose={() => setShowSuccess(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert severity="success" variant="filled" sx={{ width: "100%" }}>
-          {isEditMode
+        onClose={closeSuccess}
+        message={
+          isEditMode
             ? "Menu updated successfully!"
-            : "Menu created successfully!"}
-        </Alert>
-      </Snackbar>
+            : "Menu created successfully!"
+        }
+      />
 
       <CreateMenuCategoryDialog
         open={isCreatingCategory}

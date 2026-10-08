@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { validateCartAction } from "@/app/(storefront)/cart/action";
-import { toServerLines, type BrowserCart } from "@/app/lib/browserCart";
+import { toServerLines, type BrowserCart } from "@/app/lib/cart/browserCart";
 import type {
   CartValidationResult,
   SendState,
-} from "@/app/lib/cartValidation";
+} from "@/app/lib/cart/cartValidation";
 
 const DEBOUNCE_MS = 300;
 

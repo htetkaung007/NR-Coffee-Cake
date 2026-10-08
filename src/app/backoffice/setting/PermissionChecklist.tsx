@@ -5,7 +5,7 @@ import {
   GRANTABLE_PERMISSIONS,
   type PermissionGroup,
   type PermissionKey,
-} from "@/app/lib/permissions";
+} from "@/app/lib/access/permissions";
 
 // The catalog's groups, in the catalog's order (Orders, Daily, …).
 const GROUPS = [...new Set(GRANTABLE_PERMISSIONS.map((entry) => entry.group))];

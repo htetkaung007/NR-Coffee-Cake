@@ -1,14 +1,18 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { OrderSessionService, isSessionTerminal } from "@/app/services";
+import {
+  CounterSessionService,
+  isSessionTerminal,
+  OrderSessionService,
+} from "@/app/services";
 import {
   COUNTER_SESSION_COOKIE,
   counterSessionCookieOptions,
-} from "@/app/lib/orderSessionCookie";
-import { toCartLine } from "@/app/lib/roundLine";
-import { orderLinesTotal } from "@/app/lib/orderTotals";
-import { approvalTiming } from "@/app/lib/approvalTiming";
+} from "@/app/lib/storefront/orderSessionCookie";
+import { toCartLine } from "@/app/lib/order/roundLine";
+import { orderLinesTotal } from "@/app/lib/order/orderTotals";
+import { approvalTiming } from "@/app/lib/approval/approvalTiming";
 
 /** The one place this file reads the Counter session cookie. The cart
  *  itself lives in the browser now (sent with submitCartAction, in
@@ -31,7 +35,7 @@ async function getCookieToken() {
  * keyed rather than cookie-keyed for the same reason drafts are — see
  * TableDraftService's class comment). Deliberately does the
  * PAID-clears-cookie write here (see
- * OrderSessionApprovalService.markSessionsPaid's comment) — this IS the
+ * OrderPaymentService.markSessionsPaid's comment) — this IS the
  * customer's own browser making the request, so a Server Action here
  * can set the response cookie, unlike the cashier's Approve/Reject/Paid
  * actions in the Backoffice, which run in a different browser entirely.
@@ -47,7 +51,7 @@ export async function pollOrderStatusAction() {
     return { status: "no_session" as const, cart: [], total: 0 };
   }
 
-  const session = await OrderSessionService.getSessionByToken(token);
+  const session = await CounterSessionService.getSessionByToken(token);
   if (!session) {
     store.set(cookieName, "", { maxAge: 0 });
     return { status: "no_session" as const, cart: [], total: 0 };
@@ -64,7 +68,7 @@ export async function pollOrderStatusAction() {
     // customer isn't locked out of a bill that isn't actually settled
     // yet. The status/cart/total returned below still describe THIS
     // round, so the existing terminal handling for it is unchanged.
-    const root = await OrderSessionService.getOpenBillRoot(session);
+    const root = await CounterSessionService.getOpenBillRoot(session);
     if (root) {
       store.set(cookieName, root.token, counterSessionCookieOptions);
     } else {

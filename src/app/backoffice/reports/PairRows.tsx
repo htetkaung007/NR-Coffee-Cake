@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Stack, Typography } from "@mui/material";
-import type { PairingRow } from "@/app/lib/reportView";
+import type { PairingRow } from "@/app/lib/report/reportView";
 import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
 import { entryTitleSx } from "../order/orderTypography";
 

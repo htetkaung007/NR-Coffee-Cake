@@ -1,8 +1,8 @@
 import { Box, Typography } from "@mui/material";
 import { LocationService, ReportService } from "@/app/services";
-import { buildItemList, reportHref } from "@/app/lib/reportView";
+import { buildItemList, reportHref } from "@/app/lib/report/reportView";
 import { reportPeriodInputSchema } from "@/app/lib/schemas/reportSchema";
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import { formatShopDateTime } from "@/app/lib/shopDay";
 import ReportSheet from "./ReportSheet";
 

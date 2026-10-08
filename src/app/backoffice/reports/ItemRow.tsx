@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { formatAmount } from "@/app/lib/orderFormat";
-import type { ReportPeriodKind } from "@/app/lib/reportPeriod";
-import type { ItemListRow } from "@/app/lib/reportView";
+import type { ReportPeriodKind } from "@/app/lib/report/reportPeriod";
+import type { ItemListRow } from "@/app/lib/report/reportView";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import ExpandedPanel, { RowChevron } from "./ExpandedPanel";
 import ReportDelta from "./ReportDelta";

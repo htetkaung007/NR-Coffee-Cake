@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { readStorage, useStoredValue, writeStorage } from "./useStoredValue";
 
 /**
  * Optional beep when a round newly needs approval, on any Backoffice
@@ -35,7 +30,6 @@ import {
 
 const STORAGE_KEY = "orders-alert-sound";
 const VOLUME_STORAGE_KEY = "orders-alert-volume";
-const CHANGE_EVENT = "orders-alert-sound-change";
 const BEEP_SECONDS = 0.15;
 
 export const MIN_VOLUME = 10;
@@ -46,23 +40,13 @@ let enabledInMemory = false;
 let volumeInMemory = DEFAULT_VOLUME;
 
 function readEnabled() {
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) return stored === "on";
-  } catch {
-    // storage blocked — fall through to the in-memory copy
-  }
-  return enabledInMemory;
+  const stored = readStorage(STORAGE_KEY);
+  return stored !== null ? stored === "on" : enabledInMemory;
 }
 
 function writeEnabled(enabled: boolean) {
   enabledInMemory = enabled;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, enabled ? "on" : "off");
-  } catch {
-    // storage blocked — the in-memory copy still covers this session
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
+  writeStorage(STORAGE_KEY, enabled ? "on" : "off");
 }
 
 function clampVolume(percent: number) {
@@ -70,35 +54,17 @@ function clampVolume(percent: number) {
 }
 
 function readVolume() {
-  try {
-    const stored = window.localStorage.getItem(VOLUME_STORAGE_KEY);
-    if (stored !== null) {
-      const percent = Number(stored);
-      if (Number.isFinite(percent)) return clampVolume(percent);
-    }
-  } catch {
-    // storage blocked — fall through to the in-memory copy
+  const stored = readStorage(VOLUME_STORAGE_KEY);
+  if (stored !== null) {
+    const percent = Number(stored);
+    if (Number.isFinite(percent)) return clampVolume(percent);
   }
   return volumeInMemory;
 }
 
 function writeVolume(percent: number) {
   volumeInMemory = clampVolume(percent);
-  try {
-    window.localStorage.setItem(VOLUME_STORAGE_KEY, String(volumeInMemory));
-  } catch {
-    // storage blocked — the in-memory copy still covers this session
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGE_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGE_EVENT, onChange);
-  };
+  writeStorage(VOLUME_STORAGE_KEY, String(volumeInMemory));
 }
 
 /** Squared, because loudness is perceived roughly logarithmically — a
@@ -126,12 +92,8 @@ function playBeep(context: AudioContext, volume: number) {
 export function useOrderAlertSound() {
   // Server render and hydration always see "off" — the stored value
   // only shows up after mount, so the markup matches.
-  const enabled = useSyncExternalStore(subscribe, readEnabled, () => false);
-  const volume = useSyncExternalStore(
-    subscribe,
-    readVolume,
-    () => DEFAULT_VOLUME,
-  );
+  const enabled = useStoredValue(readEnabled, false);
+  const volume = useStoredValue(readVolume, DEFAULT_VOLUME);
   const contextRef = useRef<AudioContext | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 

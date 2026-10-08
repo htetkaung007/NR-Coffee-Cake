@@ -1,6 +1,6 @@
 import { prisma } from "../utils/prisma";
 import { NotFoundError } from "../lib/errors";
-import { MIN_PAIRING_UNITS, buildPairing } from "../lib/addonPairing";
+import { MIN_PAIRING_UNITS, buildPairing } from "../lib/report/addonPairing";
 import {
   aggregateItems,
   compareToPrevious,
@@ -8,7 +8,7 @@ import {
   rankItems,
   reconciles,
   type ReportLine,
-} from "../lib/itemReport";
+} from "../lib/report/itemReport";
 import {
   elapsedDays,
   firstDays,
@@ -18,20 +18,20 @@ import {
   previousPeriod,
   type ReportPeriod,
   type ReportPeriodKind,
-} from "../lib/reportPeriod";
+} from "../lib/report/reportPeriod";
 import {
   buildDailySeries,
   percentChange,
   splitByChannel,
   summarizeBills,
   type ReportBill,
-} from "../lib/salesReport";
+} from "../lib/report/salesReport";
 import { todayInShop } from "../lib/shopDay";
 import type {
   ExportBill,
   ExportCancelledRound,
   ExportLine,
-} from "../lib/exportLines";
+} from "../lib/report/exportLines";
 import { CartValidationService } from "./cartValidation.service";
 import { OrderHistoryService } from "./orderHistory.service";
 

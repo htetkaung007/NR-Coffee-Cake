@@ -5,8 +5,8 @@ import {
   canAccess,
   type AccessRule,
   type PermissionKey,
-} from "@/app/lib/permissions";
-import type { StaffRole } from "@/app/lib/rolePolicy";
+} from "@/app/lib/access/permissions";
+import type { StaffRole } from "@/app/lib/access/rolePolicy";
 
 interface StaffAccess {
   role: StaffRole;
@@ -25,7 +25,7 @@ const StaffAccessContext = createContext<StaffAccess>({
  * hints — hiding a sidebar item, disabling a switch with "Ask the owner…".
  * Loaded on the server by the Backoffice layout on every request. Never a
  * security boundary: every Server Action, page and route checks again
- * on the server (lib/roleGuard).
+ * on the server (lib/access/roleGuard).
  */
 export function StaffAccessProvider({
   role,

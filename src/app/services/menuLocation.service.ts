@@ -1,6 +1,6 @@
 import { prisma } from "../utils/prisma";
 import type { Prisma } from "../../../prisma/generated/client";
-import { planMenuLocations } from "../lib/menuLocations";
+import { planMenuLocations } from "../lib/menu/menuLocations";
 
 type Tx = Prisma.TransactionClient;
 

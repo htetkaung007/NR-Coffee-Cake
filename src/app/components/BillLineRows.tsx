@@ -1,5 +1,5 @@
 import { Box, Stack, Typography } from "@mui/material";
-import type { BreakdownRow } from "@/app/lib/orderTotals";
+import type { BreakdownRow } from "@/app/lib/order/orderTotals";
 import { formatAmount } from "@/app/lib/orderFormat";
 
 /** "Latte ×2" for the item; "+ Extra shot" (or "+ Extra shot ×2" when

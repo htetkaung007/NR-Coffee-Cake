@@ -7,11 +7,6 @@ import {
   Box,
   Button,
   ButtonBase,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Grid,
   Stack,
   Typography,
@@ -45,7 +40,7 @@ import StatusSnackbar, {
 } from "@/app/components/StatusSnackbar";
 import EditMenuCategoryDialog, {
   type EditableMenuCategory,
-} from "@/app/components/EditMenuCategoryDialog";
+} from "./EditMenuCategoryDialog";
 import {
   hoverCapableMedia,
   topBarHeight,
@@ -58,6 +53,7 @@ import SortableCategoryRow, {
   CategoryMenusPreview,
   type CategoryItem,
 } from "./SortableCategoryRow";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
 import CategoryTabsPreview from "./CategoryTabsPreview";
 
 interface MenuCategoryOrderViewProps {
@@ -514,35 +510,14 @@ export default function MenuCategoryOrderView({
         onClose={() => setCreatedMessage(null)}
       />
 
-      <Dialog
+      <ConfirmDialog
         open={isSortConfirmOpen}
-        onClose={() => setIsSortConfirmOpen(false)}
-        aria-labelledby="sort-confirm-title"
-      >
-        <DialogTitle id="sort-confirm-title">
-          Sort categories A → Z?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Your custom order will be replaced. This can&apos;t be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => setIsSortConfirmOpen(false)}
-            sx={{ minHeight: 44 }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => void handleSortConfirmed()}
-            sx={{ minHeight: 44 }}
-          >
-            Sort A → Z
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Sort categories A → Z?"
+        message="Your custom order will be replaced. This can't be undone."
+        confirmLabel="Sort A → Z"
+        onConfirm={() => void handleSortConfirmed()}
+        onCancel={() => setIsSortConfirmOpen(false)}
+      />
 
       <EditMenuCategoryDialog
         open={editing !== null}

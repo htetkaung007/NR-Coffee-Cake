@@ -6,11 +6,15 @@ import {
   cancelledLinesCsv,
   exportFileName,
   linesCsv,
-} from "@/app/lib/exportLines";
+} from "@/app/lib/report/exportLines";
 import { reportExportInputSchema } from "@/app/lib/schemas/reportSchema";
-import { requirePermission } from "@/app/lib/roleGuard";
-import type { StaffScope } from "@/app/lib/rolePolicy";
-import { LocationService, ReportService } from "@/app/services";
+import {
+  requirePermission,
+  withSelectedLocation,
+  type LocatedScope,
+} from "@/app/lib/access/roleGuard";
+import type { StaffScope } from "@/app/lib/access/rolePolicy";
+import { ReportService } from "@/app/services";
 
 const plain = (status: number, message: string) =>
   new Response(message, {
@@ -43,7 +47,6 @@ export async function GET(request: NextRequest) {
     if (error instanceof AppError) return plain(403, error.message);
     throw error;
   }
-  const { companyId, userId } = scope;
 
   const { searchParams } = new URL(request.url);
   const parsed = reportExportInputSchema.safeParse({
@@ -55,13 +58,18 @@ export async function GET(request: NextRequest) {
   const { type, kind, anchorDay } = parsed.data;
 
   try {
-    const selectedLocation = await LocationService.getSelectedLocation(userId);
-    if (!selectedLocation) {
-      return plain(400, "No location selected. Please choose a location first.");
+    let located: LocatedScope;
+    try {
+      located = await withSelectedLocation(scope);
+    } catch (error) {
+      if (error instanceof AppError && error.code === "NO_SELECTED_LOCATION") {
+        return plain(400, error.message);
+      }
+      throw error;
     }
-    const scope = {
-      companyId,
-      locationId: selectedLocation.locationId,
+    const exportScope = {
+      companyId: located.companyId,
+      locationId: located.locationId,
       kind,
       anchorDay,
     };
@@ -69,11 +77,12 @@ export async function GET(request: NextRequest) {
     let body: string;
     let fileName: string;
     if (type === "lines") {
-      const { period, bills } = await ReportService.getExportLines(scope);
+      const { period, bills } = await ReportService.getExportLines(exportScope);
       body = linesCsv(buildLineRows(bills));
       fileName = exportFileName("lines", period);
     } else {
-      const { period, rounds } = await ReportService.getExportCancelled(scope);
+      const { period, rounds } =
+        await ReportService.getExportCancelled(exportScope);
       body = cancelledLinesCsv(buildCancelledLineRows(rounds));
       fileName = exportFileName("cancelled", period);
     }

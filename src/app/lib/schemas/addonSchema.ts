@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formIdSchema, idSchema, optionalIdListSchema } from "./common";
 
 /**
  * "Or Create Custom Add-On Option" group form — creates an AddonCategories
@@ -20,10 +21,7 @@ export const createAddonGroupSchema = z.object({
   groupName: z.string().trim().min(1, "Group title is required.").max(50),
   isRequired: z.boolean(),
   options: z.array(optionSchema).min(1, "Add at least one option."),
-  menuIds: z
-    .array(z.coerce.number().int().positive())
-    .optional()
-    .transform((ids) => [...new Set(ids ?? [])]),
+  menuIds: optionalIdListSchema(),
 });
 
 export type CreateAddonGroupInput = z.infer<typeof createAddonGroupSchema>;
@@ -35,31 +33,30 @@ export type CreateAddonGroupInput = z.infer<typeof createAddonGroupSchema>;
  * The Service uses that to decide update vs. create vs. archive.
  */
 const editableOptionSchema = optionSchema.extend({
-  id: z.coerce.number().int().positive().optional(),
+  id: formIdSchema.optional(),
 });
 
 export const updateAddonGroupSchema = z.object({
   groupName: z.string().trim().min(1, "Group title is required.").max(50),
   isRequired: z.boolean(),
   options: z.array(editableOptionSchema).min(1, "Add at least one option."),
-  menuIds: z
-    .array(z.coerce.number().int().positive())
-    .optional()
-    .transform((ids) => [...new Set(ids ?? [])]),
+  menuIds: optionalIdListSchema(),
 });
 
 export type UpdateAddonGroupInput = z.infer<typeof updateAddonGroupSchema>;
 
 /** The Add-ons panel's on/off switch for one option. */
 export const setAddonAvailableSchema = z.object({
-  addonId: z.number().int().positive(),
+  addonId: idSchema,
   isAvailable: z.boolean(),
 });
 export type SetAddonAvailableInput = z.infer<typeof setAddonAvailableSchema>;
 
 /** The Add-ons panel's Required switch for a group. */
 export const setAddonGroupRequiredSchema = z.object({
-  addonCategoryId: z.number().int().positive(),
+  addonCategoryId: idSchema,
   isRequired: z.boolean(),
 });
-export type SetAddonGroupRequiredInput = z.infer<typeof setAddonGroupRequiredSchema>;
+export type SetAddonGroupRequiredInput = z.infer<
+  typeof setAddonGroupRequiredSchema
+>;

@@ -9,9 +9,6 @@ import {
   Button,
   Card,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogTitle,
   Snackbar,
   Stack,
   Typography,
@@ -26,8 +23,9 @@ import {
   GRANTABLE_PERMISSIONS,
   permissionChanges,
   type PermissionKey,
-} from "@/app/lib/permissions";
+} from "@/app/lib/access/permissions";
 import { AlwaysAllowedList, OwnerOnlyList } from "./AccessRuleLists";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
 import ManagerAccessEditor from "./ManagerAccessEditor";
 
 const PAGE_HREF = "/backoffice/setting";
@@ -67,7 +65,11 @@ function ManagerCard({ manager }: { manager: ManagerSummary }) {
         sx={{ alignItems: { sm: "center" } }}
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" component="h3" sx={{ overflowWrap: "anywhere" }}>
+          <Typography
+            variant="subtitle2"
+            component="h3"
+            sx={{ overflowWrap: "anywhere" }}
+          >
             {manager.email}
           </Typography>
           {manager.name && (
@@ -75,7 +77,11 @@ function ManagerCard({ manager }: { manager: ManagerSummary }) {
               {manager.name}
             </Typography>
           )}
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 1, flexWrap: "wrap" }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: "center", mt: 1, flexWrap: "wrap" }}
+          >
             {manager.locationName && (
               <Chip
                 size="small"
@@ -89,7 +95,8 @@ function ManagerCard({ manager }: { manager: ManagerSummary }) {
               />
             )}
             <Typography variant="body2" color="text.secondary">
-              {manager.permissions.length} of {GRANTABLE_PERMISSIONS.length} extras
+              {manager.permissions.length} of {GRANTABLE_PERMISSIONS.length}{" "}
+              extras
             </Typography>
           </Stack>
         </Box>
@@ -99,7 +106,11 @@ function ManagerCard({ manager }: { manager: ManagerSummary }) {
           scroll={false}
           variant="outlined"
           aria-label={`Edit access for ${manager.email}`}
-          sx={{ minHeight: 44, flexShrink: 0, alignSelf: { xs: "flex-start", sm: "center" } }}
+          sx={{
+            minHeight: 44,
+            flexShrink: 0,
+            alignSelf: { xs: "flex-start", sm: "center" },
+          }}
         >
           Edit access
         </Button>
@@ -123,19 +134,29 @@ export default function ManagersSection({
   selectedId: number | null;
 }) {
   const router = useRouter();
-  const selected = managers.find((manager) => manager.id === selectedId) ?? null;
+  const selected =
+    managers.find((manager) => manager.id === selectedId) ?? null;
   // The draft belongs to one manager; another manager starts clean.
-  const [draft, setDraft] = useState<{ managerId: number; ticks: PermissionKey[] } | null>(
-    null,
-  );
-  const [error, setError] = useState<{ managerId: number; message: string } | null>(null);
+  const [draft, setDraft] = useState<{
+    managerId: number;
+    ticks: PermissionKey[];
+  } | null>(null);
+  const [error, setError] = useState<{
+    managerId: number;
+    message: string;
+  } | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [savedFor, setSavedFor] = useState<string | null>(null);
 
   const ticks =
-    selected && draft?.managerId === selected.id ? draft.ticks : (selected?.permissions ?? []);
-  const changes = selected ? permissionChanges(selected.permissions, ticks) : null;
-  const isDirty = changes !== null && changes.add.length + changes.remove.length > 0;
+    selected && draft?.managerId === selected.id
+      ? draft.ticks
+      : (selected?.permissions ?? []);
+  const changes = selected
+    ? permissionChanges(selected.permissions, ticks)
+    : null;
+  const isDirty =
+    changes !== null && changes.add.length + changes.remove.length > 0;
 
   function close() {
     setIsConfirmOpen(false);
@@ -163,7 +184,11 @@ export default function ManagersSection({
             </Typography>
           </Stack>
         ) : (
-          <Stack component="ul" spacing={1.5} sx={{ listStyle: "none", m: 0, p: 0 }}>
+          <Stack
+            component="ul"
+            spacing={1.5}
+            sx={{ listStyle: "none", m: 0, p: 0 }}
+          >
             {managers.map((manager) => (
               <li key={manager.id}>
                 <ManagerCard manager={manager} />
@@ -198,23 +223,15 @@ export default function ManagersSection({
         )}
       </SidePanelDrawer>
 
-      <Dialog
+      <ConfirmDialog
         open={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        aria-labelledby="discard-access-title"
-      >
-        <DialogTitle id="discard-access-title">Discard changes?</DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setIsConfirmOpen(false)} sx={{ minHeight: 44 }}>
-            Keep editing
-          </Button>
-          <Button color="error" onClick={close} sx={{ minHeight: 44 }}>
-            Discard
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Discard changes?"
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        destructive
+        onConfirm={close}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
 
       <Snackbar
         open={savedFor !== null}

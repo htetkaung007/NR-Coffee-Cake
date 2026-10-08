@@ -4,7 +4,6 @@ import { AppError, NotFoundError, ValidationError } from "../lib/errors";
 import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 import { config } from "@/app/utils/config";
-import { LocationService } from "./location.service";
 
 // Name is fixed for the counter "table" row — it isn't a real seated
 // table a customer picks a name for, so locking it here (Service
@@ -38,19 +37,6 @@ export class TableService {
   static async getTablesByLocation(locationId: number) {
     return prisma.table.findMany({
       where: { locationId, isArchived: false },
-      orderBy: { id: "asc" },
-    });
-  }
-
-  /** All tables across every active location in a company — e.g. for a
-   *  company-wide table picker. Archived locations are excluded (mirrors
-   *  LocationService.getActiveLocations), same as archived tables are. */
-  static async getTablesForCompany(companyId: number) {
-    const locations = await LocationService.getActiveLocations(companyId);
-    const locationIds = locations.map((location) => location.id);
-
-    return prisma.table.findMany({
-      where: { locationId: { in: locationIds }, isArchived: false },
       orderBy: { id: "asc" },
     });
   }
@@ -157,24 +143,6 @@ export class TableService {
     return prisma.table.update({
       where: { id: tableId },
       data: { counterAccessKey: generateCounterKey() },
-    });
-  }
-
-  /** Used by the QR scan handlers (Counter and Table) to resolve
-   *  tableId+key back to a Table row — returns null (rather than
-   *  throwing) on any mismatch so the caller can fail closed to
-   *  view-only without distinguishing "wrong table" from "stale/
-   *  rotated key" (doing so would leak which case it was to whoever
-   *  is probing). isCounter isn't part of the WHERE clause since both
-   *  entry points now use the same key mechanism — the caller already
-   *  knows which kind of table it's resolving. */
-  static async findByAccessKey(tableId: number, key: string) {
-    return prisma.table.findFirst({
-      where: {
-        id: tableId,
-        counterAccessKey: key,
-        isArchived: false,
-      },
     });
   }
 

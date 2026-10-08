@@ -1,12 +1,7 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
-import { NotFoundError, ValidationError } from "../lib/errors";
-import { MenuService } from "./menu.service";
-import {
-  DEFAULT_MANAGER_PERMISSIONS,
-  type PermissionKey,
-} from "../lib/permissions";
+import { ValidationError } from "../lib/errors";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
@@ -32,16 +27,6 @@ export class AppService {
   /** Optional lookup — caller decides what to do if no user exists. */
   static async getUserByEmail(email: string) {
     return prisma.user.findFirst({ where: { email } });
-  }
-
-  static async getCompanyByEmail(email: string) {
-    const user = await AppService.getUserByEmail(email); // reuse instead of re-querying
-    if (!user) throw new NotFoundError("User", email);
-    const company = await prisma.company.findFirst({
-      where: { id: user.companyId },
-    });
-    if (!company) throw new NotFoundError("Company for user", email);
-    return company;
   }
 
   // ---------------------------------------------------------------------
@@ -99,82 +84,6 @@ export class AppService {
     );
   }
 
-  /**
-   * Admin-only flow: creates a Manager account fixed to one location.
-   * Unlike registerUser (which bootstraps a whole new Company),
-   * this attaches to the Admin's *existing* company and location —
-   * no createDefaultCompany/createDefaultLocation involved.
-   *
-   * Also seeds a MenuStock row (quantity 0) at that location for every
-   * menu the company already has, rather than creating a placeholder
-   * "Default Menu": a brand-new branch should start with the same menu
-   * the rest of the company sells (just not stocked yet), not an empty
-   * menu the Manager has to rebuild from scratch. skipDuplicates guards
-   * against a stock row that might already exist for this
-   * menu+location pair (e.g. Admin previously stocked ahead of hiring
-   * a Manager for this branch).
-   */
-  static async createManagerForLocation(input: {
-    email: string;
-    password: string;
-    companyId: number;
-    locationId: number;
-    /** The owner creating the manager — recorded as who granted. */
-    ownerId: number;
-    /** What the new manager may do (default: the catalog's defaults). */
-    permissions?: readonly PermissionKey[];
-  }) {
-    const permissions = [
-      ...new Set(input.permissions ?? DEFAULT_MANAGER_PERMISSIONS),
-    ];
-    const existingUser = await AppService.getUserByEmail(input.email);
-    if (existingUser) {
-      throw new ValidationError("Email is already registered.");
-    }
-
-    const hashedPassword = await bcrypt.hash(input.password, 10);
-    const companyMenus = await MenuService.getMenus(input.companyId);
-
-    return prisma.$transaction(async (tx) => {
-      const manager = await AppService.createUserForCompany(
-        tx,
-        { email: input.email },
-        input.companyId,
-        hashedPassword,
-        "MANAGER",
-        input.locationId,
-      );
-
-      // In the same transaction: a manager must never exist without the
-      // grants the owner picked.
-      if (permissions.length > 0) {
-        await tx.userPermission.createMany({
-          data: permissions.map((permission) => ({
-            userId: manager.id,
-            permission,
-            grantedById: input.ownerId,
-          })),
-        });
-      }
-
-      // Stock rows only (quantity 0, existing ones untouched). It never
-      // touches DisableLocationMenus, so a menu hidden at this location
-      // stays hidden — a stock row alone doesn't list it there.
-      if (companyMenus.length > 0) {
-        await tx.menuStock.createMany({
-          data: companyMenus.map((menu) => ({
-            menuId: menu.id,
-            locationId: input.locationId,
-            quantity: 0,
-          })),
-          skipDuplicates: true,
-        });
-      }
-
-      return manager;
-    });
-  }
-
   static async verifyCredentials(email: string, password: string) {
     const user = await AppService.getUserByEmail(email);
     if (!user || !user.password) return null; // no account, or Google-only account (no password set)
@@ -188,7 +97,9 @@ export class AppService {
     return tx.company.create({ data: { name: "Default Company" } });
   }
 
-  private static createUserForCompany(
+  /** Shared with ManagerService.createManagerForLocation — the one
+   *  place a User row is created. */
+  static createUserForCompany(
     tx: Tx,
     nextUser: NewUserInput,
     companyId: number,
@@ -276,52 +187,5 @@ export class AppService {
     return tx.menuStock.create({
       data: { menuId, locationId, quantity: 1 },
     });
-  }
-
-  // ---------------------------------------------------------------------
-  // Addons
-  // Menu core reads/DTOs live in menu.service.ts now (Rule 14 split) —
-  // Addons stays here since it's an adjacent-but-separate domain.
-  // ---------------------------------------------------------------------
-
-  static async getAddonCategories(companyId: number) {
-    const menus = await MenuService.getMenus(companyId);
-    const menuIds = menus.map((menu) => menu.id);
-
-    const links = await prisma.menuAddonCategories.findMany({
-      where: { menuId: { in: menuIds } },
-    });
-    const addonCategoryIds = links.map((link) => link.addonCategoryId);
-
-    return prisma.addonCategories.findMany({
-      where: { id: { in: addonCategoryIds }, isArchived: false },
-    });
-  }
-
-  static async getAddons(companyId: number) {
-    const categories = await AppService.getAddonCategories(companyId);
-    const categoryIds = categories.map((category) => category.id);
-
-    return prisma.addon.findMany({
-      where: { addonCategoryId: { in: categoryIds }, isArchived: false },
-      orderBy: { id: "asc" },
-    });
-  }
-  static async getCompanyNameByCompanyId(companyId: number) {
-    const company = await prisma.company.findFirst({
-      where: { id: companyId },
-    });
-    if (!company) throw new NotFoundError("Company", companyId);
-    return company.name;
-  }
-
-  static async getCompanyNameByUserId(userId: number) {
-    const user = await prisma.user.findFirst({ where: { id: userId } });
-    if (!user) throw new NotFoundError("User", userId);
-    const company = await prisma.company.findFirst({
-      where: { id: user.companyId },
-    });
-    if (!company) throw new NotFoundError("Company for user", userId);
-    return company.name;
   }
 }

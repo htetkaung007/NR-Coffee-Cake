@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { readStorage, useStoredValue, writeStorage } from "./useStoredValue";
 
 /**
  * A per-browser "the user has already seen this" flag (e.g. a nav item's
@@ -13,43 +13,19 @@ import { useSyncExternalStore } from "react";
  * flash and vanish.
  */
 
-const CHANGE_EVENT = "seen-flag-change";
 const inMemory = new Set<string>();
 
 function isSeen(key: string) {
-  if (inMemory.has(key)) return true;
-  try {
-    return window.localStorage.getItem(key) === "1";
-  } catch {
-    return false; // storage blocked — only the in-memory copy counts
-  }
+  return inMemory.has(key) || readStorage(key) === "1";
 }
 
 export function markSeen(key: string) {
   if (isSeen(key)) return;
   inMemory.add(key);
-  try {
-    window.localStorage.setItem(key, "1");
-  } catch {
-    // storage blocked — the in-memory copy still covers this session
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGE_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGE_EVENT, onChange);
-  };
+  writeStorage(key, "1");
 }
 
 /** True once `markSeen(key)` has run in this browser; always true for no key. */
 export function useSeenFlag(key: string | undefined): boolean {
-  return useSyncExternalStore(
-    subscribe,
-    () => (key ? isSeen(key) : true),
-    () => true,
-  );
+  return useStoredValue(() => (key ? isSeen(key) : true), true);
 }

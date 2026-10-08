@@ -7,12 +7,6 @@ import {
   Box,
   Button,
   CardMedia,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Stack,
   TextField,
   Typography,
 } from "@mui/material";
@@ -20,6 +14,8 @@ import UploadOutlinedIcon from "@mui/icons-material/UploadOutlined";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { updateTableAction, deleteTableAction } from "../action";
+import FormCard from "@/app/components/FormCard";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
 import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
 
 interface EditTableProps {
@@ -84,128 +80,119 @@ export default function EditTable({ table }: EditTableProps) {
       {/* Rename + logo — one form, one submit, one error. Saving with
           a new logo regenerates the QR code image (see action.ts);
           content/URL stays the same either way. */}
-      <Box
-        component="form"
+      <FormCard
         onSubmit={handleSaveName}
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 3,
-          p: { xs: 2, sm: 3 },
-          mb: 3,
-        }}
+        error={nameError}
+        spacing={2}
+        sx={{ mb: 3 }}
       >
-        <Stack spacing={2}>
-          {nameError && <Alert severity="error">{nameError}</Alert>}
+        <TextField
+          label="Table Name"
+          required
+          fullWidth
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
 
-          <TextField
-            label="Table Name"
-            required
-            fullWidth
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
+        <Box>
+          <Button
+            component="label"
+            variant="outlined"
+            startIcon={<UploadOutlinedIcon />}
+            sx={{ fontSize: "0.8rem" }}
+          >
+            {logo ? "Change Logo" : "Update New Logo"}
+            <input
+              type="file"
+              hidden
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => setLogo(event.target.files?.[0] ?? null)}
+            />
+          </Button>
 
-          <Box>
-            <Button
-              component="label"
-              variant="outlined"
-              startIcon={<UploadOutlinedIcon />}
-              sx={{ fontSize: "0.8rem" }}
+          {logo ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                mt: 0.5,
+                color: "success.main",
+              }}
             >
-              {logo ? "Change Logo" : "Update New Logo"}
-              <input
-                type="file"
-                hidden
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => setLogo(event.target.files?.[0] ?? null)}
-              />
-            </Button>
-
-            {logo ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  mt: 0.5,
-                  color: "success.main",
-                }}
-              >
-                <CheckCircleIcon sx={{ fontSize: 16 }} />
-                <Typography variant="caption">
-                  Image uploaded — {logo.name}
-                </Typography>
-              </Box>
-            ) : (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mt: 0.5 }}
-              >
-                Uploading a new logo regenerates the QR code image — reprint it
-                afterward to show the new logo. PNG, JPEG, or WEBP, up to 5MB.
+              <CheckCircleIcon sx={{ fontSize: 16 }} />
+              <Typography variant="caption">
+                Image uploaded — {logo.name}
               </Typography>
-            )}
-          </Box>
-
-          {table.qrcodeImageUrl && (
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mb: 0.5 }}
-              >
-                Current QR code
-              </Typography>
-              <CardMedia
-                component="img"
-                image={table.qrcodeImageUrl}
-                alt={`QR code for ${table.name}`}
-                sx={{
-                  width: 120,
-                  height: 120,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 1.5,
-                  mb: 1,
-                }}
-              />
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<DownloadOutlinedIcon sx={{ fontSize: 14 }} />}
-                onClick={() =>
-                  table.qrcodeImageUrl &&
-                  downloadQrCode(table.qrcodeImageUrl, table.name)
-                }
-                sx={{ fontSize: "0.75rem" }}
-              >
-                Save QR
-              </Button>
             </Box>
+          ) : (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 0.5 }}
+            >
+              Uploading a new logo regenerates the QR code image — reprint it
+              afterward to show the new logo. PNG, JPEG, or WEBP, up to 5MB.
+            </Typography>
           )}
+        </Box>
 
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isSavingName || !name.trim()}
-              sx={{ px: 3 }}
+        {table.qrcodeImageUrl && (
+          <Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 0.5 }}
             >
-              {isSavingName ? "Saving..." : "Save Changes"}
-            </Button>
+              Current QR code
+            </Typography>
+            <CardMedia
+              component="img"
+              image={table.qrcodeImageUrl}
+              alt={`QR code for ${table.name}`}
+              sx={{
+                width: 120,
+                height: 120,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 1.5,
+                mb: 1,
+              }}
+            />
             <Button
-              type="button"
+              size="small"
               variant="outlined"
-              disabled={isSavingName}
-              onClick={() => router.push("/backoffice/tables")}
+              startIcon={<DownloadOutlinedIcon sx={{ fontSize: 14 }} />}
+              onClick={() =>
+                table.qrcodeImageUrl &&
+                downloadQrCode(table.qrcodeImageUrl, table.name)
+              }
+              sx={{ fontSize: "0.75rem" }}
             >
-              Cancel
+              Save QR
             </Button>
           </Box>
-        </Stack>
-      </Box>
+        )}
+
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSavingName || !name.trim()}
+            sx={{ px: 3 }}
+          >
+            {isSavingName ? "Saving..." : "Save Changes"}
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            disabled={isSavingName}
+            onClick={() => router.push("/backoffice/tables")}
+          >
+            Cancel
+          </Button>
+        </Box>
+      </FormCard>
 
       {/* Delete — immediate hard delete, no archive step. Removes the
           Table row and its QR code image (MinIO) together. */}
@@ -240,30 +227,17 @@ export default function EditTable({ table }: EditTableProps) {
         </Box>
       </Box>
 
-      <Dialog
+      <ConfirmDialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>Delete this table?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure want to delete this table? This removes the table and
-            its QR code from the database and storage permanently. This action
-            cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button
-            color="error"
-            variant="contained"
-            disabled={isDeleting}
-            onClick={handleDelete}
-          >
-            {isDeleting ? "Deleting..." : "Yes, delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Delete this table?"
+        message="Are you sure want to delete this table? This removes the table and its QR code from the database and storage permanently. This action cannot be undone."
+        confirmLabel="Yes, delete"
+        pendingLabel="Deleting..."
+        destructive
+        pending={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
     </Box>
   );
 }

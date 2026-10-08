@@ -6,7 +6,7 @@ import {
   MenuLocationService,
   MenuService,
 } from "@/app/services";
-import { requireBackofficeContext } from "@/app/lib/backofficeContext";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import MenuForm from "@/app/components/menuForm/MenuForm";
 
 export default async function EditMenuPage({

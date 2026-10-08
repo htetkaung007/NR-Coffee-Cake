@@ -1,4 +1,4 @@
-import { requireBackofficeAccess } from "@/app/lib/backofficeContext";
+import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import NewLocation from "./NewLocation";
 
 export default async function NewLocationPage() {
