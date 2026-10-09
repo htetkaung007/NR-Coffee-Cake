@@ -32,7 +32,12 @@ vi.mock("@/app/utils/prisma", () => ({
         where.id === 3 ? { locationId: 10 } : null,
     },
     orderSession: {
-      findFirst: async () => ({ id: 7, status: "CART", locationId: 10 }),
+      findFirst: async () => ({
+        id: 7,
+        status: "CART",
+        locationId: 10,
+        location: { companyId: 1 },
+      }),
     },
     order: {
       findMany: async () =>
@@ -75,6 +80,14 @@ import { CartValidationService } from "./cartValidation.service";
 import { TableDraftService } from "./tableDraft.service";
 import { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 import { StaffOrderService } from "./orderService/staffOrder.service";
+
+/** A manager working at location 10 (the staff POS's scope). */
+const staffAtLocation10 = {
+  companyId: 1,
+  userId: 1,
+  role: "MANAGER" as const,
+  locationId: 10,
+};
 
 const HIDDEN_MESSAGE = '"Mocha" isn\'t available at this location.';
 
@@ -134,7 +147,7 @@ describe("sending a menu hidden at the location is refused on the server", () =>
 
   it("staff POS: submit refuses a line added before the menu was hidden", async () => {
     db.orders = [{ menuId: 2 }];
-    await expect(StaffOrderService.submitStaffOrder(7)).rejects.toMatchObject({
+    await expect(StaffOrderService.submitStaffOrder(7, staffAtLocation10)).rejects.toMatchObject({
       message: HIDDEN_MESSAGE,
     });
     expect(transaction).not.toHaveBeenCalled();

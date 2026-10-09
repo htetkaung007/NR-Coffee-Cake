@@ -15,7 +15,7 @@ export default async function LocationsPage() {
 
   const [locations, selectedLocation] = await Promise.all([
     LocationService.getAllLocationsForCompany(companyId),
-    userId ? LocationService.getSelectedLocation(userId) : null,
+    LocationService.getSelectedLocation(userId, companyId),
   ]);
 
   return (

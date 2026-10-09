@@ -17,11 +17,24 @@ import {
 } from "@mui/material";
 import NextLink from "next/link";
 import GoogleIcon from "@mui/icons-material/Google";
+import {
+  SIGNUP_CLOSED_ERROR,
+  SIGNUP_CLOSED_MESSAGE,
+} from "@/app/lib/access/signUp";
 
-export default function SignInForm() {
+export default function SignInForm({
+  isSignUpOpen,
+}: {
+  /** Display only — shows the "Sign Up" link while no shop exists yet. */
+  isSignUpOpen: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/backoffice";
+  // A new Google email while sign-up is closed: NextAuth redirects back
+  // here with this error (ensureDefaultSetup) and nothing was created.
+  const isSignUpClosedRedirect =
+    searchParams.get("error") === SIGNUP_CLOSED_ERROR;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -100,6 +113,16 @@ export default function SignInForm() {
           </Typography>
         </Box>
 
+        {isSignUpClosedRedirect && (
+          <Alert
+            severity="info"
+            role="status"
+            sx={{ width: "100%", mb: 3, borderRadius: 2 }}
+          >
+            {SIGNUP_CLOSED_MESSAGE}
+          </Alert>
+        )}
+
         <Button
           fullWidth
           variant="outlined"
@@ -175,19 +198,21 @@ export default function SignInForm() {
             )}
           </Button>
 
-          <Box sx={{ mt: 3, textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
-              Do not have an account?{" "}
-              <Link
-                component={NextLink}
-                href="/auth/signup"
-                variant="body2"
-                sx={{ fontWeight: "bold", textDecoration: "none" }}
-              >
-                Sign Up
-              </Link>
-            </Typography>
-          </Box>
+          {isSignUpOpen && (
+            <Box sx={{ mt: 3, textAlign: "center" }}>
+              <Typography variant="body2" color="text.secondary">
+                Do not have an account?{" "}
+                <Link
+                  component={NextLink}
+                  href="/auth/signup"
+                  variant="body2"
+                  sx={{ fontWeight: "bold", textDecoration: "none" }}
+                >
+                  Sign Up
+                </Link>
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
     </Container>

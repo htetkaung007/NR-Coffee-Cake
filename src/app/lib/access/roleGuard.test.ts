@@ -11,7 +11,8 @@ vi.mock("@/app/services", () => ({
     getGrantedPermissions: (userId: number) => getGrantedPermissions(userId),
   },
   LocationService: {
-    getSelectedLocation: (userId: number) => getSelectedLocation(userId),
+    getSelectedLocation: (userId: number, companyId: number) =>
+      getSelectedLocation(userId, companyId),
   },
 }));
 
@@ -94,7 +95,7 @@ describe("the withLocation option", () => {
       role: "MANAGER",
       locationId: 10,
     });
-    expect(getSelectedLocation).toHaveBeenCalledWith(7);
+    expect(getSelectedLocation).toHaveBeenCalledWith(7, 1);
   });
 
   it("refuses with NO_SELECTED_LOCATION when there is none", async () => {

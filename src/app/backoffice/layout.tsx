@@ -28,7 +28,7 @@ export default async function BackOfficeLayout({ children }: Props) {
   // or it has been archived — the top bar then shows its fallbacks).
   const { userId, role } = await getSessionContext();
   const selectedLocation = userId
-    ? await LocationService.getSelectedLocation(userId)
+    ? await LocationService.getSelectedLocation(userId, company.id)
     : null;
   const locationName = selectedLocation
     ? await LocationService.getShopNameForLocation(selectedLocation.locationId)

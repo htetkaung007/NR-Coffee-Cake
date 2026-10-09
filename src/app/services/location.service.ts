@@ -46,6 +46,17 @@ export class LocationService {
     return prisma.location.findFirst({ where: { id: locationId } });
   }
 
+  /** Chain lookup — the location, if it belongs to this company
+   *  (archived or not). Throws NotFoundError otherwise, so an id from
+   *  another company is indistinguishable from one that doesn't exist. */
+  static async getCompanyLocation(locationId: number, companyId: number) {
+    const location = await prisma.location.findFirst({
+      where: { id: locationId, companyId },
+    });
+    if (!location) throw new NotFoundError("Location", locationId);
+    return location;
+  }
+
   /** Customer-facing top bar needs the shop's brand name (Company.name),
    *  not the Location's own name (which is a branch label like
    *  "Downtown" — see Company vs Location in schema.prisma). Does one
@@ -86,7 +97,12 @@ export class LocationService {
 
   /** Does one thing: renames. Does not touch isArchived/archivedAt —
    *  that's toggleLocationArchive's job. */
-  static async updateLocationName(locationId: number, name: string) {
+  static async updateLocationName(
+    locationId: number,
+    companyId: number,
+    name: string,
+  ) {
+    await LocationService.getCompanyLocation(locationId, companyId);
     return prisma.location.update({
       where: { id: locationId },
       data: { name },
@@ -98,7 +114,12 @@ export class LocationService {
    * match (when it was closed — informational; deleting doesn't depend
    * on it, see deleteLocation).
    */
-  static async toggleLocationArchive(locationId: number, isArchived: boolean) {
+  static async toggleLocationArchive(
+    locationId: number,
+    companyId: number,
+    isArchived: boolean,
+  ) {
+    await LocationService.getCompanyLocation(locationId, companyId);
     return prisma.location.update({
       where: { id: locationId },
       data: {
@@ -222,17 +243,27 @@ export class LocationService {
    * return the same shape ({ locationId, ... }) so callers like
    * MenuService.getMenusWithDetails(companyId, selectedLocation.locationId)
    * work unchanged regardless of which role called this.
+   *
+   * Only ever a location of `companyId` (the session's): a user or a
+   * location of another company reads as "none selected" (null).
    */
-  static async getSelectedLocation(userId: number) {
-    const user = await prisma.user.findFirst({ where: { id: userId } });
+  static async getSelectedLocation(userId: number, companyId: number) {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, companyId },
+    });
+    if (!user) return null;
 
-    if (user?.role === "MANAGER") {
+    if (user.role === "MANAGER") {
       if (!user.locationId) return null; // Manager not yet assigned a location
-      return { locationId: user.locationId };
+      const own = await prisma.location.findFirst({
+        where: { id: user.locationId, companyId },
+        select: { id: true },
+      });
+      return own ? { locationId: own.id } : null;
     }
 
     return prisma.selectedLocation.findFirst({
-      where: { userId },
+      where: { userId, location: { companyId } },
       orderBy: { id: "asc" },
     });
   }
@@ -244,14 +275,21 @@ export class LocationService {
    * Upserts on the @@unique([userId]) constraint so an Admin always
    * has exactly one active location, never zero or two.
    */
-  static async setSelectedLocation(userId: number, locationId: number) {
-    const user = await prisma.user.findFirst({ where: { id: userId } });
+  static async setSelectedLocation(
+    userId: number,
+    companyId: number,
+    locationId: number,
+  ) {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, companyId },
+    });
     if (!user) throw new NotFoundError("User", String(userId));
     if (user.role === "MANAGER") {
       throw new ValidationError(
         "Managers can't switch locations — contact your Admin.",
       );
     }
+    await LocationService.getCompanyLocation(locationId, companyId);
 
     return prisma.selectedLocation.upsert({
       where: { userId },

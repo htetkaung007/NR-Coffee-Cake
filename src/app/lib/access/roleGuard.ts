@@ -1,6 +1,10 @@
 import { AppError } from "../errors";
 import { hasPermission, type PermissionKey } from "./permissions";
-import { assertRole, type StaffScope } from "./rolePolicy";
+import {
+  assertRole,
+  type LocatedScope,
+  type StaffScope,
+} from "./rolePolicy";
 import { getSessionContext } from "./session";
 import { LocationService, PermissionService } from "@/app/services";
 
@@ -15,11 +19,6 @@ const OWNER_ONLY_ACTION_MESSAGE = "Only the owner can do this.";
 /** The one error for "this needs a selected location and there's none". */
 const NO_LOCATION_MESSAGE = "Select a location first.";
 
-/** A scope plus the location the user is working in. */
-export interface LocatedScope extends StaffScope {
-  locationId: number;
-}
-
 interface GuardOptions {
   /** Also resolve the user's selected location (an owner's
    *  SelectedLocation, a manager's own) — missing → NO_SELECTED_LOCATION. */
@@ -29,12 +28,16 @@ interface GuardOptions {
 }
 
 /** `scope` plus its selected location — never one named by the client
- *  (LocationService.getSelectedLocation). Shared by the guards'
- *  `withLocation` option and requireBackofficeContext. */
+ *  (LocationService.getSelectedLocation, which only returns a location
+ *  of the session's company; another company's reads as none). Shared by
+ *  the guards' `withLocation` option and requireBackofficeContext. */
 export async function withSelectedLocation(
   scope: StaffScope,
 ): Promise<LocatedScope> {
-  const selected = await LocationService.getSelectedLocation(scope.userId);
+  const selected = await LocationService.getSelectedLocation(
+    scope.userId,
+    scope.companyId,
+  );
   if (!selected) {
     throw new AppError(NO_LOCATION_MESSAGE, "NO_SELECTED_LOCATION");
   }

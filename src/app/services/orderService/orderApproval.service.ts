@@ -1,7 +1,8 @@
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
-import { NotFoundError, ValidationError } from "@/app/lib/errors";
+import { ValidationError } from "@/app/lib/errors";
 import type { RejectDetails } from "@/app/lib/order/rejectReason";
+import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 import { OrderSessionService } from "./orderSession.service";
 
 type Tx = Prisma.TransactionClient;
@@ -16,11 +17,11 @@ type Tx = Prisma.TransactionClient;
 export class OrderApprovalService {
   /** Cashier taps Accept on the Backoffice dashboard —
    *  PENDING_APPROVAL -> PENDING (kitchen can start). */
-  static async acceptCounterSession(sessionId: number) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
+  static async acceptCounterSession(sessionId: number, scope: LocatedScope) {
+    const session = await OrderSessionService.getRoundForStaff(
+      sessionId,
+      scope,
+    );
     if (session.status !== "PENDING_APPROVAL") {
       throw new ValidationError("This order is not awaiting approval.");
     }
@@ -37,11 +38,15 @@ export class OrderApprovalService {
    *  cashier-initiated instead of time-initiated. The cashier's reason
    *  (and, for Other, their optional note) is kept on the round's
    *  OrderCancellation row. */
-  static async rejectCounterSession(sessionId: number, details: RejectDetails) {
-    const session = await prisma.orderSession.findFirst({
-      where: { id: sessionId, isArchived: false },
-    });
-    if (!session) throw new NotFoundError("OrderSession", sessionId);
+  static async rejectCounterSession(
+    sessionId: number,
+    scope: LocatedScope,
+    details: RejectDetails,
+  ) {
+    const session = await OrderSessionService.getRoundForStaff(
+      sessionId,
+      scope,
+    );
     if (session.status !== "PENDING_APPROVAL") {
       throw new ValidationError("This order is not awaiting approval.");
     }

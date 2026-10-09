@@ -8,6 +8,8 @@ import {
   deriveRequestedAt,
 } from "@/app/lib/order/cancellation";
 import { APPROVAL_WINDOW_MINUTES } from "@/app/lib/approval/approvalWindow";
+import { canActAtLocation } from "@/app/lib/access/ownership";
+import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 
 type Tx = Prisma.TransactionClient;
 
@@ -398,6 +400,32 @@ export class OrderSessionService {
       where: { id: round.id },
       data: { status: "PENDING_APPROVAL", approvalExpiresAt },
     });
+  }
+
+  /** Chain lookup for the Backoffice — the round, if staff `scope` may
+   *  act where it was ordered (its company; a manager's own location
+   *  only — canActAtLocation). Anything else is the same NotFoundError
+   *  as a round that doesn't exist. Shared by OrderApprovalService and
+   *  StaffOrderService. */
+  static async getRoundForStaff(sessionId: number, scope: LocatedScope) {
+    const session = await prisma.orderSession.findFirst({
+      where: {
+        id: sessionId,
+        isArchived: false,
+        location: { companyId: scope.companyId },
+      },
+      include: { location: { select: { companyId: true } } },
+    });
+    if (
+      !session ||
+      !canActAtLocation(scope, {
+        companyId: session.location.companyId,
+        locationId: session.locationId,
+      })
+    ) {
+      throw new NotFoundError("OrderSession", sessionId);
+    }
+    return session;
   }
 
   /** Read path for the customer's polling endpoint (design doc "Step

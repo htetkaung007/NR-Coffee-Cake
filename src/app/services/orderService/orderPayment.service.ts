@@ -1,6 +1,8 @@
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
-import { ValidationError } from "@/app/lib/errors";
+import { NotFoundError, ValidationError } from "@/app/lib/errors";
+import { canActAtLocation, firstUnownedId } from "@/app/lib/access/ownership";
+import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 import { BillService } from "../bill.service";
 import { OrderSessionService } from "./orderSession.service";
 
@@ -118,6 +120,9 @@ export class OrderPaymentService {
    *
    *  Everything happens in ONE transaction, so a failure anywhere
    *  leaves nothing marked paid and no Bill row behind:
+   *   0. Every id must be a round `scope` may act on (its company; a
+   *      manager's own location only — canActAtLocation); the first
+   *      that isn't is the same NotFoundError as one that doesn't exist.
    *   1. Load the sessions WITH their lines/add-ons (BillService needs
    *      those to price the bill) and refuse (ValidationError) if any
    *      is already PAID or already has a billId — the double-click/
@@ -130,21 +135,38 @@ export class OrderPaymentService {
    *   4. cleanUpAfterPayment, called last, exactly as before (Table QR
    *      epoch bump/leftover drafts, Counter's sibling CART rounds on
    *      the same bill) — its own comment covers why. */
-  static async markSessionsPaid(sessionIds: number[]) {
+  static async markSessionsPaid(sessionIds: number[], scope: LocatedScope) {
     if (sessionIds.length === 0) {
       throw new ValidationError("No sessions to mark as paid.");
     }
 
     return prisma.$transaction(async (tx) => {
       const sessions = await tx.orderSession.findMany({
-        where: { id: { in: sessionIds }, isArchived: false },
+        where: {
+          id: { in: sessionIds },
+          isArchived: false,
+          location: { companyId: scope.companyId },
+        },
         include: {
+          location: { select: { companyId: true } },
           orders: {
             where: { isArchived: false },
             include: { OrdersAddons: true },
           },
         },
       });
+      const unowned = firstUnownedId(
+        sessionIds,
+        sessions
+          .filter((session) =>
+            canActAtLocation(scope, {
+              companyId: session.location.companyId,
+              locationId: session.locationId,
+            }),
+          )
+          .map((session) => session.id),
+      );
+      if (unowned !== null) throw new NotFoundError("OrderSession", unowned);
 
       const alreadyPaid = sessions.find(
         (session) => session.status === "PAID" || session.billId !== null,

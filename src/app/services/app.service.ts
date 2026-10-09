@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
-import { ValidationError } from "../lib/errors";
+import { AppError, ValidationError } from "../lib/errors";
+import { SIGNUP_CLOSED_MESSAGE } from "../lib/access/signUp";
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
@@ -11,6 +12,10 @@ type Tx = Prisma.TransactionClient;
 // library ရဲ့ type ကို မမှီခိုသင့်ဘူး, NextAuth ကနေရော, register form
 // ကနေရော ၂ နေရာစလုံးက ခေါ်နိုင်ဖို့).
 type NewUserInput = { name?: string | null; email: string };
+
+function signUpClosedError() {
+  return new AppError(SIGNUP_CLOSED_MESSAGE, "SIGNUP_CLOSED");
+}
 
 // AppService ရဲ့ method တွေက this.xxx() အစား AppService.xxx() ကို
 // အသုံးပြုထားတယ် — ဘာကြောင့်လဲဆိုတော့ toSafeResult(AppService.someMethod)
@@ -30,35 +35,77 @@ export class AppService {
   }
 
   // ---------------------------------------------------------------------
+  // Single-shop mode: sign-up opens only while no company exists
+  // ---------------------------------------------------------------------
+
+  /** True only while there are zero Company rows — the first owner may
+   *  still sign up. Display only for the auth pages; the real check is
+   *  inside createDefaultSetup's transaction. */
+  static async isSignUpOpen() {
+    return (await prisma.company.count()) === 0;
+  }
+
+  // ---------------------------------------------------------------------
   // Default setup (transactional)
   // Each step is its own function so it can be tested and read independently.
   // The public entry point (createDefaultSetup) reads top-to-bottom like a
   // newspaper headline; the details live in the private helpers below it.
   // ---------------------------------------------------------------------
 
+  /**
+   * Creates the shop: the company, its owner and the default menu,
+   * location and table. THE one door both sign-up paths go through
+   * (registerUser for the form, ensureDefaultSetup for a new Google
+   * email), so it enforces "sign-up only while no company exists"
+   * itself, in the same transaction that creates the company.
+   * Serializable: two first sign-ups racing each other can't both see
+   * zero companies — the loser fails with P2034, reported as
+   * SIGNUP_CLOSED.
+   */
   static async createDefaultSetup(nextUser: NewUserInput, password?: string) {
-    return prisma.$transaction(async (tx) => {
-      const company = await AppService.createDefaultCompany(tx);
-      const user = await AppService.createUserForCompany(
-        tx,
-        nextUser,
-        company.id,
-        password,
+    try {
+      return await prisma.$transaction(
+        (tx) => AppService.createDefaultSetupIn(tx, nextUser, password),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
-      const menu = await AppService.createDefaultMenu(tx, company.id);
-      await AppService.createDefaultAddons(tx, menu.id);
-      const location = await AppService.createDefaultLocation(
-        tx,
-        company.id,
-        user.id,
-      );
-      // MenuStock needs both menuId and locationId, so this must come
-      // after createDefaultLocation, not alongside createDefaultMenu.
-      await AppService.createDefaultMenuStock(tx, menu.id, location.id);
-      const table = await AppService.createDefaultTable(tx, location.id);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2034"
+      ) {
+        throw signUpClosedError();
+      }
+      throw error;
+    }
+  }
 
-      return { user, company, location, table };
-    });
+  private static async createDefaultSetupIn(
+    tx: Tx,
+    nextUser: NewUserInput,
+    password?: string,
+  ) {
+    if ((await tx.company.count()) > 0) throw signUpClosedError();
+
+    const company = await AppService.createDefaultCompany(tx);
+    const user = await AppService.createUserForCompany(
+      tx,
+      nextUser,
+      company.id,
+      password,
+    );
+    const menu = await AppService.createDefaultMenu(tx, company.id);
+    await AppService.createDefaultAddons(tx, menu.id);
+    const location = await AppService.createDefaultLocation(
+      tx,
+      company.id,
+      user.id,
+    );
+    // MenuStock needs both menuId and locationId, so this must come
+    // after createDefaultLocation, not alongside createDefaultMenu.
+    await AppService.createDefaultMenuStock(tx, menu.id, location.id);
+    const table = await AppService.createDefaultTable(tx, location.id);
+
+    return { user, company, location, table };
   }
 
   /**
@@ -72,6 +119,10 @@ export class AppService {
     email: string;
     password: string;
   }) {
+    // Checked first, so a closed sign-up never says whether an email is
+    // registered (and skips the hash); createDefaultSetup checks again.
+    if (!(await AppService.isSignUpOpen())) throw signUpClosedError();
+
     const existingUser = await AppService.getUserByEmail(input.email);
     if (existingUser) {
       throw new ValidationError("Email is already registered.");

@@ -43,8 +43,12 @@ export async function createLocationAction(formData: FormData) {
 
 const safeUpdateLocationName = toSafeResult(
   async (input: UpdateLocationInput & { locationId: number }) => {
-    await requireOwner();
-    return LocationService.updateLocationName(input.locationId, input.name);
+    const { companyId } = await requireOwner();
+    return LocationService.updateLocationName(
+      input.locationId,
+      companyId,
+      input.name,
+    );
   },
 );
 
@@ -70,9 +74,10 @@ export async function updateLocationNameAction(
 
 const safeToggleArchive = toSafeResult(
   async (input: { locationId: number; isArchived: boolean }) => {
-    await requireOwner();
+    const { companyId } = await requireOwner();
     return LocationService.toggleLocationArchive(
       input.locationId,
+      companyId,
       input.isArchived,
     );
   },
@@ -115,8 +120,8 @@ export async function hardDeleteLocationAction(locationId: number) {
 
 const safeSetSelected = toSafeResult(async (locationId: number) => {
   // Switching location is the owner's — a manager's is fixed.
-  const { userId } = await requireOwner();
-  return LocationService.setSelectedLocation(userId, locationId);
+  const { companyId, userId } = await requireOwner();
+  return LocationService.setSelectedLocation(userId, companyId, locationId);
 });
 
 export async function selectLocationAction(locationId: number) {

@@ -7,7 +7,11 @@ import {
 import { NotFoundError } from "../lib/errors";
 import { getFileStorageService } from "../lib/storage/getFileStorageService";
 import { isMenuListed } from "../lib/menu/menuOrderability";
-import { MenuLocationService } from "./menuLocation.service";
+import {
+  companyMenuWhere,
+  MenuLocationService,
+} from "./menuLocation.service";
+import { firstUnownedId } from "../lib/access/ownership";
 
 type Tx = Prisma.TransactionClient;
 
@@ -81,6 +85,11 @@ export class MenuService {
     shownLocationIds: number[];
   }) {
     return prisma.$transaction(async (tx: Tx) => {
+      await MenuService.assertCompanyCategories(
+        tx,
+        input.categoryIds,
+        input.companyId,
+      );
       const menu = await tx.menu.create({
         data: {
           name: input.name,
@@ -125,9 +134,32 @@ export class MenuService {
     });
   }
 
+  /** Every category id from the client must be this company's (archived
+   *  ones included — a menu may still be linked to one). The first that
+   *  isn't is the same NotFoundError as one that doesn't exist. */
+  private static async assertCompanyCategories(
+    db: Tx,
+    categoryIds: readonly number[],
+    companyId: number,
+  ) {
+    const ids = [...new Set(categoryIds)];
+    if (ids.length === 0) return;
+    const owned = await db.menuCategory.findMany({
+      where: { id: { in: ids }, companyId },
+      select: { id: true },
+    });
+    const unowned = firstUnownedId(
+      ids,
+      owned.map((category) => category.id),
+    );
+    if (unowned !== null) throw new NotFoundError("Menu category", unowned);
+  }
+
   /** Sets assetUrl after an image has been uploaded to storage — kept as
-   *  its own step (see createMenu's comment on why it's not transactional). */
-  static async setMenuAsset(menuId: number, url: string) {
+   *  its own step (see createMenu's comment on why it's not
+   *  transactional). Private: only saveMenuImage calls it, after its
+   *  ownership check. */
+  private static async setMenuAsset(menuId: number, url: string) {
     return prisma.menu.update({
       where: { id: menuId },
       data: { assetUrl: url },
@@ -137,8 +169,10 @@ export class MenuService {
   /** A new photo for a saved menu: upload it to file storage, then store
    *  its URL (setMenuAsset) — after the menu's own DB write, never inside
    *  its transaction (an object-store PUT can't be rolled back; CLAUDE.md
-   *  Rule 7). */
-  static async saveMenuImage(menuId: number, image: File) {
+   *  Rule 7). The menu must be this company's (checked before the
+   *  upload, so nothing is stored for someone else's menu). */
+  static async saveMenuImage(menuId: number, companyId: number, image: File) {
+    await MenuService.getCompanyMenu(menuId, companyId);
     const storage = getFileStorageService();
     const { url } = await storage.upload(
       Buffer.from(await image.arrayBuffer()),
@@ -321,21 +355,32 @@ export class MenuService {
    *  Throws NotFoundError otherwise, so an id from another company is
    *  indistinguishable from one that doesn't exist. */
   static async getCompanyMenu(menuId: number, companyId: number) {
-    const menu = await prisma.menu.findFirst({
-      where: {
-        id: menuId,
-        isArchived: false,
-        menuMenuCategory: { some: { menuCategory: { companyId } } },
-      },
+    return MenuService.findCompanyMenu(prisma, menuId, companyId);
+  }
+
+  /** getCompanyMenu with any client — the plain one, or a transaction's. */
+  private static async findCompanyMenu(
+    db: Tx,
+    menuId: number,
+    companyId: number,
+  ) {
+    const menu = await db.menu.findFirst({
+      where: { id: menuId, ...companyMenuWhere(companyId) },
       select: { id: true, name: true },
     });
     if (!menu) throw new NotFoundError("Menu", menuId);
     return menu;
   }
 
-  static async getMenuById(menuId: number, locationId: number) {
+  /** The Backoffice edit form's data — null (the page's "Menu not
+   *  found") for a menu that isn't this company's. */
+  static async getMenuById(
+    menuId: number,
+    companyId: number,
+    locationId: number,
+  ) {
     const menu = await prisma.menu.findFirst({
-      where: { id: menuId, isArchived: false },
+      where: { id: menuId, ...companyMenuWhere(companyId) },
     });
     if (!menu) return null;
 
@@ -380,6 +425,14 @@ export class MenuService {
     },
   ) {
     return prisma.$transaction(async (tx: Tx) => {
+      // The menu and every category it's put in must be this company's.
+      await MenuService.findCompanyMenu(tx, menuId, input.companyId);
+      await MenuService.assertCompanyCategories(
+        tx,
+        input.categoryIds,
+        input.companyId,
+      );
+
       const menu = await tx.menu.update({
         where: { id: menuId },
         data: {

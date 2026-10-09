@@ -12,6 +12,12 @@ export interface StaffScope {
   role: StaffRole;
 }
 
+/** A scope plus the location the user is working in — an owner's
+ *  selected location, a manager's own (User.locationId). */
+export interface LocatedScope extends StaffScope {
+  locationId: number;
+}
+
 /** The FORBIDDEN message for owner-only changes on the add-ons page. */
 export const OWNER_ONLY_MESSAGE = "Only the owner can change this.";
 

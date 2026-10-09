@@ -11,9 +11,8 @@ import { reportExportInputSchema } from "@/app/lib/schemas/reportSchema";
 import {
   requirePermission,
   withSelectedLocation,
-  type LocatedScope,
 } from "@/app/lib/access/roleGuard";
-import type { StaffScope } from "@/app/lib/access/rolePolicy";
+import type { LocatedScope, StaffScope } from "@/app/lib/access/rolePolicy";
 import { ReportService } from "@/app/services";
 
 const plain = (status: number, message: string) =>

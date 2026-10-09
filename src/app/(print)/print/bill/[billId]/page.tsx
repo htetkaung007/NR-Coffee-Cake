@@ -35,7 +35,10 @@ export default async function PrintPaidBillPage({
   const { companyId, userId } = await getSessionContext();
   if (!companyId || !userId) redirect("/auth/signIn");
 
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(
+    userId,
+    companyId,
+  );
   if (!selectedLocation) {
     return (
       <Message>No location selected. Please choose a location first.</Message>

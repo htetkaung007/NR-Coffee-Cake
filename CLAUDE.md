@@ -289,10 +289,34 @@ independently of the app config). Everything else still goes through
   customer-facing order flow should show "We are closed" and block new
   orders server-side (check location.isArchived in the order-creation
   Server Action, not just hide UI client-side) — not yet wired up.
+- Add-on groups are global (no companyId) — fine in single-shop mode;
+  must get a companyId before more than one company can exist.
 - Menu hard-delete (soft-delete via isArchived exists; permanent
   delete is not yet built). Locations have no grace period any more:
   one with no sales history and no managers is deleted at once, one
   with sales can only be archived (lib/location/locationDeletion.ts).
+
+## 13a. Single-shop mode
+
+- This app runs for **one shop**. Sign-up opens only while **no company
+  exists** — for both doors, the sign-up form (`registerUser`) and a new
+  Google email (`ensureDefaultSetup`). Both go through
+  `AppService.createDefaultSetup`, which checks it inside its own
+  (Serializable) transaction and throws `SIGNUP_CLOSED`
+  (`lib/access/signUp.ts`). The hidden "Sign Up" link and the closed
+  /auth/signup page are display only.
+- Staff accounts (managers) are created by the owner in Settings
+  (`ManagerService.createManagerForLocation`), never by sign-up.
+- **Every client-supplied id is checked against the session's company
+  (and a manager's location) inside the Service** — `where: { id,
+  companyId }`, a relation filter (`location: { companyId }`), or a chain
+  lookup — with the companyId / scope passed in by the action from the
+  guard, never from client input. "Doesn't exist" and "belongs to someone
+  else" are the same NotFoundError. A manager may act only at their own
+  `User.locationId`: `canActAtLocation` (`lib/access/ownership.ts`).
+  Where an action uses only the session's selected location (never a
+  client id), that location is already checked by
+  `LocationService.getSelectedLocation(userId, companyId)`.
 
 ## 14. Service imports — always via the barrel file, never the concrete path
 

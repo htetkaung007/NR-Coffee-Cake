@@ -15,9 +15,12 @@ export default async function NewStaffOrderPage() {
     access: "staff",
   });
   if (!scope) return fallback;
-  const { userId } = scope;
+  const { companyId, userId } = scope;
 
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(
+    userId,
+    companyId,
+  );
   if (!selectedLocation) {
     return (
       <StaffOrderClient

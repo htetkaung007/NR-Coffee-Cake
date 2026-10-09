@@ -4,6 +4,8 @@ import { AppError, NotFoundError, ValidationError } from "../lib/errors";
 import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
 import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 import { config } from "@/app/utils/config";
+import { canActAtLocation } from "@/app/lib/access/ownership";
+import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 
 // Name is fixed for the counter "table" row — it isn't a real seated
 // table a customer picks a name for, so locking it here (Service
@@ -41,9 +43,24 @@ export class TableService {
     });
   }
 
-  static async getTableById(tableId: number) {
-    const table = await prisma.table.findFirst({ where: { id: tableId } });
-    if (!table) throw new NotFoundError("Table", String(tableId));
+  /** Chain lookup for the Backoffice — the table, if `scope` may act
+   *  where it is (its company; a manager's own location only —
+   *  canActAtLocation). Anything else is the same NotFoundError as a
+   *  table that doesn't exist. */
+  static async getTableById(tableId: number, scope: LocatedScope) {
+    const table = await prisma.table.findFirst({
+      where: { id: tableId, location: { companyId: scope.companyId } },
+      include: { location: { select: { companyId: true } } },
+    });
+    if (
+      !table ||
+      !canActAtLocation(scope, {
+        companyId: table.location.companyId,
+        locationId: table.locationId,
+      })
+    ) {
+      throw new NotFoundError("Table", String(tableId));
+    }
     return table;
   }
 
@@ -100,8 +117,12 @@ export class TableService {
    *  Refuses to rename a counter row — the locked name is part of
    *  what makes it recognizable as "the counter" rather than a table,
    *  both in the UI and to anyone reading the row directly. */
-  static async updateTableName(tableId: number, name: string) {
-    const table = await TableService.getTableById(tableId);
+  static async updateTableName(
+    tableId: number,
+    scope: LocatedScope,
+    name: string,
+  ) {
+    const table = await TableService.getTableById(tableId, scope);
     if (table.isCounter) {
       throw new ValidationError("The Counter QR code's name can't be changed.");
     }
@@ -114,20 +135,22 @@ export class TableService {
 
   /** Does one thing: attaches a QR code image URL to an existing table.
    *  Mirrors MenuService.setMenuAsset — it only persists a URL that
-   *  FileStorageService.upload() already returned. */
-  static async setTableQrCodeUrl(tableId: number, url: string) {
+   *  FileStorageService.upload() already returned. Private: only
+   *  regenerateQrImage calls it, with a table its caller already looked
+   *  up through the ownership check. */
+  private static async setTableQrCodeUrl(tableId: number, url: string) {
     return prisma.table.update({
       where: { id: tableId },
       data: { qrcodeImageUrl: url },
     });
   }
 
-  /** Does one thing: deletes the Table row. Does NOT touch the QR
-   *  code image in storage — that's the Controller's job (action.ts),
-   *  which deletes it after this returns. Callers should read
-   *  qrcodeImageUrl via getTableById *before* calling this, since the
-   *  row (and that URL) is gone once this returns. */
-  static async deleteTable(tableId: number) {
+  /** Does one thing: deletes the Table row (after the ownership check).
+   *  Does NOT touch the QR code image in storage — that's the
+   *  Controller's job (action.ts), which deletes it after this returns,
+   *  using the deleted row's qrcodeImageUrl returned here. */
+  static async deleteTable(tableId: number, scope: LocatedScope) {
+    await TableService.getTableById(tableId, scope);
     return prisma.table.delete({ where: { id: tableId } });
   }
 
@@ -137,8 +160,8 @@ export class TableService {
    *  resolveTableQrScan). This method only updates the key the Table
    *  row holds — the caller (tables/action.ts) must follow up with
    *  regenerateQrImage to reprint the image around the new key. */
-  static async rotateAccessKey(tableId: number) {
-    await TableService.getTableById(tableId);
+  static async rotateAccessKey(tableId: number, scope: LocatedScope) {
+    await TableService.getTableById(tableId, scope);
 
     return prisma.table.update({
       where: { id: tableId },

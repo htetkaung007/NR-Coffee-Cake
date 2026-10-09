@@ -32,7 +32,9 @@ const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
     shownLocationIds: input.shownLocationIds,
   });
 
-  if (input.image) await MenuService.saveMenuImage(menu.id, input.image);
+  if (input.image) {
+    await MenuService.saveMenuImage(menu.id, companyId, input.image);
+  }
 
   return { id: menu.id };
 });
@@ -66,7 +68,9 @@ const safeUpdateMenu = toSafeResult(
       shownLocationIds: input.shownLocationIds,
     });
 
-    if (input.image) await MenuService.saveMenuImage(menu.id, input.image);
+    if (input.image) {
+      await MenuService.saveMenuImage(menu.id, companyId, input.image);
+    }
 
     return { id: menu.id };
   },

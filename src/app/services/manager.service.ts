@@ -8,6 +8,7 @@ import {
   type PermissionKey,
 } from "../lib/access/permissions";
 import { AppService } from "./app.service";
+import { LocationService } from "./location.service";
 import { MenuService } from "./menu.service";
 
 /** One manager as the owner's Settings list shows them. */
@@ -56,6 +57,10 @@ export class ManagerService {
     if (existingUser) {
       throw new ValidationError("Email is already registered.");
     }
+
+    // The location comes from the owner's form: it must be the owner's
+    // own company's (same NotFoundError as one that doesn't exist).
+    await LocationService.getCompanyLocation(input.locationId, input.companyId);
 
     const hashedPassword = await bcrypt.hash(input.password, 10);
     const companyMenus = await MenuService.getMenus(input.companyId);

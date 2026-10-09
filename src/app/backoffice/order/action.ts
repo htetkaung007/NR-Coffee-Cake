@@ -20,8 +20,11 @@ import {
 } from "@/app/services";
 
 const safeGetPendingApprovals = toSafeResult(async () => {
-  const { userId } = await requireStaff();
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
+  const { companyId, userId } = await requireStaff();
+  const selectedLocation = await LocationService.getSelectedLocation(
+    userId,
+    companyId,
+  );
   // No location chosen yet: nothing can be pending there — the pages
   // themselves already tell the user to pick one.
   if (!selectedLocation) return [];
@@ -39,8 +42,10 @@ export async function getPendingApprovalsAction() {
 }
 
 const safeAccept = toSafeResult(async (sessionId: number) => {
-  await requireStaff();
-  return OrderApprovalService.acceptCounterSession(sessionId);
+  // The round must be the company's — and, for a manager, at their own
+  // location (OrderApprovalService checks with the scope).
+  const scope = await requireStaff({ withLocation: true });
+  return OrderApprovalService.acceptCounterSession(sessionId, scope);
 });
 
 /** Cashier accepts a Counter QR session — see
@@ -59,9 +64,10 @@ export async function acceptCounterSessionAction(sessionId: number) {
 }
 
 const safeReject = toSafeResult(async (input: RejectRound) => {
-  await requireStaff();
+  const scope = await requireStaff({ withLocation: true });
   return OrderApprovalService.rejectCounterSession(
     input.sessionId,
+    scope,
     input.details,
   );
 });
@@ -86,8 +92,10 @@ export async function rejectCounterSessionAction(input: RejectRoundInput) {
 
 const safeMarkEntryPaid = toSafeResult(async (sessionIds: number[]) => {
   // Taking money: the owner, or a manager the owner let mark bills paid.
-  await requirePermission("ORDERS_MARK_PAID");
-  return OrderPaymentService.markSessionsPaid(sessionIds);
+  const scope = await requirePermission("ORDERS_MARK_PAID", {
+    withLocation: true,
+  });
+  return OrderPaymentService.markSessionsPaid(sessionIds, scope);
 });
 
 /** Whole-entry version for the grouped Order List (see

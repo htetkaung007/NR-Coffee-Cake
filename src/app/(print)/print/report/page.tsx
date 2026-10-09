@@ -39,7 +39,10 @@ export default async function PrintReportPage({
   if (!scope) return fallback;
   const { companyId, userId } = scope;
 
-  const selectedLocation = await LocationService.getSelectedLocation(userId);
+  const selectedLocation = await LocationService.getSelectedLocation(
+    userId,
+    companyId,
+  );
   if (!selectedLocation) {
     return (
       <Message>No location selected. Please choose a location first.</Message>

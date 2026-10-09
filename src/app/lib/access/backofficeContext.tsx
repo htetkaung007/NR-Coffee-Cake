@@ -122,7 +122,9 @@ export async function requireBackofficeContext(messages: {
   const { companyId, userId, role } = scope;
 
   // The same lookup the actions' `withLocation` guards use; a page shows
-  // its notice instead of throwing.
+  // its notice instead of throwing. A selected location that isn't the
+  // session company's reads as "no location selected"
+  // (LocationService.getSelectedLocation).
   let locationId: number;
   try {
     ({ locationId } = await withSelectedLocation(scope));

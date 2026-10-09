@@ -63,10 +63,17 @@ export async function createTableAction(formData: FormData) {
 
 const safeUpdateTable = toSafeResult(
   async (input: UpdateTableInput & { tableId: number }) => {
-    await requirePermission("TABLES_MANAGE");
+    // The table must be the company's — and, for a manager, at their
+    // own location (TableService.getTableById).
+    const scope = await requirePermission("TABLES_MANAGE", {
+      withLocation: true,
+    });
 
-    const existingTable = await TableService.getTableById(input.tableId);
-    await TableService.updateTableName(input.tableId, input.name);
+    const table = await TableService.updateTableName(
+      input.tableId,
+      scope,
+      input.name,
+    );
 
     // Logo is optional on edit too — only touch the QR code at all if
     // the user actually picked a new file this time. QR *content* (the
@@ -77,7 +84,7 @@ const safeUpdateTable = toSafeResult(
     // same place; only their look goes stale until reprinted.
     if (input.logo) {
       const logoBuffer = Buffer.from(await input.logo.arrayBuffer());
-      await TableService.regenerateQrImage(existingTable, logoBuffer);
+      await TableService.regenerateQrImage(table, logoBuffer);
     }
 
     return { id: input.tableId };
@@ -114,10 +121,11 @@ export async function updateTableAction(tableId: number, formData: FormData) {
  * truth, so it goes first.
  */
 const safeDeleteTable = toSafeResult(async (tableId: number) => {
-  await requirePermission("TABLES_MANAGE");
+  const scope = await requirePermission("TABLES_MANAGE", {
+    withLocation: true,
+  });
 
-  const table = await TableService.getTableById(tableId);
-  await TableService.deleteTable(tableId);
+  const table = await TableService.deleteTable(tableId, scope);
 
   if (table.qrcodeImageUrl) {
     const storage = getFileStorageService();
@@ -154,9 +162,11 @@ export async function deleteTableAction(tableId: number) {
  * can re-upload the logo afterward via updateTableAction if needed.
  */
 const safeRotateAccessKey = toSafeResult(async (tableId: number) => {
-  await requirePermission("TABLES_MANAGE");
+  const scope = await requirePermission("TABLES_MANAGE", {
+    withLocation: true,
+  });
 
-  const rotated = await TableService.rotateAccessKey(tableId);
+  const rotated = await TableService.rotateAccessKey(tableId, scope);
   await TableService.regenerateQrImage(rotated, null);
 
   return { id: rotated.id };

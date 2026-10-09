@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { TableService } from "@/app/services";
-import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
+import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import EditTable from "./EditTable";
 
 export default async function EditTablePage({
@@ -11,13 +11,19 @@ export default async function EditTablePage({
   const { id } = await params;
   const tableId = Number(id);
 
-  const { scope, fallback } = await requireBackofficeAccess({
+  const { context, fallback } = await requireBackofficeContext({
     signedOut: "You must be signed in to manage tables.",
     access: "TABLES_MANAGE",
   });
-  if (!scope) return fallback;
+  if (!context) return fallback;
+  const { location, ...scope } = context;
 
-  const table = await TableService.getTableById(tableId).catch(() => null);
+  // Another company's table — or, for a manager, another location's —
+  // reads as not found.
+  const table = await TableService.getTableById(tableId, {
+    ...scope,
+    locationId: location.locationId,
+  }).catch(() => null);
   if (!table) {
     return (
       <Box sx={{ p: 3 }}>

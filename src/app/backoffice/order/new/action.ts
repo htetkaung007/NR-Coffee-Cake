@@ -13,7 +13,7 @@ import {
   type StaffAddCartItemInput,
   type StaffUpdateCartItemInput,
 } from "@/app/lib/schemas/staffOrderSchema";
-import { OrderSessionCartService, StaffOrderService, TableService } from "@/app/services";
+import { StaffOrderService } from "@/app/services";
 
 /**
  * Design doc section 7 ("staff place a new order directly") — the one
@@ -24,15 +24,15 @@ import { OrderSessionCartService, StaffOrderService, TableService } from "@/app/
  * creation (Order rows, OrdersAddon rows, status transitions) reuses
  * the exact same OrderSessionService methods a real customer session
  * would — this file's only job is the auth boundary and wiring a
- * chosen tableId into startStaffSession/addItemToCart, which a real
- * scan would otherwise have supplied via the cookie.
+ * chosen tableId into startStaffSession/addItem, which a real scan
+ * would otherwise have supplied via the cookie. Every table / session id
+ * here comes from the browser, so StaffOrderService checks it against
+ * the staff scope (the company; a manager's own location only).
  */
 
 const safeStartStaffOrder = toSafeResult(async (tableId: number) => {
-  await requireStaff();
-
-  const table = await TableService.getTableById(tableId);
-  return StaffOrderService.startStaffSession(table);
+  const scope = await requireStaff({ withLocation: true });
+  return StaffOrderService.startStaffSession(tableId, scope);
 });
 
 export async function startStaffOrderAction(tableId: number) {
@@ -42,18 +42,8 @@ export async function startStaffOrderAction(tableId: number) {
 
 const safeAddStaffCartItem = toSafeResult(
   async (input: StaffAddCartItemInput) => {
-    await requireStaff();
-
-    // The same cart method (and so the same note handling and line-merge
-    // rule) the customer flow uses.
-    return OrderSessionCartService.addItemToCart(
-      input.sessionId,
-      input.tableId,
-      input.menuId,
-      input.quantity,
-      input.addonIds,
-      input.note,
-    );
+    const scope = await requireStaff({ withLocation: true });
+    return StaffOrderService.addItem(scope, input);
   },
 );
 
@@ -78,15 +68,8 @@ export async function addStaffCartItemAction(
 
 const safeUpdateStaffCartItem = toSafeResult(
   async (input: StaffUpdateCartItemInput) => {
-    await requireStaff();
-
-    return OrderSessionCartService.updateItemInCart(
-      input.sessionId,
-      input.orderId,
-      input.quantity,
-      input.addonIds,
-      input.note,
-    );
+    const scope = await requireStaff({ withLocation: true });
+    return StaffOrderService.updateItem(scope, input);
   },
 );
 
@@ -112,12 +95,8 @@ export async function updateStaffCartItemAction(
 
 const safeRemoveStaffCartItem = toSafeResult(
   async (input: { sessionId: number; orderId: number }) => {
-    await requireStaff();
-
-    return OrderSessionCartService.removeItemFromCart(
-      input.sessionId,
-      input.orderId,
-    );
+    const scope = await requireStaff({ withLocation: true });
+    return StaffOrderService.removeItem(scope, input);
   },
 );
 
@@ -130,9 +109,8 @@ export async function removeStaffCartItemAction(
 }
 
 const safeSubmitStaffOrder = toSafeResult(async (sessionId: number) => {
-  await requireStaff();
-
-  return StaffOrderService.submitStaffOrder(sessionId);
+  const scope = await requireStaff({ withLocation: true });
+  return StaffOrderService.submitStaffOrder(sessionId, scope);
 });
 
 export async function submitStaffOrderAction(sessionId: number) {

@@ -4,9 +4,10 @@ import { planMenuLocations } from "../lib/menu/menuLocations";
 
 type Tx = Prisma.TransactionClient;
 
-/** A live menu of this company — scoped through its categories, as
- *  MenuService.getMenus and getCompanyMenu are. */
-function companyMenuWhere(companyId: number): Prisma.MenuWhereInput {
+/** A live menu of this company — scoped through its categories (Menu has
+ *  no companyId), as MenuService.getMenus is. Shared with MenuService's
+ *  ownership checks (getCompanyMenu, getMenuById, updateMenu). */
+export function companyMenuWhere(companyId: number): Prisma.MenuWhereInput {
   return {
     isArchived: false,
     menuMenuCategory: { some: { menuCategory: { companyId } } },
