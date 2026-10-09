@@ -271,7 +271,7 @@ MinIO instance for offline/dev use — chosen specifically because MinIO,
 AWS S3, and DigitalOcean Spaces all speak the same S3 API, so moving to
 a real cloud provider later is a config change (.env's
 MINIO_ENDPOINT/keys), not a code change. All config values are read
-through the centralized config object in utils/config/index.tsx —
+through the centralized config object in utils/config/index.ts —
 never process.env.X directly in a Service or component; add new env
 vars to the Config interface and object there first.
 
@@ -404,6 +404,8 @@ business reason?"
 
 ## Coding conventions to just follow, not re-litigate
 
+- AddonCategories (Prisma model) is called an "add-on group" in the UI
+  and in action names; same thing, don't create a second model.
 - Filenames: PascalCase for components (MenuCategoryCard.tsx), no
   spaces, no invented abbreviation-style prefixes for new files (avoid
   new Bo-/Od-prefixed names going forward — prefer a clear full word,

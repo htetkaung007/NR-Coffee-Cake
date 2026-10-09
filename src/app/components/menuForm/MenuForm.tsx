@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
+  AlertTitle,
   Box,
   Button,
   Divider,
@@ -31,6 +33,10 @@ import StatusSnackbar, { type StatusMessage } from "../StatusSnackbar";
 import FormCard, { SuccessSnackbar } from "../FormCard";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
+import {
+  menuFormProblems,
+  type MenuFormProblem,
+} from "@/app/lib/menu/menuFormProblems";
 
 interface MenuFormInitialData {
   id: number;
@@ -83,7 +89,6 @@ export default function MenuForm({
   const submittedLocationIds = hasLocationChoice
     ? shownLocationIds
     : locations.map((location) => location.locationId);
-  const isMissingLocation = hasLocationChoice && shownLocationIds.length === 0;
   const [name, setName] = useState(initialData?.name ?? "");
   const [description, setDescription] = useState(
     initialData?.description ?? "",
@@ -119,6 +124,26 @@ export default function MenuForm({
       (created) => !categories.some((category) => category.id === created.id),
     ),
   ];
+
+  // What's still missing (lib/menu/menuFormProblems — the schema's own
+  // words; the action's Zod check stays the real one). Nothing is shown
+  // until the first Create / Save; after that the list follows every
+  // change, so each message goes away as soon as it's fixed.
+  const [hasTriedSubmit, setHasTriedSubmit] = useState(false);
+  const problems = menuFormProblems({
+    name,
+    price,
+    categoryIds: selectedCategoryIds,
+    requiresLocation: hasLocationChoice,
+    shownLocationIds,
+  });
+  const shownProblems = hasTriedSubmit ? problems : [];
+  const problemFor = (field: MenuFormProblem["field"]) =>
+    shownProblems.find((problem) => problem.field === field)?.message;
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const locationsRef = useRef<HTMLDivElement>(null);
 
   const MAX_NAME_LENGTH = 50;
   const MAX_DESCRIPTION_LENGTH = 100;
@@ -160,9 +185,42 @@ export default function MenuForm({
     setImagePreviewUrl(null);
   }
 
+  /** Brings the first problem's field into view and focuses it when it
+   *  can take focus (the input; the first category chip, else "New
+   *  category"; the first location checkbox). */
+  function showProblem(field: MenuFormProblem["field"]) {
+    const target =
+      field === "name"
+        ? nameInputRef.current
+        : field === "price"
+          ? priceInputRef.current
+          : field === "categories"
+            ? (categoriesRef.current?.querySelector<HTMLElement>(
+                ".MuiChip-clickable",
+              ) ??
+              categoriesRef.current?.querySelector<HTMLElement>("button") ??
+              null)
+            : (locationsRef.current?.querySelector<HTMLElement>(
+                'input[type="checkbox"]',
+              ) ?? null);
+    const container =
+      field === "categories"
+        ? categoriesRef.current
+        : field === "locations"
+          ? locationsRef.current
+          : target;
+    container?.scrollIntoView({ block: "center" });
+    target?.focus({ preventScroll: true });
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    if (problems.length > 0) {
+      setHasTriedSubmit(true);
+      showProblem(problems[0].field);
+      return;
+    }
 
     const formData = new FormData();
     formData.set("name", name);
@@ -207,6 +265,8 @@ export default function MenuForm({
     <>
       <Box
         component="form"
+        // Our own messages (above the button) replace the browser's.
+        noValidate
         onSubmit={handleSubmit}
         sx={{
           display: "flex",
@@ -229,7 +289,6 @@ export default function MenuForm({
               ? "Update this item's information, price, category, and stock."
               : "Configure item information, price, category, and stock.",
           }}
-          error={error}
         >
           <TextField
             label="Dish / Item Name"
@@ -237,10 +296,15 @@ export default function MenuForm({
             fullWidth
             value={name}
             onChange={(event) => setName(event.target.value)}
+            inputRef={nameInputRef}
             slotProps={{
               htmlInput: { maxLength: MAX_NAME_LENGTH },
             }}
-            helperText={`${name.length}/${MAX_NAME_LENGTH} characters`}
+            error={Boolean(problemFor("name"))}
+            helperText={
+              problemFor("name") ??
+              `${name.length}/${MAX_NAME_LENGTH} characters`
+            }
           />
           <TextField
             label="Description"
@@ -256,12 +320,15 @@ export default function MenuForm({
             helperText={`${description.length}/${MAX_DESCRIPTION_LENGTH} characters`}
           />
 
-          <MenuCategoryChips
-            categories={categoryOptions}
-            selectedCategoryIds={selectedCategoryIds}
-            onToggle={toggleCategory}
-            onCreateCategory={() => setIsCreatingCategory(true)}
-          />
+          <Box ref={categoriesRef}>
+            <MenuCategoryChips
+              categories={categoryOptions}
+              selectedCategoryIds={selectedCategoryIds}
+              onToggle={toggleCategory}
+              onCreateCategory={() => setIsCreatingCategory(true)}
+              error={problemFor("categories")}
+            />
+          </Box>
 
           <Box
             sx={{
@@ -276,6 +343,9 @@ export default function MenuForm({
               type="number"
               value={price}
               onChange={(event) => setPrice(event.target.value)}
+              inputRef={priceInputRef}
+              error={Boolean(problemFor("price"))}
+              helperText={problemFor("price")}
               slotProps={{
                 htmlInput: { min: 1, step: 1 },
                 input: {
@@ -300,13 +370,17 @@ export default function MenuForm({
             />
           </Box>
 
+          {/* LocationChecklist shows its own "Choose at least one
+              location." as soon as nothing is ticked. */}
           {hasLocationChoice && (
-            <LocationChecklist
-              locations={locations}
-              currentLocationId={currentLocation.locationId}
-              selectedIds={shownLocationIds}
-              onChange={setShownLocationIds}
-            />
+            <Box ref={locationsRef}>
+              <LocationChecklist
+                locations={locations}
+                currentLocationId={currentLocation.locationId}
+                selectedIds={shownLocationIds}
+                onChange={setShownLocationIds}
+              />
+            </Box>
           )}
 
           <MenuImageUploader
@@ -349,10 +423,33 @@ export default function MenuForm({
             />
           </Box>
 
+          {/* The form's ONE error area, right above the button: what's
+              still missing (after a Create / Save), and any server or
+              image error. MUI's Alert is role="alert", so it's announced. */}
+          {(shownProblems.length > 0 || error) && (
+            <Alert severity="error">
+              {shownProblems.length > 0 && (
+                <>
+                  <AlertTitle>
+                    {isEditMode ? "To save changes:" : "To create this menu:"}
+                  </AlertTitle>
+                  <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                    {shownProblems.map((problem) => (
+                      <li key={problem.field}>{problem.message}</li>
+                    ))}
+                  </Box>
+                </>
+              )}
+              {error && (
+                <Box sx={{ mt: shownProblems.length > 0 ? 1 : 0 }}>{error}</Box>
+              )}
+            </Alert>
+          )}
+
           <Button
             type="submit"
             variant="contained"
-            disabled={isPending || isMissingLocation}
+            disabled={isPending}
             sx={{ alignSelf: "flex-start", px: 3 }}
           >
             {isPending

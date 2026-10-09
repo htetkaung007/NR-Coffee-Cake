@@ -62,7 +62,7 @@ export function getBoTheme(mode: PaletteMode) {
         contrastText: "rgba(0, 0, 0, 0.87)",
       },
       error: {
-        // Destructive actions (Reject) and the Order List's pending dot/border
+        // Destructive actions (Reject) and the Order List's pending dot
         main: isLight ? "#d32f2f" : "#f44336",
         light: isLight ? "#ef5350" : "#e57373",
         dark: isLight ? "#c62828" : "#d32f2f",

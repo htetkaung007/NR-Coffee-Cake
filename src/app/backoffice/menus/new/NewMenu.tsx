@@ -17,7 +17,7 @@ export default async function NewMenu({
   const [categories, addonCategories, activeLocations, currentLocation] =
     await Promise.all([
       MenuCategoryService.getMenuCategories(companyId),
-      AddonService.getAddonCategoriesWithAddonsList(),
+      AddonService.getAddonCategoriesWithAddons(),
       LocationService.getActiveLocations(companyId),
       LocationService.getLocationById(currentLocationId),
     ]);

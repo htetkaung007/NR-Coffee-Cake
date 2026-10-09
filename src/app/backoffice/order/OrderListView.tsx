@@ -166,7 +166,7 @@ function EntryCard({
           flexWrap: "wrap",
           alignItems: "stretch",
           position: "relative",
-          borderColor: entry.hasPendingApproval ? "error.main" : "divider",
+          borderColor: entry.hasPendingApproval ? "warning.main" : "divider",
           borderLeftWidth: 4,
           borderLeftColor: sourceAccent,
           transition: "box-shadow 160ms ease-out",

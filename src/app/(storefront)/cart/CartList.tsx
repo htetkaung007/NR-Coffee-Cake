@@ -2,7 +2,7 @@
 
 import { forwardRef, type ReactNode } from "react";
 import {
-  Avatar,
+  ButtonBase,
   Box,
   Divider,
   IconButton,
@@ -10,10 +10,10 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 
 import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper";
+import MenuThumb from "@/app/components/MenuThumb";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLineTotal, type LineAddon } from "@/app/lib/order/orderTotals";
 import { formatAmount } from "@/app/lib/orderFormat";
@@ -120,54 +120,42 @@ export function CartLineRow({
         }),
       }}
     >
-      <Avatar
-        variant="rounded"
-        src={line.imageUrl ?? undefined}
-        alt={line.menuName}
+      {/* The shared menu image (MenuThumb): the photo, or the same
+          first-letter tile every menu image falls back to. The name is
+          right beside it, so the image itself is decorative here. */}
+      <Box
         sx={{
           width: { xs: 64, sm: 72 },
           height: { xs: 64, sm: 72 },
           flexShrink: 0,
           borderRadius: 3,
+          overflow: "hidden",
           bgcolor: "background.paper",
-          color: "text.secondary",
           border: "1px solid",
           borderColor: "divider",
           opacity: dimmed ? 0.5 : 1,
         }}
       >
-        <RestaurantOutlinedIcon fontSize="small" />
-      </Avatar>
+        <MenuThumb name={line.menuName} imageUrl={line.imageUrl} />
+      </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        {/* The keyboard-reachable "edit" target — pointer users can tap
-           anywhere on the row (the wrapper's onClick). */}
-        <Box
-          role={canEdit ? "button" : undefined}
-          tabIndex={canEdit ? 0 : undefined}
-          aria-label={canEdit ? `Edit ${line.menuName}` : undefined}
-          onKeyDown={
-            canEdit
-              ? (event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onEdit?.();
-                  }
-                }
-              : undefined
-          }
-          sx={{
-            outline: "none",
-            opacity: dimmed ? 0.5 : 1,
-            "&:focus-visible": {
-              outline: "2px solid",
-              outlineColor: "primary.main",
-              outlineOffset: 2,
-              borderRadius: 1,
-            },
-          }}
+        {/* The keyboard-reachable "edit" target (ButtonBase: Enter and
+           Space work, focus ring when tabbed to) — pointer users can tap
+           anywhere on the row (the wrapper's onClick). It handles its own
+           click and stops it, so an edit never fires twice. The quantity
+           stepper stays outside it (no nested interactive elements). A
+           read-only row is plain text. */}
+        <EditTarget
+          canEdit={canEdit}
+          label={`Edit ${line.menuName}`}
+          onEdit={onEdit}
+          dimmed={dimmed}
         >
-          <Typography variant="body1" sx={{ fontWeight: 700, lineHeight: 1.35 }}>
+          <Typography
+            variant="body1"
+            sx={{ fontWeight: 700, lineHeight: 1.35 }}
+          >
             {line.menuName}
           </Typography>
           {line.addons.length > 0 && (
@@ -195,7 +183,7 @@ export function CartLineRow({
               </Typography>
             </Stack>
           )}
-        </Box>
+        </EditTarget>
 
         <Box sx={{ mt: 0.5 }} onClick={(event) => event.stopPropagation()}>
           {changeQuantity ? (
@@ -231,7 +219,11 @@ export function CartLineRow({
         {priceLabel ?? (
           <Typography
             variant="body1"
-            sx={{ fontWeight: 700, color: "error.main", whiteSpace: "nowrap" }}
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              whiteSpace: "nowrap",
+            }}
           >
             {formatAmount(cartLineTotal(line))}
           </Typography>
@@ -245,23 +237,93 @@ export function CartLineRow({
               event.stopPropagation();
               onRemove?.();
             }}
+            // 44×44 tap area (DESIGN.md Rule 10); the visible 32px circle
+            // is the inner span, and the negative margin keeps it where it
+            // was.
             sx={{
-              width: 32,
-              height: 32,
-              color: "text.secondary",
-              bgcolor: "background.paper",
-              border: "1px solid",
-              borderColor: "divider",
+              width: 44,
+              height: 44,
+              p: 0,
+              m: -0.75,
               [hoverCapableMedia]: {
-                "&:hover": { color: "error.main", bgcolor: "action.hover" },
+                "&:hover": {
+                  bgcolor: "transparent",
+                  "& > .remove-circle": {
+                    color: "error.main",
+                    bgcolor: "action.hover",
+                  },
+                },
               },
             }}
           >
-            <CloseIcon sx={{ fontSize: 16 }} />
+            <Box
+              component="span"
+              className="remove-circle"
+              sx={{
+                width: 32,
+                height: 32,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                color: "text.secondary",
+                bgcolor: "background.paper",
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 16 }} />
+            </Box>
           </IconButton>
         )}
       </Stack>
     </Box>
+  );
+}
+
+/** CartLineRow's edit target: a ButtonBase when the line can be edited
+ *  (keyboard + focus ring; no ripple, so pointer users see nothing new),
+ *  plain text otherwise. */
+function EditTarget({
+  canEdit,
+  label,
+  onEdit,
+  dimmed,
+  children,
+}: {
+  canEdit: boolean;
+  label: string;
+  onEdit?: () => void;
+  dimmed: boolean;
+  children: ReactNode;
+}) {
+  if (!canEdit) {
+    return <Box sx={{ opacity: dimmed ? 0.5 : 1 }}>{children}</Box>;
+  }
+  return (
+    <ButtonBase
+      component="div"
+      disableRipple
+      aria-label={label}
+      onClick={(event) => {
+        event.stopPropagation();
+        onEdit?.();
+      }}
+      sx={{
+        display: "block",
+        width: "100%",
+        textAlign: "left",
+        opacity: dimmed ? 0.5 : 1,
+        "&.Mui-focusVisible": {
+          outline: "2px solid",
+          outlineColor: "primary.main",
+          outlineOffset: 2,
+          borderRadius: 1,
+        },
+      }}
+    >
+      {children}
+    </ButtonBase>
   );
 }
 

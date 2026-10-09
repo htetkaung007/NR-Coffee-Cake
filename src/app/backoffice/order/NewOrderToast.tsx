@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Button, Snackbar, useMediaQuery } from "@mui/material";
+import {
+  Alert,
+  Button,
+  IconButton,
+  Snackbar,
+  useMediaQuery,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useTheme } from "@mui/material/styles";
 import type { NewPendingRoundsEvent } from "../OrderAlertsProvider";
 
@@ -70,27 +78,56 @@ export default function NewOrderToast({
         vertical: "bottom",
         horizontal: isDesktop ? "right" : "center",
       }}
-      message={notice?.message}
-      action={
-        notice?.href ? (
-          <Button
-            component={Link}
-            href={notice.href}
-            color="inherit"
-            size="small"
-            onClick={onClose}
-            sx={{ minHeight: 44 }}
-          >
-            View
-          </Button>
-        ) : undefined
-      }
       sx={{
         bottom: {
           xs: "calc(12px + env(safe-area-inset-bottom, 0px))",
           sm: "calc(24px + env(safe-area-inset-bottom, 0px))",
         },
       }}
-    />
+    >
+      {/* The solid warning fill, as the banner: warning.main with the
+          theme's dark warning.contrastText (set explicitly — never white
+          on this orange, 3.1:1). */}
+      <Alert
+        variant="filled"
+        severity="warning"
+        icon={<WarningAmberIcon />}
+        // MUI drops its own × when `action` is set, so the × is part of
+        // the action, next to "View" when there's a page to go to.
+        action={
+          <>
+            {notice?.href && (
+              <Button
+                component={Link}
+                href={notice.href}
+                color="inherit"
+                size="small"
+                onClick={onClose}
+                sx={{ minHeight: 44 }}
+              >
+                View
+              </Button>
+            )}
+            <IconButton
+              aria-label="Close"
+              color="inherit"
+              onClick={onClose}
+              sx={{ width: 44, height: 44 }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </>
+        }
+        sx={{
+          width: "100%",
+          alignItems: "center",
+          bgcolor: "warning.main",
+          color: "warning.contrastText",
+          "& .MuiAlert-icon": { color: "inherit" },
+        }}
+      >
+        {notice?.message}
+      </Alert>
+    </Snackbar>
   );
 }

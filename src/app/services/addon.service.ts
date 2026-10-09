@@ -17,7 +17,7 @@ export class AddonService {
   /** Merged Add-ons view: each category shown with its own addons nested
    *  underneath, instead of two separate flat lists (categories vs.
    *  addons) that the user has to mentally cross-reference. */
-  static async getAddonCategoriesWithAddonsList() {
+  static async getAddonCategoriesWithAddons() {
     return prisma.addonCategories.findMany({
       where: { isArchived: false },
       orderBy: { id: "asc" },

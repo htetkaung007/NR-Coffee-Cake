@@ -17,7 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { createAddonGroupAction, updateAddonGroupAction } from "../action";
 import { SuccessSnackbar } from "@/app/components/FormCard";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
-import MenuMultiSelect, { MenuOption } from "../MenuMultiSelected";
+import MenuMultiSelect, { MenuOption } from "../MenuMultiSelect";
 
 interface OptionRow {
   id?: number; // present only for options that already exist (edit mode)

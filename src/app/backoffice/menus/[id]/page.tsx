@@ -27,7 +27,7 @@ export default async function EditMenuPage({
   const [categories, addonCategories, menu, menuLocations, currentLocation] =
     await Promise.all([
       MenuCategoryService.getMenuCategories(companyId),
-      AddonService.getAddonCategoriesWithAddonsList(),
+      AddonService.getAddonCategoriesWithAddons(),
       MenuService.getMenuById(menuId, location.locationId),
       MenuLocationService.getMenuLocations(menuId, companyId),
       LocationService.getLocationById(location.locationId),

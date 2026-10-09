@@ -14,13 +14,19 @@ interface MenuCategoryChipsProps {
   onToggle: (id: number) => void;
   /** "+ New category" — opens the create dialog (no navigation). */
   onCreateCategory: () => void;
+  /** Shown under the chips (and the label turns error-coloured) — in
+   *  words, never colour alone. */
+  error?: string;
 }
+
+const ERROR_ID = "menu-category-error";
 
 export default function MenuCategoryChips({
   categories,
   selectedCategoryIds,
   onToggle,
   onCreateCategory,
+  error,
 }: MenuCategoryChipsProps) {
   return (
     <Box>
@@ -35,7 +41,11 @@ export default function MenuCategoryChips({
           mb: 1,
         }}
       >
-        <Typography variant="body2" sx={{ mb: 1 }}>
+        <Typography
+          variant="body2"
+          id="menu-category-label"
+          sx={{ mb: 1, color: error ? "error.main" : undefined }}
+        >
           Menu Category
         </Typography>
         <Button
@@ -47,7 +57,15 @@ export default function MenuCategoryChips({
           New category
         </Button>
       </Stack>
-      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        role="group"
+        aria-labelledby="menu-category-label"
+        aria-describedby={error ? ERROR_ID : undefined}
+        sx={{ flexWrap: "wrap" }}
+      >
         {categories.map((category) => {
           const selected = selectedCategoryIds.includes(category.id);
           return (
@@ -69,6 +87,16 @@ export default function MenuCategoryChips({
           );
         })}
       </Stack>
+      {error && (
+        <Typography
+          id={ERROR_ID}
+          variant="caption"
+          color="error"
+          sx={{ display: "block", mt: 0.5 }}
+        >
+          {error}
+        </Typography>
+      )}
     </Box>
   );
 }

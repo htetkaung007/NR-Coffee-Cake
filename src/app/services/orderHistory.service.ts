@@ -75,7 +75,9 @@ export class OrderHistoryService {
    *  Controller) surfaces that as a normal action error, not a 500. */
   private static decodeCursor(cursor: string): { sortKey: Date; id: number } {
     try {
-      const decoded = JSON.parse(Buffer.from(cursor, "base64").toString("utf8"));
+      const decoded = JSON.parse(
+        Buffer.from(cursor, "base64").toString("utf8"),
+      );
       const sortKey = new Date(decoded.sortKey);
       if (typeof decoded.id !== "number" || Number.isNaN(sortKey.getTime())) {
         throw new Error("Malformed cursor payload.");
@@ -88,7 +90,7 @@ export class OrderHistoryService {
 
   /** Case-insensitive "contains" — the one place that Prisma filter
    *  shape is written, reused across every search field below. */
-  private static ci(value: string): Prisma.StringFilter {
+  private static containsInsensitive(value: string): Prisma.StringFilter {
     return { contains: value, mode: "insensitive" };
   }
 
@@ -126,15 +128,24 @@ export class OrderHistoryService {
     if (trimmedSearch) {
       conditions.push({
         OR: [
-          { billNumber: OrderHistoryService.ci(trimmedSearch) },
+          {
+            billNumber: OrderHistoryService.containsInsensitive(trimmedSearch),
+          },
           {
             sessions: {
-              some: { orderNumber: OrderHistoryService.ci(trimmedSearch) },
+              some: {
+                orderNumber:
+                  OrderHistoryService.containsInsensitive(trimmedSearch),
+              },
             },
           },
           {
             sessions: {
-              some: { table: { name: OrderHistoryService.ci(trimmedSearch) } },
+              some: {
+                table: {
+                  name: OrderHistoryService.containsInsensitive(trimmedSearch),
+                },
+              },
             },
           },
         ],
@@ -275,8 +286,14 @@ export class OrderHistoryService {
     if (trimmedSearch) {
       conditions.push({
         OR: [
-          { orderNumber: OrderHistoryService.ci(trimmedSearch) },
-          { table: { name: OrderHistoryService.ci(trimmedSearch) } },
+          {
+            orderNumber: OrderHistoryService.containsInsensitive(trimmedSearch),
+          },
+          {
+            table: {
+              name: OrderHistoryService.containsInsensitive(trimmedSearch),
+            },
+          },
         ],
       });
     }

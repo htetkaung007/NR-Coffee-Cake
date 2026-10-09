@@ -17,6 +17,7 @@ import {
   Divider,
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
+import NextLink from "next/link";
 import { registerAction } from "./action";
 
 export function SignUpForm() {
@@ -192,10 +193,9 @@ export function SignUpForm() {
             <Typography variant="body2" color="text.secondary">
               Already have an account?{" "}
               <Link
-                component="button"
+                component={NextLink}
+                href="/auth/signIn"
                 variant="body2"
-                type="button"
-                onClick={() => router.push("/auth/signIn")}
                 sx={{ fontWeight: "bold", textDecoration: "none" }}
               >
                 Sign In

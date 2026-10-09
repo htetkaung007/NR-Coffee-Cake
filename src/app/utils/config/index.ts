@@ -1,6 +1,6 @@
 export interface Config {
   googleClientId: string;
-  googleClientSecreat: string;
+  googleClientSecret: string;
   apiBackOfficeUrl: string;
   mainUrl: string;
   orderAppUrl: string;
@@ -19,7 +19,7 @@ export interface Config {
 
 export const config: Config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID as string,
-  googleClientSecreat: process.env.GOOGLE_CLIENT_SECRET as string,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
   apiBackOfficeUrl: process.env.NEXT_PUBLIC_BACK_OFFICE_API_BASE_URL || "",
   mainUrl: process.env.NEXTAUTH_URL || "",
   orderAppUrl: process.env.NEXT_PUBLIC_ORDER_APP_PAGE || "",

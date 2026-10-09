@@ -6,11 +6,19 @@ import { NO_LOCATION_MESSAGE } from "@/app/lib/menu/menuLocations";
 /** Most locations one company can tick on a menu form. */
 const MAX_SHOWN_LOCATIONS = 50;
 
+/** The menu form's messages — exported so the form's own check
+ *  (lib/menu/menuFormProblems.ts, UX only) says exactly what this schema,
+ *  the real check, says. */
+export const MENU_NAME_REQUIRED_MESSAGE = "Menu item name is required.";
+export const MENU_PRICE_WHOLE_MESSAGE = `Price must be a whole number of ${CURRENCY_LABEL}.`;
+export const MENU_PRICE_POSITIVE_MESSAGE = "Price must be greater than zero.";
+export const MENU_CATEGORY_REQUIRED_MESSAGE = "Select at least one menu category.";
+
 export const createMenuSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Menu item name is required.")
+    .min(1, MENU_NAME_REQUIRED_MESSAGE)
     .max(50, "Menu item name cannot exceed 50 characters."),
   description: z
     .string()
@@ -18,8 +26,8 @@ export const createMenuSchema = z.object({
     .max(100, "Description cannot exceed 100 characters."),
   price: z.coerce
     .number()
-    .int(`Price must be a whole number of ${CURRENCY_LABEL}.`)
-    .positive("Price must be greater than zero."),
+    .int(MENU_PRICE_WHOLE_MESSAGE)
+    .positive(MENU_PRICE_POSITIVE_MESSAGE),
   quantity: z.coerce
     .number()
     .int("Stock quantity must be a whole number.")
@@ -27,7 +35,7 @@ export const createMenuSchema = z.object({
   isAvailable: z.boolean(),
   categoryIds: idListSchema({
     min: 1,
-    minMessage: "Select at least one menu category.",
+    minMessage: MENU_CATEGORY_REQUIRED_MESSAGE,
   }),
   addonCategoryIds: optionalIdListSchema(),
   /** Where the menu shows — company/active-location membership is

@@ -79,8 +79,7 @@ export default function NewOrderBanner() {
           component={Link}
           href={ORDER_LIST_PATH}
           sx={(theme) => {
-            const tint = (opacity: number) =>
-              alpha(theme.palette.warning.main, opacity);
+            const darken = alpha(theme.palette.common.black, 0.08);
             return {
               display: "flex",
               alignItems: "center",
@@ -92,20 +91,22 @@ export default function NewOrderBanner() {
               py: 1,
               mb: 2,
               borderRadius: 2,
-              border: 1,
-              borderColor: "warning.main",
-              color: "text.primary",
+              border: "none",
+              // The solid warning fill — the same colour as "Needs
+              // approval" everywhere (DESIGN.md Rules 13 and 25). Text
+              // and icon use warning.contrastText: dark, ~6:1 light and
+              // ~10:1 dark (white on this orange is only 3.1:1). Opaque,
+              // so content scrolls underneath it.
+              backgroundColor: "warning.main",
+              color: "warning.contrastText",
               textDecoration: "none",
-              // Opaque (content scrolls underneath), tinted with the
-              // warning color over the paper background.
-              backgroundColor: "background.paper",
-              backgroundImage: `linear-gradient(${tint(0.16)}, ${tint(0.16)})`,
               animation: `${bannerEnter} ${ENTER_MS}ms ease-out`,
               [hoverCapableMedia]: {
                 "&:hover": {
-                  backgroundImage: `linear-gradient(${tint(0.26)}, ${tint(0.26)})`,
+                  backgroundImage: `linear-gradient(${darken}, ${darken})`,
                 },
               },
+              // Outside the fill, against the page background.
               "&:focus-visible": {
                 outline: `2px solid ${theme.palette.primary.main}`,
                 outlineOffset: 2,
@@ -113,7 +114,7 @@ export default function NewOrderBanner() {
             };
           }}
         >
-          <WarningAmberIcon sx={{ color: "warning.main" }} />
+          <WarningAmberIcon sx={{ color: "inherit" }} />
           <Typography
             component="span"
             variant="body2"

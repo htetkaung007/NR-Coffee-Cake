@@ -15,6 +15,7 @@ import {
   CircularProgress,
   Link,
 } from "@mui/material";
+import NextLink from "next/link";
 import GoogleIcon from "@mui/icons-material/Google";
 
 export default function SignInForm() {
@@ -178,9 +179,9 @@ export default function SignInForm() {
             <Typography variant="body2" color="text.secondary">
               Do not have an account?{" "}
               <Link
-                component="button"
+                component={NextLink}
+                href="/auth/signup"
                 variant="body2"
-                onClick={() => router.push("/auth/signup")}
                 sx={{ fontWeight: "bold", textDecoration: "none" }}
               >
                 Sign Up

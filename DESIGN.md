@@ -339,6 +339,9 @@ toggling an add-on). Printing never blocks or changes payment.
 - The tab title is prefixed with the pending count, e.g. "(2) Orders".
 - A card that receives a new round gets a one-time highlight (Rule 2), never
   a looping animation.
+- The banner and the toast use the solid warning fill (`warning.main` +
+  `warning.contrastText`) — the same colour as "Needs approval"
+  everywhere.
 
 ## 26. Orders, bills, and money on screen
 

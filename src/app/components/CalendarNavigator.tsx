@@ -5,7 +5,13 @@ import Link from "next/link";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { Box, IconButton, Popover, Stack, Typography } from "@mui/material";
+import {
+  ButtonBase,
+  IconButton,
+  Popover,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -91,10 +97,10 @@ export default function CalendarNavigator({
         <ChevronLeftIcon />
       </IconButton>
 
-      <Box
-        component="button"
-        type="button"
+      <ButtonBase
         onClick={(event) => setAnchorEl(event.currentTarget)}
+        aria-haspopup="dialog"
+        aria-expanded={Boolean(anchorEl)}
         sx={(theme) => ({
           display: "flex",
           flexDirection: "column",
@@ -104,15 +110,17 @@ export default function CalendarNavigator({
           minWidth: 96,
           px: 1.5,
           py: 0.5,
-          border: "none",
           borderRadius: 1.5,
-          bgcolor: "transparent",
           color: "inherit",
           font: "inherit",
-          cursor: "pointer",
           transition: "background-color 160ms ease-out",
           [hoverCapableMedia]: {
             "&:hover": { backgroundColor: theme.palette.action.hover },
+          },
+          // Visible keyboard focus, as SegmentedTabs.
+          "&.Mui-focusVisible": {
+            outline: `2px solid ${theme.palette.primary.main}`,
+            outlineOffset: 2,
           },
         })}
       >
@@ -124,7 +132,7 @@ export default function CalendarNavigator({
             {secondary}
           </Typography>
         )}
-      </Box>
+      </ButtonBase>
 
       <IconButton
         aria-label={nextLabel}
