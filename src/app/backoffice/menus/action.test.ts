@@ -12,7 +12,11 @@ vi.mock("@/app/lib/access/session", () => ({
   getSessionContext: () => getSessionContext(),
 }));
 vi.mock("@/app/services", () => ({
-  PermissionService: { getGrantedPermissions: (...args: unknown[]) => getGrantedPermissions(...args) },
+  PermissionService: {
+    getGrantedPermissions: (...args: unknown[]) => getGrantedPermissions(...args),
+    // The guards' "does the session's user still exist" read — yes here.
+    userExistsInCompany: async () => true,
+  },
   LocationService: { getSelectedLocation: (...args: unknown[]) => getSelectedLocation(...args) },
   MenuService: { getCompanyMenu: (...args: unknown[]) => getCompanyMenu(...args) },
   MenuStockService: { setManualDisabled: (...args: unknown[]) => setManualDisabled(...args) },

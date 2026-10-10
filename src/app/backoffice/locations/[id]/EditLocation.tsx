@@ -31,11 +31,15 @@ interface EditLocationProps {
   };
   /** Display only — hardDeleteLocationAction checks the rule again. */
   deletion: LocationDeletion;
+  /** Names (or emails) of the managers assigned here, when they block
+   *  the delete. */
+  blockingManagers: { id: number; name: string }[];
 }
 
 export default function EditLocation({
   location,
   deletion,
+  blockingManagers,
 }: EditLocationProps) {
   const router = useRouter();
   const [name, setName] = useState(location.name);
@@ -205,19 +209,44 @@ export default function EditLocation({
               </Button>
             </Box>
           </>
+        ) : deletion.reason === "hasManagers" ? (
+          <>
+            <Typography variant="caption" color="text.secondary" component="p">
+              Managers are assigned to this location.{" "}
+              {LOCATION_DELETION_MESSAGES.hasManagers}
+            </Typography>
+            {blockingManagers.length > 0 && (
+              <Box
+                component="ul"
+                aria-label="Managers at this location"
+                sx={{ m: 0, mt: 1, pl: 2.5 }}
+              >
+                {blockingManagers.map(({ id, name }) => (
+                  <Typography
+                    key={id}
+                    component="li"
+                    variant="body2"
+                    sx={{ overflowWrap: "anywhere" }}
+                  >
+                    {name}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+            <Box sx={{ mt: 1.5 }}>
+              <Button
+                component={Link}
+                href="/backoffice/setting#settings-managers"
+                variant="outlined"
+                sx={{ minHeight: 44 }}
+              >
+                Manage in Settings
+              </Button>
+            </Box>
+          </>
         ) : (
           <Typography variant="caption" color="text.secondary" component="p">
-            {deletion.reason === "hasManagers" ? (
-              <>
-                Managers are assigned to this location.{" "}
-                {LOCATION_DELETION_MESSAGES.hasManagers}{" "}
-                <Link href="/backoffice/setting#settings-managers">
-                  Settings → Managers
-                </Link>
-              </>
-            ) : (
-              LOCATION_DELETION_MESSAGES.hasSales
-            )}
+            {LOCATION_DELETION_MESSAGES.hasSales}
           </Typography>
         )}
       </Box>

@@ -26,5 +26,5 @@ export function locationDeletion(facts: {
 export const LOCATION_DELETION_MESSAGES: Record<LocationDeletionBlock, string> = {
   hasSales:
     "This location has sales history, so it can be closed (archived) but not deleted.",
-  hasManagers: "Move or remove its managers first.",
+  hasManagers: "Move or remove its managers in Settings first.",
 };

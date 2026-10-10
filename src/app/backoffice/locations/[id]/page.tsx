@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { LocationService } from "@/app/services";
+import { LocationService, ManagerService } from "@/app/services";
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import EditLocation from "./EditLocation";
 
@@ -32,6 +32,16 @@ export default async function EditLocationPage({
     location.id,
     scope.companyId,
   );
+  // Who blocks the delete, so the owner knows whom to move or remove.
+  const blockingManagers =
+    !deletion.allowed && deletion.reason === "hasManagers"
+      ? (await ManagerService.listManagers(scope.companyId))
+          .filter((manager) => manager.locationId === location.id)
+          .map((manager) => ({
+            id: manager.id,
+            name: manager.name || manager.email,
+          }))
+      : [];
 
   return (
     <EditLocation
@@ -41,6 +51,7 @@ export default async function EditLocationPage({
         isArchived: location.isArchived,
       }}
       deletion={deletion}
+      blockingManagers={blockingManagers}
     />
   );
 }

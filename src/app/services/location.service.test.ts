@@ -75,7 +75,7 @@ describe("LocationService.deleteLocation", () => {
   it("refuses while managers are assigned and writes nothing", async () => {
     counts.managers = 1;
     await expect(LocationService.deleteLocation(5, 1)).rejects.toMatchObject({
-      message: "Move or remove its managers first.",
+      message: "Move or remove its managers in Settings first.",
     });
     expect(writes).toEqual([]);
   });

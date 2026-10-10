@@ -7,6 +7,10 @@ import {
   permissionChanges,
   type PermissionKey,
 } from "../lib/access/permissions";
+import {
+  MANAGER_ASSIGNMENT_MESSAGES,
+  managerAssignmentBlock,
+} from "../lib/location/managerAssignment";
 import { AppService } from "./app.service";
 import { LocationService } from "./location.service";
 import { MenuService } from "./menu.service";
@@ -16,12 +20,14 @@ export interface ManagerSummary {
   id: number;
   email: string;
   name: string | null;
+  locationId: number | null;
   locationName: string | null;
   permissions: PermissionKey[];
 }
 
 /** Manager accounts — creating one for a location, the owner's list of
- *  them, and changing what each may do. Its own Service (Rule 14): it
+ *  them, changing what each may do, moving one to another location and
+ *  removing one. Its own Service (Rule 14): it
  *  changes when the owner's manager settings change, not with sign-up
  *  (AppService) or the per-request permission check (PermissionService). */
 export class ManagerService {
@@ -59,8 +65,14 @@ export class ManagerService {
     }
 
     // The location comes from the owner's form: it must be the owner's
-    // own company's (same NotFoundError as one that doesn't exist).
-    await LocationService.getCompanyLocation(input.locationId, input.companyId);
+    // own company's (same NotFoundError as one that doesn't exist), and
+    // open (managerAssignmentBlock).
+    const location = await LocationService.getCompanyLocation(
+      input.locationId,
+      input.companyId,
+    );
+    const block = managerAssignmentBlock({ target: location });
+    if (block) throw new ValidationError(MANAGER_ASSIGNMENT_MESSAGES[block]);
 
     const hashedPassword = await bcrypt.hash(input.password, 10);
     const companyMenus = await MenuService.getMenus(input.companyId);
@@ -115,6 +127,7 @@ export class ManagerService {
         id: true,
         email: true,
         name: true,
+        locationId: true,
         location: { select: { name: true } },
         permissions: { select: { permission: true } },
       },
@@ -123,6 +136,7 @@ export class ManagerService {
       id: manager.id,
       email: manager.email,
       name: manager.name,
+      locationId: manager.locationId,
       locationName: manager.location?.name ?? null,
       permissions: manager.permissions
         .map((row) => row.permission)
@@ -176,5 +190,69 @@ export class ManagerService {
       }
       return [...new Set(input.permissions)];
     });
+  }
+
+  /** Chain lookup — a MANAGER of `companyId` (archived or not, so an
+   *  archived one can still be moved or removed). An owner (ADMIN), a
+   *  user of another company or an unknown id is the same NotFoundError,
+   *  so the id's existence elsewhere isn't revealed. */
+  private static async findManager(managerId: number, companyId: number) {
+    const manager = await prisma.user.findFirst({
+      where: { id: managerId, companyId, role: "MANAGER" },
+      select: { id: true, locationId: true },
+    });
+    if (!manager) throw new NotFoundError("Manager", managerId);
+    return manager;
+  }
+
+  /** Moves a manager to another open location of the company
+   *  (managerAssignmentBlock: not a closed one, not the one they're
+   *  already at). Their permissions stay as they are. Takes effect on
+   *  their very next request — their location is read from User.locationId
+   *  every time (LocationService.getSelectedLocation). */
+  static async moveManager(input: {
+    managerId: number;
+    companyId: number;
+    locationId: number;
+  }) {
+    const manager = await ManagerService.findManager(
+      input.managerId,
+      input.companyId,
+    );
+    const location = await LocationService.getCompanyLocation(
+      input.locationId,
+      input.companyId,
+    );
+    const block = managerAssignmentBlock({
+      target: location,
+      currentLocationId: manager.locationId,
+    });
+    if (block) throw new ValidationError(MANAGER_ASSIGNMENT_MESSAGES[block]);
+
+    await prisma.user.update({
+      where: { id: manager.id },
+      data: { locationId: location.id },
+    });
+    return { id: manager.id, locationId: location.id, locationName: location.name };
+  }
+
+  /** Removes a manager's account for good. Nothing in the order, bill or
+   *  cancellation history points at a User, so no sales data is lost;
+   *  their UserPermission rows cascade, and a grant row that names them
+   *  as the granter (never expected — only owners grant) is set to null.
+   *  One transaction: a leftover SelectedLocation row (managers never
+   *  use one, but its foreign key would block the delete) goes first.
+   *  Takes effect on their very next request — the guards re-check that
+   *  the session's user still exists (lib/access/roleGuard). */
+  static async removeManager(input: { managerId: number; companyId: number }) {
+    const manager = await ManagerService.findManager(
+      input.managerId,
+      input.companyId,
+    );
+    await prisma.$transaction(async (tx) => {
+      await tx.selectedLocation.deleteMany({ where: { userId: manager.id } });
+      await tx.user.delete({ where: { id: manager.id } });
+    });
+    return { id: manager.id };
   }
 }

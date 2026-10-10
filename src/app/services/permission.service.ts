@@ -2,8 +2,8 @@ import { prisma } from "../utils/prisma";
 import { isPermissionKey, type PermissionKey } from "../lib/access/permissions";
 
 /** What an owner has granted a MANAGER (UserPermission rows) — only the
- *  per-request check lives here; managing manager accounts and their
- *  grants is ManagerService's. */
+ *  per-request checks the guards call live here; managing manager
+ *  accounts and their grants is ManagerService's. */
 export class PermissionService {
   /** The manager's granted permissions — read from the database on
    *  EVERY check (never cached in the session/JWT), so a revoked
@@ -15,5 +15,17 @@ export class PermissionService {
       select: { permission: true },
     });
     return rows.map((row) => row.permission).filter(isPermissionKey);
+  }
+
+  /** Does the session's user still exist in the session's company? Read
+   *  on EVERY guard check (lib/access/roleGuard), so a removed manager —
+   *  whose signed session cookie still says MANAGER until it expires —
+   *  is treated as signed out on their very next request. */
+  static async userExistsInCompany(userId: number, companyId: number) {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, companyId },
+      select: { id: true },
+    });
+    return user !== null;
   }
 }

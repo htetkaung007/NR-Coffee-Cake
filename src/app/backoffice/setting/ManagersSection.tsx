@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,8 +9,10 @@ import {
   Button,
   Card,
   Chip,
+  MenuItem,
   Snackbar,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -26,7 +28,17 @@ import {
 } from "@/app/lib/access/permissions";
 import { AlwaysAllowedList, OwnerOnlyList } from "./AccessRuleLists";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
+import StatusSnackbar, {
+  type StatusMessage,
+} from "@/app/components/StatusSnackbar";
 import ManagerAccessEditor from "./ManagerAccessEditor";
+import { moveManagerAction, removeManagerAction } from "./action";
+
+/** A location a manager can be moved to (the company's open ones). */
+interface LocationOption {
+  id: number;
+  name: string;
+}
 
 const PAGE_HREF = "/backoffice/setting";
 
@@ -56,15 +68,108 @@ function AccessRulesDisclosure() {
   );
 }
 
-function ManagerCard({ manager }: { manager: ManagerSummary }) {
+/** "Move to…": the company's open locations, the current one shown
+ *  selected and disabled. Saved as soon as one is picked (no Save
+ *  button); the field is disabled while it saves. A manager at a closed
+ *  location still sees it, disabled, so the field says where they are. */
+function MoveManagerSelect({
+  manager,
+  locations,
+  onStatus,
+}: {
+  manager: ManagerSummary;
+  locations: LocationOption[];
+  onStatus: (message: StatusMessage) => void;
+}) {
+  const [pendingLocationId, setPendingLocationId] = useState<number | null>(
+    null,
+  );
+  const [isMoving, startMoving] = useTransition();
+  const fieldId = useId();
+
+  const options =
+    manager.locationId === null ||
+    locations.some((location) => location.id === manager.locationId)
+      ? locations
+      : [
+          ...locations,
+          { id: manager.locationId, name: manager.locationName ?? "Closed location" },
+        ];
+  const value = pendingLocationId ?? manager.locationId ?? "";
+
+  function move(locationId: number) {
+    const target = options.find((location) => location.id === locationId);
+    setPendingLocationId(locationId);
+    startMoving(async () => {
+      const result = await moveManagerAction(manager.id, locationId);
+      setPendingLocationId(null);
+      onStatus(
+        result.success
+          ? {
+              text: `${manager.email} moved to ${target?.name ?? "the new location"}`,
+              severity: "success",
+            }
+          : { text: result.error.message, severity: "error" },
+      );
+    });
+  }
+
+  return (
+    <TextField
+      select
+      id={fieldId}
+      label="Move to…"
+      value={value}
+      disabled={isMoving || options.length < 2}
+      onChange={(event) => move(Number(event.target.value))}
+      helperText={
+        options.length < 2 ? "Add another location to move managers." : undefined
+      }
+      sx={{ minWidth: { sm: 200 }, width: { xs: "100%", sm: "auto" } }}
+    >
+      {options.map((location) => (
+        <MenuItem
+          key={location.id}
+          value={location.id}
+          disabled={location.id === manager.locationId}
+          sx={{ minHeight: 44 }}
+        >
+          {location.name}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+}
+
+function ManagerCard({
+  manager,
+  locations,
+  onStatus,
+}: {
+  manager: ManagerSummary;
+  locations: LocationOption[];
+  onStatus: (message: StatusMessage) => void;
+}) {
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
+  const [isRemoving, startRemoving] = useTransition();
+  const displayName = manager.name || manager.email;
+
+  function remove() {
+    startRemoving(async () => {
+      const result = await removeManagerAction(manager.id);
+      setIsRemoveOpen(false);
+      onStatus(
+        result.success
+          ? { text: `${displayName} removed`, severity: "success" }
+          : { text: result.error.message, severity: "error" },
+      );
+    });
+  }
+
   return (
     <Card variant="outlined" sx={{ p: 2 }}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1.5}
-        sx={{ alignItems: { sm: "center" } }}
-      >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Stack spacing={2}>
+        <Box sx={{ minWidth: 0 }}>
           <Typography
             variant="subtitle2"
             component="h3"
@@ -100,21 +205,51 @@ function ManagerCard({ manager }: { manager: ManagerSummary }) {
             </Typography>
           </Stack>
         </Box>
-        <Button
-          component={Link}
-          href={`${PAGE_HREF}?manager=${manager.id}`}
-          scroll={false}
-          variant="outlined"
-          aria-label={`Edit access for ${manager.email}`}
-          sx={{
-            minHeight: 44,
-            flexShrink: 0,
-            alignSelf: { xs: "flex-start", sm: "center" },
-          }}
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          sx={{ alignItems: { xs: "stretch", sm: "center" } }}
         >
-          Edit access
-        </Button>
+          <MoveManagerSelect
+            manager={manager}
+            locations={locations}
+            onStatus={onStatus}
+          />
+          <Box sx={{ flex: 1, display: { xs: "none", sm: "block" } }} />
+          <Button
+            component={Link}
+            href={`${PAGE_HREF}?manager=${manager.id}`}
+            scroll={false}
+            variant="outlined"
+            aria-label={`Edit access for ${manager.email}`}
+            sx={{ minHeight: 44, flexShrink: 0 }}
+          >
+            Edit access
+          </Button>
+          <Button
+            color="error"
+            disabled={isRemoving}
+            onClick={() => setIsRemoveOpen(true)}
+            aria-label={`Remove ${manager.email}`}
+            sx={{ minHeight: 44, flexShrink: 0 }}
+          >
+            Remove
+          </Button>
+        </Stack>
       </Stack>
+
+      <ConfirmDialog
+        open={isRemoveOpen}
+        title={`Remove ${displayName}?`}
+        message="They can no longer sign in. Sales history is not affected. You can add them again later with the same email."
+        confirmLabel="Remove manager"
+        pendingLabel="Removing..."
+        destructive
+        pending={isRemoving}
+        onConfirm={remove}
+        onCancel={() => setIsRemoveOpen(false)}
+      />
     </Card>
   );
 }
@@ -128,9 +263,12 @@ function ManagerCard({ manager }: { manager: ManagerSummary }) {
  */
 export default function ManagersSection({
   managers,
+  locations,
   selectedId,
 }: {
   managers: ManagerSummary[];
+  /** The company's open locations — the "Move to…" choices. */
+  locations: LocationOption[];
   selectedId: number | null;
 }) {
   const router = useRouter();
@@ -147,6 +285,9 @@ export default function ManagersSection({
   } | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [savedFor, setSavedFor] = useState<string | null>(null);
+  // Move / Remove results — outside the cards, so a removed manager's
+  // card can disappear while its message stays.
+  const [status, setStatus] = useState<StatusMessage | null>(null);
 
   const ticks =
     selected && draft?.managerId === selected.id
@@ -191,7 +332,11 @@ export default function ManagersSection({
           >
             {managers.map((manager) => (
               <li key={manager.id}>
-                <ManagerCard manager={manager} />
+                <ManagerCard
+                  manager={manager}
+                  locations={locations}
+                  onStatus={setStatus}
+                />
               </li>
             ))}
           </Stack>
@@ -243,6 +388,8 @@ export default function ManagersSection({
           Access updated for {savedFor}
         </Alert>
       </Snackbar>
+
+      <StatusSnackbar message={status} onClose={() => setStatus(null)} />
     </>
   );
 }

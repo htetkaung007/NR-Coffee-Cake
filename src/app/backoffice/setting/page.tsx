@@ -79,7 +79,11 @@ export default async function SettingsPage({
           title="Managers"
           description="Managers work at their assigned location. Choose what each one can do."
         >
-          <ManagersSection managers={managers} selectedId={selectedManagerId} />
+          <ManagersSection
+            managers={managers}
+            locations={locations.map(({ id, name }) => ({ id, name }))}
+            selectedId={selectedManagerId}
+          />
           <Divider sx={{ my: 3 }} />
           <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
             Add a manager

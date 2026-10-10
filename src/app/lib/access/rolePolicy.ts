@@ -18,6 +18,13 @@ export interface LocatedScope extends StaffScope {
   locationId: number;
 }
 
+/** THE "not signed in" error every guard throws (pages show their
+ *  signed-out notice for it): no session — or a session whose user no
+ *  longer exists (roleGuard). */
+export function signedOutError() {
+  return new AppError("You must be signed in.", "UNAUTHORIZED");
+}
+
 /** The FORBIDDEN message for owner-only changes on the add-ons page. */
 export const OWNER_ONLY_MESSAGE = "Only the owner can change this.";
 
@@ -32,7 +39,7 @@ export function assertRole(
   forbiddenMessage: string,
 ): StaffScope {
   if (!session.companyId || !session.userId) {
-    throw new AppError("You must be signed in.", "UNAUTHORIZED");
+    throw signedOutError();
   }
   if (!allowed.includes(session.role)) {
     throw new AppError(forbiddenMessage, "FORBIDDEN");

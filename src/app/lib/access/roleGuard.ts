@@ -2,7 +2,9 @@ import { AppError } from "../errors";
 import { hasPermission, type PermissionKey } from "./permissions";
 import {
   assertRole,
+  signedOutError,
   type LocatedScope,
+  type StaffRole,
   type StaffScope,
 } from "./rolePolicy";
 import { getSessionContext } from "./session";
@@ -51,6 +53,23 @@ function located(
   return options.withLocation ? withSelectedLocation(scope) : scope;
 }
 
+/** The session's role check, then: does its user still exist in its
+ *  company? The session cookie outlives a removed manager (it still says
+ *  MANAGER until it expires), so this one cheap read — for an owner too —
+ *  makes a removal take effect on the very next request, as signed out. */
+async function assertSignedInStaff(
+  allowed: readonly StaffRole[],
+  forbiddenMessage: string,
+): Promise<StaffScope> {
+  const scope = assertRole(await getSessionContext(), allowed, forbiddenMessage);
+  const exists = await PermissionService.userExistsInCompany(
+    scope.userId,
+    scope.companyId,
+  );
+  if (!exists) throw signedOutError();
+  return scope;
+}
+
 /** Signed in as any staff (owner or manager) — the always-allowed order
  *  work. */
 export function requireStaff(
@@ -60,8 +79,7 @@ export function requireStaff(options?: GuardOptions): Promise<StaffScope>;
 export async function requireStaff(
   options: GuardOptions = {},
 ): Promise<StaffScope | LocatedScope> {
-  const scope = assertRole(
-    await getSessionContext(),
+  const scope = await assertSignedInStaff(
     ["ADMIN", "MANAGER"],
     options.forbiddenMessage ?? NO_PERMISSION_MESSAGE,
   );
@@ -76,8 +94,7 @@ export function requireOwner(options?: GuardOptions): Promise<StaffScope>;
 export async function requireOwner(
   options: GuardOptions = {},
 ): Promise<StaffScope | LocatedScope> {
-  const scope = assertRole(
-    await getSessionContext(),
+  const scope = await assertSignedInStaff(
     ["ADMIN"],
     options.forbiddenMessage ?? OWNER_ONLY_ACTION_MESSAGE,
   );

@@ -6,6 +6,7 @@ import { BackofficeShell } from "../components/BackofficeShell";
 import { CompanyService, LocationService, PermissionService } from "@/app/services";
 import { StaffAccessProvider } from "../components/StaffAccessProvider";
 import { getSessionContext } from "../lib/access/session";
+import { NotFoundError } from "../lib/errors";
 import { Box } from "@mui/material";
 import { SurfaceThemeProvider } from "../lib/theme/ThemeModeProvider";
 import { OrderAlertsProvider } from "./OrderAlertsProvider";
@@ -20,7 +21,15 @@ export default async function BackOfficeLayout({ children }: Props) {
   const email = session?.user?.email;
   if (!email) redirect("/auth/signIn");
 
-  const company = await CompanyService.getByUserEmail(email);
+  // A session whose user no longer exists (a removed manager — the
+  // cookie outlives the account) is signed out: back to sign-in, the
+  // same as no session. Every page and action guard re-checks it too.
+  const company = await CompanyService.getByUserEmail(email).catch(
+    (error: unknown) => {
+      if (error instanceof NotFoundError) return null;
+      throw error;
+    },
+  );
   if (!company) redirect("/auth/signIn");
   const companyName = company.name;
 

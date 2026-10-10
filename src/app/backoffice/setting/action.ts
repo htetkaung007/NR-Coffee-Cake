@@ -19,7 +19,18 @@ import {
   setManagerPermissionsSchema,
   type SetManagerPermissionsInput,
 } from "@/app/lib/schemas/managerPermissionsSchema";
+import {
+  moveManagerSchema,
+  removeManagerSchema,
+} from "@/app/lib/schemas/managerAccountSchema";
 import { CompanyService, ManagerService } from "@/app/services";
+
+/** Where a manager change shows: this page, and each location's delete
+ *  rule (blocked while managers are assigned there). */
+function revalidateManagers() {
+  revalidatePath("/backoffice/setting");
+  revalidatePath("/backoffice/locations", "layout");
+}
 
 const safeCreateManager = toSafeResult(async (input: CreateManagerInput) => {
   const { companyId, userId } = await requireOwner();
@@ -80,7 +91,7 @@ export async function setManagerPermissionsAction(
 
 /** The company to rename is ALWAYS the signed-in Admin's own — taken from
  *  the session, never from the client's input. */
-const safeRequireCompanyAdmin = toSafeResult(() => requireOwner());
+const safeRequireOwner = toSafeResult(() => requireOwner());
 
 const safeUpdateCompanyName = toSafeResult(
   async (input: UpdateCompanyNameInput & { companyId: number }) =>
@@ -88,7 +99,7 @@ const safeUpdateCompanyName = toSafeResult(
 );
 
 export async function updateCompanyNameAction(formData: FormData) {
-  const result = await safeRequireCompanyAdmin()
+  const result = await safeRequireOwner()
     .andThen(({ companyId }) =>
       validateWith(updateCompanyNameSchema, {
         name: formData.get("name"),
@@ -102,5 +113,46 @@ export async function updateCompanyNameAction(formData: FormData) {
     revalidatePath("/backoffice", "layout");
   }
 
+  return actionResult;
+}
+
+const safeRemoveManager = toSafeResult(ManagerService.removeManager);
+
+/** Settings → Managers "Remove": deletes the manager's account. The
+ *  owner guard runs FIRST; the manager must be the owner's own company's
+ *  (the company comes from the session, never the input). The removed
+ *  manager is signed out on their next request (the guards re-check
+ *  that the session's user still exists). */
+export async function removeManagerAction(managerId: number) {
+  const result = await safeRequireOwner()
+    .andThen(({ companyId }) =>
+      validateWith(removeManagerSchema, { managerId }).map((data) => ({
+        ...data,
+        companyId,
+      })),
+    )
+    .andThen(safeRemoveManager);
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) revalidateManagers();
+  return actionResult;
+}
+
+const safeMoveManager = toSafeResult(ManagerService.moveManager);
+
+/** Settings → Managers "Move to…": same guard-first order; the manager
+ *  and the location must both be the owner's company's, and the location
+ *  open. The manager's permissions stay. */
+export async function moveManagerAction(managerId: number, locationId: number) {
+  const result = await safeRequireOwner()
+    .andThen(({ companyId }) =>
+      validateWith(moveManagerSchema, { managerId, locationId }).map(
+        (data) => ({ ...data, companyId }),
+      ),
+    )
+    .andThen(safeMoveManager);
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) revalidateManagers();
   return actionResult;
 }

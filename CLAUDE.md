@@ -355,8 +355,9 @@ business reason?"
   the same file just because both mention "location."
 - Current splits worth knowing: **ManagerService** owns manager
   accounts (createManagerForLocation, listManagers,
-  setManagerPermissions); **PermissionService** keeps only
-  getGrantedPermissions, the per-request check the guards call.
+  setManagerPermissions, moveManager, removeManager);
+  **PermissionService** keeps only the per-request checks the guards
+  call (getGrantedPermissions, userExistsInCompany).
   **CompanyService** owns company reads/renames (getName,
   getByUserEmail, updateName); **AppService** is sign-up/onboarding
   only (registerUser, createDefaultSetup and its helpers,
@@ -407,6 +408,9 @@ business reason?"
   so revoking takes effect on the next request. Anything a page passes
   to the client about permissions (`canToggle`, `useCan`) is display
   only; the action enforces.
+- The owner can move a manager to another location or remove them
+  (ManagerService); guards re-check that the session's user still exists
+  on every request.
 
 ## 16. Testing
 
