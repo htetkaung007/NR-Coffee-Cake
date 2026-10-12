@@ -23,10 +23,17 @@ import {
 } from "@/app/lib/schemas/customerOrderSchema";
 import { CartSubmitService, CartValidationService } from "@/app/services";
 import { config } from "@/app/utils/config";
+import { AppError } from "@/app/lib/errors";
+import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
 
 const url = config.orderAppUrl;
 
 const safeValidateCart = toSafeResult(async (input: ValidateCartInput) => {
+  // The check answers with menu names and prices: the menu-access rule
+  // applies (online menu off + no QR session here → refused).
+  if ((await checkMenuAccess(input.locationId)) === "unavailable") {
+    throw new AppError("The shop is unavailable now.", "SHOP_UNAVAILABLE");
+  }
   const store = await cookies();
   const cookieToken = store.get(COUNTER_SESSION_COOKIE)?.value ?? null;
   const [validation, sendState] = await Promise.all([
@@ -41,8 +48,10 @@ const safeValidateCart = toSafeResult(async (input: ValidateCartInput) => {
  *  or regains focus, and again before submit — and says whether this
  *  browser could send it now (`sendState`, from the Counter scan
  *  cookie). Read-only: writes nothing, not even the cookie. No session
- *  required (Online browsing has none); the location must exist and be
- *  active (see CartValidationService.loadCatalog). */
+ *  required while the online menu is on (Online browsing has none);
+ *  with it off, only a browser with a QR session here
+ *  (lib/storefront/menuAccess). The location must exist and be active
+ *  (see CartValidationService.loadCatalog). */
 export async function validateCartAction(input: ValidateCartRawInput) {
   const result = await validateWith(validateCartSchema, input).asyncAndThen(
     safeValidateCart,

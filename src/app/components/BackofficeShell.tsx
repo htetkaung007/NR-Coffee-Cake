@@ -6,18 +6,20 @@ import { BackofficeTopBar } from "./BackofficeTopBar";
 import { BackofficeSideBar } from "./BackofficeSideBar";
 import { backofficePageTop } from "../lib/theme/sharedThemeTokens";
 import type { NavRole } from "../lib/backofficeNav";
+import type { TopBarLocation } from "./OnlineMenuStatus";
 
 interface Props {
   children?: React.ReactNode;
   companyName?: string;
-  locationName: string | null;
+  /** The selected location (null: none, or archived). */
+  location: TopBarLocation | null;
   role: NavRole;
 }
 
 export function BackofficeShell({
   children,
   companyName,
-  locationName,
+  location,
   role,
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -33,7 +35,7 @@ export function BackofficeShell({
       <BackofficeTopBar
         onMenuClick={() => setMobileOpen((prev) => !prev)}
         companyName={companyName}
-        locationName={locationName}
+        location={location}
         canChangeLocation={role === "ADMIN"}
       />
       <Box>

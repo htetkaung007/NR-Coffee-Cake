@@ -334,6 +334,34 @@ independently of the app config). Everything else still goes through
   client id), that location is already checked by
   `LocationService.getSelectedLocation(userId, companyId)`.
 
+## 13b. Online menu = the /menu page
+
+- There is no separate online page: the customer menu page
+  (`/menu?locationId=<id>`) IS the online menu. The owner's per-location
+  switch, Location.onlineMenuEnabled, decides who may see it — ONE pure
+  rule, `menuAccess` (`lib/storefront/menuAccess.ts`):
+  - a browser with a QR session for that location (the Counter cookie's
+    session, or a current Table contributor token for a table there) →
+    the page works as always, ON or OFF;
+  - no QR session + ON → the menu as always (browse, browser cart);
+  - no QR session + OFF, or the location missing / archived → only "The
+    shop is unavailable now" (ShopUnavailable), no menu data loaded.
+- **The server decides.** `checkMenuAccess` (`lib/storefront/
+  menuAccessCheck.ts`) gathers the facts with the existing checks only
+  (CartSubmitService.getSendState, TableDraftService
+  .hasCurrentTokenAtLocation). Every place that shows menu data without a
+  QR session calls it first: the /menu and /cart pages,
+  getMenuDetailAction and validateCartAction. URL ids are untrusted —
+  parsed with `parseIdParam` (Zod), then looked up. Staff (New Order)
+  read details through their own guarded getStaffMenuDetailAction.
+- **Ordering is always QR-only**, ON or OFF: sending the cart and every
+  order action still need the QR session from scanning in the shop.
+- The link Settings shows is `config.publicBaseUrl` (PUBLIC_BASE_URL,
+  optional) + `/menu?locationId=<id>` — the path only without it. **QR
+  codes keep the in-shop (LAN) address, never the online hostname.**
+- Location.publicMenuCode is unused (left from the dropped /m/<code>
+  page) and will be dropped in a later migration.
+
 ## 14. Service imports — always via the barrel file, never the concrete path
 
 ```typescript

@@ -1,6 +1,4 @@
 import { cookies } from "next/headers";
-import Link from "next/link";
-import { Box, Typography } from "@mui/material";
 import {
   CartSubmitService,
   CounterSessionService,
@@ -19,8 +17,10 @@ import { orderLinesTotal } from "@/app/lib/order/orderTotals";
 import { approvalTiming } from "@/app/lib/approval/approvalTiming";
 import CartPageClient from "@/app/components/orderUI/CartPageClient";
 import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
-import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import { CartButtonStatus } from "@/app/components/orderUI/CartButton";
+import ShopUnavailable from "@/app/components/orderUI/ShopUnavailable";
+import { parseIdParam } from "@/app/lib/storefront/menuAccess";
+import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
 
 // Same reasoning as /menu — see that page's dynamic export comment.
 export const dynamic = "force-dynamic";
@@ -36,14 +36,12 @@ export const dynamic = "force-dynamic";
  * to Counter QR's own session-based review (CartPageClient), same as
  * before the per-customer draft redesign.
  *
- * A visitor with neither a session nor a table draft to look at
- * (someone just browsing online — never scanned a table/counter QR)
- * is NOT an error case: the cart icon is always visible in the top
- * bar regardless of hasSession (see CounterOrderClient.tsx), so this
- * page has to make sense for that visitor too. It gets a plain "No
- * order yet" message here instead of redirecting — a redirect back to
- * /menu with no locationId to carry over previously produced a broken
- * page (MenuService queried with an invalid id).
+ * A visitor with no session (browsing online — never scanned a
+ * table/counter QR) is NOT an error case: the cart icon is always
+ * visible in the top bar, so this page has to make sense for them too.
+ * It follows the menu-access rule (lib/storefront/menuAccess): their
+ * browser cart shows while the online menu is on; with it off, or with
+ * no valid location at all, it's the "shop is unavailable" screen.
  */
 export default async function CartPage({
   searchParams,
@@ -59,18 +57,24 @@ export default async function CartPage({
     tableId: tableIdParam,
     scanned,
   } = await searchParams;
-  const tableId = tableIdParam ? Number(tableIdParam) : null;
+  // Untrusted URL ids (Zod) — looked up, never used as they come.
+  const urlLocationId = parseIdParam(locationIdParam);
+  const tableId = parseIdParam(tableIdParam);
 
-  if (tableId) {
+  if (tableId && urlLocationId) {
     const contributorToken = await getContributorToken(tableId);
-    const isTokenCurrent =
+    // A current token for THIS table, at this location (see /menu).
+    const isTableSession =
       contributorToken !== null &&
-      (await TableDraftService.isTokenCurrentForTable(
-        tableId,
-        contributorToken,
-      ));
-    if (contributorToken && isTokenCurrent) {
-      const locationId = Number(locationIdParam);
+      (await TableDraftService.hasCurrentTokenAtLocation(urlLocationId, {
+        [tableId]: contributorToken,
+      }));
+    if (contributorToken && isTableSession) {
+      const locationId = urlLocationId;
+      // Scanned in — unless the location is gone or closed.
+      if ((await checkMenuAccess(locationId)) === "unavailable") {
+        return <ShopUnavailable />;
+      }
       const [
         draftItems,
         activeRound,
@@ -131,33 +135,12 @@ export default async function CartPage({
   // The session's location when there is one (the query param could be
   // edited), otherwise the page's own — the browser cart is kept per
   // location, so one is needed to show it at all.
-  const locationId = session?.locationId ?? Number(locationIdParam);
+  const locationId = session?.locationId ?? urlLocationId;
 
-  if (!session && !(locationId > 0)) {
-    const backHref = tableId
-      ? `/menu?locationId=${locationIdParam}&tableId=${tableId}`
-      : locationIdParam
-        ? `/menu?locationId=${locationIdParam}`
-        : "/menu";
-    return (
-      <Box sx={{ minHeight: "100vh" }}>
-        <OrderTopBar shopName={null} cartItemCount={0} />
-        <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            No order
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            You don&apos;t have an active order yet. Scan the table or counter
-            QR to start one.
-          </Typography>
-          <Link href={backHref} style={{ color: "inherit" }}>
-            <Typography variant="body2" sx={{ textDecoration: "underline" }}>
-              Back to menu
-            </Typography>
-          </Link>
-        </Box>
-      </Box>
-    );
+  // The browser cart shows menu names and prices: the menu-access rule
+  // applies (online menu off + no QR session here → unavailable).
+  if (locationId === null || (await checkMenuAccess(locationId)) === "unavailable") {
+    return <ShopUnavailable />;
   }
 
   const [shopName, sendState, bill] = await Promise.all([

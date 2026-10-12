@@ -19,6 +19,7 @@ import { signOut, useSession } from "next-auth/react";
 import { clearStaffCarts } from "@/app/lib/hooks/useStaffCart";
 import { useThemeMode } from "../lib/theme/ThemeModeProvider";
 import { hoverCapableMedia } from "../lib/theme/sharedThemeTokens";
+import OnlineMenuStatus, { type TopBarLocation } from "./OnlineMenuStatus";
 
 const LOCATIONS_HREF = "/backoffice/locations";
 
@@ -105,18 +106,21 @@ function LocationPill({
 type BackofficeTopBarProps = {
   onMenuClick: () => void;
   companyName?: string;
-  /** The selected location's name; null when none is selected. */
-  locationName: string | null;
-  /** Admins can switch location, so the pill links to Locations. */
+  /** The selected location (name + online menu switch); null when none
+   *  is selected. */
+  location: TopBarLocation | null;
+  /** Admins can switch location (the pill links to Locations) and switch
+   *  its online menu (the status chip) — the owner. */
   canChangeLocation: boolean;
 };
 
 export function BackofficeTopBar({
   onMenuClick,
   companyName,
-  locationName,
+  location,
   canChangeLocation,
 }: BackofficeTopBarProps) {
+  const locationName = location?.name ?? null;
   const { data: session } = useSession();
   const { mode, toggleMode } = useThemeMode();
 
@@ -184,6 +188,13 @@ export function BackofficeTopBar({
               maxWidth={240}
             />
           </Box>
+          {/* Right after the location: its online menu status (hidden
+             with no selected location). */}
+          {location && (
+            <Box sx={{ display: "flex", flexShrink: 0 }}>
+              <OnlineMenuStatus location={location} canChange={canChangeLocation} />
+            </Box>
+          )}
         </Box>
 
         <Box

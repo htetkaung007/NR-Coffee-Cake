@@ -43,6 +43,15 @@ interface MenuDetailDialogProps {
     detail: MenuDetail,
   ) => Promise<string | null>;
   editing?: MenuDetailEditingSelection;
+  /** How the detail is read. Default: the customer read
+   *  (getMenuDetailAction — which follows the menu-access rule). The
+   *  staff New Order page passes its own, guarded by the staff session.
+   *  Pass a stable function (an imported Server Action), not an inline
+   *  one — it's an effect dependency. */
+  loadDetail?: (
+    menuId: number,
+    locationId: number,
+  ) => ReturnType<typeof getMenuDetailAction>;
 }
 
 /**
@@ -76,6 +85,7 @@ export default function MenuDetailDialog({
   onClose,
   onSubmit,
   editing,
+  loadDetail = getMenuDetailAction,
 }: MenuDetailDialogProps) {
   const [fetchedForMenuId, setFetchedForMenuId] = useState<number | null>(null);
   const [detail, setDetail] = useState<MenuDetail | null>(null);
@@ -97,7 +107,7 @@ export default function MenuDetailDialog({
   useEffect(() => {
     if (!open || menuId === null) return;
 
-    getMenuDetailAction(menuId, locationId).then((result) => {
+    loadDetail(menuId, locationId).then((result) => {
       setDetail(result);
       setFetchedForMenuId(menuId);
       if (editing) {
@@ -127,7 +137,7 @@ export default function MenuDetailDialog({
     // dependency array (open/menuId already re-run this per dialog
     // open, which is the only time re-initializing should happen).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, menuId, locationId]);
+  }, [open, menuId, locationId, loadDetail]);
 
   function selectRequired(categoryId: number, addonId: number) {
     setSelected((current) => ({ ...current, [categoryId]: [addonId] }));

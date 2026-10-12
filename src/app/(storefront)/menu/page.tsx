@@ -11,6 +11,9 @@ import { getContributorToken } from "@/app/lib/storefront/contributorToken";
 import CounterOrderClient from "@/app/components/orderUI/CounterOrderClient";
 import TableOrderClient from "@/app/components/orderUI/TableOrderClient";
 import { toDraftLine } from "@/app/lib/order/roundLine";
+import { parseIdParam } from "@/app/lib/storefront/menuAccess";
+import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
+import ShopUnavailable from "@/app/components/orderUI/ShopUnavailable";
 
 // Session/cart state can change between one visit and the next (a
 // customer's own submit, or another contributor's draft add) —
@@ -76,18 +79,25 @@ export default async function MenuPage({
     tableId: tableIdParam,
     scanned,
   } = await searchParams;
-  const locationId = Number(locationIdParam);
-  const tableId = tableIdParam ? Number(tableIdParam) : null;
+  // Untrusted URL ids (Zod) — looked up, never used as they come.
+  const locationId = parseIdParam(locationIdParam);
+  const tableId = parseIdParam(tableIdParam);
 
-  if (tableId) {
+  if (tableId && locationId) {
     const contributorToken = await getContributorToken(tableId);
-    const isTokenCurrent =
+    // A current token for THIS table, and the table is at this location
+    // (a token for a table elsewhere doesn't open this location's menu).
+    const isTableSession =
       contributorToken !== null &&
-      (await TableDraftService.isTokenCurrentForTable(
-        tableId,
-        contributorToken,
-      ));
-    if (contributorToken && isTokenCurrent) {
+      (await TableDraftService.hasCurrentTokenAtLocation(locationId, {
+        [tableId]: contributorToken,
+      }));
+    if (contributorToken && isTableSession) {
+      // Scanned in: the menu works, online menu on or off — unless the
+      // location is gone or closed (lib/storefront/menuAccess).
+      if ((await checkMenuAccess(locationId)) === "unavailable") {
+        return <ShopUnavailable />;
+      }
       const [menuData, shopName, draftItems, activeRound, labels] =
         await Promise.all([
           MenuService.getMenusForLocation(locationId),
@@ -123,6 +133,16 @@ export default async function MenuPage({
   // Session ရှိရင် session ရဲ့ locationId ကို ယုံ (query param ကို
   // customer က ကိုယ်တိုင် ပြောင်းလို့ရလို့) — မရှိမှသာ query param ကို သုံး.
   const effectiveLocationId = session ? session.locationId : locationId;
+
+  // The online menu IS this page: with no QR session here it shows only
+  // while the owner has it switched on (lib/storefront/menuAccess). The
+  // server decides — "unavailable" loads and sends no menu data.
+  if (
+    effectiveLocationId === null ||
+    (await checkMenuAccess(effectiveLocationId)) === "unavailable"
+  ) {
+    return <ShopUnavailable />;
+  }
 
   const [menuData, shopName, bill] = await Promise.all([
     MenuService.getMenusForLocation(effectiveLocationId),

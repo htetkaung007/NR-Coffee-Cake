@@ -16,9 +16,11 @@ import {
 import type { CartLineInput } from "@/app/lib/cart/cartValidation";
 import {
   CartValidationService,
+  MenuService,
   OrderListService,
   StaffOrderService,
 } from "@/app/services";
+import { menuDetailSchema } from "@/app/lib/schemas/customerOrderSchema";
 
 /**
  * Design doc section 7 ("staff place a new order directly"). The cart is
@@ -112,4 +114,25 @@ const safeGetTableOccupancy = toSafeResult(async () => {
  *  location comes from the session, never the input. */
 export async function getTableOccupancyAction() {
   return toActionResult(await safeGetTableOccupancy());
+}
+
+/** A menu's detail for New Order's item dialog — the staff member's
+ *  own selected location only (from the session; the `locationId`
+ *  argument is ignored), so it works whether or not the online menu is
+ *  on (the customer read, getMenuDetailAction, follows the menu-access
+ *  rule). Guard FIRST; null when there's nothing to show, like the
+ *  customer read. */
+export async function getStaffMenuDetailAction(
+  menuId: number,
+  _locationId: number,
+) {
+  void _locationId;
+  const result = await safeRequireStaffAtLocation().andThen(({ locationId }) =>
+    validateWith(menuDetailSchema, { menuId, locationId }),
+  );
+  if (result.isErr()) return null;
+  return MenuService.getMenuDetailForCustomer(
+    result.value.menuId,
+    result.value.locationId,
+  );
 }

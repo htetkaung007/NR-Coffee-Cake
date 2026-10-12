@@ -192,6 +192,10 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
   `palette.successText` (≥ 4.5:1 on paper and page, both modes).
 - Print output is always `common.black` on `common.white`, regardless of
   light/dark mode.
+- **Online menu status chip** (Backoffice top bar, selected location):
+  on = success dot + "Online menu" (`palette.successText`), off = neutral
+  dot (`text.secondary`) + "Online menu off" — never red (off is the
+  normal default); below `sm`, dot + globe icon with an aria-label.
 
 ## 14. Loading, empty, and error states
 
@@ -272,6 +276,13 @@ double-taps), or an optimistic update. A disabled control shows WHY
   - Stock badge, **bottom-right of the image**, always shown (solid,
     ≥ 4.5:1): **"Sold out"** (stock 0, error role), **"N left"** (1–4,
     warning role), **"N in stock"** (5+, neutral).
+- **Online menu = the /menu page** (`lib/storefront/menuAccess`): with
+  the owner's switch ON, anyone sees the menu as it is today; OFF, a
+  visitor who hasn't scanned the QR (and any missing or closed location)
+  gets ONE simple screen instead — "The shop is unavailable now" + "Scan
+  the QR code at your table or the counter to order." (customer theme,
+  `role="status"`, no menu data). The /cart page follows the same rule.
+  Ordering always needs the QR, ON or OFF.
 - **Dialog vs page:** a **dialog** for short tasks — about 1–3 fields,
   confirmations, and quick creates that must not lose the form behind
   them (e.g. "New category" from the menu form). A **page** for long

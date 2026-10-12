@@ -15,6 +15,11 @@ export interface Config {
   // boundary can never silently split a late-night order onto the
   // wrong day in reports.
   shopTimezone: string;
+  // Optional public address the online menu is reached at (e.g.
+  // https://menu.yourshop.com) — Settings shows the full
+  // /menu?locationId=<id> link with it, the path only without. Never used in a QR code: QR codes
+  // keep the in-shop (LAN) address.
+  publicBaseUrl: string;
 }
 
 export const config: Config = {
@@ -30,4 +35,5 @@ export const config: Config = {
   minioSecretKey: process.env.MINIO_SECRET_KEY || "",
   minioBucket: process.env.MINIO_BUCKET || "",
   shopTimezone: process.env.SHOP_TIMEZONE || "Asia/Yangon",
+  publicBaseUrl: process.env.PUBLIC_BASE_URL || "",
 };

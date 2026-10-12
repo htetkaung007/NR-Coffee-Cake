@@ -142,7 +142,9 @@ export const LocationScalarFieldEnum = {
   companyId: 'companyId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
-  isArchived: 'isArchived'
+  isArchived: 'isArchived',
+  onlineMenuEnabled: 'onlineMenuEnabled',
+  publicMenuCode: 'publicMenuCode'
 } as const
 
 export type LocationScalarFieldEnum = (typeof LocationScalarFieldEnum)[keyof typeof LocationScalarFieldEnum]

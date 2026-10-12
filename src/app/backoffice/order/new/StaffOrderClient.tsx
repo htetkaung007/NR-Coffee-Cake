@@ -49,6 +49,7 @@ import {
 } from "@/app/lib/order/targetMode";
 import { moneySx } from "../orderTypography";
 import {
+  getStaffMenuDetailAction,
   getStaffSubmitStatusAction,
   getTableOccupancyAction,
   submitStaffOrderAction,
@@ -751,6 +752,7 @@ export default function StaffOrderClient({
         editing={dialog?.editing}
         onClose={() => setDialog(null)}
         onSubmit={handleDialogSubmit}
+        loadDetail={getStaffMenuDetailAction}
       />
 
       <Snackbar

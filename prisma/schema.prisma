@@ -109,6 +109,14 @@ model Location {
   createdAt                      DateTime                        @default(now())
   updateTime                     DateTime                        @updatedAt
   isArchived                     Boolean                         @default(false)
+  // When true, anyone with this location's online menu link can VIEW
+  // the menu without scanning a QR code. Ordering always still needs the
+  // QR (table/counter token). Off by default.
+  onlineMenuEnabled              Boolean                         @default(false)
+  // UNUSED — left from the dropped /m/<code> online page (#79b); the
+  // online menu is now the /menu page itself (onlineMenuEnabled above).
+  // Nothing reads or writes it; it will be dropped in a later migration.
+  publicMenuCode                 String?                         @unique @db.VarChar(16)
   disableLocationMenus           DisableLocationMenus[]
   disableLocationMenuCategories DisableLocationMenuCategories[]
   orderSessions                  OrderSession[]

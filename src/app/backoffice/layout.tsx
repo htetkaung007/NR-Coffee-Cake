@@ -51,8 +51,9 @@ export default async function BackOfficeLayout({ children }: Props) {
   const selectedLocation = userId
     ? await LocationService.getSelectedLocation(userId, company.id)
     : null;
-  const locationName = selectedLocation
-    ? await LocationService.getShopNameForLocation(selectedLocation.locationId)
+  // Its name and online menu switch, in one read (the status chip).
+  const topBarLocation = selectedLocation
+    ? await LocationService.getTopBarLocation(selectedLocation.locationId)
     : null;
   // A manager's grants, read fresh on every request — for the display
   // hints only (hidden sidebar items, disabled switches); every action,
@@ -71,7 +72,7 @@ export default async function BackOfficeLayout({ children }: Props) {
         <Box>
           <BackofficeShell
             companyName={companyName}
-            locationName={locationName}
+            location={topBarLocation}
             role={role}
           >
             <NewOrderBanner />

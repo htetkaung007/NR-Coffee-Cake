@@ -7,11 +7,14 @@ import EditIcon from "@mui/icons-material/Edit";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 
 import { selectLocationAction } from "@/app/backoffice/locations/action";
+import { menuAccess } from "@/app/lib/storefront/menuAccess";
 
 export interface LocationCardData {
   id: number;
   name: string;
   isArchived: boolean;
+  /** The owner's switch (lib/location/onlineMenu). */
+  onlineMenuEnabled: boolean;
 }
 
 interface LocationCardProps {
@@ -77,6 +80,16 @@ export default function LocationCard({
           />
         )}
       </Box>
+
+      {/* What a visitor who hasn't scanned gets: On only while it's
+         switched on AND the location is open (lib/storefront/menuAccess). */}
+      <Typography variant="caption" color="text.secondary">
+        Online menu:{" "}
+        {menuAccess({ ...location, locationExists: true, hasQrSession: false }) ===
+        "menu"
+          ? "On"
+          : "Off"}
+      </Typography>
 
       {isSelected && !location.isArchived && (
         <Box

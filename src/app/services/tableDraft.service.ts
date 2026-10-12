@@ -54,6 +54,29 @@ export class TableDraftService {
     return table !== null && table.contributorEpoch === tokenEpoch;
   }
 
+  /** Does this browser hold a CURRENT contributor token (the same epoch
+   *  rule as isTokenCurrentForTable) for any live table AT this
+   *  location? `tokens` is the cookie's tableId → token map. One query
+   *  however many tables the cookie remembers. The menu-access check
+   *  (lib/storefront/menuAccessCheck) — a token for a table at another
+   *  location doesn't open this one. */
+  static async hasCurrentTokenAtLocation(
+    locationId: number,
+    tokens: Readonly<Record<string, string>>,
+  ) {
+    const tableIds = Object.keys(tokens)
+      .map(Number)
+      .filter((id) => Number.isInteger(id) && id > 0);
+    if (tableIds.length === 0) return false;
+    const tables = await prisma.table.findMany({
+      where: { id: { in: tableIds }, locationId, isArchived: false },
+      select: { id: true, contributorEpoch: true },
+    });
+    return tables.some(
+      (table) => getTokenEpoch(tokens[String(table.id)]) === table.contributorEpoch,
+    );
+  }
+
   /** Ownership isn't checked here (adding is never a conflict the way
    *  removing is) — contributorToken is just stamped onto the new row
    *  so a LATER remove/edit can check it. Reuses

@@ -8,12 +8,13 @@ import {
 } from "@/app/lib/actionHelper";
 import {
   createLocationSchema,
+  setOnlineMenuSchema,
   updateLocationSchema,
   type CreateLocationInput,
   type UpdateLocationInput,
 } from "@/app/lib/schemas/locationSchema";
 import { requireOwner } from "@/app/lib/access/roleGuard";
-import { LocationService } from "@/app/services";
+import { LocationService, OnlineMenuService } from "@/app/services";
 
 const safeCreateLocation = toSafeResult(async (input: CreateLocationInput) => {
   // Every action in this file is the owner's: managers have no
@@ -131,5 +132,31 @@ export async function selectLocationAction(locationId: number) {
     revalidatePath("/backoffice", "layout");
   }
 
+  return actionResult;
+}
+
+const safeRequireOwner = toSafeResult(() => requireOwner());
+
+const safeSetOnlineMenu = toSafeResult(OnlineMenuService.setOnlineMenu);
+
+/** The owner's "Online menu" switch for one location: guard FIRST, then
+ *  the input, then OnlineMenuService (ownership, archived, the link
+ *  code). Viewing only — ordering still needs the QR in the shop. */
+export async function setOnlineMenuAction(locationId: number, enabled: boolean) {
+  const result = await safeRequireOwner()
+    .andThen(({ companyId }) =>
+      validateWith(setOnlineMenuSchema, { locationId, enabled }).map(
+        (data) => ({ ...data, companyId }),
+      ),
+    )
+    .andThen(safeSetOnlineMenu);
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath("/backoffice/locations");
+    revalidatePath(`/backoffice/locations/${locationId}`);
+    // The top bar's online menu status chip (Backoffice layout).
+    revalidatePath("/backoffice", "layout");
+  }
   return actionResult;
 }

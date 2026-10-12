@@ -72,6 +72,16 @@ export class LocationService {
     return location?.name ?? null;
   }
 
+  /** The Backoffice top bar's selected location: its name and the
+   *  online menu switch (the status chip) — one read, null for an
+   *  archived/missing location (the top bar then shows its fallbacks). */
+  static async getTopBarLocation(locationId: number) {
+    return prisma.location.findFirst({
+      where: { id: locationId, isArchived: false },
+      select: { id: true, name: true, onlineMenuEnabled: true },
+    });
+  }
+
   /** Does one thing: creates a location with a name. Nothing else —
    *  callers that also want it selected call setSelectedLocation
    *  themselves afterward, rather than this method reaching into a

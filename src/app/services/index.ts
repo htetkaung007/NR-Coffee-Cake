@@ -11,6 +11,7 @@ export { MenuCategoryService } from "./menuCategory.service";
 export { MenuStockService } from "./menuStock.service";
 export { MenuLocationService } from "./menuLocation.service";
 export { LocationService } from "./location.service";
+export { OnlineMenuService } from "./onlineMenu.service";
 export { AddonService } from "./addon.service";
 export { TableService } from "./table.service";
 export { PriceSnapshotService } from "./priceSnapshot.service";

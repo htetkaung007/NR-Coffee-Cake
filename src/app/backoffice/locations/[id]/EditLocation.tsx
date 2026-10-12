@@ -22,13 +22,17 @@ import {
 } from "../action";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import FormCard from "@/app/components/FormCard";
+import OnlineMenuSection from "./OnlineMenuSection";
 
 interface EditLocationProps {
   location: {
     id: number;
     name: string;
     isArchived: boolean;
+    onlineMenuEnabled: boolean;
   };
+  /** config.publicBaseUrl — the online menu link's base (may be ""). */
+  publicBaseUrl: string;
   /** Display only — hardDeleteLocationAction checks the rule again. */
   deletion: LocationDeletion;
   /** Names (or emails) of the managers assigned here, when they block
@@ -38,6 +42,7 @@ interface EditLocationProps {
 
 export default function EditLocation({
   location,
+  publicBaseUrl,
   deletion,
   blockingManagers,
 }: EditLocationProps) {
@@ -169,6 +174,13 @@ export default function EditLocation({
           />
         </Box>
       </Box>
+
+      <OnlineMenuSection
+        locationId={location.id}
+        enabled={location.onlineMenuEnabled}
+        publicBaseUrl={publicBaseUrl}
+        isArchived={isArchived}
+      />
 
       {/* Danger zone — permanent delete (lib/location/locationDeletion): only a
           location with no sales history and no managers; right away,

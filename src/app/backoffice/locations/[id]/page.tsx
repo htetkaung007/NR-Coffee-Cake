@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { LocationService, ManagerService } from "@/app/services";
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
+import { config } from "@/app/utils/config";
 import EditLocation from "./EditLocation";
 
 export default async function EditLocationPage({
@@ -49,7 +50,9 @@ export default async function EditLocationPage({
         id: location.id,
         name: location.name,
         isArchived: location.isArchived,
+        onlineMenuEnabled: location.onlineMenuEnabled,
       }}
+      publicBaseUrl={config.publicBaseUrl}
       deletion={deletion}
       blockingManagers={blockingManagers}
     />
