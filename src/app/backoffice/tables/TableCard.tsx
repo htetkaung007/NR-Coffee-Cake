@@ -22,7 +22,7 @@ import { rotateAccessKeyAction } from "./action";
 import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
-export interface TableCardData {
+interface TableCardData {
   id: number;
   name: string;
   qrcodeImageUrl: string | null;

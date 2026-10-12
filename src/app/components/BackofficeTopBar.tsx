@@ -1,5 +1,6 @@
 "use client";
 
+import { useId, useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -7,6 +8,12 @@ import {
   Typography,
   Box,
   Avatar,
+  Divider,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Switch,
 } from "@mui/material";
 import Link from "next/link";
 import { alpha } from "@mui/material/styles";
@@ -103,6 +110,108 @@ function LocationPill({
   );
 }
 
+/** The account button (the avatar) and its menu: who's signed in (name +
+ *  role in words), Dark mode — this device's setting
+ *  (ThemeModeProvider) — and Sign out. Every role gets it. The Dark mode
+ *  item is ONE control (a menuitemcheckbox) that keeps the menu open so
+ *  the change shows; its Switch is only the visual. */
+function AccountMenu() {
+  const { data: session } = useSession();
+  const { mode, toggleMode } = useThemeMode();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const buttonId = useId();
+  const menuId = useId();
+
+  const name = session?.user?.name || session?.user?.email || "Account";
+  const roleLabel = session?.user?.role === "ADMIN" ? "Owner" : "Manager";
+  const isDark = mode === "dark";
+  const open = anchor !== null;
+
+  return (
+    <>
+      <IconButton
+        id={buttonId}
+        onClick={(event) => setAnchor(event.currentTarget)}
+        aria-label={`Account menu, ${name}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        sx={{ width: 44, height: 44, p: 0.75 }}
+      >
+        <Avatar
+          sx={{
+            width: 32,
+            height: 32,
+            bgcolor: "primary.main",
+            fontSize: 14,
+          }}
+        >
+          {session?.user?.name?.[0]?.toUpperCase() ?? "?"}
+        </Avatar>
+      </IconButton>
+      <Menu
+        id={menuId}
+        anchorEl={anchor}
+        open={open}
+        onClose={() => setAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          list: { "aria-labelledby": buttonId },
+          paper: { sx: { minWidth: 240, maxWidth: "calc(100vw - 32px)" } },
+        }}
+      >
+        {/* Not a menu item (MenuList only focuses MenuItems): who's
+           signed in. */}
+        <Box component="li" role="presentation" sx={{ px: 2, pt: 1, pb: 1.5 }}>
+          <Typography variant="subtitle2" sx={{ overflowWrap: "anywhere" }}>
+            {name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {roleLabel}
+          </Typography>
+        </Box>
+        <Divider />
+        <MenuItem
+          role="menuitemcheckbox"
+          aria-checked={isDark}
+          // Stays open, so the new mode shows straight away.
+          onClick={toggleMode}
+          sx={{ minHeight: 44 }}
+        >
+          <ListItemIcon>
+            {isDark ? <DarkModeIcon fontSize="small" /> : <LightModeIcon fontSize="small" />}
+          </ListItemIcon>
+          <ListItemText>Dark mode</ListItemText>
+          <Switch
+            edge="end"
+            size="small"
+            checked={isDark}
+            tabIndex={-1}
+            aria-hidden
+            sx={{ pointerEvents: "none" }}
+          />
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchor(null);
+            // An unsent New Order stays on this device until Send —
+            // never for the next person who signs in here.
+            clearStaffCarts(session?.user?.id ?? null);
+            void signOut({ callbackUrl: "/auth/signIn" });
+          }}
+          sx={{ minHeight: 44 }}
+        >
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Sign out</ListItemText>
+        </MenuItem>
+      </Menu>
+    </>
+  );
+}
+
 type BackofficeTopBarProps = {
   onMenuClick: () => void;
   companyName?: string;
@@ -121,8 +230,6 @@ export function BackofficeTopBar({
   canChangeLocation,
 }: BackofficeTopBarProps) {
   const locationName = location?.name ?? null;
-  const { data: session } = useSession();
-  const { mode, toggleMode } = useThemeMode();
 
   return (
     <AppBar
@@ -133,7 +240,7 @@ export function BackofficeTopBar({
         color: "text.primary",
         borderBottom: 1,
         borderColor: "divider",
-        zIndex: (theme) => theme.zIndex.drawer + 1, // side bar ရဲ့ အပေါ်ကို လွှမ်းမိုးအောင်
+        zIndex: (theme) => theme.zIndex.drawer + 1, // above the side bar
       }}
     >
       <Toolbar
@@ -148,10 +255,11 @@ export function BackofficeTopBar({
             minWidth: 0,
           }}
         >
-          {/* Burger tab — mobile မှာပဲ ပေါ်, side bar ကို ဖွင့်/ပိတ် */}
+          {/* Phones only: opens / closes the side bar. */}
           <IconButton
             edge="start"
             onClick={onMenuClick}
+            aria-label="Open menu"
             sx={{ display: { sm: "none" }, color: "text.primary" }}
           >
             <MenuIcon />
@@ -178,9 +286,11 @@ export function BackofficeTopBar({
           >
             {companyName}
           </Typography>
-          {/* sm and up: the location pill after the company name. */}
+          {/* sm and up: the location pill after the company name. When
+             the row is tight the pill gives way first (ellipsis), down to
+             a short stub, before the company name does. */}
           <Box
-            sx={{ display: { xs: "none", sm: "flex" }, minWidth: 0, flexShrink: 0 }}
+            sx={{ display: { xs: "none", sm: "flex" }, minWidth: 96, flexShrink: 10 }}
           >
             <LocationPill
               name={locationName}
@@ -188,13 +298,6 @@ export function BackofficeTopBar({
               maxWidth={240}
             />
           </Box>
-          {/* Right after the location: its online menu status (hidden
-             with no selected location). */}
-          {location && (
-            <Box sx={{ display: "flex", flexShrink: 0 }}>
-              <OnlineMenuStatus location={location} canChange={canChangeLocation} />
-            </Box>
-          )}
         </Box>
 
         <Box
@@ -205,43 +308,12 @@ export function BackofficeTopBar({
             flexShrink: 0,
           }}
         >
-          {session?.user?.name && (
-            <Typography
-              variant="body2"
-              sx={{ display: { xs: "none", sm: "block" } }}
-            >
-              {session.user.name}
-            </Typography>
+          {/* The selected location's online menu status (hidden with no
+             selected location), then the account menu. */}
+          {location && (
+            <OnlineMenuStatus location={location} canChange={canChangeLocation} />
           )}
-          <IconButton
-            onClick={toggleMode}
-            sx={{ color: "text.primary" }}
-            aria-label="Toggle theme"
-          >
-            {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
-          </IconButton>
-          <Avatar
-            sx={{
-              width: 32,
-              height: 32,
-              bgcolor: "primary.main",
-              fontSize: 14,
-            }}
-          >
-            {session?.user?.name?.[0]?.toUpperCase() ?? "?"}
-          </Avatar>
-          <IconButton
-            onClick={() => {
-              // An unsent New Order stays on this device until Send —
-              // never for the next person who signs in here.
-              clearStaffCarts(session?.user?.id ?? null);
-              void signOut({ callbackUrl: "/auth/signIn" });
-            }}
-            sx={{ color: "text.primary" }}
-            aria-label="Sign out"
-          >
-            <LogoutIcon />
-          </IconButton>
+          <AccountMenu />
         </Box>
       </Toolbar>
     </AppBar>

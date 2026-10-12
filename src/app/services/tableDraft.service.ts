@@ -186,15 +186,7 @@ export class TableDraftService {
    *  an already-submitted (merged) row can never be "removed" through
    *  this path — only a still-draft one. */
   static async removeDraftItem(contributorToken: string, orderId: number) {
-    const order = await prisma.order.findFirst({
-      where: { id: orderId, orderSessionId: null },
-    });
-    if (!order) {
-      throw new NotFoundError("Order", orderId);
-    }
-    if (order.contributorToken !== contributorToken) {
-      throw new ValidationError("This item belongs to someone else.");
-    }
+    await TableDraftService.getOwnDraftItem(contributorToken, orderId);
 
     await prisma.$transaction(async (tx: Tx) => {
       await tx.ordersAddon.deleteMany({ where: { orderId } });
@@ -215,15 +207,10 @@ export class TableDraftService {
     addonIds: number[] = [],
     note?: string,
   ) {
-    const order = await prisma.order.findFirst({
-      where: { id: orderId, orderSessionId: null },
-    });
-    if (!order) {
-      throw new NotFoundError("Order", orderId);
-    }
-    if (order.contributorToken !== contributorToken) {
-      throw new ValidationError("This item belongs to someone else.");
-    }
+    const order = await TableDraftService.getOwnDraftItem(
+      contributorToken,
+      orderId,
+    );
 
     await OrderSessionCartService.validateAddonSelection(
       order.menuId,
@@ -254,6 +241,24 @@ export class TableDraftService {
       }
       return OrderSessionCartService.getLineWithAddons(tx, orderId);
     });
+  }
+
+  /** Chain lookup — a still-draft row (orderSessionId null, so a
+   *  submitted row never matches) that is THIS contributor's own:
+   *  NotFoundError when there's no such draft, ValidationError when it's
+   *  someone else's. The ownership boundary of removeDraftItem and
+   *  updateDraftItem. */
+  private static async getOwnDraftItem(contributorToken: string, orderId: number) {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, orderSessionId: null },
+    });
+    if (!order) {
+      throw new NotFoundError("Order", orderId);
+    }
+    if (order.contributorToken !== contributorToken) {
+      throw new ValidationError("This item belongs to someone else.");
+    }
+    return order;
   }
 
   /** Everyone at the table sees the FULL draft list, not just their

@@ -8,13 +8,12 @@ import {
   Button,
   TextField,
   Typography,
-  Container,
-  Paper,
   Divider,
   Alert,
   CircularProgress,
   Link,
 } from "@mui/material";
+import AuthCard from "../AuthCard";
 import NextLink from "next/link";
 import GoogleIcon from "@mui/icons-material/Google";
 import {
@@ -81,140 +80,127 @@ export default function SignInForm({
   }
 
   return (
-    <Container maxWidth="sm">
-      <Paper
-        elevation={3}
+    <AuthCard>
+      <Box sx={{ mb: 4, textAlign: "center" }}>
+        <Typography
+          variant="overline"
+          sx={{ letterSpacing: 4, fontWeight: "bold", color: "primary.main" }}
+        >
+          Welcome Back
+        </Typography>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ mt: 1, fontWeight: 600 }}
+        >
+          Sign In
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          We are glad to see you again! Please sign in to continue.
+        </Typography>
+      </Box>
+
+      {isSignUpClosedRedirect && (
+        <Alert
+          severity="info"
+          role="status"
+          sx={{ width: "100%", mb: 3, borderRadius: 2 }}
+        >
+          {SIGNUP_CLOSED_MESSAGE}
+        </Alert>
+      )}
+
+      <Button
+        fullWidth
+        variant="outlined"
+        startIcon={<GoogleIcon />}
+        onClick={handleGoogleSignIn}
         sx={{
-          p: 4,
-          mt: 8,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          borderRadius: 4,
-          bgcolor: "background.paper",
+          py: 1.5,
+          borderRadius: 3,
+          textTransform: "none",
+          fontSize: "1rem",
+          mb: 3,
         }}
       >
-        <Box sx={{ mb: 4, textAlign: "center" }}>
-          <Typography
-            variant="overline"
-            sx={{ letterSpacing: 4, fontWeight: "bold", color: "primary.main" }}
-          >
-            Welcome Back
-          </Typography>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ mt: 1, fontWeight: 600 }}
-          >
-            Sign In
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            We are glad to see you again! Please sign in to continue.
-          </Typography>
-        </Box>
+        Continue with Google
+      </Button>
 
-        {isSignUpClosedRedirect && (
-          <Alert
-            severity="info"
-            role="status"
-            sx={{ width: "100%", mb: 3, borderRadius: 2 }}
-          >
-            {SIGNUP_CLOSED_MESSAGE}
+      <Divider sx={{ width: "100%", mb: 3 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
+          OR WITH EMAIL
+        </Typography>
+      </Divider>
+
+      <Box
+        component="form"
+        onSubmit={handleCredentialsSubmit}
+        sx={{ width: "100%" }}
+      >
+        <TextField
+          fullWidth
+          label="Email Address"
+          type="email"
+          variant="outlined"
+          margin="normal"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <TextField
+          fullWidth
+          label="Password"
+          type="password"
+          variant="outlined"
+          margin="normal"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+            {error}
           </Alert>
         )}
 
         <Button
+          type="submit"
           fullWidth
-          variant="outlined"
-          startIcon={<GoogleIcon />}
-          onClick={handleGoogleSignIn}
+          variant="contained"
+          disabled={loading}
           sx={{
+            mt: 4,
             py: 1.5,
             borderRadius: 3,
             textTransform: "none",
             fontSize: "1rem",
-            mb: 3,
+            fontWeight: "bold",
           }}
         >
-          Continue with Google
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            "Sign In"
+          )}
         </Button>
 
-        <Divider sx={{ width: "100%", mb: 3 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-            OR WITH EMAIL
-          </Typography>
-        </Divider>
-
-        <Box
-          component="form"
-          onSubmit={handleCredentialsSubmit}
-          sx={{ width: "100%" }}
-        >
-          <TextField
-            fullWidth
-            label="Email Address"
-            type="email"
-            variant="outlined"
-            margin="normal"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Password"
-            type="password"
-            variant="outlined"
-            margin="normal"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          {error && (
-            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            disabled={loading}
-            sx={{
-              mt: 4,
-              py: 1.5,
-              borderRadius: 3,
-              textTransform: "none",
-              fontSize: "1rem",
-              fontWeight: "bold",
-            }}
-          >
-            {loading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              "Sign In"
-            )}
-          </Button>
-
-          {isSignUpOpen && (
-            <Box sx={{ mt: 3, textAlign: "center" }}>
-              <Typography variant="body2" color="text.secondary">
-                Do not have an account?{" "}
-                <Link
-                  component={NextLink}
-                  href="/auth/signup"
-                  variant="body2"
-                  sx={{ fontWeight: "bold", textDecoration: "none" }}
-                >
-                  Sign Up
-                </Link>
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </Paper>
-    </Container>
+        {isSignUpOpen && (
+          <Box sx={{ mt: 3, textAlign: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              Do not have an account?{" "}
+              <Link
+                component={NextLink}
+                href="/auth/signup"
+                variant="body2"
+                sx={{ fontWeight: "bold", textDecoration: "none" }}
+              >
+                Sign Up
+              </Link>
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </AuthCard>
   );
 }

@@ -3,6 +3,7 @@
 // concrete file like "@/app/services/app.service". That way, splitting a
 // Service into its own file later only requires a change here, not in
 // every file that imports it.
+// Internal helpers used only inside services/ are not exported here.
 
 export { AppService } from "./app.service";
 export { CompanyService } from "./company.service";
@@ -14,8 +15,6 @@ export { LocationService } from "./location.service";
 export { OnlineMenuService } from "./onlineMenu.service";
 export { AddonService } from "./addon.service";
 export { TableService } from "./table.service";
-export { PriceSnapshotService } from "./priceSnapshot.service";
-export { BillService } from "./bill.service";
 export { OrderHistoryService } from "./orderHistory.service";
 export {
   OrderSessionService,
@@ -28,7 +27,6 @@ export { OrderApprovalService } from "./orderService/orderApproval.service";
 export { OrderPaymentService } from "./orderService/orderPayment.service";
 export { OrderVoidService } from "./orderService/orderVoid.service";
 export { OrderListService } from "./orderService/orderList.service";
-export { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 export { TableDraftService } from "./tableDraft.service";
 export { CartValidationService } from "./cartValidation.service";
 export { CartSubmitService } from "./cartSubmit.service";

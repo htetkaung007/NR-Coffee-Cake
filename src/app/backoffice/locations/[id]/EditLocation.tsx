@@ -22,6 +22,7 @@ import {
 } from "../action";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import FormCard from "@/app/components/FormCard";
+import PageHeader from "@/app/components/PageHeader";
 import OnlineMenuSection from "./OnlineMenuSection";
 
 interface EditLocationProps {
@@ -105,9 +106,11 @@ export default function EditLocation({
 
   return (
     <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Edit Location
-      </Typography>
+      <PageHeader
+        title="Edit Location"
+        backHref="/backoffice/locations"
+        backLabel="Back to locations"
+      />
 
       {/* Rename — its own form, its own submit, its own error */}
       <FormCard

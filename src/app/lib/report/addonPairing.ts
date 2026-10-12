@@ -8,7 +8,7 @@ export const MIN_PAIRING_UNITS = 10;
 /** How many add-ons are listed for one menu. */
 export const TOP_PAIRS = 3;
 
-export interface MenuAddonPair {
+interface MenuAddonPair {
   addonId: number;
   /** Units of this menu that had the add-on. */
   units: number;
@@ -16,7 +16,7 @@ export interface MenuAddonPair {
   rate: number;
 }
 
-export interface MenuPairing {
+interface MenuPairing {
   /** Units of this menu sold (Σ quantity of its lines) — returned even
    *  below the minimum, for "6 / 10 sold so far". */
   units: number;
@@ -26,7 +26,7 @@ export interface MenuPairing {
   pairs: MenuAddonPair[];
 }
 
-export interface AddonMenuPair {
+interface AddonMenuPair {
   menuId: number;
   /** Units of that menu that had this add-on. */
   units: number;

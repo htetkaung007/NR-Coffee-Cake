@@ -20,7 +20,7 @@ import { toShopDay, toShopTime } from "../shopDay";
 // ── Input (plain rows the caller loads) ─────────────────────────────────
 
 /** One add-on on a line, with its own price snapshot (for ONE unit). */
-export interface ExportLineAddon {
+interface ExportLineAddon {
   name: string;
   unitPrice: number;
 }
@@ -39,7 +39,7 @@ export interface ExportLine {
 }
 
 /** One round (OrderSession) of a paid bill. */
-export interface ExportRound {
+interface ExportRound {
   orderNumber: string;
   /** Decides round_no: 1, 2, … within the bill, oldest first. */
   createdAt: Date;

@@ -9,11 +9,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
 import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
 import UploadOutlinedIcon from "@mui/icons-material/UploadOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FormCard, { SuccessSnackbar } from "@/app/components/FormCard";
+import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import { createTableAction } from "../action";
 
@@ -41,14 +41,12 @@ export default function NewTable() {
   return (
     <>
       <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
-        <FormCard
-          onSubmit={handleSubmit}
-          header={{
-            icon: <TableRestaurantOutlinedIcon color="primary" />,
-            title: "New Table",
-          }}
-          error={error}
-        >
+        <PageHeader
+          title="New Table"
+          backHref="/backoffice/tables"
+          backLabel="Back to tables"
+        />
+        <FormCard onSubmit={handleSubmit} error={error}>
           {/* Prominent on purpose (own bordered box, filled icon,
                 bold label) — this single switch changes what the rest
                 of the form means (name becomes fixed/disabled), so it

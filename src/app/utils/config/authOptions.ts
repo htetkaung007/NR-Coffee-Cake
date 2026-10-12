@@ -50,15 +50,14 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user }) {
-      // Sign-in ချိန်မှာပဲ companyId ကို token ထဲ ထည့်ထား — request တိုင်း
-      // database ကို ပြန်မထိုးတော့ဘဲ token (encrypted cookie) ထဲကနေပဲ ဖတ်.
+      // Cache companyId in the token at sign-in, so each request reads it
+      // from the (encrypted) cookie instead of the database.
       if (user?.email) {
         const company = await CompanyService.getByUserEmail(user.email);
         token.companyId = company.id;
 
-        // Prisma User.id (number) ကို token ထဲ cache — Google OAuth ရဲ့
-        // user.id ဟာ Google ကိုယ်ပိုင် account id ဖြစ်လို့ (Rule 9),
-        // email ကနေပဲ ပြန်ရှာရတယ်.
+        // Cache our Prisma User.id, looked up by email: Google OAuth's
+        // user.id is Google's own account id (CLAUDE.md §9).
         const dbUser = await AppService.getUserByEmail(user.email);
         if (dbUser) {
           token.userId = dbUser.id;

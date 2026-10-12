@@ -12,8 +12,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import AddBusinessOutlinedIcon from "@mui/icons-material/AddBusinessOutlined";
 import FormCard, { SuccessSnackbar } from "@/app/components/FormCard";
+import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import { createLocationAction } from "../action";
 
@@ -58,14 +58,12 @@ export default function NewLocation() {
   return (
     <>
       <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
-        <FormCard
-          onSubmit={handleSubmit}
-          header={{
-            icon: <AddBusinessOutlinedIcon color="primary" />,
-            title: "New Location",
-          }}
-          error={error}
-        >
+        <PageHeader
+          title="New Location"
+          backHref="/backoffice/locations"
+          backLabel="Back to locations"
+        />
+        <FormCard onSubmit={handleSubmit} error={error}>
           <TextField
             label="Location Name"
             required

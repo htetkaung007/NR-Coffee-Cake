@@ -9,7 +9,7 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { selectLocationAction } from "@/app/backoffice/locations/action";
 import { menuAccess } from "@/app/lib/storefront/menuAccess";
 
-export interface LocationCardData {
+interface LocationCardData {
   id: number;
   name: string;
   isArchived: boolean;

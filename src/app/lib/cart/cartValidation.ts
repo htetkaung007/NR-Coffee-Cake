@@ -33,7 +33,7 @@ export interface CatalogAddon {
 
 /** A required add-on group — see findUnpickedRequiredGroup, the rule
  *  this shares with OrderSessionCartService.validateAddonSelection. */
-export type CatalogRequiredAddonGroup = RequiredAddonGroup;
+type CatalogRequiredAddonGroup = RequiredAddonGroup;
 
 /** One menu as orderable at the catalog's location. */
 export interface CatalogMenu {

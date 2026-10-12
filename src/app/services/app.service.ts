@@ -7,23 +7,18 @@ import { SIGNUP_CLOSED_MESSAGE } from "../lib/access/signUp";
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
 
-// AppService ကိုယ်တိုင်ရဲ့ own input shape — NextAuth ရဲ့ User type ကို
-// တိုက်ရိုက် မသုံးတော့ဘူး (Boundaries: Service layer က third-party auth
-// library ရဲ့ type ကို မမှီခိုသင့်ဘူး, NextAuth ကနေရော, register form
-// ကနေရော ၂ နေရာစလုံးက ခေါ်နိုင်ဖို့).
+// AppService's own input shape, not NextAuth's User type: a Service never
+// depends on a third-party library's type, and both NextAuth and the
+// sign-up form call it.
 type NewUserInput = { name?: string | null; email: string };
 
 function signUpClosedError() {
   return new AppError(SIGNUP_CLOSED_MESSAGE, "SIGNUP_CLOSED");
 }
 
-// AppService ရဲ့ method တွေက this.xxx() အစား AppService.xxx() ကို
-// အသုံးပြုထားတယ် — ဘာကြောင့်လဲဆိုတော့ toSafeResult(AppService.someMethod)
-// လို "function ကို variable ထဲ ခွာထုတ်" တဲ့ pattern ကို actions/*.ts
-// file တွေထဲမှာ အမြဲသုံးနေတယ် (Zod/neverthrow pipeline). ဒီလို ခွာထုတ်
-// လိုက်တာနဲ့ static method ရဲ့ `this` context ပျောက်သွားမယ် (undefined
-// ဖြစ်မယ်) — this.xxx() ခေါ်ထားရင် crash ဖြစ်မယ်, AppService.xxx()
-// ခေါ်ထားရင်တော့ ဘယ်လို detach ဖြစ်ဖြစ် အမြဲ အလုပ်လုပ်မယ်.
+// Methods call AppService.x(), never this.x(): actions detach them
+// (toSafeResult(AppService.someMethod)), which leaves `this` undefined
+// (CLAUDE.md §4).
 export class AppService {
   // ---------------------------------------------------------------------
   // User

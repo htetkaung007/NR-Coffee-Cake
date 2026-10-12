@@ -15,8 +15,8 @@ const ThemeModeContext = createContext<ThemeModeContextValue | null>(null);
 
 const STORAGE_KEY = "theme-mode";
 
-// Server Component layout ကနေ function ကို Client Component ဆီ prop အနေနဲ့
-// ပို့လို့ မရလို့ (serialize မလုပ်နိုင်) string key နဲ့ပဲ ပို့ပြီး ဒီမှာ resolve လုပ်တယ်.
+// A Server Component layout can't pass a function to a Client Component
+// (it can't be serialized), so it passes a string key, resolved here.
 const THEME_BUILDERS = {
   bo: getBoTheme,
   od: getOdTheme,
@@ -24,8 +24,9 @@ const THEME_BUILDERS = {
 
 export type ThemeSurface = keyof typeof THEME_BUILDERS;
 
-/** Light/dark mode state + toggle ကိုပဲ ကိုင်တယ် (app တစ်ခုလုံးမှာ တစ်ခုတည်း, root layout ကနေ mount).
- *  Theme object ကိုတော့ SurfaceThemeProvider က surface အလိုက် ဆောက်တယ်. */
+/** Holds only the light/dark mode and its toggle — one for the whole app,
+ *  mounted by the root layout. SurfaceThemeProvider builds each surface's
+ *  theme object. */
 export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<PaletteMode>(() => {
     if (typeof window === "undefined") {
@@ -55,10 +56,10 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Surface တစ်ခုရဲ့ theme ကိုပဲ (CssBaseline မပါဘဲ) လက်ရှိ mode နဲ့ ဆောက်ပေးတယ်.
- *  တခြား surface ရဲ့ layout ထဲမှာ Od component ကို ထည့်ပြရတဲ့ နေရာ (ဥပမာ backoffice
- *  ရဲ့ live customer preview) အတွက် — CssBaseline က page တစ်ခုလုံးကို ထပ်ခြယ်မှာမို့
- *  ဒီမှာ မထည့်ဘူး. */
+/** One surface's theme in the current mode, WITHOUT CssBaseline — for an
+ *  Od component shown inside the other surface's layout (e.g. the
+ *  Backoffice's live customer preview), where a second CssBaseline would
+ *  restyle the whole page. */
 export function SurfaceThemeScope({
   surface,
   children,
@@ -68,14 +69,13 @@ export function SurfaceThemeScope({
 }) {
   const { mode } = useThemeMode();
 
-  // Mode ပြောင်းတိုင်း theme object အသစ် ပြန်မတည်ဆောက်စေရန် memoize
   const theme = useMemo(() => THEME_BUILDERS[surface](mode), [surface, mode]);
 
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 }
 
-/** Surface (Backoffice / Order-app) တစ်ခုချင်းစီရဲ့ layout ကနေ mount လုပ်ပြီး
- *  theme + CssBaseline ကို ပေးတယ်. */
+/** Mounted by each surface's layout (Backoffice / Order-app): its theme
+ *  plus CssBaseline. */
 export function SurfaceThemeProvider({
   surface,
   children,
@@ -91,7 +91,7 @@ export function SurfaceThemeProvider({
   );
 }
 
-/** Component ဘယ်ဟာကမဆို "အခု light လား dark လား" သိချင်ရင် / toggle ချင်ရင် သုံးရန် */
+/** The current light/dark mode and its toggle, for any component. */
 export function useThemeMode() {
   const context = useContext(ThemeModeContext);
   if (!context) {

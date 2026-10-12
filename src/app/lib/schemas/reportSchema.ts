@@ -21,7 +21,6 @@ export type ReportPeriodInput = z.infer<typeof reportPeriodInputSchema>;
 export const reportExportInputSchema = reportPeriodInputSchema.extend({
   type: z.enum(["lines", "cancelled"]).default("lines"),
 });
-export type ReportExportInput = z.infer<typeof reportExportInputSchema>;
 
 /** Pairing is always a calendar month, so it takes the day only. */
 export const reportPairingInputSchema = z.object({

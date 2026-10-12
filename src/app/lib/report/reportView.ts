@@ -16,7 +16,7 @@ import { isShopDay } from "../shopDay";
  *  (?period=week|month&day=YYYY-MM-DD&tab=overview|items&list=top|slow). */
 const REPORTS_PATH = "/backoffice/reports";
 
-export type ReportTab = "overview" | "items";
+type ReportTab = "overview" | "items";
 export type ReportList = "top" | "slow";
 export type ReportSortBy = "sales" | "quantity";
 
@@ -97,7 +97,7 @@ export function navigationDays(
   };
 }
 
-export type DeltaDirection = "up" | "down" | "flat" | "none";
+type DeltaDirection = "up" | "down" | "flat" | "none";
 
 export interface DeltaText {
   direction: DeltaDirection;

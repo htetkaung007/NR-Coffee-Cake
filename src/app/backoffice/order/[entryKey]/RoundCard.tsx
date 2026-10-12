@@ -23,7 +23,7 @@ import type { RejectReason } from "@/app/lib/order/rejectReason";
 import { countLabel, formatClockTime } from "@/app/lib/orderFormat";
 
 /** One void on a line, as staff read it (lib/order/voids). */
-export interface RoundLineVoid {
+interface RoundLineVoid {
   quantity: number;
   /** The reason in words ("Wrong item"). */
   reason: string;

@@ -52,16 +52,7 @@ export class TableService {
       where: { id: tableId, location: { companyId: scope.companyId } },
       include: { location: { select: { companyId: true } } },
     });
-    if (
-      !table ||
-      !canActAtLocation(scope, {
-        companyId: table.location.companyId,
-        locationId: table.locationId,
-      })
-    ) {
-      throw new NotFoundError("Table", String(tableId));
-    }
-    return table;
+    return TableService.inScopeOrNotFound(table, tableId, scope);
   }
 
   /** Chain lookup for a staff order (New Order's "Order for") — a LIVE
@@ -81,6 +72,15 @@ export class TableService {
       },
       include: { location: { select: { companyId: true } } },
     });
+    return TableService.inScopeOrNotFound(table, tableId, scope);
+  }
+
+  /** The shared end of the table chain lookups: the table found, if
+   *  `scope` may act where it is (canActAtLocation) — otherwise (missing,
+   *  or not this scope's) the same NotFoundError. */
+  private static inScopeOrNotFound<
+    Found extends { locationId: number; location: { companyId: number } },
+  >(table: Found | null, tableId: number, scope: LocatedScope): Found {
     if (
       !table ||
       !canActAtLocation(scope, {

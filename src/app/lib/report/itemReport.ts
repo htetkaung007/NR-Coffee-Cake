@@ -31,7 +31,7 @@ export interface MenuSalesRow {
 /** How often an add-on was picked (once per unit of the line that had
  *  it) and what that made. Required-group add-ons count here too, so the
  *  totals reconcile with the bills. */
-export interface AddonSalesRow {
+interface AddonSalesRow {
   addonId: number;
   timesChosen: number;
   addonSales: number;

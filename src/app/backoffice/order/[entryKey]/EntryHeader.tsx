@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { Box, IconButton, Stack, Typography } from "@mui/material";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { Box, Stack, Typography } from "@mui/material";
+import BackLink from "@/app/components/BackLink";
 import StatusChip, { StatusDot } from "./StatusChip";
 import { countLabel, formatClockTime } from "@/app/lib/orderFormat";
 
@@ -27,14 +26,7 @@ export default function EntryHeader({
 }: EntryHeaderProps) {
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 2 }}>
-      <IconButton
-        component={Link}
-        href="/backoffice/order"
-        aria-label="Back to orders"
-        sx={{ width: 44, height: 44 }}
-      >
-        <ArrowBackIosNewIcon fontSize="small" />
-      </IconButton>
+      <BackLink href="/backoffice/order" label="Back to orders" />
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography component="h1" variant="h6" noWrap>
           {title}

@@ -15,7 +15,7 @@ export async function ensureDefaultSetup(
   if (!user.email) return false;
 
   const existingUser = await AppService.getUserByEmail(user.email);
-  if (existingUser) return true; // ရှိပြီးသား user, ဆက်ဝင်ပါ
+  if (existingUser) return true;
 
   if (account?.provider === "credentials") {
     return false;
@@ -30,6 +30,6 @@ export async function ensureDefaultSetup(
       return SIGNUP_CLOSED_URL;
     }
     console.error("[NextAuth] Failed to create default setup:", error);
-    return false; // setup fail ရင် sign-in ကို block — data ညစ်ပတ်စေချင်လို့ မဟုတ်
+    return false; // the setup failed: block the sign-in
   }
 }

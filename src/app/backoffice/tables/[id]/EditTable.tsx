@@ -15,6 +15,7 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { updateTableAction, deleteTableAction } from "../action";
 import FormCard from "@/app/components/FormCard";
+import PageHeader from "@/app/components/PageHeader";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
 
@@ -73,9 +74,11 @@ export default function EditTable({ table }: EditTableProps) {
 
   return (
     <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Edit Table
-      </Typography>
+      <PageHeader
+        title="Edit Table"
+        backHref="/backoffice/tables"
+        backLabel="Back to tables"
+      />
 
       {/* Rename + logo — one form, one submit, one error. Saving with
           a new logo regenerates the QR code image (see action.ts);

@@ -3,11 +3,9 @@ import type { ZodType } from "zod";
 import { AppError, type ErrorInfo } from "./errors";
 import { ActionResult } from "./actionResult";
 /**
- * toSafeResult — Service function ကို throw မလုပ်တော့ဘဲ
- * ResultAsync<T, ErrorInfo> ပြန်ပေးတဲ့ version ပြောင်းပေးတယ်.
- *
- * app/backoffice/**\/action.ts file တိုင်း ဒါကို ပြန်သုံးရမှာမို့
- * တစ်နေရာတည်း (lib/) ထားထားတယ် — DRY.
+ * Wraps a Service function that throws into one that returns
+ * ResultAsync<T, ErrorInfo>: an AppError keeps its message, anything
+ * else is logged and becomes a generic error.
  */
 export function toSafeResult<Args extends unknown[], SuccessValue>(
   serviceFn: (...args: Args) => Promise<SuccessValue>,
@@ -25,7 +23,8 @@ export function toSafeResult<Args extends unknown[], SuccessValue>(
     });
 }
 
-/** Result/ResultAsync ကို client ဆီ ပို့မယ့် plain object ({success, data}/{success, error}) ပြောင်းတယ်. */
+/** Flattens a Result into the plain object sent to the client
+ *  ({ success, data } / { success, error }). */
 export function toActionResult<SuccessValue>(
   result: Result<SuccessValue, ErrorInfo>,
 ): ActionResult<SuccessValue> {

@@ -12,7 +12,7 @@ import { outlinedInputClasses } from "@mui/material/OutlinedInput";
  *  theme with the storefront's colors, the Bo theme with calm values
  *  (no watercolor, money in text.primary) for the staff New Order page,
  *  so the one MenuCard follows whichever theme it renders under. */
-export interface DecorPalette {
+interface DecorPalette {
   /** Soft neutral blob behind the page and menu-card images. */
   wash: string;
   /** The second, colored blob on a menu-card image. */
@@ -54,22 +54,19 @@ declare module "@mui/material/styles" {
 }
 
 /**
- * Backoffice (Bo) နဲ့ Order-app (Od) theme နှစ်ခုလုံးက ဒီ file ကို import လုပ်ပြီး
- * သုံးတယ် — font, typography scale, shape, component override တွေက surface
- * နှစ်ခုမှာ မကွဲပြားရ. Font ပြောင်းချင်ရင် ဒီ file တစ်ခုတည်းကိုပဲ ပြင်ရမယ်.
- * Color (palette) ကိုတော့ ဒီမှာ မထည့်ဘူး — theme.ts (Bo) / odTheme.ts (Od)
- * ထဲမှာ ခွဲထားတယ်.
+ * Shared by both themes — Backoffice (Bo) and Order-app (Od): the font,
+ * typography scale, shape and component overrides are the same on both
+ * surfaces, so a font change happens only here. Colors (palette) are not
+ * here — they live in theme.ts (Bo) and odTheme.ts (Od).
  *
- * Typography က "phone မှာ ဘယ်လိုအရွယ်, desktop မှာ ဘယ်လိုအရွယ်" ဆိုတာကို
- * component တစ်ခုချင်းစီထဲ fontSize breakpoint object ကို လက်နှင့်
- * ထပ်ခါထပ်ခါ ရေးမနေတော့ဘဲ, ဒီနေရာမှာ တစ်ခါတည်း သတ်မှတ်ထား — Typography
- * ကို variant name (h6, body2, caption...) နဲ့ပဲ ခေါ်ရင် အလိုအလျောက်
- * breakpoint အလိုက် ပြောင်းသွားမယ်.
+ * Responsive type sizes are set once here, not as fontSize breakpoint
+ * objects in each component: use a Typography variant (h6, body2,
+ * caption…) and it resizes per breakpoint by itself.
  */
 
-// MUI ရဲ့ default breakpoints — theme.breakpoints.up("sm") နဲ့ တူညီအောင်
-// hardcode ထားရတာက createTheme() ထဲက object literal အတွင်းမှာ
-// `theme.breakpoints` ကို self-reference လုပ်လို့ မရလို့ပါ (circular).
+// MUI's default breakpoints, written out because an object literal passed
+// to createTheme() can't refer to its own `theme.breakpoints` (circular).
+// Must match theme.breakpoints.up("sm") etc.
 const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
 
 // Gates `&:hover` styles to devices that actually have a real hover +
@@ -124,7 +121,7 @@ const BORDER_RADIUS = 8;
 // the focused / error / disabled look.
 const inputIsIdle = `:not(.${outlinedInputClasses.focused}):not(.${outlinedInputClasses.error}):not(.${outlinedInputClasses.disabled})`;
 
-/** `createTheme({ palette, ...sharedThemeOptions })` ပုံစံနဲ့ spread လုပ်ပြီး သုံးရန် */
+/** Spread into a theme: `createTheme({ palette, ...sharedThemeOptions })`. */
 export const sharedThemeOptions: ThemeOptions = {
   shape: {
     borderRadius: BORDER_RADIUS,

@@ -377,7 +377,10 @@ needs a one-line change. Every action.ts importing from
 @/app/services keeps working untouched.
 
 This applies only to **Services** (shared business logic). It does not
-apply to Rule 3's colocation guidance for action.ts files.
+apply to Rule 3's colocation guidance for action.ts files. Internal
+helpers used only inside services/ (PriceSnapshotService, BillService,
+OrderSessionCartService) are not exported from the barrel — services
+import them by relative path.
 
 **When to split a Service file — use "reason to change" (SRP), not a
 method-count threshold.** A method count (8-10 was used as a rough
@@ -463,8 +466,11 @@ business reason?"
   to the client about permissions (`canToggle`, `useCan`) is display
   only; the action enforces.
 - `ORDERS_VOID` (void items on an accepted, unpaid order) is grantable,
-  not a default; `voidOrderLineAction` checks it first, the "⋯ → Void…"
-  menu is display only.
+  not a default; `voidOrderLineAction` checks it first, the line's
+  "Void" button is display only.
+- The sign-in redirect for /backoffice and /print lives in `src/proxy.ts`
+  (Next 16's proxy) — a coarse first check only; every page and action
+  still runs its own guard.
 - The owner can move a manager to another location or remove them
   (ManagerService); guards re-check that the session's user still exists
   on every request.

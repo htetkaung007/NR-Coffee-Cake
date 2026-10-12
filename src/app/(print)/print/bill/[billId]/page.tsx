@@ -1,22 +1,12 @@
-import { redirect } from "next/navigation";
-import { Box, Typography } from "@mui/material";
 import {
   CompanyService,
   LocationService,
   OrderHistoryService,
 } from "@/app/services";
 import { NotFoundError } from "@/app/lib/errors";
-import { getSessionContext } from "@/app/lib/access/session";
 import { toShopDay } from "@/app/lib/shopDay";
 import ReceiptLayout from "../../ReceiptLayout";
-
-function Message({ children }: { children: React.ReactNode }) {
-  return (
-    <Box sx={{ p: 3 }}>
-      <Typography color="text.secondary">{children}</Typography>
-    </Box>
-  );
-}
+import { PrintMessage, getPrintContext } from "../../../printContext";
 
 /** A paid bill's receipt, reprinted from Order History — the same
  *  access checks and the same ReceiptLayout as the open bill's receipt
@@ -32,26 +22,17 @@ export default async function PrintPaidBillPage({
 }) {
   const { billId: billIdParam } = await params;
 
-  const { companyId, userId } = await getSessionContext();
-  if (!companyId || !userId) redirect("/auth/signIn");
+  const context = await getPrintContext();
+  if (context.fallback) return context.fallback;
+  const { companyId, locationId } = context;
 
-  const selectedLocation = await LocationService.getSelectedLocation(
-    userId,
-    companyId,
-  );
-  if (!selectedLocation) {
-    return (
-      <Message>No location selected. Please choose a location first.</Message>
-    );
-  }
-
-  const notFound = <Message>This bill was not found.</Message>;
+  const notFound = <PrintMessage>This bill was not found.</PrintMessage>;
   if (!/^\d+$/.test(billIdParam)) return notFound;
 
   let bill: Awaited<ReturnType<typeof OrderHistoryService.getPaidBillDetail>>;
   try {
     bill = await OrderHistoryService.getPaidBillDetail({
-      locationId: selectedLocation.locationId,
+      locationId,
       billId: Number(billIdParam),
     });
   } catch (error) {
@@ -61,7 +42,7 @@ export default async function PrintPaidBillPage({
 
   const [shopName, location] = await Promise.all([
     CompanyService.getName(companyId),
-    LocationService.getLocationById(selectedLocation.locationId),
+    LocationService.getLocationById(locationId),
   ]);
 
   // Back to this bill, open, on its own day in History.

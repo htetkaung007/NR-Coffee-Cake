@@ -9,7 +9,7 @@ import { orderNoteSchema } from "../schemas/customerOrderSchema";
  *  only. The server never trusts any of it: prices are re-read from the
  *  catalog (see validateCartLines); unitPrice only travels back as
  *  displayedUnitPrice, to detect "the price changed since you saw it". */
-export interface BrowserCartLineDisplay {
+interface BrowserCartLineDisplay {
   name: string;
   unitPrice: number;
   addons: { id: number; name: string; unitPrice: number }[];
@@ -30,7 +30,7 @@ export interface BrowserCartLine {
 /** The cart as it was just sent, kept until the round's outcome is
  *  known: restored if the counter rejects it or doesn't decide in time,
  *  forgotten once it's accepted, dismissed, or a day old. */
-export interface LastSubmitted {
+interface LastSubmitted {
   /** The request id the order was sent with — also how its outcome is
    *  looked up later (see getSubmittedOrderOutcomeAction). */
   clientRequestId: string;

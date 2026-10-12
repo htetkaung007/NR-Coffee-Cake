@@ -7,7 +7,7 @@ import { alpha, type SxProps, type Theme } from "@mui/material/styles";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
-export interface SegmentedItem<Value extends string> {
+interface SegmentedItem<Value extends string> {
   value: Value;
   label: string;
   /** With a href the segment is a link (a tab whose state lives in the

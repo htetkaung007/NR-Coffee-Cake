@@ -29,7 +29,6 @@ export const menuDetailSchema = z.object({
   menuId: idSchema,
   locationId: idSchema,
 });
-export type MenuDetailInput = z.infer<typeof menuDetailSchema>;
 
 export const addDraftItemSchema = z.object({
   tableId: idSchema,
@@ -117,7 +116,6 @@ export const pollTableSchema = z.object({
   tableId: idSchema,
   locationId: idSchema,
 });
-export type PollTableInput = z.infer<typeof pollTableSchema>;
 
 // A customer withdrawing (cancelling or changing) the table's round
 // that waits for approval — which table only; the round is the table's

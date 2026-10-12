@@ -31,7 +31,7 @@ const plain = (status: number, message: string) =>
  * location come from the session — never the query string. Everything in
  * the file goes through exportLines + csv.ts (every text cell guarded
  * against formula injection). Signed-out requests never get here: the
- * middleware sends them to sign-in.
+ * proxy (src/proxy.ts) sends them to sign-in.
  */
 export async function GET(request: NextRequest) {
   // The same check as the Reports page and actions: the owner, or a

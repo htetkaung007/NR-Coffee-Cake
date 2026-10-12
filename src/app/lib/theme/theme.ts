@@ -2,12 +2,11 @@ import { alpha, createTheme, type PaletteMode } from "@mui/material/styles";
 import { sharedThemeOptions } from "./sharedThemeTokens";
 
 /**
- * Backoffice (Bo) theme — design file ရဲ့ color palette table ထဲက token တွေ
- * ဒီနေရာမှာပဲ သိမ်းထား. Color ပြောင်းချင်ရင် ဒီ file ကိုပဲ ပြင်ရမယ်, component
- * တစ်ခုချင်းစီထဲ လိုက်ရှာစရာ မလိုဘူး.
+ * Backoffice (Bo) theme — the design file's color palette lives here only,
+ * so a color change is made in this file, never in components.
  *
- * Font / typography / shape ကတော့ Od theme နဲ့ ဘုံဖြစ်လို့ sharedThemeTokens.ts
- * မှာ ရှိတယ်. Customer-facing order-app theme က odTheme.ts မှာ.
+ * Font / typography / shape are shared with the Od theme
+ * (sharedThemeTokens.ts). The customer-facing theme is odTheme.ts.
  */
 export function getBoTheme(mode: PaletteMode) {
   const isLight = mode === "light";

@@ -22,20 +22,12 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import { createAddonGroupAction } from "../backoffice/addons/action";
+import { emptyOptionRow, useOptionRows } from "../lib/hooks/useOptionRows";
 
 export interface AddonGroupOption {
   id: number;
   name: string;
   addons: { id: number; name: string; price: number }[];
-}
-
-interface OptionRow {
-  name: string;
-  price: string; // blank string = Free
-}
-
-function emptyRow(): OptionRow {
-  return { name: "", price: "" };
 }
 
 interface ConnectAddonGroupDialogProps {
@@ -58,7 +50,8 @@ export default function ConnectAddonGroupDialog({
   const [search, setSearch] = useState("");
   const [groupName, setGroupName] = useState("");
   const [isRequired, setIsRequired] = useState(false);
-  const [options, setOptions] = useState<OptionRow[]>([emptyRow(), emptyRow()]);
+  const { options, setOptions, updateOption, addOption, removeOption } =
+    useOptionRows([emptyOptionRow(), emptyOptionRow()]);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -76,7 +69,7 @@ export default function ConnectAddonGroupDialog({
       setSearch("");
       setGroupName("");
       setIsRequired(false);
-      setOptions([emptyRow(), emptyRow()]);
+      setOptions([emptyOptionRow(), emptyOptionRow()]);
       setError(null);
     }
   }
@@ -87,20 +80,6 @@ export default function ConnectAddonGroupDialog({
         ? current.filter((existingId) => existingId !== id)
         : [...current, id],
     );
-  }
-
-  function updateOption(index: number, field: "name" | "price", value: string) {
-    setOptions((rows) =>
-      rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
-    );
-  }
-
-  function addOption() {
-    setOptions((rows) => [...rows, emptyRow()]);
-  }
-
-  function removeOption(index: number) {
-    setOptions((rows) => rows.filter((_, i) => i !== index));
   }
 
   const filteredCategories = addonCategories.filter((category) =>

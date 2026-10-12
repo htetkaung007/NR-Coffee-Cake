@@ -31,6 +31,7 @@ import CreateMenuCategoryDialog, {
 } from "../menuCategory/CreateMenuCategoryDialog";
 import StatusSnackbar, { type StatusMessage } from "../StatusSnackbar";
 import FormCard, { SuccessSnackbar } from "../FormCard";
+import PageHeader from "../PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 import {
@@ -263,6 +264,13 @@ export default function MenuForm({
 
   return (
     <>
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pt: { xs: 2, sm: 3, md: 4 } }}>
+        <PageHeader
+          title={isEditMode ? "Edit Menu Item" : "New Menu Item"}
+          backHref="/backoffice/menus"
+          backLabel="Back to menus"
+        />
+      </Box>
       <Box
         component="form"
         // Our own messages (above the button) replace the browser's.
@@ -274,7 +282,9 @@ export default function MenuForm({
           gap: { xs: 3, lg: 4 },
           width: "100%",
           justifyContent: "center",
-          p: { xs: 2, sm: 3, md: 4 },
+          // The page's top padding is above PageHeader.
+          px: { xs: 2, sm: 3, md: 4 },
+          pb: { xs: 2, sm: 3, md: 4 },
           "& .MuiButton-root": {
             fontSize: { xs: "0.72rem", sm: "0.8rem" },
             minHeight: { xs: 34, sm: 36 },
@@ -284,7 +294,7 @@ export default function MenuForm({
         <FormCard
           header={{
             icon: <EditOutlinedIcon color="primary" />,
-            title: isEditMode ? "Edit Menu Item" : "Menu Item Details",
+            title: "Menu Item Details",
             subtitle: isEditMode
               ? "Update this item's information, price, category, and stock."
               : "Configure item information, price, category, and stock.",

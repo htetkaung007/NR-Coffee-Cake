@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Alert,
   Box,
@@ -16,20 +16,12 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import { createAddonGroupAction, updateAddonGroupAction } from "../action";
 import { SuccessSnackbar } from "@/app/components/FormCard";
+import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import MenuMultiSelect, { MenuOption } from "../MenuMultiSelect";
+import { emptyOptionRow, useOptionRows } from "@/app/lib/hooks/useOptionRows";
 
-interface OptionRow {
-  id?: number; // present only for options that already exist (edit mode)
-  name: string;
-  price: string; // blank string = Free
-}
-
-function emptyRow(): OptionRow {
-  return { name: "", price: "" };
-}
-
-export interface NewAddonInitialData {
+interface NewAddonInitialData {
   id: number;
   groupName: string;
   isRequired: boolean;
@@ -43,7 +35,6 @@ interface NewAddonProps {
 }
 
 export default function NewAddon({ menus, initialData }: NewAddonProps) {
-  const router = useRouter();
   const { error, setError, isPending, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const isEditMode = Boolean(initialData);
@@ -55,29 +46,15 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
   const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>(
     initialData?.menuIds ?? [],
   );
-  const [options, setOptions] = useState<OptionRow[]>(() =>
+  const { options, updateOption, addOption, removeOption } = useOptionRows(() =>
     initialData
       ? initialData.options.map((option) => ({
           id: option.id,
           name: option.name,
           price: option.price === 0 ? "" : String(option.price),
         }))
-      : [emptyRow(), emptyRow()],
+      : [emptyOptionRow(), emptyOptionRow()],
   );
-
-  function updateOption(index: number, field: "name" | "price", value: string) {
-    setOptions((rows) =>
-      rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
-    );
-  }
-
-  function addOption() {
-    setOptions((rows) => [...rows, emptyRow()]);
-  }
-
-  function removeOption(index: number) {
-    setOptions((rows) => rows.filter((_, i) => i !== index));
-  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,6 +93,15 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
           p: { xs: 2, sm: 3, md: 4 },
         }}
       >
+        <PageHeader
+          title={
+            isEditMode
+              ? "Edit Custom Add-On Option"
+              : "Or Create Custom Add-On Option"
+          }
+          backHref="/backoffice/addons"
+          backLabel="Back to add-ons"
+        />
         <Box
           sx={{
             border: "1px solid",
@@ -129,12 +115,6 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
               {error}
             </Alert>
           )}
-
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            {isEditMode
-              ? "Edit Custom Add-On Option"
-              : "Or Create Custom Add-On Option"}
-          </Typography>
 
           <Stack
             direction="row"
@@ -259,9 +239,10 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
             sx={{ justifyContent: "flex-end", mt: 3 }}
           >
             <Button
+              component={Link}
+              href="/backoffice/addons"
               variant="outlined"
               color="inherit"
-              onClick={() => router.back()}
               sx={{ borderRadius: 2.5, px: 3 }}
             >
               Cancel

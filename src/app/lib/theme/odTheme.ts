@@ -7,8 +7,8 @@ import { sharedThemeOptions } from "./sharedThemeTokens";
  * here via useTheme() / sx tokens — no hex and no globals.css variables in
  * components.
  *
- * Font / typography / shape က Bo theme နဲ့ ဘုံဖြစ်လို့ sharedThemeTokens.ts
- * မှာပဲ ရှိတယ် — ဒီ file မှာ palette ပဲ ရှိရမယ်.
+ * Font / typography / shape are shared with the Bo theme
+ * (sharedThemeTokens.ts) — this file holds the palette only.
  */
 export function getOdTheme(mode: PaletteMode) {
   const isLight = mode === "light";
@@ -30,7 +30,7 @@ export function getOdTheme(mode: PaletteMode) {
         contrastText: "#2D1B10",
       },
       success: {
-        main: "#10B981", // Free Badge Background (Bo နဲ့ တူ)
+        main: "#10B981", // Free Badge Background (same as Bo)
       },
       error: {
         main: red,

@@ -1,22 +1,14 @@
-import { Box, Typography } from "@mui/material";
 import { LocationService, ReportService } from "@/app/services";
 import { buildItemList, reportHref } from "@/app/lib/report/reportView";
 import { reportPeriodInputSchema } from "@/app/lib/schemas/reportSchema";
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import { formatShopDateTime } from "@/app/lib/shopDay";
 import ReportSheet from "./ReportSheet";
+import { PrintMessage } from "../../printContext";
 
 /** How many rows each list prints — the owner's short version. */
 const BEST_SELLERS = 10;
 const TOP_ADDONS = 5;
-
-function Message({ children }: { children: React.ReactNode }) {
-  return (
-    <Box sx={{ p: 3 }}>
-      <Typography color="text.secondary">{children}</Typography>
-    </Box>
-  );
-}
 
 /** The week's or month's report on A4, to print or "Save as PDF" — the
  *  same server-side access check as the Reports page (REPORTS_VIEW: the
@@ -45,7 +37,7 @@ export default async function PrintReportPage({
   );
   if (!selectedLocation) {
     return (
-      <Message>No location selected. Please choose a location first.</Message>
+      <PrintMessage>No location selected. Please choose a location first.</PrintMessage>
     );
   }
 
@@ -54,7 +46,7 @@ export default async function PrintReportPage({
     anchorDay: raw.day,
   });
   if (!parsed.success) {
-    return <Message>This report link isn&apos;t valid.</Message>;
+    return <PrintMessage>This report link isn&apos;t valid.</PrintMessage>;
   }
   const { kind, anchorDay } = parsed.data;
 

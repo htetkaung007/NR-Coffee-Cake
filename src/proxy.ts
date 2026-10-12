@@ -3,12 +3,14 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 /**
- * /menu ကို cookie session ရှိသူ၊ မရှိသူ နှစ်ဦးစလုံး ရောက်ခွင့်ရှိရမယ်
- * (view-only vs order UI ကို page ကိုယ်တိုင်က ဆုံးဖြတ်တယ် —
- * menu/page.tsx ရဲ့ comment ကြည့်ပါ), ဒါကြောင့် backoffice auth
- * guard တစ်ခုတည်းပဲ ဒီ middleware မှာ ကျန်တော့တယ်.
+ * The sign-in redirect for staff pages (/backoffice and /print): no
+ * NextAuth token → the sign-in page, with the page as the callbackUrl.
+ * Only a coarse first check — every page and action still runs its own
+ * guard (lib/access/roleGuard). Customer pages (/menu, /cart …) aren't
+ * matched: who may see them is decided by the pages themselves
+ * (lib/storefront/menuAccess).
  */
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   return guardBackoffice(request);
 }
 

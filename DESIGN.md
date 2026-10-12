@@ -195,7 +195,8 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
 - **Online menu status chip** (Backoffice top bar, selected location):
   on = success dot + "Online menu" (`palette.successText`), off = neutral
   dot (`text.secondary`) + "Online menu off" — never red (off is the
-  normal default); below `sm`, dot + globe icon with an aria-label.
+  normal default); below `sm`, dot + globe icon with an aria-label. It
+  sits on the right of the top bar, just before the account menu.
 
 ## 14. Loading, empty, and error states
 
@@ -238,6 +239,10 @@ double-taps), or an optimistic update. A disabled control shows WHY
 - **View state lives in the URL** for anything a user might return to or
   share (e.g. History: `?day=…&tab=…&bill=…`). Section switches like
   [Open] [History] are links, not local state.
+- Backoffice create/edit pages start with PageHeader: a back link to the
+  section's list page (a link, never history back) + the page title (h1).
+- Account menu (top-bar avatar): name + role, Dark mode (per device), Sign
+  out — for every role.
 
 ## 18. Responsive layout — mobile-first
 

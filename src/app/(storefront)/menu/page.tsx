@@ -43,27 +43,22 @@ function buildMenuOptions(
 }
 
 /**
- * View + Order UI ကို page တစ်ခုတည်းထဲ ပေါင်းထားတယ် — Table QR (per-
- * customer draft design) vs Counter QR/plain-browsing (session cookie)
- * ကို branch ခွဲပြီး client component သီးခြားစီ (TableOrderClient vs
- * CounterOrderClient) ကို ခေါ်တယ်, menu list query ကတော့ ၂ ခုစလုံး
- * အတွက် တူတူပဲ (buildMenuOptions).
+ * One page for viewing and ordering: it branches between Table QR (the
+ * per-customer shared draft — TableOrderClient) and Counter QR / plain
+ * browsing (the session cookie — CounterOrderClient). Both get the same
+ * menu list (buildMenuOptions).
  *
- * tableId ရှိရင်တောင် contributorToken မရှိရင် (ဒီ browser ဒီ table
- * ကို scan ဝင်ခဲ့ဖူးတာ မဟုတ်ဘူး — url ကို လက်နဲ့ ရိုက်ထည့်တာမျိုး)
- * ဒါမှမဟုတ် token က stale ဖြစ်နေရင် (Table.contributorEpoch ကျော်
- * သွားပြီ — table ကို paid လုပ်ပြီးသွားလို့, ပြန် scan မှသာ token
- * အသစ်ရမယ်) Table branch ကို မယုံဘဲ ပုံမှန် browsing view ဆီ
- * ဆက်သွားတယ်.
+ * A tableId alone isn't trusted: without this browser's contributor
+ * token for that table (never scanned — a typed URL), or with a stale
+ * one (the table was paid since, Table.contributorEpoch moved on; a new
+ * scan gives a new token), the page falls through to the Counter /
+ * browsing view.
  *
- * SECURITY NOTE: ဒီမှာ hasSession=false ဖြစ်ရင် Add/Submit button
- * hide လုပ်တာက UX ချည်းပဲ — တကယ့် access control က
- * customer/action.ts ရဲ့ requireSessionFromCookie()/
- * requireContributorToken() (Server Action boundary) မှာပဲရှိတယ်.
- * Cookie မရှိတဲ့သူက button ကို hide ထားရင်တောင် Server Action ကို
- * တိုက်ရိုက်ခေါ်ဖို့ ကြိုးစားရင် UNAUTHORIZED AppError နဲ့ reject
- * ခံရမယ် — ဒီ page က ဒါကို ထပ်မလုပ်တော့ဘူး, Service/Action layer
- * ကိုပဲ ယုံတယ်.
+ * SECURITY NOTE: hiding Add / Submit without a session is UX only. The
+ * real checks are in the Server Actions (the Counter cookie,
+ * requireContributorToken for a table) — calling one directly without
+ * the session is refused there. Who may SEE the menu is the menu-access
+ * rule (lib/storefront/menuAccess).
  */
 export default async function MenuPage({
   searchParams,
@@ -130,8 +125,8 @@ export default async function MenuPage({
     ? await CounterSessionService.getActiveSessionByToken(token)
     : null;
 
-  // Session ရှိရင် session ရဲ့ locationId ကို ယုံ (query param ကို
-  // customer က ကိုယ်တိုင် ပြောင်းလို့ရလို့) — မရှိမှသာ query param ကို သုံး.
+  // With a session, trust its location (the customer can edit the query
+  // param); only without one use the param.
   const effectiveLocationId = session ? session.locationId : locationId;
 
   // The online menu IS this page: with no QR session here it shows only

@@ -124,11 +124,8 @@ export class ReportService {
   static async getOverview({ companyId, locationId, kind, anchorDay }: PeriodArgs) {
     await ReportService.assertLocationInCompany({ companyId, locationId });
 
-    const period = periodFor(kind, anchorDay);
-    const today = todayInShop();
-    const compared = ReportService.comparisonPeriod(period, today);
-    const range = periodRangeUtc(period);
-    const comparedRange = periodRangeUtc(compared);
+    const { period, today, compared, range, comparedRange } =
+      ReportService.periodsFor(kind, anchorDay);
 
     const [bills, previousBills, cancelled, previousCancelled, voids] = await Promise.all([
       ReportService.loadBills(locationId, range),
@@ -207,11 +204,10 @@ export class ReportService {
   static async getItems({ companyId, locationId, kind, anchorDay }: PeriodArgs) {
     await ReportService.assertLocationInCompany({ companyId, locationId });
 
-    const period = periodFor(kind, anchorDay);
-    const today = todayInShop();
-    const compared = ReportService.comparisonPeriod(period, today);
-    const range = periodRangeUtc(period);
-    const comparedRange = periodRangeUtc(compared);
+    const { period, range, comparedRange } = ReportService.periodsFor(
+      kind,
+      anchorDay,
+    );
 
     const [lines, previousLines, billsTotal, orderable] = await Promise.all([
       ReportService.loadLines(locationId, range),
@@ -528,6 +524,23 @@ export class ReportService {
       select: { id: true },
     });
     if (!location) throw new NotFoundError("Location", locationId);
+  }
+
+  /** The period wanted (the one holding `anchorDay`), the one it's
+   *  compared with (comparisonPeriod, as of today in the shop) and both
+   *  as UTC ranges — what getOverview and getItems start from. No
+   *  queries. */
+  private static periodsFor(kind: ReportPeriodKind, anchorDay: string) {
+    const period = periodFor(kind, anchorDay);
+    const today = todayInShop();
+    const compared = ReportService.comparisonPeriod(period, today);
+    return {
+      period,
+      today,
+      compared,
+      range: periodRangeUtc(period),
+      comparedRange: periodRangeUtc(compared),
+    };
   }
 
   /** The period the current one is measured against: the one before it —

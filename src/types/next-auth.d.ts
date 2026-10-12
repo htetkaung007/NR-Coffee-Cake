@@ -1,3 +1,4 @@
+// NextAuth type augmentation: our session.user / JWT fields (companyId, id, role). Loaded globally — nothing imports it.
 import "next-auth";
 
 declare module "next-auth" {
