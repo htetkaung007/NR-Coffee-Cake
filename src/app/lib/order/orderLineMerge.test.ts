@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   groupDraftsForSubmit,
+  isSingleLine,
   lineMergeKey,
   mergeLinesForDisplay,
 } from "./orderLineMerge";
@@ -236,5 +237,43 @@ describe("mergeLinesForDisplay", () => {
     const lines = [orderRow(1, "a"), orderRow(2, "b")];
     mergeLinesForDisplay(lines);
     expect(lines.map((line) => line.quantity)).toEqual([1, 1]);
+  });
+});
+
+describe("isSingleLine", () => {
+  const row = (overrides: Partial<{ menuId: number; unitPrice: number; note: string | null; OrdersAddons: { addonId: number; unitPrice: number }[] }> = {}) => ({
+    menuId: 1,
+    unitPrice: 2000,
+    note: null as string | null,
+    OrdersAddons: [extraShot],
+    ...overrides,
+  });
+
+  it("accepts rows that are the same menu, price, add-ons and note", () => {
+    expect(isSingleLine([row(), row({ OrdersAddons: [extraShot, extraShot] })])).toBe(true);
+  });
+
+  it("treats notes that differ only in case and spacing as the same line", () => {
+    expect(isSingleLine([row({ note: "Less  sugar" }), row({ note: " less sugar " })])).toBe(true);
+  });
+
+  it("refuses rows of different menus", () => {
+    expect(isSingleLine([row(), row({ menuId: 2 })])).toBe(false);
+  });
+
+  it("refuses rows with different add-ons", () => {
+    expect(isSingleLine([row(), row({ OrdersAddons: [oatMilk] })])).toBe(false);
+  });
+
+  it("refuses rows with different notes", () => {
+    expect(isSingleLine([row({ note: "no sugar" }), row({ note: "less sugar" })])).toBe(false);
+  });
+
+  it("refuses rows at different price snapshots", () => {
+    expect(isSingleLine([row(), row({ unitPrice: 2200 })])).toBe(false);
+  });
+
+  it("refuses no rows at all", () => {
+    expect(isSingleLine([])).toBe(false);
   });
 });

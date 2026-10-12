@@ -64,6 +64,35 @@ export class TableService {
     return table;
   }
 
+  /** Chain lookup for a staff order (New Order's "Order for") — a LIVE
+   *  table at the location `scope` works at right now (its selected
+   *  location; a manager's own), for every role: an owner working at
+   *  Location A can't send to Location B's table. Archived, at another
+   *  location, another company's or missing — all the same
+   *  NotFoundError. (getTableById stays as it is for table management,
+   *  which works on any table the scope owns.) */
+  static async getOrderableTable(tableId: number, scope: LocatedScope) {
+    const table = await prisma.table.findFirst({
+      where: {
+        id: tableId,
+        locationId: scope.locationId,
+        isArchived: false,
+        location: { companyId: scope.companyId },
+      },
+      include: { location: { select: { companyId: true } } },
+    });
+    if (
+      !table ||
+      !canActAtLocation(scope, {
+        companyId: table.location.companyId,
+        locationId: table.locationId,
+      })
+    ) {
+      throw new NotFoundError("Table", String(tableId));
+    }
+    return table;
+  }
+
   /** Chain lookup — the counter at the location `scope` works at (its
    *  selected location; a manager's own), for a new staff takeaway. The
    *  first one if there are several. NotFoundError when there's none. */

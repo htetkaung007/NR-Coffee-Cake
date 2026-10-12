@@ -2283,6 +2283,7 @@ export const OrderVoidScalarFieldEnum = {
   note: 'note',
   stockReturned: 'stockReturned',
   voidedById: 'voidedById',
+  voidedByName: 'voidedByName',
   createdAt: 'createdAt'
 } as const
 

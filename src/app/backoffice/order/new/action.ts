@@ -8,6 +8,7 @@ import {
 } from "@/app/lib/actionHelper";
 import { requireStaff } from "@/app/lib/access/roleGuard";
 import {
+  staffSubmitStatusSchema,
   submitStaffOrderSchema,
   validateStaffCartSchema,
   type SubmitStaffOrderRawInput,
@@ -78,6 +79,27 @@ export async function submitStaffOrderAction(input: SubmitStaffOrderRawInput) {
     revalidatePath("/backoffice/order");
   }
   return actionResult;
+}
+
+const safeGetStaffSubmitStatus = toSafeResult(
+  StaffOrderService.getSubmitStatus,
+);
+
+/** After a send whose answer never arrived: did that order reach the
+ *  kitchen? Looks the request id up only among rounds at the staff
+ *  member's own selected location (StaffOrderService.getSubmitStatus).
+ *  Read-only; guard FIRST. */
+export async function getStaffSubmitStatusAction(clientRequestId: string) {
+  const result = await safeRequireStaffAtLocation()
+    .andThen((scope) =>
+      validateWith(staffSubmitStatusSchema, { clientRequestId }).map(
+        (data) => ({ ...data, scope }),
+      ),
+    )
+    .andThen(({ clientRequestId: requestId, scope }) =>
+      safeGetStaffSubmitStatus(requestId, scope),
+    );
+  return toActionResult(result);
 }
 
 const safeGetTableOccupancy = toSafeResult(async () => {

@@ -33,9 +33,21 @@ export default async function BackOfficeLayout({ children }: Props) {
   if (!company) redirect("/auth/signIn");
   const companyName = company.name;
 
+  // The session's own user must still exist in the session's company —
+  // the same check every guard makes (PermissionService
+  // .userExistsInCompany). The email lookup above isn't enough: a
+  // removed account whose email was reused, or a cookie whose company
+  // no longer matches, would still find a company by email.
+  const { userId, companyId, role } = await getSessionContext();
+  const userStillExists =
+    userId !== null &&
+    companyId !== null &&
+    companyId === company.id &&
+    (await PermissionService.userExistsInCompany(userId, companyId));
+  if (!userStillExists) redirect("/auth/signIn");
+
   // The selected location's name for the top bar (null: none selected,
   // or it has been archived — the top bar then shows its fallbacks).
-  const { userId, role } = await getSessionContext();
   const selectedLocation = userId
     ? await LocationService.getSelectedLocation(userId, company.id)
     : null;

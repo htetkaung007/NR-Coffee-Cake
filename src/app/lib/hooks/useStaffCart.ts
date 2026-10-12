@@ -11,6 +11,7 @@ import {
 } from "@/app/lib/cart/browserCart";
 import type { CartValidationResult } from "@/app/lib/cart/cartValidation";
 import {
+  abandonSend,
   beginSend,
   changeLines,
   chooseTarget,
@@ -133,5 +134,8 @@ export function useStaffCart(
       update((current) => beginSend(current, newRequestId)).pendingRequestId,
     finishSend: () =>
       update((current) => finishSend(current, nowIso(), defaultTarget)),
+    /** Nothing was written under the pending request id: unlock the
+     *  order (its next send gets a fresh id). */
+    abandonSend: () => update((current) => abandonSend(current, nowIso())),
   };
 }

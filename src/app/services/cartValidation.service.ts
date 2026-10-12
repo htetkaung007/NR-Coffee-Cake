@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import { Prisma } from "../../../prisma/generated/client";
 import { NotFoundError, ValidationError } from "../lib/errors";
 import {
   isMenuListed,
@@ -132,16 +133,20 @@ export class CartValidationService {
    * `menus` holds only menus linked to at least one of the company's live
    * categories — anything else is "not sold here". No stock row = not
    * manually disabled (and 0 stock, for callers that read it).
+   *
+   * `db` is a transaction's client when the facts must be read inside
+   * one (areAllOrderable, a staff send's re-check).
    */
   static async loadOrderability(
     companyId: number,
     locationId: number,
     menuIds: readonly number[] | null,
+    db: Prisma.TransactionClient = prisma,
   ) {
     const menuFilter = menuIds ? { in: [...menuIds] } : undefined;
     const [menus, stocks, disabledHere, visibleCategories, categoryLinks] =
       await Promise.all([
-        prisma.menu.findMany({
+        db.menu.findMany({
           where: menuIds
             ? { id: menuFilter }
             : {
@@ -155,18 +160,18 @@ export class CartValidationService {
               },
           select: { id: true, name: true, price: true, isArchived: true },
         }),
-        prisma.menuStock.findMany({
+        db.menuStock.findMany({
           where: { menuId: menuFilter, locationId, isArchived: false },
           select: { menuId: true, quantity: true, isManuallyDisabled: true },
         }),
         // An archived row means "enabled again", the same convention as
         // the per-location category disable rows.
-        prisma.disableLocationMenus.findMany({
+        db.disableLocationMenus.findMany({
           where: { menuId: menuFilter, locationId, isArchived: false },
           select: { menuId: true },
         }),
-        MenuCategoryService.getVisibleCategories(companyId, locationId),
-        prisma.menuMenuCategory.findMany({
+        MenuCategoryService.getVisibleCategories(companyId, locationId, db),
+        db.menuMenuCategory.findMany({
           where: {
             menuId: menuFilter,
             isArchived: false,
@@ -274,6 +279,26 @@ export class CartValidationService {
       if (name === undefined) throw new NotFoundError("Menu", menuId);
       throw new ValidationError(notAvailableHereMessage(name));
     }
+  }
+
+  /** Whether every menu can still be ordered at this location
+   *  (isMenuOrderable: listed here AND switched on) — read with `db`, so
+   *  a send re-checks inside its own transaction what the earlier cart
+   *  check saw. False for a menu that isn't this company's. */
+  static async areAllOrderable(
+    db: Prisma.TransactionClient,
+    companyId: number,
+    locationId: number,
+    menuIds: readonly number[],
+  ) {
+    const ids = [...new Set(menuIds)];
+    const orderability = await CartValidationService.loadOrderability(
+      companyId,
+      locationId,
+      ids,
+      db,
+    );
+    return ids.every((menuId) => orderability.isOrderable(menuId));
   }
 
   /** loadCatalog for the cart's menus, then THE cart rules

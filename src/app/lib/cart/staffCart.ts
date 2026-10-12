@@ -25,9 +25,17 @@ import {
  * Besides the lines it keeps who the order is for (target — a new
  * takeaway, a round on an open Counter bill, or a table:
  * lib/order/orderTarget) and, once
- * Send has been pressed, the request id that send used (pendingRequestId)
- * — kept until the send succeeds, so a retry after a dropped response
- * returns the order the first send created instead of making a second.
+ * Send has been pressed, the request id that send used (pendingRequestId).
+ *
+ * While pendingRequestId is set the order is LOCKED (isSendUnconfirmed):
+ * a send is out, or its answer never arrived, so it may already be in
+ * the kitchen under that id. Lines and target can't change then
+ * (changeLines and chooseTarget return the cart as it is) — edited lines
+ * must never go out under the old id, where the server would answer
+ * with the first order and drop the edits. It's settled one of three
+ * ways: the send succeeds or the status check finds it (finishSend), or
+ * the server answers that nothing was written — a refusal, or the status
+ * check finding nothing (abandonSend).
  */
 export interface StaffCart {
   /** 2: `target` replaced #74's `tableId` — an older cart is dropped. */
@@ -128,15 +136,23 @@ export function asBrowserCart(cart: StaffCart): BrowserCart {
   return { ...emptyCart(cart.locationId), lines: cart.lines };
 }
 
+/** A send is out or unanswered (pendingRequestId set): the order is
+ *  locked until it's settled (finishSend / abandonSend). */
+export function isSendUnconfirmed(cart: StaffCart) {
+  return cart.pendingRequestId !== null;
+}
+
 /** Applies one of browserCart's line changes (addLine, setQuantity,
  *  removeLine, updateLine, applyValidation) to the staff cart's lines. A
  *  change that leaves the lines as they were (a price refresh that found
- *  nothing new) returns the cart itself — nothing to store. */
+ *  nothing new) returns the cart itself — nothing to store; so does any
+ *  change while a send is unconfirmed (the lines are locked). */
 export function changeLines(
   cart: StaffCart,
   change: (lines: BrowserCart) => BrowserCart,
   now: string,
 ): StaffCart {
+  if (isSendUnconfirmed(cart)) return cart;
   const lines = change(asBrowserCart(cart)).lines;
   const unchanged = JSON.stringify(lines) === JSON.stringify(cart.lines);
   return unchanged ? cart : { ...cart, lines, updatedAt: now };
@@ -145,26 +161,28 @@ export function changeLines(
 /** Picks who the order is for — or nobody (null: the other "Order for"
  *  mode was chosen and nothing in it is picked yet). A different target
  *  starts a new order: the lines go (the page asks first when there are
- *  any), and so does a pending send's request id, which belonged to the
- *  old order. */
+ *  any). Refused (the cart as it is) while a send is unconfirmed — the
+ *  order may already be in the kitchen. */
 export function chooseTarget(
   cart: StaffCart,
   target: OrderTarget | null,
   now: string,
 ): StaffCart {
   const keyOf = (of: OrderTarget | null) => (of ? targetKey(of) : null);
-  if (keyOf(cart.target) === keyOf(target)) return cart;
+  if (keyOf(cart.target) === keyOf(target) || isSendUnconfirmed(cart)) {
+    return cart;
+  }
   return {
     ...cart,
     target,
     lines: clear(asBrowserCart(cart), now).lines,
-    pendingRequestId: null,
     updatedAt: now,
   };
 }
 
 /** "Send to kitchen" pressed: the request id for this order — the one a
- *  previous, unanswered send already used, or a new one. */
+ *  previous, unanswered send already used (the lines are locked since,
+ *  so it's the same order), or a new one. */
 export function beginSend(cart: StaffCart, newId: () => string): StaffCart {
   return cart.pendingRequestId ? cart : { ...cart, pendingRequestId: newId() };
 }
@@ -181,4 +199,13 @@ export function finishSend(
 ): StaffCart {
   const target = cart.target?.kind === "counterBill" ? next : cart.target;
   return { ...cart, target, lines: [], pendingRequestId: null, updatedAt: now };
+}
+
+/** The server answered that nothing was written — a refusal (a line
+ *  that can't go, a closed bill …) or the status check finding no order
+ *  under this id: the request id is dropped and the order unlocked. The
+ *  next send, edited or not, gets a fresh id. */
+export function abandonSend(cart: StaffCart, now: string): StaffCart {
+  if (!isSendUnconfirmed(cart)) return cart;
+  return { ...cart, pendingRequestId: null, updatedAt: now };
 }

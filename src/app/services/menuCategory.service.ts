@@ -76,8 +76,13 @@ export class MenuCategoryService {
   /** The categories customers and staff see at this location, in the
    *  company order, each with its "N items" count. The one place the
    *  "which categories are visible here" rule is applied. */
-  static async getVisibleCategories(companyId: number, locationId: number) {
-    return prisma.menuCategory.findMany({
+  static async getVisibleCategories(
+    companyId: number,
+    locationId: number,
+    // A transaction's client when read inside one (a send's re-check).
+    db: Prisma.TransactionClient = prisma,
+  ) {
+    return db.menuCategory.findMany({
       where: visibleAtLocation(companyId, locationId),
       orderBy: MENU_CATEGORY_ORDER,
       include: liveMenuCount,

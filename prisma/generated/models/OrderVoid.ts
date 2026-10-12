@@ -52,6 +52,7 @@ export type OrderVoidMinAggregateOutputType = {
   note: string | null
   stockReturned: boolean | null
   voidedById: number | null
+  voidedByName: string | null
   createdAt: Date | null
 }
 
@@ -63,6 +64,7 @@ export type OrderVoidMaxAggregateOutputType = {
   note: string | null
   stockReturned: boolean | null
   voidedById: number | null
+  voidedByName: string | null
   createdAt: Date | null
 }
 
@@ -74,6 +76,7 @@ export type OrderVoidCountAggregateOutputType = {
   note: number
   stockReturned: number
   voidedById: number
+  voidedByName: number
   createdAt: number
   _all: number
 }
@@ -101,6 +104,7 @@ export type OrderVoidMinAggregateInputType = {
   note?: true
   stockReturned?: true
   voidedById?: true
+  voidedByName?: true
   createdAt?: true
 }
 
@@ -112,6 +116,7 @@ export type OrderVoidMaxAggregateInputType = {
   note?: true
   stockReturned?: true
   voidedById?: true
+  voidedByName?: true
   createdAt?: true
 }
 
@@ -123,6 +128,7 @@ export type OrderVoidCountAggregateInputType = {
   note?: true
   stockReturned?: true
   voidedById?: true
+  voidedByName?: true
   createdAt?: true
   _all?: true
 }
@@ -221,6 +227,7 @@ export type OrderVoidGroupByOutputType = {
   note: string | null
   stockReturned: boolean
   voidedById: number | null
+  voidedByName: string | null
   createdAt: Date
   _count: OrderVoidCountAggregateOutputType | null
   _avg: OrderVoidAvgAggregateOutputType | null
@@ -255,6 +262,7 @@ export type OrderVoidWhereInput = {
   note?: Prisma.StringNullableFilter<"OrderVoid"> | string | null
   stockReturned?: Prisma.BoolFilter<"OrderVoid"> | boolean
   voidedById?: Prisma.IntNullableFilter<"OrderVoid"> | number | null
+  voidedByName?: Prisma.StringNullableFilter<"OrderVoid"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderVoid"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   voidedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -268,6 +276,7 @@ export type OrderVoidOrderByWithRelationInput = {
   note?: Prisma.SortOrderInput | Prisma.SortOrder
   stockReturned?: Prisma.SortOrder
   voidedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  voidedByName?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   order?: Prisma.OrderOrderByWithRelationInput
   voidedBy?: Prisma.UserOrderByWithRelationInput
@@ -284,6 +293,7 @@ export type OrderVoidWhereUniqueInput = Prisma.AtLeast<{
   note?: Prisma.StringNullableFilter<"OrderVoid"> | string | null
   stockReturned?: Prisma.BoolFilter<"OrderVoid"> | boolean
   voidedById?: Prisma.IntNullableFilter<"OrderVoid"> | number | null
+  voidedByName?: Prisma.StringNullableFilter<"OrderVoid"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderVoid"> | Date | string
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
   voidedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -297,6 +307,7 @@ export type OrderVoidOrderByWithAggregationInput = {
   note?: Prisma.SortOrderInput | Prisma.SortOrder
   stockReturned?: Prisma.SortOrder
   voidedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  voidedByName?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.OrderVoidCountOrderByAggregateInput
   _avg?: Prisma.OrderVoidAvgOrderByAggregateInput
@@ -316,6 +327,7 @@ export type OrderVoidScalarWhereWithAggregatesInput = {
   note?: Prisma.StringNullableWithAggregatesFilter<"OrderVoid"> | string | null
   stockReturned?: Prisma.BoolWithAggregatesFilter<"OrderVoid"> | boolean
   voidedById?: Prisma.IntNullableWithAggregatesFilter<"OrderVoid"> | number | null
+  voidedByName?: Prisma.StringNullableWithAggregatesFilter<"OrderVoid"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"OrderVoid"> | Date | string
 }
 
@@ -324,6 +336,7 @@ export type OrderVoidCreateInput = {
   reason: $Enums.VoidReason
   note?: string | null
   stockReturned: boolean
+  voidedByName?: string | null
   createdAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutVoidsInput
   voidedBy?: Prisma.UserCreateNestedOneWithoutOrderVoidsInput
@@ -337,6 +350,7 @@ export type OrderVoidUncheckedCreateInput = {
   note?: string | null
   stockReturned: boolean
   voidedById?: number | null
+  voidedByName?: string | null
   createdAt?: Date | string
 }
 
@@ -345,6 +359,7 @@ export type OrderVoidUpdateInput = {
   reason?: Prisma.EnumVoidReasonFieldUpdateOperationsInput | $Enums.VoidReason
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutVoidsNestedInput
   voidedBy?: Prisma.UserUpdateOneWithoutOrderVoidsNestedInput
@@ -358,6 +373,7 @@ export type OrderVoidUncheckedUpdateInput = {
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   voidedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -369,6 +385,7 @@ export type OrderVoidCreateManyInput = {
   note?: string | null
   stockReturned: boolean
   voidedById?: number | null
+  voidedByName?: string | null
   createdAt?: Date | string
 }
 
@@ -377,6 +394,7 @@ export type OrderVoidUpdateManyMutationInput = {
   reason?: Prisma.EnumVoidReasonFieldUpdateOperationsInput | $Enums.VoidReason
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -388,6 +406,7 @@ export type OrderVoidUncheckedUpdateManyInput = {
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   voidedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -409,6 +428,7 @@ export type OrderVoidCountOrderByAggregateInput = {
   note?: Prisma.SortOrder
   stockReturned?: Prisma.SortOrder
   voidedById?: Prisma.SortOrder
+  voidedByName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -427,6 +447,7 @@ export type OrderVoidMaxOrderByAggregateInput = {
   note?: Prisma.SortOrder
   stockReturned?: Prisma.SortOrder
   voidedById?: Prisma.SortOrder
+  voidedByName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -438,6 +459,7 @@ export type OrderVoidMinOrderByAggregateInput = {
   note?: Prisma.SortOrder
   stockReturned?: Prisma.SortOrder
   voidedById?: Prisma.SortOrder
+  voidedByName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -541,6 +563,7 @@ export type OrderVoidCreateWithoutVoidedByInput = {
   reason: $Enums.VoidReason
   note?: string | null
   stockReturned: boolean
+  voidedByName?: string | null
   createdAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutVoidsInput
 }
@@ -552,6 +575,7 @@ export type OrderVoidUncheckedCreateWithoutVoidedByInput = {
   reason: $Enums.VoidReason
   note?: string | null
   stockReturned: boolean
+  voidedByName?: string | null
   createdAt?: Date | string
 }
 
@@ -592,6 +616,7 @@ export type OrderVoidScalarWhereInput = {
   note?: Prisma.StringNullableFilter<"OrderVoid"> | string | null
   stockReturned?: Prisma.BoolFilter<"OrderVoid"> | boolean
   voidedById?: Prisma.IntNullableFilter<"OrderVoid"> | number | null
+  voidedByName?: Prisma.StringNullableFilter<"OrderVoid"> | string | null
   createdAt?: Prisma.DateTimeFilter<"OrderVoid"> | Date | string
 }
 
@@ -600,6 +625,7 @@ export type OrderVoidCreateWithoutOrderInput = {
   reason: $Enums.VoidReason
   note?: string | null
   stockReturned: boolean
+  voidedByName?: string | null
   createdAt?: Date | string
   voidedBy?: Prisma.UserCreateNestedOneWithoutOrderVoidsInput
 }
@@ -611,6 +637,7 @@ export type OrderVoidUncheckedCreateWithoutOrderInput = {
   note?: string | null
   stockReturned: boolean
   voidedById?: number | null
+  voidedByName?: string | null
   createdAt?: Date | string
 }
 
@@ -647,6 +674,7 @@ export type OrderVoidCreateManyVoidedByInput = {
   reason: $Enums.VoidReason
   note?: string | null
   stockReturned: boolean
+  voidedByName?: string | null
   createdAt?: Date | string
 }
 
@@ -655,6 +683,7 @@ export type OrderVoidUpdateWithoutVoidedByInput = {
   reason?: Prisma.EnumVoidReasonFieldUpdateOperationsInput | $Enums.VoidReason
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutVoidsNestedInput
 }
@@ -666,6 +695,7 @@ export type OrderVoidUncheckedUpdateWithoutVoidedByInput = {
   reason?: Prisma.EnumVoidReasonFieldUpdateOperationsInput | $Enums.VoidReason
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -676,6 +706,7 @@ export type OrderVoidUncheckedUpdateManyWithoutVoidedByInput = {
   reason?: Prisma.EnumVoidReasonFieldUpdateOperationsInput | $Enums.VoidReason
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -686,6 +717,7 @@ export type OrderVoidCreateManyOrderInput = {
   note?: string | null
   stockReturned: boolean
   voidedById?: number | null
+  voidedByName?: string | null
   createdAt?: Date | string
 }
 
@@ -694,6 +726,7 @@ export type OrderVoidUpdateWithoutOrderInput = {
   reason?: Prisma.EnumVoidReasonFieldUpdateOperationsInput | $Enums.VoidReason
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   voidedBy?: Prisma.UserUpdateOneWithoutOrderVoidsNestedInput
 }
@@ -705,6 +738,7 @@ export type OrderVoidUncheckedUpdateWithoutOrderInput = {
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   voidedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -715,6 +749,7 @@ export type OrderVoidUncheckedUpdateManyWithoutOrderInput = {
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   stockReturned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   voidedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  voidedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -728,6 +763,7 @@ export type OrderVoidSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   note?: boolean
   stockReturned?: boolean
   voidedById?: boolean
+  voidedByName?: boolean
   createdAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   voidedBy?: boolean | Prisma.OrderVoid$voidedByArgs<ExtArgs>
@@ -741,6 +777,7 @@ export type OrderVoidSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   note?: boolean
   stockReturned?: boolean
   voidedById?: boolean
+  voidedByName?: boolean
   createdAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   voidedBy?: boolean | Prisma.OrderVoid$voidedByArgs<ExtArgs>
@@ -754,6 +791,7 @@ export type OrderVoidSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   note?: boolean
   stockReturned?: boolean
   voidedById?: boolean
+  voidedByName?: boolean
   createdAt?: boolean
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   voidedBy?: boolean | Prisma.OrderVoid$voidedByArgs<ExtArgs>
@@ -767,10 +805,11 @@ export type OrderVoidSelectScalar = {
   note?: boolean
   stockReturned?: boolean
   voidedById?: boolean
+  voidedByName?: boolean
   createdAt?: boolean
 }
 
-export type OrderVoidOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "quantity" | "reason" | "note" | "stockReturned" | "voidedById" | "createdAt", ExtArgs["result"]["orderVoid"]>
+export type OrderVoidOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "quantity" | "reason" | "note" | "stockReturned" | "voidedById" | "voidedByName" | "createdAt", ExtArgs["result"]["orderVoid"]>
 export type OrderVoidInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   voidedBy?: boolean | Prisma.OrderVoid$voidedByArgs<ExtArgs>
@@ -798,6 +837,7 @@ export type $OrderVoidPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     note: string | null
     stockReturned: boolean
     voidedById: number | null
+    voidedByName: string | null
     createdAt: Date
   }, ExtArgs["result"]["orderVoid"]>
   composites: {}
@@ -1231,6 +1271,7 @@ export interface OrderVoidFieldRefs {
   readonly note: Prisma.FieldRef<"OrderVoid", 'String'>
   readonly stockReturned: Prisma.FieldRef<"OrderVoid", 'Boolean'>
   readonly voidedById: Prisma.FieldRef<"OrderVoid", 'Int'>
+  readonly voidedByName: Prisma.FieldRef<"OrderVoid", 'String'>
   readonly createdAt: Prisma.FieldRef<"OrderVoid", 'DateTime'>
 }
     

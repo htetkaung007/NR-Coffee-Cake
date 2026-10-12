@@ -171,3 +171,22 @@ export function mergeLinesForDisplay<Line extends DisplayMergeable>(
   }
   return [...merged.values()];
 }
+
+/** Whether order rows are all ONE line by THE merge rule (lineMergeKey):
+ *  same menu at the same price, same add-ons, same note. False for no
+ *  rows. A void acts on one display line, so its rows must pass this
+ *  before the first row's menu stands for all of them (stock return). */
+export function isSingleLine(
+  rows: readonly {
+    menuId: number;
+    unitPrice: number;
+    note: string | null;
+    OrdersAddons: readonly PricedAddon[];
+  }[],
+) {
+  if (rows.length === 0) return false;
+  const keys = new Set(
+    rows.map((row) => lineMergeKey(row.menuId, row.unitPrice, row.OrdersAddons, row.note)),
+  );
+  return keys.size === 1;
+}

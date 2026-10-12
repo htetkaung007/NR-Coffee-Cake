@@ -492,10 +492,17 @@ model OrderVoid {
   // Whether `quantity` went back into MenuStock (it wasn't made yet), or
   // not (already made — wasted).
   stockReturned Boolean
-  // Who voided it. Kept as history; cleared if that user is later
-  // removed (SetNull), so removing a manager never deletes a void.
+  // Who voided it — a live link while that user exists, for joining
+  // ("voids by this person"). Cleared if the user is later removed
+  // (SetNull), so removing a manager never deletes a void; the name
+  // below is what keeps "who" on the record after that.
   voidedBy      User?      @relation("OrderVoids", fields: [voidedById], references: [id], onDelete: SetNull)
   voidedById    Int?
+  // The staff member's display name (name, else email) copied at void
+  // time — frozen like the rest of the row, never updated on a rename
+  // and kept when the user is removed. Null on voids made before this
+  // column existed (no name is made up for them).
+  voidedByName  String?    @db.VarChar(120)
   createdAt     DateTime   @default(now())
 
   // orderId: a line's voids (bill, detail, reports). voidedById: "voids

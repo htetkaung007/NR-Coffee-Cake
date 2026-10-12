@@ -8,6 +8,7 @@ import {
   effectiveItemCount,
   effectiveQuantity,
   isVoidableRoundStatus,
+  voidedByLabel,
   voidReasonLabel,
 } from "@/app/lib/order/voids";
 import OrderDetailView from "./OrderDetailView";
@@ -90,7 +91,7 @@ export default async function OrderDetailPage({
         reason: voidReasonLabel(entry.reason),
         note: entry.note,
         at: entry.createdAt.toISOString(),
-        by: entry.voidedBy?.name || entry.voidedBy?.email || null,
+        by: voidedByLabel(entry),
       })),
       menuName: order.menu.name,
       imageUrl: order.menu.assetUrl || null,

@@ -236,9 +236,12 @@ export class ManagerService {
     return { id: manager.id, locationId: location.id, locationName: location.name };
   }
 
-  /** Removes a manager's account for good. Nothing in the order, bill or
-   *  cancellation history points at a User, so no sales data is lost;
-   *  their UserPermission rows cascade, and a grant row that names them
+  /** Removes a manager's account for good. No sales data is lost: the
+   *  order, bill and cancellation history don't point at a User, and the
+   *  one history row that does — OrderVoid.voidedById — is set to null
+   *  (SetNull) while the void keeps the name frozen on it
+   *  (voidedByName), so "who voided it" survives. Their UserPermission
+   *  rows cascade, and a grant row that names them
    *  as the granter (never expected — only owners grant) is set to null.
    *  One transaction: a leftover SelectedLocation row (managers never
    *  use one, but its foreign key would block the delete) goes first.

@@ -48,6 +48,12 @@ export interface StaffCartLine {
   blocked: boolean;
 }
 
+/** The "did it go through?" check of a send whose answer never arrived
+ *  (StaffOrderClient): in flight, or failed (offline) with a Retry. */
+export type SendCheck =
+  | { state: "checking" }
+  | { state: "failed"; message: string };
+
 const stepperButtonSx = {
   width: 44,
   height: 44,
@@ -60,11 +66,14 @@ const stepperButtonSx = {
 
 function OrderLine({
   line,
+  locked,
   onEdit,
   onChangeQuantity,
   onRemove,
 }: {
   line: StaffCartLine;
+  /** A send is unconfirmed — nothing on the line can change. */
+  locked: boolean;
   onEdit: (line: StaffCartLine) => void;
   onChangeQuantity: (line: StaffCartLine, next: number) => void;
   onRemove: (line: StaffCartLine) => void;
@@ -76,6 +85,7 @@ function OrderLine({
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
         <ButtonBase
+          disabled={locked}
           onClick={() => onEdit(line)}
           aria-label={`Edit ${line.menuName}`}
           sx={(theme) => ({
@@ -137,6 +147,7 @@ function OrderLine({
         {line.quantity === 1 ? (
           <IconButton
             aria-label={`Remove ${line.menuName}`}
+            disabled={locked}
             onClick={() => onRemove(line)}
             sx={stepperButtonSx}
           >
@@ -145,6 +156,7 @@ function OrderLine({
         ) : (
           <IconButton
             aria-label={`One less ${line.menuName}`}
+            disabled={locked}
             onClick={() => onChangeQuantity(line, line.quantity - 1)}
             sx={stepperButtonSx}
           >
@@ -160,7 +172,7 @@ function OrderLine({
         </Typography>
         <IconButton
           aria-label={`One more ${line.menuName}`}
-          disabled={line.quantity >= MAX_LINE_QUANTITY}
+          disabled={locked || line.quantity >= MAX_LINE_QUANTITY}
           onClick={() => onChangeQuantity(line, line.quantity + 1)}
           sx={stepperButtonSx}
         >
@@ -188,6 +200,12 @@ interface StaffOrderPanelProps {
   onSend: () => void;
   /** Given in the drawer/sheet — shows a close (×) button. */
   onClose?: () => void;
+  /** A send is out or unanswered: the lines can't be changed (so edited
+   *  lines never go out under the old request id). */
+  locked: boolean;
+  /** The check of an unanswered send, shown above the lines. */
+  sendCheck: SendCheck | null;
+  onRetryCheck: () => void;
 }
 
 /**
@@ -209,6 +227,9 @@ export default function StaffOrderPanel({
   isSending,
   onSend,
   onClose,
+  locked,
+  sendCheck,
+  onRetryCheck,
 }: StaffOrderPanelProps) {
   const reasonId = useId();
 
@@ -242,6 +263,31 @@ export default function StaffOrderPanel({
             {error}
           </Alert>
         )}
+        {sendCheck?.state === "checking" && (
+          <Alert
+            severity="info"
+            role="status"
+            icon={<CircularProgress size={20} color="inherit" />}
+            sx={{ mt: 1.5 }}
+          >
+            Checking whether the order went through…
+          </Alert>
+        )}
+        {sendCheck?.state === "failed" && (
+          <Alert
+            severity="warning"
+            role="status"
+            action={
+              <Button color="inherit" onClick={onRetryCheck} sx={{ minHeight: 44 }}>
+                Retry
+              </Button>
+            }
+            sx={{ mt: 1.5 }}
+          >
+            {sendCheck.message} The items stay locked so the order
+            can&apos;t be sent twice.
+          </Alert>
+        )}
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, mt: 1 }}>
@@ -269,6 +315,7 @@ export default function StaffOrderPanel({
               <OrderLine
                 key={line.index}
                 line={line}
+                locked={locked}
                 onEdit={onEdit}
                 onChangeQuantity={onChangeQuantity}
                 onRemove={onRemove}

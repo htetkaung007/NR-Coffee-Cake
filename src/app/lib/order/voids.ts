@@ -96,3 +96,28 @@ export function planVoid(
   }
   return left === 0 ? plan : null;
 }
+
+/** The DB limit on OrderVoid.voidedByName (its VarChar). */
+export const VOID_STAFF_NAME_MAX_LENGTH = 120;
+
+/** The name a void freezes for whoever made it: their name, else their
+ *  email (trimmed; a blank name counts as none), cut to the column's
+ *  limit. Copied onto the OrderVoid row at void time so "who" survives a
+ *  rename or the user being removed. */
+export function voidStaffName(user: { name: string | null; email: string }) {
+  const name = user.name?.trim() || user.email.trim();
+  return name.slice(0, VOID_STAFF_NAME_MAX_LENGTH);
+}
+
+/** Who voided it, as the Backoffice shows it: the name frozen on the
+ *  void, else the linked user (voids made before voidedByName existed,
+ *  while that user still exists), else "—". Staff screens only —
+ *  customers never see who. */
+export function voidedByLabel(entry: {
+  voidedByName: string | null;
+  voidedBy: { name: string | null; email: string } | null;
+}) {
+  if (entry.voidedByName) return entry.voidedByName;
+  if (entry.voidedBy) return voidStaffName(entry.voidedBy);
+  return "—";
+}

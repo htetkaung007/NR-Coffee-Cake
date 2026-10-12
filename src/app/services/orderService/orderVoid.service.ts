@@ -7,8 +7,10 @@ import {
   VOIDABLE_ROUND_STATUSES,
   effectiveQuantity,
   planVoid,
+  voidStaffName,
   type VoidDetails,
 } from "@/app/lib/order/voids";
+import { isSingleLine } from "@/app/lib/order/orderLineMerge";
 import { MenuStockService } from "../menuStock.service";
 
 type Tx = Prisma.TransactionClient;
@@ -34,8 +36,14 @@ export class OrderVoidService {
    *     so a concurrent payment either counts this void or makes it fail
    *     here with a ValidationError, never in between;
    *  3. the rows are re-read under that lock: a concurrent void of the
-   *     same line has committed by now, so "how many are left" is exact;
-   *  4. one OrderVoid per row touched (planVoid — oldest row first);
+   *     same line has committed by now, so "how many are left" is exact.
+   *     They must all be ONE line (isSingleLine: same menu, price,
+   *     add-ons and note) or it's a ValidationError — so the first row's
+   *     menu stands for all of them in step 5;
+   *  4. one OrderVoid per row touched (planVoid — oldest row first), each
+   *     with the acting user's name frozen on it (voidStaffName, read in
+   *     this transaction) — "who" survives a rename or the user being
+   *     removed;
    *  5. if `returnToStock`, the units go back into MenuStock at the
    *     round's location.
    */
@@ -71,10 +79,16 @@ export class OrderVoidService {
         select: {
           id: true,
           menuId: true,
+          unitPrice: true,
+          note: true,
+          OrdersAddons: { select: { addonId: true, unitPrice: true } },
           quantity: true,
           voids: { select: { quantity: true } },
         },
       });
+      if (!isSingleLine(rows)) {
+        throw new ValidationError("Void one line of one order at a time.");
+      }
       const plan = planVoid(rows, input.quantity);
       if (!plan) {
         const left = rows.reduce((sum, row) => sum + effectiveQuantity(row), 0);
@@ -84,6 +98,15 @@ export class OrderVoidService {
             : `Only ${left} left to void on this line.`,
         );
       }
+
+      // Chain lookup: the guard checked the user exists this request; if
+      // they were removed since, there's no one to record the void as.
+      const staff = await tx.user.findUnique({
+        where: { id: scope.userId },
+        select: { name: true, email: true },
+      });
+      if (!staff) throw new NotFoundError("User", scope.userId);
+      const voidedByName = voidStaffName(staff);
 
       const note = input.details.reason === "OTHER" ? input.details.note : null;
       for (const entry of plan) {
@@ -95,12 +118,13 @@ export class OrderVoidService {
             note,
             stockReturned: input.returnToStock,
             voidedById: scope.userId,
+            voidedByName,
           },
         });
       }
 
       if (input.returnToStock) {
-        // One display line is one menu (lineMergeKey) — all rows share it.
+        // isSingleLine above: every row is the same menu.
         await MenuStockService.incrementStock(
           tx,
           rows[0].menuId,

@@ -31,8 +31,9 @@ export interface RoundLineVoid {
   note: string | null;
   /** ISO time. */
   at: string;
-  /** Who voided it (name or email); null once they've been removed. */
-  by: string | null;
+  /** Who voided it — the name frozen at void time, kept after the user
+   *  is removed; "—" when unknown (lib/order/voids.voidedByLabel). */
+  by: string;
 }
 
 export interface RoundLine {

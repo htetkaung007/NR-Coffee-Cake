@@ -63,10 +63,12 @@ export class StaffOrderService {
    *  - idempotent by clientRequestId (@unique, the Counter cart's
    *    pattern): a repeat — a double click, a retry after a dropped
    *    response — returns the order the first call created;
-   *  - the target must be one `scope` may act at (resolveTarget): a
-   *    table of its company (a manager's own location —
-   *    TableService.getTableById), its location's counter, or an OPEN
-   *    Counter bill of its company (findOpenCounterBill) — the new round
+   *  - the target must be at the location `scope` works at right now
+   *    (its selected location — for EVERY role, so an owner at Location
+   *    A can't send to Location B) and one it may act at (resolveTarget):
+   *    a live table there (TableService.getOrderableTable — an archived
+   *    one is refused), its counter, or an OPEN Counter bill there
+   *    (findOpenCounterBill) — the new round
    *    joins that bill (billSessionId = its root), exactly as a
    *    customer's "Order More" does, so they're paid together;
    *  - checked like any browser cart (CartValidationService.validate at
@@ -76,8 +78,12 @@ export class StaffOrderService {
    *    still open (a payment that got there first makes this refuse
    *    "This bill is already closed"), then the round (never a cookie or
    *    contributor token), its lines priced from snapshots taken HERE (a
-   *    price that moved since the check rolls back), and the stock
-   *    decrement with its atomic guard (a shortage rolls back).
+   *    price that moved since the check rolls back), the stock
+   *    decrement with its atomic guard (a shortage rolls back), and the
+   *    menus' availability read again (switched off or no longer listed
+   *    here since the check rolls back — after the decrement, which has
+   *    locked those stock rows, so the on/off switch read is current).
+   *    Any rollback of that kind answers with a fresh check.
    */
   static async submitStaffOrder(input: {
     scope: LocatedScope;
@@ -87,7 +93,7 @@ export class StaffOrderService {
   }): Promise<StaffSubmitResult> {
     const alreadySubmitted = await StaffOrderService.findSubmitted(
       input.clientRequestId,
-      input.scope.companyId,
+      input.scope,
     );
     if (alreadySubmitted) return alreadySubmitted;
 
@@ -130,6 +136,13 @@ export class StaffOrderService {
           created.id,
           where.locationId,
         );
+        const stillOrderable = await CartValidationService.areAllOrderable(
+          tx,
+          input.scope.companyId,
+          where.locationId,
+          input.lines.map((line) => line.menuId),
+        );
+        if (!stillOrderable) throw new CartChangedDuringSubmit();
         return tx.orderSession.update({
           where: { id: created.id },
           data: { orderNumber: generateOrderNumber(created.id) },
@@ -149,14 +162,15 @@ export class StaffOrderService {
     }
   }
 
-  /** Where a target's round goes: its location and table, and the bill it
-   *  joins (null: a bill of its own / the table's tab). Ownership checked
-   *  for every kind — the same NotFoundError for "not there" and "not
-   *  yours" (CLAUDE.md §13a). */
+  /** Where a target's round goes: its location (always `scope`'s
+   *  selected location) and table, and the bill it joins (null: a bill
+   *  of its own / the table's tab). Ownership checked for every kind —
+   *  the same NotFoundError for "not there", "archived", "another
+   *  location" and "not yours" (CLAUDE.md §13a). */
   private static async resolveTarget(target: OrderTarget, scope: LocatedScope) {
     switch (target.kind) {
       case "table": {
-        const table = await TableService.getTableById(target.tableId, scope);
+        const table = await TableService.getOrderableTable(target.tableId, scope);
         return {
           locationId: table.locationId,
           tableId: table.id,
@@ -189,9 +203,9 @@ export class StaffOrderService {
   }
 
   /** Chain lookup — a Counter bill's first round (its root: no
-   *  billSessionId of its own), if `scope` may act where it is
-   *  (canActAtLocation; otherwise the same NotFoundError as a missing
-   *  one), and the bill is still OPEN: not paid, not archived, and some
+   *  billSessionId of its own), if it's at `scope`'s selected location
+   *  and `scope` may act there (canActAtLocation; otherwise the same
+   *  NotFoundError as a missing one), and the bill is still OPEN: not paid, not archived, and some
    *  round on it still awaiting approval, accepted or cooking. A paid,
    *  cancelled or archived bill is "This bill is already closed". */
   private static async findOpenCounterBill(billRootId: number, scope: LocatedScope) {
@@ -200,6 +214,7 @@ export class StaffOrderService {
         id: billRootId,
         isCounter: true,
         billSessionId: null,
+        locationId: scope.locationId,
         location: { companyId: scope.companyId },
       },
       include: { location: { select: { companyId: true } } },
@@ -253,14 +268,41 @@ export class StaffOrderService {
     return open > 0 && paid === 0;
   }
 
+  /** "Did my send go through?" — for New Order after a send whose answer
+   *  never arrived (a dropped connection, a server error): the order a
+   *  send with this clientRequestId created, at `scope`'s selected
+   *  location only, or "notSent". Reads only. */
+  static async getSubmitStatus(
+    clientRequestId: string,
+    scope: LocatedScope,
+  ): Promise<
+    | { status: "sent"; sessionId: number; orderNumber: string; entryKey: string }
+    | { status: "notSent" }
+  > {
+    const submitted = await StaffOrderService.findSubmitted(clientRequestId, scope);
+    return submitted?.status === "submitted"
+      ? {
+          status: "sent",
+          sessionId: submitted.sessionId,
+          orderNumber: submitted.orderNumber,
+          entryKey: submitted.entryKey,
+        }
+      : { status: "notSent" };
+  }
+
   /** The order a previous send with this clientRequestId created, as
-   *  "submitted" — only within the staff's own company; null if none. */
+   *  "submitted" — only at the staff's selected location (where every
+   *  staff send goes); null if none. */
   private static async findSubmitted(
     clientRequestId: string,
-    companyId: number,
+    scope: LocatedScope,
   ): Promise<StaffSubmitResult | null> {
     const round = await prisma.orderSession.findFirst({
-      where: { clientRequestId, location: { companyId } },
+      where: {
+        clientRequestId,
+        locationId: scope.locationId,
+        location: { companyId: scope.companyId },
+      },
       select: {
         id: true,
         orderNumber: true,
@@ -282,7 +324,8 @@ export class StaffOrderService {
   /** Why the transaction rolled back decides the answer:
    *  - the same clientRequestId won a race (its unique index refused
    *    this one) → that order, as "submitted";
-   *  - stock ran out or a price moved since the check → a fresh check,
+   *  - stock ran out, a price moved or a menu stopped being orderable
+   *    since the check → a fresh check,
    *    so the staff see what changed (never "ok" — nothing was written).
    *  Anything else is a real error and is rethrown. */
   private static async recoverFromFailedSubmit(
@@ -297,7 +340,7 @@ export class StaffOrderService {
     if (isUniqueViolation(error)) {
       const submitted = await StaffOrderService.findSubmitted(
         input.clientRequestId,
-        input.scope.companyId,
+        input.scope,
       );
       if (submitted) return submitted;
     }

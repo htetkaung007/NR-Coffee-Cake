@@ -1,6 +1,10 @@
 import { prisma } from "@/app/utils/prisma";
 import { shownCancelReason } from "@/app/lib/order/roundOutcome";
-import { ACTIVE_ORDER_LINES, ORDER_LINE_INCLUDE } from "./orderLineQuery";
+import {
+  ACTIVE_ORDER_LINES,
+  CUSTOMER_LINE_OMIT,
+  ORDER_LINE_INCLUDE,
+} from "./orderLineQuery";
 import { Prisma } from "../../../../prisma/generated/browser";
 import { AppError } from "@/app/lib/errors";
 import {
@@ -139,6 +143,7 @@ export class TableSessionService {
       where: { orderSessionId: round.id, isArchived: false },
       orderBy: { id: "asc" },
       include: ORDER_LINE_INCLUDE,
+      omit: CUSTOMER_LINE_OMIT,
     });
     return { ...round, orders };
   }
@@ -220,7 +225,15 @@ export class TableSessionService {
     const round = table?.activeSessionId
       ? await prisma.orderSession.findFirst({
           where: { id: table.activeSessionId, tableId, isArchived: false },
-          include: { orders: { ...ACTIVE_ORDER_LINES, orderBy: { id: "asc" } } },
+          // WITH contributorToken (no CUSTOMER_LINE_OMIT): "change" gives
+          // each line back to whoever picked it. Never returned from here.
+          include: {
+            orders: {
+              where: { isArchived: false },
+              include: ORDER_LINE_INCLUDE,
+              orderBy: { id: "asc" },
+            },
+          },
         })
       : null;
     if (!round) {

@@ -4,7 +4,10 @@ import {
   effectiveQuantity,
   isVoidableRoundStatus,
   planVoid,
+  voidedByLabel,
   voidedQuantity,
+  voidStaffName,
+  VOID_STAFF_NAME_MAX_LENGTH,
   voidReasonLabel,
   VOID_REASONS,
 } from "./voids";
@@ -167,5 +170,45 @@ describe("merged display lines keep their rows and voids", () => {
     expect(merged.orderIds).toEqual([1, 2]);
     expect(merged.quantity).toBe(3);
     expect(effectiveQuantity(merged)).toBe(2);
+  });
+});
+
+describe("voidStaffName", () => {
+  it("uses the staff member's name", () => {
+    expect(voidStaffName({ name: "Aye", email: "aye@example.com" })).toBe("Aye");
+  });
+
+  it("falls back to the email when the name is missing or blank", () => {
+    expect(voidStaffName({ name: null, email: "aye@example.com" })).toBe("aye@example.com");
+    expect(voidStaffName({ name: "  ", email: "aye@example.com" })).toBe("aye@example.com");
+  });
+
+  it("is cut to the column's limit", () => {
+    const long = "a".repeat(200);
+    expect(voidStaffName({ name: long, email: "x@example.com" })).toHaveLength(
+      VOID_STAFF_NAME_MAX_LENGTH,
+    );
+  });
+});
+
+describe("voidedByLabel", () => {
+  it("shows the name frozen on the void, even if the linked user was renamed", () => {
+    expect(
+      voidedByLabel({ voidedByName: "Aye", voidedBy: { name: "Aye Aye", email: "a@example.com" } }),
+    ).toBe("Aye");
+  });
+
+  it("keeps the frozen name after the user is removed", () => {
+    expect(voidedByLabel({ voidedByName: "Aye", voidedBy: null })).toBe("Aye");
+  });
+
+  it("falls back to the linked user for voids made before the name was stored", () => {
+    expect(voidedByLabel({ voidedByName: null, voidedBy: { name: null, email: "a@example.com" } })).toBe(
+      "a@example.com",
+    );
+  });
+
+  it("shows a dash when neither is known", () => {
+    expect(voidedByLabel({ voidedByName: null, voidedBy: null })).toBe("—");
   });
 });

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Alert,
   Box,
+  Button,
   Snackbar,
   Stack,
   Typography,
@@ -18,7 +19,7 @@ import {
   toBrowserCartLine,
   toServerLines,
 } from "@/app/lib/cart/browserCart";
-import { asBrowserCart } from "@/app/lib/cart/staffCart";
+import { asBrowserCart, isSendUnconfirmed } from "@/app/lib/cart/staffCart";
 import type { ValidatedCartLine } from "@/app/lib/cart/cartValidation";
 import { useStaffCart } from "@/app/lib/hooks/useStaffCart";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
@@ -48,12 +49,16 @@ import {
 } from "@/app/lib/order/targetMode";
 import { moneySx } from "../orderTypography";
 import {
+  getStaffSubmitStatusAction,
   getTableOccupancyAction,
   submitStaffOrderAction,
   validateStaffCartAction,
 } from "./action";
 import StaffMenuGrid, { type StaffCategory, type StaffMenu } from "./StaffMenuGrid";
-import StaffOrderPanel, { type StaffCartLine } from "./StaffOrderPanel";
+import StaffOrderPanel, {
+  type SendCheck,
+  type StaffCartLine,
+} from "./StaffOrderPanel";
 import OrderTargetPicker, {
   targetName,
   type PickerOccupancy,
@@ -107,8 +112,12 @@ const canBeSent = (line: ValidatedCartLine | undefined) =>
  * against the server (useCartValidation → validateStaffCartAction) so
  * "Only 1 left" / "Sold out" / "No longer available" show before
  * sending. "Send to kitchen" sends the whole order once, with a request
- * id kept until it succeeds — a retry or a double click can't make two
- * orders.
+ * id kept until it's settled — a retry or a double click can't make two
+ * orders. When a send's answer never arrives (a dropped connection, a
+ * server error) the order is LOCKED (lib/cart/staffCart
+ * isSendUnconfirmed) and the page asks the server whether it went
+ * through (getStaffSubmitStatusAction): found → "Order #A020 was already
+ * sent", cleared; not found → unlocked, to change or send again.
  *
  * The picker is ONE instance, placed by width (isDesktop). Switching
  * table clears the current order, so with items in it the switch asks
@@ -168,7 +177,15 @@ export default function StaffOrderClient({
   const [error, setError] = useState<string | null>(null);
   const [tablePrompt, setTablePrompt] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [sentMessage, setSentMessage] = useState<string | null>(null);
+  const [sent, setSent] = useState<{
+    message: string;
+    /** The order to open from the notice (an order found by the status
+     *  check); null for a plain "sent". */
+    entryKey: string | null;
+  } | null>(null);
+  // The "did it go through?" check of an unconfirmed send; null when
+  // there's none (or it's in flight as the send itself — isSending).
+  const [sendCheck, setSendCheck] = useState<SendCheck | null>(null);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   // A switch waiting for "Switch and clear" (the order has items).
   // A target change waiting for "Switch and clear" (the order has items)
@@ -226,20 +243,11 @@ export default function StaffOrderClient({
   // from the address. Sending onto it goes back to that order
   // (returnToEntry).
   const returnToEntry = useRef(false);
-  const latestRequest = useRef<(next: OrderTarget) => void>(() => {});
-  useEffect(() => {
-    latestRequest.current = requestTargetChange;
-  });
-  const handledLink = useRef(false);
-  useEffect(() => {
-    if (handledLink.current || !staffCart.isLoaded || !fromLink) return;
-    handledLink.current = true;
-    router.replace("/backoffice/order/new", { scroll: false });
-    if (fromLink.target) {
-      returnToEntry.current = fromLink.target.kind !== "counterNew";
-      latestRequest.current(fromLink.target);
-    }
-  }, [staffCart.isLoaded, fromLink, router]);
+
+  // A send is out or unanswered: lines and target are locked until it's
+  // settled (the store refuses changes too — this only says why).
+  const isLocked = isSendUnconfirmed(cart);
+  const lockedMessage = "Wait until we know whether the order went through.";
 
   const checkedLines = validation.result?.lines ?? [];
   const lines: StaffCartLine[] = cart.lines.map((line, index) => {
@@ -253,7 +261,8 @@ export default function StaffOrderClient({
       addons: line.display.addons,
       note: line.note,
       blocked: !canBeSent(checked),
-      notice: checked ? (
+      // Its fix-it actions change the line — not while it's locked.
+      notice: checked && !isLocked ? (
         <CartLineNotice
           line={checked}
           fitQuantity={quantityThatFits(
@@ -305,9 +314,27 @@ export default function StaffOrderClient({
   function requestTargetChange(next: OrderTarget | null) {
     const keyOf = (of: OrderTarget | null) => (of ? targetKey(of) : null);
     if (keyOf(next) === keyOf(target)) return;
+    if (isLocked) return setError(lockedMessage);
     if (lines.length > 0) setPendingSwitch({ next });
     else handleTargetChange(next);
   }
+
+  // (The link's preselect — see returnToEntry above. After
+  // requestTargetChange, which it calls through a ref.)
+  const latestRequest = useRef<(next: OrderTarget) => void>(() => {});
+  useEffect(() => {
+    latestRequest.current = requestTargetChange;
+  });
+  const handledLink = useRef(false);
+  useEffect(() => {
+    if (handledLink.current || !staffCart.isLoaded || !fromLink) return;
+    handledLink.current = true;
+    router.replace("/backoffice/order/new", { scroll: false });
+    if (fromLink.target) {
+      returnToEntry.current = fromLink.target.kind !== "counterNew";
+      latestRequest.current(fromLink.target);
+    }
+  }, [staffCart.isLoaded, fromLink, router]);
 
   /** Picking who it's for starts a new order — in this browser only;
    *  nothing is written until Send. */
@@ -321,6 +348,7 @@ export default function StaffOrderClient({
    *  there (it can't — a target has one mode — so it's cleared, asking
    *  first when the order has items). */
   function selectMode(next: TargetMode) {
+    if (isLocked) return setError(lockedMessage);
     setChosenMode(next);
     if (target && modeOfTarget(target, modeSource) !== next) {
       requestTargetChange(null);
@@ -349,6 +377,7 @@ export default function StaffOrderClient({
 
   function handleSelectMenu(menu: StaffMenu) {
     if (target === null) return promptForTable();
+    if (isLocked) return setError(lockedMessage);
     if (menu.hasAddonGroups) setDialog({ menuId: menu.id });
     else quickAdd(menu);
   }
@@ -364,6 +393,7 @@ export default function StaffOrderClient({
     detail: Parameters<typeof toBrowserCartLine>[0],
   ): Promise<string | null> {
     if (target === null) return "Choose a table or Counter first.";
+    if (isLocked) return lockedMessage;
     const line = toBrowserCartLine(detail, quantity, addonIds, note);
     const lineIndex = dialog?.lineIndex;
     if (lineIndex === undefined) {
@@ -377,7 +407,7 @@ export default function StaffOrderClient({
 
   function handleEdit(index: number) {
     const line = cart.lines[index];
-    if (!line) return;
+    if (!line || isLocked) return;
     setDialog({
       menuId: line.menuId,
       lineIndex: index,
@@ -389,12 +419,85 @@ export default function StaffOrderClient({
     });
   }
 
+  /** The order reached the kitchen (this send, or an earlier one the
+   *  status check found): clear it and say so. Onto an existing Counter
+   *  bill (or from an order's "Add items"): back to that order, so the
+   *  cashier sees the new round on its bill. */
+  function handleSent(
+    order: { orderNumber: string; entryKey: string },
+    how: "sent" | "found",
+  ) {
+    const backToEntry =
+      target?.kind === "counterBill" || returnToEntry.current;
+    returnToEntry.current = false;
+    staffCart.finishSend();
+    setSendCheck(null);
+    setError(null);
+    setSent(
+      how === "sent"
+        ? { message: `Order ${order.orderNumber} sent to the kitchen`, entryKey: null }
+        : {
+            message: `Order ${order.orderNumber} was already sent`,
+            entryKey: order.entryKey,
+          },
+    );
+    setIsOrderOpen(false);
+    if (backToEntry) router.push(`/backoffice/order/${order.entryKey}`);
+  }
+
+  /** A send's answer never arrived: ask whether an order exists under its
+   *  request id. Found → it was sent; not found → nothing was written,
+   *  so the order unlocks. If the check itself fails, the order stays
+   *  locked with a Retry. */
+  async function checkSendStatus(clientRequestId: string) {
+    setSendCheck({ state: "checking" });
+    let response;
+    try {
+      response = await getStaffSubmitStatusAction(clientRequestId);
+    } catch {
+      setSendCheck({
+        state: "failed",
+        message: "Couldn't reach the server to check whether the order went through.",
+      });
+      return;
+    }
+    if (!response.success) {
+      setSendCheck({ state: "failed", message: response.error.message });
+      return;
+    }
+    if (response.data.status === "sent") {
+      handleSent(response.data, "found");
+      return;
+    }
+    staffCart.abandonSend();
+    setSendCheck(null);
+    setError(
+      "The order wasn't sent. Check it, then send again.",
+    );
+  }
+
+  // A stored order that was mid-send when the page closed or reloaded:
+  // find out once whether it went through.
+  const checkedOnLoad = useRef(false);
+  const latestCheck = useRef(checkSendStatus);
+  useEffect(() => {
+    latestCheck.current = checkSendStatus;
+  });
+  useEffect(() => {
+    if (checkedOnLoad.current || !staffCart.isLoaded) return;
+    checkedOnLoad.current = true;
+    if (cart.pendingRequestId) void latestCheck.current(cart.pendingRequestId);
+  }, [staffCart.isLoaded, cart.pendingRequestId]);
+
   /** "Send to kitchen": the whole order, once. The request id is made on
-   *  the first press and kept (in the stored cart) until a send
-   *  succeeds — so a retry after a dropped connection, or a second
-   *  click, returns the same order instead of making another. */
+   *  the first press and kept (in the stored cart, which is locked
+   *  meanwhile) until the send is settled — so a second click returns
+   *  the same order instead of making another, and edited lines never go
+   *  out under an old id. */
   async function handleSend() {
-    if (target === null || cart.lines.length === 0 || isSending) return;
+    if (target === null || cart.lines.length === 0 || isSending || sendCheck) {
+      return;
+    }
     const clientRequestId = staffCart.beginSend();
     if (!clientRequestId) return;
     setIsSending(true);
@@ -407,20 +510,27 @@ export default function StaffOrderClient({
         clientRequestId,
       });
     } catch {
+      // No answer — it may or may not have reached the server.
       setIsSending(false);
-      setError(
-        "Couldn't reach the server. Try again — the order won't be sent twice.",
-      );
+      void checkSendStatus(clientRequestId);
       return;
     }
     setIsSending(false);
     if (!response.success) {
-      setError(response.error.message);
+      if (response.error.code === "INTERNAL_ERROR") {
+        // An unexpected server error — it may have failed after writing.
+        void checkSendStatus(clientRequestId);
+      } else {
+        // A plain refusal (a closed bill, a table gone): nothing written.
+        staffCart.abandonSend();
+        setError(response.error.message);
+      }
       return;
     }
     const result = response.data;
     if (result.status !== "submitted") {
       // Nothing was written: show what changed on the lines.
+      staffCart.abandonSend();
       validation.showResult(result.validation);
       setError(
         result.status === "pricesChanged"
@@ -429,19 +539,12 @@ export default function StaffOrderClient({
       );
       return;
     }
-    // Onto an existing Counter bill (or from an order's "Add items"):
-    // back to that order, so the cashier sees the new round on its bill.
-    const backToEntry =
-      target.kind === "counterBill" || returnToEntry.current;
-    returnToEntry.current = false;
-    staffCart.finishSend();
-    setSentMessage(`Order ${result.orderNumber} sent to the kitchen`);
-    setIsOrderOpen(false);
-    if (backToEntry) router.push(`/backoffice/order/${result.entryKey}`);
+    handleSent(result, "sent");
   }
 
-  const sendBlockedReason =
-    target === null
+  const sendBlockedReason = isLocked && !isSending
+    ? "Waiting to hear whether the order went through"
+    : target === null
       ? "Choose a table or Counter first"
       : lines.length === 0
         ? "Add items to start an order"
@@ -478,6 +581,11 @@ export default function StaffOrderClient({
       sendBlockedReason={sendBlockedReason}
       isSending={isSending}
       onSend={() => void handleSend()}
+      locked={isLocked}
+      sendCheck={sendCheck}
+      onRetryCheck={() => {
+        if (cart.pendingRequestId) void checkSendStatus(cart.pendingRequestId);
+      }}
       onClose={inDrawer ? () => setIsOrderOpen(false) : undefined}
     />
   );
@@ -646,10 +754,26 @@ export default function StaffOrderClient({
       />
 
       <Snackbar
-        open={sentMessage !== null}
-        autoHideDuration={4000}
-        onClose={() => setSentMessage(null)}
-        message={sentMessage}
+        open={sent !== null}
+        autoHideDuration={sent?.entryKey ? 8000 : 4000}
+        onClose={() => setSent(null)}
+        message={sent?.message}
+        action={
+          sent?.entryKey ? (
+            <Button
+              color="inherit"
+              size="small"
+              sx={{ minHeight: 44 }}
+              onClick={() => {
+                const entryKey = sent.entryKey;
+                setSent(null);
+                router.push(`/backoffice/order/${entryKey}`);
+              }}
+            >
+              View order
+            </Button>
+          ) : undefined
+        }
         anchorOrigin={
           isDesktop
             ? { vertical: "bottom", horizontal: "left" }

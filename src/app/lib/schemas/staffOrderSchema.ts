@@ -21,3 +21,7 @@ export const submitStaffOrderSchema = z.object({
   clientRequestId: z.uuid(),
 });
 export type SubmitStaffOrderRawInput = z.input<typeof submitStaffOrderSchema>;
+
+/** "Did my send go through?" — the request id of a send whose answer
+ *  never arrived (StaffCart.pendingRequestId). */
+export const staffSubmitStatusSchema = z.object({ clientRequestId: z.uuid() });

@@ -73,7 +73,8 @@ export interface RoundLineSource {
  *  round's snapshots — display only; the cart is re-checked against
  *  today's menu before it can be sent again. */
 export function toCounterHandBack(
-  lines: readonly RoundLineSource[],
+  // A Counter line has no customer token to keep.
+  lines: readonly Omit<RoundLineSource, "contributorToken">[],
 ): BrowserCartLine[] {
   return lines.map((line) => ({
     menuId: line.menuId,

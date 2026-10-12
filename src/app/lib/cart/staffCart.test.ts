@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { addLine, setQuantity, type BrowserCartLine } from "./browserCart";
 import {
+  abandonSend,
   asBrowserCart,
   beginSend,
   changeLines,
@@ -8,6 +9,7 @@ import {
   emptyStaffCart,
   finishSend,
   isFromEarlierShopDay,
+  isSendUnconfirmed,
   isStaffCartKeyOf,
   parseStaffCart,
   staffCartKey,
@@ -135,15 +137,25 @@ describe("changeLines", () => {
     expect(cart.lines).toEqual([]);
   });
 
-  it("keeps the table and a pending send's request id", () => {
+  it("refuses every change while a send is unconfirmed — edited lines never go out under the old request id", () => {
     const sending = beginSend(cartWithLatte(), () => ID_A);
     const cart = changeLines(
       sending,
       (lines) => setQuantity(lines, 0, 3, T2),
       T2,
     );
-    expect(cart.target).toEqual(TABLE_3);
-    expect(cart.pendingRequestId).toBe(ID_A);
+    expect(cart).toBe(sending);
+    expect(cart.lines[0].quantity).toBe(1);
+  });
+
+  it("refuses an add while a send is unconfirmed", () => {
+    const sending = beginSend(cartWithLatte(), () => ID_A);
+    const cart = changeLines(
+      sending,
+      (lines) => addLine(lines, latte, T2, () => ID_B),
+      T2,
+    );
+    expect(cart).toBe(sending);
   });
 
   it("leaves the cart untouched when the lines don't change", () => {
@@ -162,12 +174,16 @@ describe("changeLines", () => {
 });
 
 describe("chooseTarget", () => {
-  it("switching who it's for starts a new order: lines and pending request id go", () => {
-    const sending = beginSend(cartWithLatte(), () => ID_A);
-    const cart = chooseTarget(sending, COUNTER_NEW, T2);
+  it("switching who it's for starts a new order: the lines go", () => {
+    const cart = chooseTarget(cartWithLatte(), COUNTER_NEW, T2);
     expect(cart.target).toEqual(COUNTER_NEW);
     expect(cart.lines).toEqual([]);
     expect(cart.pendingRequestId).toBeNull();
+  });
+
+  it("refuses a switch while a send is unconfirmed — that order may already be in the kitchen", () => {
+    const sending = beginSend(cartWithLatte(), () => ID_A);
+    expect(chooseTarget(sending, COUNTER_NEW, T2)).toBe(sending);
   });
 
   it("choosing nobody (the other mode) clears the target and the lines", () => {
@@ -204,5 +220,58 @@ describe("finishSend", () => {
   it("after a round onto an existing Counter bill, the next order is a new takeaway", () => {
     const onBill = chooseTarget(cartWithLatte(), BILL_12, T1);
     expect(finishSend(onBill, T2, COUNTER_NEW).target).toEqual(COUNTER_NEW);
+  });
+});
+
+describe("isSendUnconfirmed", () => {
+  it("is false for an order nobody has tried to send", () => {
+    expect(isSendUnconfirmed(cartWithLatte())).toBe(false);
+  });
+
+  it("is true from Send until the send is settled", () => {
+    expect(isSendUnconfirmed(beginSend(cartWithLatte(), () => ID_A))).toBe(true);
+  });
+});
+
+describe("abandonSend", () => {
+  it("unlocks the order and keeps its lines and target when nothing was written", () => {
+    const sending = beginSend(cartWithLatte(), () => ID_A);
+    const cart = abandonSend(sending, T2);
+    expect(isSendUnconfirmed(cart)).toBe(false);
+    expect(cart.lines).toEqual(sending.lines);
+    expect(cart.target).toEqual(TABLE_3);
+  });
+
+  it("lets the lines be edited again afterwards", () => {
+    const unlocked = abandonSend(beginSend(cartWithLatte(), () => ID_A), T2);
+    const cart = changeLines(unlocked, (lines) => setQuantity(lines, 0, 3, T2), T2);
+    expect(cart.lines[0].quantity).toBe(3);
+  });
+
+  it("gives the next send a fresh request id", () => {
+    const unlocked = abandonSend(beginSend(cartWithLatte(), () => ID_A), T2);
+    expect(beginSend(unlocked, () => ID_B).pendingRequestId).toBe(ID_B);
+  });
+
+  it("changes nothing when no send is pending", () => {
+    const cart = cartWithLatte();
+    expect(abandonSend(cart, T2)).toBe(cart);
+  });
+});
+
+describe("a send whose answer never arrived", () => {
+  it("found by the status check: the order is cleared and the next one starts fresh", () => {
+    const sending = beginSend(cartWithLatte(), () => ID_A);
+    const found = finishSend(sending, T2, COUNTER_NEW);
+    expect(found.lines).toEqual([]);
+    expect(isSendUnconfirmed(found)).toBe(false);
+  });
+
+  it("retried before it's settled: the same id and the same lines go again", () => {
+    const sending = beginSend(cartWithLatte(), () => ID_A);
+    const edited = changeLines(sending, (lines) => setQuantity(lines, 0, 3, T2), T2);
+    const retry = beginSend(edited, never);
+    expect(retry.pendingRequestId).toBe(ID_A);
+    expect(retry.lines).toEqual(sending.lines);
   });
 });
