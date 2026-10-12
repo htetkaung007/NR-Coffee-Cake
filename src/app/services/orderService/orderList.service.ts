@@ -1,8 +1,14 @@
 import { prisma } from "@/app/utils/prisma";
 import { orderLinesTotal } from "@/app/lib/order/orderTotals";
+import {
+  counterBillOccupancy,
+  tableOccupancy,
+} from "@/app/lib/order/tableOccupancy";
 import { approvalDeadline } from "@/app/lib/approval/approvalDeadline";
-import { ACTIVE_ORDER_LINES } from "./orderLineQuery";
+import { STAFF_ACTIVE_ORDER_LINES } from "./orderLineQuery";
 import { OrderApprovalService } from "./orderApproval.service";
+import { TableService } from "../table.service";
+import { TableDraftService } from "../tableDraft.service";
 
 /** The Backoffice Order List's reads — open sessions for a location
  *  grouped into entries (one per table / counter bill), a single entry,
@@ -29,7 +35,7 @@ export class OrderListService {
       include: {
         table: true,
         // Each add-on's name, for the itemised bill and round cards.
-        orders: ACTIVE_ORDER_LINES,
+        orders: STAFF_ACTIVE_ORDER_LINES,
       },
     });
 
@@ -195,6 +201,32 @@ export class OrderListService {
     return OrderListService.groupSessionsForDisplay(sessions);
   }
 
+  /** What the staff New Order's "Order for" picker shows: which tables
+   *  are In use / Free (lib/order/tableOccupancy) and the open Counter
+   *  bills a new round can join (counterBillOccupancy). Built on what the
+   *  Order List itself shows (getOpenEntries: the open rounds, stale
+   *  approvals expired first, so the two never disagree), plus the
+   *  tables a customer is drafting at. Active tables only
+   *  (TableService.getTablesByLocation leaves archived ones out). */
+  static async getTableOccupancy(locationId: number) {
+    const [entries, tables, tablesWithDraft] = await Promise.all([
+      OrderListService.getOpenEntries(locationId),
+      TableService.getTablesByLocation(locationId),
+      TableDraftService.getTableIdsWithDraftLines(locationId),
+    ]);
+    return {
+      tables: tableOccupancy({
+        tables: tables.map((table) => ({
+          id: table.id,
+          isCounter: table.isCounter === true,
+        })),
+        rounds: entries.flatMap((entry) => entry.sessions),
+        tablesWithDraft,
+      }),
+      counterBills: counterBillOccupancy(entries),
+    };
+  }
+
   /** One entry by its key (see entryKeyFor) — behind both the entry's
    *  detail page and its printable bill. Null when it's no longer open
    *  (paid, rejected or expired since it was listed) or the key is
@@ -260,6 +292,41 @@ export class OrderListService {
         : (session.table?.name ?? session.orderNumber),
       isTableGroup: !session.isCounter,
       approvalExpiresAt: session.approvalExpiresAt,
+    }));
+  }
+
+  /** How far back the Backoffice looks for rounds customers withdrew —
+   *  enough for a toast on the next refreshes; older ones are History. */
+  private static readonly RECENT_WITHDRAWAL_MINUTES = 15;
+
+  /** Rounds customers withdrew at this location in the last few minutes
+   *  (cancelReason WITHDRAWN) — for the one-time "Customer cancelled
+   *  order …" toast (OrderAlertsProvider remembers which it has shown).
+   *  Light: ids, numbers and the table's name only. */
+  static async getRecentWithdrawals(locationId: number) {
+    const since = new Date(
+      Date.now() - OrderListService.RECENT_WITHDRAWAL_MINUTES * 60_000,
+    );
+    const rounds = await prisma.orderSession.findMany({
+      where: {
+        locationId,
+        isArchived: false,
+        status: "CANCELLED",
+        cancelReason: "WITHDRAWN",
+        updateTime: { gte: since },
+      },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        orderNumber: true,
+        isCounter: true,
+        table: { select: { name: true } },
+      },
+    });
+    return rounds.map((round) => ({
+      sessionId: round.id,
+      orderNumber: round.orderNumber,
+      tableName: round.isCounter ? null : (round.table?.name ?? null),
     }));
   }
 }

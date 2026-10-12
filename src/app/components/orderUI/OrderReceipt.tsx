@@ -4,6 +4,8 @@ import { Avatar, Box, Chip, Stack, Typography } from "@mui/material";
 import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 import { formatAmount } from "@/app/lib/orderFormat";
+import type { RemovedByStaff } from "@/app/lib/order/roundLine";
+import { WITHDRAWN_CUSTOMER_LABEL } from "@/app/lib/order/cancelReason";
 
 import BackCircleButton from "./BackCircleButton";
 
@@ -13,8 +15,12 @@ export interface ReceiptLine {
   imageUrl: string | null;
   addonNames: string[];
   note: string | null;
+  /** What's still on the order (staff-voided units left out). */
   quantity: number;
   total: number;
+  /** Units staff took back — how many and why, never the staff's note or
+   *  name. Null when none. */
+  removedByStaff: RemovedByStaff | null;
 }
 
 interface OrderReceiptProps {
@@ -40,17 +46,23 @@ export const ORDER_STATUS_CHIP: Record<
   PENDING_APPROVAL: { label: "Awaiting approval", color: "default" },
   PENDING: { label: "Approved", color: "success" },
   COOKING: { label: "Cooking", color: "success" },
+  // customerRoundStatus — a round the customer cancelled themselves.
+  WITHDRAWN: { label: WITHDRAWN_CUSTOMER_LABEL, color: "default" },
 };
 
 /** One receipt line: photo, name, add-ons, note, quantity and amount.
  *  The one place this markup lives — the flat (Counter) and per-person
  *  (Table) layouts both render lines through it. */
 function ReceiptLineRow({ line }: { line: ReceiptLine }) {
+  const removed = line.removedByStaff;
+  // Every unit taken back: still listed, dimmed and struck through, with
+  // the words saying why (DESIGN.md Rule 26). Never in the total.
+  const isFullyRemoved = removed !== null && line.quantity === 0;
   return (
     <Stack
       direction="row"
       spacing={1.5}
-      sx={{ py: 1.5, alignItems: "flex-start" }}
+      sx={{ py: 1.5, alignItems: "flex-start", opacity: isFullyRemoved ? 0.6 : 1 }}
     >
       <Avatar
         variant="rounded"
@@ -69,7 +81,13 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
       </Avatar>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="body1" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant="body1"
+          sx={{
+            fontWeight: 700,
+            textDecoration: isFullyRemoved ? "line-through" : "none",
+          }}
+        >
           {line.menuName}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -100,16 +118,29 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
           color="text.secondary"
           sx={{ display: "block", mt: 0.25 }}
         >
-          Qty {line.quantity}
+          Qty {isFullyRemoved ? removed.quantity : line.quantity}
         </Typography>
+        {removed && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 0.25 }}
+          >
+            {isFullyRemoved
+              ? `Removed by staff · ${removed.reason}`
+              : `${removed.quantity} removed by staff · ${removed.reason}`}
+          </Typography>
+        )}
       </Box>
 
-      <Typography
-        variant="body1"
-        sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
-      >
-        {formatAmount(line.total)}
-      </Typography>
+      {!isFullyRemoved && (
+        <Typography
+          variant="body1"
+          sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
+        >
+          {formatAmount(line.total)}
+        </Typography>
+      )}
     </Stack>
   );
 }

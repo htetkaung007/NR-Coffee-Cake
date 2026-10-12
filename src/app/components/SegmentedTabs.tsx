@@ -15,6 +15,10 @@ export interface SegmentedItem<Value extends string> {
   href?: string;
   /** A count pill after the label (Order History's Paid / Cancelled). */
   count?: number;
+  /** Button segments only: can't be picked right now. The parent shows
+   *  why (DESIGN.md Rule 15) and names that text here (its id). */
+  disabled?: boolean;
+  describedBy?: string;
 }
 
 interface SegmentedTabsProps<Value extends string> {
@@ -66,6 +70,7 @@ export default function SegmentedTabs<Value extends string>({
     >
       {items.map((item) => {
         const selected = item.value === value;
+        const disabled = item.disabled === true && !selected;
         const segmentSx = (theme: Theme) => ({
           display: "flex",
           alignItems: "center",
@@ -77,14 +82,18 @@ export default function SegmentedTabs<Value extends string>({
           borderRadius: 1.5,
           font: "inherit",
           textDecoration: "none",
-          cursor: "pointer",
+          cursor: disabled ? "not-allowed" : "pointer",
+          // Dimmed, not hidden: the reason is said next to it.
+          opacity: disabled ? 0.5 : 1,
           color: selected ? "primary.contrastText" : "text.primary",
           bgcolor: selected ? "primary.main" : "transparent",
           transition: "background-color 160ms ease-out, color 160ms ease-out",
           [hoverCapableMedia]: {
-            "&:hover": {
-              bgcolor: selected ? "primary.main" : theme.palette.action.hover,
-            },
+            "&:hover": disabled
+              ? undefined
+              : {
+                  bgcolor: selected ? "primary.main" : theme.palette.action.hover,
+                },
           },
           "&:focus-visible": {
             outline: `2px solid ${theme.palette.primary.main}`,
@@ -157,6 +166,8 @@ export default function SegmentedTabs<Value extends string>({
             component="button"
             type="button"
             aria-pressed={selected}
+            disabled={disabled}
+            aria-describedby={item.describedBy}
             onClick={() => onSelect?.(item.value)}
             sx={segmentSx}
           >

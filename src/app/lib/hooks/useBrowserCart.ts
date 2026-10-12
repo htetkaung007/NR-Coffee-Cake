@@ -101,8 +101,9 @@ function subscribe(locationId: number, onChange: () => void) {
 
 /** crypto.randomUUID exists only in secure contexts (HTTPS/localhost);
  *  a phone on the shop's LAN over plain http gets a v4 UUID built from
- *  getRandomValues instead, which is available everywhere. */
-function newRequestId(): string {
+ *  getRandomValues instead, which is available everywhere. Shared with
+ *  the staff New Order cart (useStaffCart). */
+export function newRequestId(): string {
   if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
@@ -169,6 +170,15 @@ export function useBrowserCart(locationId: number) {
           [...indexes]
             .sort((a, b) => b - a)
             .reduce((next, index) => removeLine(next, index, nowIso()), c),
+        ),
+      /** Several lines at once (each merged by the add rule) — one write:
+       *  a withdrawn order's lines coming back for "Change order". */
+      addLines: (lines: readonly BrowserCartLine[]) =>
+        update((c) =>
+          lines.reduce(
+            (next, line) => addLine(next, line, nowIso(), newRequestId),
+            c,
+          ),
         ),
       updateLine: (index: number, line: BrowserCartLine) =>
         update((c) => updateLine(c, index, line, nowIso())),

@@ -403,6 +403,7 @@ export const ModelName = {
   OrderSession: 'OrderSession',
   Bill: 'Bill',
   OrderCancellation: 'OrderCancellation',
+  OrderVoid: 'OrderVoid',
   UserPermission: 'UserPermission'
 } as const
 
@@ -419,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill" | "orderCancellation" | "userPermission"
+    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill" | "orderCancellation" | "orderVoid" | "userPermission"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1829,6 +1830,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    OrderVoid: {
+      payload: Prisma.$OrderVoidPayload<ExtArgs>
+      fields: Prisma.OrderVoidFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrderVoidFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrderVoidFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>
+        }
+        findFirst: {
+          args: Prisma.OrderVoidFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrderVoidFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>
+        }
+        findMany: {
+          args: Prisma.OrderVoidFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>[]
+        }
+        create: {
+          args: Prisma.OrderVoidCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>
+        }
+        createMany: {
+          args: Prisma.OrderVoidCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrderVoidCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>[]
+        }
+        delete: {
+          args: Prisma.OrderVoidDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>
+        }
+        update: {
+          args: Prisma.OrderVoidUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrderVoidDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrderVoidUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrderVoidUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrderVoidUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderVoidPayload>
+        }
+        aggregate: {
+          args: Prisma.OrderVoidAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrderVoid>
+        }
+        groupBy: {
+          args: Prisma.OrderVoidGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderVoidGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrderVoidCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderVoidCountAggregateOutputType> | number
+        }
+      }
+    }
     UserPermission: {
       payload: Prisma.$UserPermissionPayload<ExtArgs>
       fields: Prisma.UserPermissionFieldRefs
@@ -2200,6 +2275,20 @@ export const OrderCancellationScalarFieldEnum = {
 export type OrderCancellationScalarFieldEnum = (typeof OrderCancellationScalarFieldEnum)[keyof typeof OrderCancellationScalarFieldEnum]
 
 
+export const OrderVoidScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  quantity: 'quantity',
+  reason: 'reason',
+  note: 'note',
+  stockReturned: 'stockReturned',
+  voidedById: 'voidedById',
+  createdAt: 'createdAt'
+} as const
+
+export type OrderVoidScalarFieldEnum = (typeof OrderVoidScalarFieldEnum)[keyof typeof OrderVoidScalarFieldEnum]
+
+
 export const UserPermissionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -2343,6 +2432,20 @@ export type EnumRejectReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'RejectReason[]'
  */
 export type ListEnumRejectReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RejectReason[]'>
+    
+
+
+/**
+ * Reference to a field of type 'VoidReason'
+ */
+export type EnumVoidReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VoidReason'>
+    
+
+
+/**
+ * Reference to a field of type 'VoidReason[]'
+ */
+export type ListEnumVoidReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VoidReason[]'>
     
 
 
@@ -2502,6 +2605,7 @@ export type GlobalOmitConfig = {
   orderSession?: Prisma.OrderSessionOmit
   bill?: Prisma.BillOmit
   orderCancellation?: Prisma.OrderCancellationOmit
+  orderVoid?: Prisma.OrderVoidOmit
   userPermission?: Prisma.UserPermissionOmit
 }
 

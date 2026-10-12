@@ -27,6 +27,9 @@ import {
   type ReportBill,
 } from "../lib/report/salesReport";
 import { todayInShop } from "../lib/shopDay";
+import { effectiveQuantity } from "../lib/order/voids";
+import { summarizeVoids } from "../lib/report/voidReport";
+import { SHOP_MISSED_CANCEL_REASONS } from "../lib/order/cancelReason";
 import type {
   ExportBill,
   ExportCancelledRound,
@@ -64,6 +67,8 @@ const exportLineSelect = {
     orderBy: { id: "asc" },
     select: { unitPrice: true, addon: { select: { name: true } } },
   },
+  // Voided units are never sold (lib/order/voids).
+  voids: { select: { quantity: true } },
 } as const;
 
 function toExportLine(
@@ -74,6 +79,7 @@ function toExportLine(
     unitPrice: number;
     note: string | null;
     OrdersAddons: { unitPrice: number; addon: { name: string } }[];
+    voids: { quantity: number }[];
   },
   menuNames: Map<number, string>,
 ): ExportLine {
@@ -81,7 +87,8 @@ function toExportLine(
     id: order.id,
     menuId: order.menuId,
     menuName: menuNames.get(order.menuId) ?? "Unknown item",
-    quantity: order.quantity,
+    // What was sold — voided units left out (lib/order/voids).
+    quantity: effectiveQuantity(order),
     unitPrice: order.unitPrice,
     addons: order.OrdersAddons.map((link) => ({
       name: link.addon.name,
@@ -123,7 +130,7 @@ export class ReportService {
     const range = periodRangeUtc(period);
     const comparedRange = periodRangeUtc(compared);
 
-    const [bills, previousBills, cancelled, previousCancelled] = await Promise.all([
+    const [bills, previousBills, cancelled, previousCancelled, voids] = await Promise.all([
       ReportService.loadBills(locationId, range),
       prisma.bill.findMany({
         where: {
@@ -137,6 +144,7 @@ export class ReportService {
         locationId,
         ...comparedRange,
       }),
+      ReportService.loadVoids(locationId, range),
     ]);
 
     const summary = summarizeBills(bills);
@@ -155,7 +163,13 @@ export class ReportService {
           // Rejected rounds per RejectReason, then "Not recorded".
           reasons: cancelled.reasons,
           notCharged: cancelled.notCharged,
+          // Customers cancelling their own order while it waited — not the
+          // shop's miss, so never in the figures above or their change.
+          withdrawn: cancelled.withdrawn,
         },
+        // Items voided off the period's paid bills (never charged): units,
+        // value and why.
+        voided: summarizeVoids(voids),
       },
       previous: {
         period: compared,
@@ -356,7 +370,10 @@ export class ReportService {
         rounds: bill.sessions.map((session) => ({
           orderNumber: session.orderNumber,
           createdAt: session.createdAt,
-          lines: session.orders.map((order) => toExportLine(order, menuNames)),
+          // A fully voided line was never sold — not in the sales CSV.
+          lines: session.orders
+            .filter((order) => effectiveQuantity(order) > 0)
+            .map((order) => toExportLine(order, menuNames)),
         })),
       };
     });
@@ -384,7 +401,12 @@ export class ReportService {
     const period = periodFor(kind, anchorDay);
     const range = periodRangeUtc(period);
     const sessions = await prisma.orderSession.findMany({
-      where: OrderHistoryService.cancelledInRange({ locationId, ...range }),
+      // The shop's misses only, so the lines add up to "Not charged".
+      where: OrderHistoryService.cancelledInRange({
+        locationId,
+        ...range,
+        reasons: SHOP_MISSED_CANCEL_REASONS,
+      }),
       orderBy: [{ updateTime: "asc" }, { id: "asc" }],
       select: {
         orderNumber: true,
@@ -415,7 +437,7 @@ export class ReportService {
       orderNumber: session.orderNumber,
       channel: session.isCounter ? "counter" : "table",
       tableName: session.table?.name ?? null,
-      // cancelledInRange only returns REJECTED / EXPIRED rounds.
+      // Only REJECTED / EXPIRED rounds were asked for.
       cancelReason: session.cancelReason as "REJECTED" | "EXPIRED",
       cancelledAt: session.updateTime,
       cancellation: session.cancellation,
@@ -574,17 +596,53 @@ export class ReportService {
             addon: { select: { addonCategory: { select: { isRequired: true } } } },
           },
         },
+        voids: { select: { quantity: true } },
       },
     });
-    return orders.map((order) => ({
-      menuId: order.menuId,
-      quantity: order.quantity,
-      unitPrice: order.unitPrice,
-      addons: order.OrdersAddons.map((link) => ({
-        addonId: link.addonId,
-        unitPrice: link.unitPrice,
-        isRequiredGroup: link.addon.addonCategory.isRequired,
-      })),
+    // What was sold: voided units left out, a fully voided line dropped —
+    // so item and add-on sales still add up to the bills (Bill.total
+    // leaves them out too).
+    return orders
+      .filter((order) => effectiveQuantity(order) > 0)
+      .map((order) => ({
+        menuId: order.menuId,
+        quantity: effectiveQuantity(order),
+        unitPrice: order.unitPrice,
+        addons: order.OrdersAddons.map((link) => ({
+          addonId: link.addonId,
+          unitPrice: link.unitPrice,
+          isRequiredGroup: link.addon.addonCategory.isRequired,
+        })),
+      }));
+  }
+
+  /** One query: every void on a line of the sessions whose bill was paid
+   *  in the range — the same lines loadLines reads — with the line's own
+   *  price snapshots, for the "Voided" figure (summarizeVoids). */
+  private static async loadVoids(locationId: number, range: Range) {
+    const voids = await prisma.orderVoid.findMany({
+      where: {
+        order: {
+          isArchived: false,
+          orderSession: {
+            isArchived: false,
+            bill: { locationId, paidAt: { gte: range.start, lt: range.end } },
+          },
+        },
+      },
+      select: {
+        reason: true,
+        quantity: true,
+        order: {
+          select: { unitPrice: true, OrdersAddons: { select: { unitPrice: true } } },
+        },
+      },
+    });
+    return voids.map((entry) => ({
+      reason: entry.reason,
+      quantity: entry.quantity,
+      unitPrice: entry.order.unitPrice,
+      addonUnitPrices: entry.order.OrdersAddons.map((link) => link.unitPrice),
     }));
   }
 

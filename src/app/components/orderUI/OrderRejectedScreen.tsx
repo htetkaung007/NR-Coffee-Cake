@@ -7,7 +7,24 @@ import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import type { ShownCancelReason } from "@/app/lib/order/roundOutcome";
 import OutcomeScreenShell from "./OutcomeScreenShell";
 
-const TITLE = "Your last order wasn't accepted";
+/** The heading: the counter's decision, or a customer's own cancel. */
+function titleFor(reason: ShownCancelReason) {
+  return reason === "WITHDRAWN"
+    ? "Your last order was cancelled"
+    : "Your last order wasn't accepted";
+}
+
+/** What happened to it, in one line. */
+function explanationFor(reason: ShownCancelReason, orderNumber: string) {
+  switch (reason) {
+    case "REJECTED":
+      return `Order ${orderNumber} was not accepted by the counter.`;
+    case "EXPIRED":
+      return `The counter didn't confirm Order ${orderNumber} in time.`;
+    case "WITHDRAWN":
+      return `Order ${orderNumber} was cancelled before the counter accepted it.`;
+  }
+}
 
 interface OrderRejectedScreenProps {
   /** The round's own number. */
@@ -26,8 +43,9 @@ interface OrderRejectedScreenProps {
 }
 
 /**
- * The cart page's view of a round the counter turned down or didn't
- * confirm in time (see shownCancelReason) — the counterpart of
+ * The cart page's view of a round the counter turned down, didn't
+ * confirm in time, or a customer cancelled while it waited (see
+ * shownCancelReason) — the counterpart of
  * OrderConfirmedScreen, in the same visual language. Warning, not error:
  * nothing is broken, the customer just needs to look again. Shown until
  * the customer moves on (each caller remembers that per round).
@@ -46,9 +64,9 @@ export default function OrderRejectedScreen({
   // in it isn't reliably announced, a change to an existing one is.
   const [announcement, setAnnouncement] = useState("");
   useEffect(() => {
-    const timeout = setTimeout(() => setAnnouncement(TITLE), 100);
+    const timeout = setTimeout(() => setAnnouncement(titleFor(reason)), 100);
     return () => clearTimeout(timeout);
-  }, []);
+  }, [reason]);
 
   return (
     <OutcomeScreenShell
@@ -77,16 +95,14 @@ export default function OrderRejectedScreen({
         component="h1"
         sx={{ mb: 1, textAlign: "center" }}
       >
-        {TITLE}
+        {titleFor(reason)}
       </Typography>
       <Typography
         variant="body2"
         color="text.secondary"
         sx={{ textAlign: "center", mb: 1 }}
       >
-        {reason === "REJECTED"
-          ? `Order ${orderNumber} was not accepted by the counter.`
-          : `The counter didn't confirm Order ${orderNumber} in time.`}
+        {explanationFor(reason, orderNumber)}
       </Typography>
       <Typography
         variant="body2"

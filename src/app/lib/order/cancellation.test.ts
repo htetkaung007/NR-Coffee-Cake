@@ -74,6 +74,10 @@ describe("deriveDecidedAt", () => {
   it("is now for an expiry with no deadline", () => {
     expect(deriveDecidedAt("EXPIRED", null, now)).toEqual(now);
   });
+
+  it("is now for a customer's withdrawal — when they tapped Cancel", () => {
+    expect(deriveDecidedAt("WITHDRAWN", deadline, now)).toEqual(now);
+  });
 });
 
 describe("waitSeconds", () => {

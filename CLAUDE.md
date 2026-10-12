@@ -146,12 +146,28 @@ left in a broken/inconsistent state?"
   (`services/orderService/orderSession.service.ts`, in the caller's
   transaction) is
   the only code that writes status CANCELLED / `cancelReason`, gives the
-  stock back, and creates the `OrderCancellation` row (REJECTED and
-  EXPIRED only — never UNSUBMITTED, never accepted rounds). Every cancel
-  path (Reject, lazy and batch expiry, abandoned carts, leftover carts
-  at payment) goes through it; don't write those fields anywhere else.
+  stock back, and creates the `OrderCancellation` row (REJECTED, EXPIRED
+  and WITHDRAWN — never UNSUBMITTED, never accepted rounds). Every cancel
+  path (Reject, lazy and batch expiry, a customer's own Cancel / Change
+  order while the round waits for approval, abandoned carts, leftover
+  carts at payment) goes through it; don't write those fields anywhere
+  else. WITHDRAWN (the customer's own, `lib/order/withdrawal.ts`) is
+  listed in History ("Cancelled by customer") but never counted as the
+  shop's miss on Reports (`lib/order/cancelReason.ts`).
   An `OrderCancellation` row is frozen history: written once, never
   edited.
+- **Accepted rounds are still never CANCELLED, but their lines can be
+  voided.** `OrderVoidService.voidLine`
+  (`services/orderService/orderVoid.service.ts`) is the ONLY writer of
+  `OrderVoid` — accepted, unpaid rounds only (PENDING / COOKING), in one
+  transaction that locks the round first (markSessionsPaid takes the
+  same lock, so a void is either on the bill or refused, never charged).
+  An `OrderVoid` row is frozen history: written once, never edited. A
+  line charges its effective quantity (quantity − voids,
+  `lib/order/voids.ts`): `orderTotals.orderLineTotal` requires `voids`
+  on every line it prices, so a query that forgets them fails tsc.
+  Customers see only "Removed by staff" + the reason — never the note
+  or who (ORDER_LINE_INCLUDE's void select carries neither).
 - **The cancellation `note` is staff-typed free text** (Other only,
   ≤ 120 characters, normalised by `rejectRoundSchema`). Never put it in a
   URL (query string, path, redirect).
@@ -368,11 +384,21 @@ business reason?"
   next round, status); **TableSessionService** (Table QR scan and a
   table's rounds), **CounterSessionService** (Counter QR scan, the
   cookie's session and its bill), **StaffOrderService** (the staff New
-  Order screen), **OrderApprovalService** (accept / reject / expire),
-  **OrderPaymentService** (mark paid + after-payment clean-up) and
+  Order screen — it only submits a WHOLE order: New Order keeps its cart
+  in localStorage (lib/cart/staffCart.ts, useStaffCart) until "Send to
+  kitchen", and a staff round never touches Table.activeSessionId, the
+  customers' phone status; its target — a new takeaway, an open Counter
+  bill or a table — is `lib/order/orderTarget.ts`, and a round onto a
+  Counter bill joins it through billSessionId like customer "Order
+  More"), **OrderApprovalService** (accept / reject / expire),
+  **OrderPaymentService** (mark paid + after-payment clean-up),
+  **OrderVoidService** (voids on accepted, unpaid rounds — the one
+  OrderVoid writer) and
   **OrderListService** (the Backoffice Order List reads) each call down
   into OrderSessionService, never the other way round — no import
-  cycles. OrderSessionCartService (cart lines) is unchanged.
+  cycles. OrderSessionCartService keeps only the Table
+  QR draft's helpers (add-on selection check, the line as returned) —
+  the Table draft is the one cart still built on the server.
 - "Frequently called together in one workflow" is **not** a reason to
   put two Services' logic in the same file — that's what the
   Controller (action.ts) is for: it orchestrates calls across
@@ -408,6 +434,9 @@ business reason?"
   so revoking takes effect on the next request. Anything a page passes
   to the client about permissions (`canToggle`, `useCan`) is display
   only; the action enforces.
+- `ORDERS_VOID` (void items on an accepted, unpaid order) is grantable,
+  not a default; `voidOrderLineAction` checks it first, the "⋯ → Void…"
+  menu is display only.
 - The owner can move a manager to another location or remove them
   (ManagerService); guards re-check that the session's user still exists
   on every request.

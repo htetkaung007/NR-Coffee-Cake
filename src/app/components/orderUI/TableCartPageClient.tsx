@@ -24,11 +24,14 @@ import {
 } from "@/app/lib/hooks/useRoundDismissed";
 import type { ShownCancelReason } from "@/app/lib/order/roundOutcome";
 import {
+  changeRoundAction,
   pollTableAction,
   removeDraftItemAction,
   submitDraftAction,
   updateDraftItemAction,
+  withdrawRoundAction,
 } from "@/app/(storefront)/table/action";
+import WithdrawRoundControls from "./WithdrawRoundControls";
 import type {
   DraftLine,
   LabelledCartLine,
@@ -41,6 +44,8 @@ const POLL_INTERVAL_MS = 4000;
 
 interface TableCartPageClientProps {
   tableId: number;
+  /** "Table 3" — for the Cancel order confirm; null if unknown. */
+  tableName: string | null;
   locationId: number;
   shopName: string | null;
   initialDraftItems: DraftLine[];
@@ -73,6 +78,7 @@ interface RejectedRound {
  */
 export default function TableCartPageClient({
   tableId,
+  tableName,
   locationId,
   shopName,
   initialDraftItems,
@@ -194,18 +200,40 @@ export default function TableCartPageClient({
       // instead of clearing the list locally, which is what used to
       // leave the page empty apart from the status chip. Table stays
       // open for drafting a next round.
-      const fresh = await pollTableAction(tableId, locationId);
-      if (fresh.authorized) {
-        setDraftItems(fresh.draftItems);
-        setActiveRound(fresh.activeRound);
-        setRoundItems(fresh.roundItems);
-        setShortages(fresh.shortages);
-        setRejectedRound(fresh.rejectedRound);
-      } else {
-        router.refresh();
-      }
+      await refreshNow();
       setIsSending(false);
     });
+  }
+
+  /** Pulls the table's state right away instead of waiting for a poll. */
+  async function refreshNow() {
+    const fresh = await pollTableAction(tableId, locationId);
+    if (fresh.authorized) {
+      setDraftItems(fresh.draftItems);
+      setActiveRound(fresh.activeRound);
+      setRoundItems(fresh.roundItems);
+      setShortages(fresh.shortages);
+      setRejectedRound(fresh.rejectedRound);
+    } else {
+      router.refresh();
+    }
+  }
+
+  /** "Change order" / "Cancel order" on the waiting round — for everyone
+   *  at the table. This phone did it, so it skips the "was cancelled"
+   *  screen the other phones see; Change brings the lines back as the
+   *  shared draft to edit. */
+  async function withdrawOwnRound(mode: "change" | "cancel") {
+    const roundId = activeRound?.id;
+    const result =
+      mode === "change"
+        ? await changeRoundAction(tableId)
+        : await withdrawRoundAction(tableId);
+    if (result.success && roundId !== undefined) {
+      dismissRejectedRound(tableId, roundId);
+    }
+    await refreshNow();
+    return result;
   }
 
   function goBackToMenu() {
@@ -304,7 +332,13 @@ export default function TableCartPageClient({
             <ApprovalWaitingPanel
               orderNumber={activeRound.orderNumber}
               approval={activeRound.approval}
-            />
+            >
+              <WithdrawRoundControls
+                confirmMessage={`This cancels the order for everyone at ${tableName ?? "your table"}.`}
+                onChange={() => withdrawOwnRound("change")}
+                onCancel={() => withdrawOwnRound("cancel")}
+              />
+            </ApprovalWaitingPanel>
           )}
 
         {error && (

@@ -16,6 +16,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import { signOut, useSession } from "next-auth/react";
+import { clearStaffCarts } from "@/app/lib/hooks/useStaffCart";
 import { useThemeMode } from "../lib/theme/ThemeModeProvider";
 import { hoverCapableMedia } from "../lib/theme/sharedThemeTokens";
 
@@ -219,7 +220,12 @@ export function BackofficeTopBar({
             {session?.user?.name?.[0]?.toUpperCase() ?? "?"}
           </Avatar>
           <IconButton
-            onClick={() => signOut({ callbackUrl: "/auth/signIn" })}
+            onClick={() => {
+              // An unsent New Order stays on this device until Send —
+              // never for the next person who signs in here.
+              clearStaffCarts(session?.user?.id ?? null);
+              void signOut({ callbackUrl: "/auth/signIn" });
+            }}
             sx={{ color: "text.primary" }}
             aria-label="Sign out"
           >

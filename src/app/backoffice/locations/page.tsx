@@ -46,11 +46,13 @@ export default async function LocationsPage() {
         <Box
           sx={{
             display: "grid",
+            // From sm the permanent sidebar takes 260px, so columns
+            // follow the content width, not the viewport: as many
+            // ≥180px cards as fit (auto-fill keeps a few cards at that
+            // size on a wide screen instead of stretching them).
             gridTemplateColumns: {
               xs: "repeat(2, 1fr)",
-              sm: "repeat(3, 1fr)",
-              md: "repeat(4, 1fr)",
-              lg: "repeat(5, 1fr)",
+              sm: "repeat(auto-fill, minmax(180px, 1fr))",
             },
             gap: { xs: 1.5, sm: 2, md: 2.5 },
           }}

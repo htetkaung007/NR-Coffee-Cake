@@ -8,116 +8,86 @@ import {
 } from "@/app/lib/actionHelper";
 import { requireStaff } from "@/app/lib/access/roleGuard";
 import {
-  staffAddCartItemSchema,
-  staffUpdateCartItemSchema,
-  type StaffAddCartItemInput,
-  type StaffUpdateCartItemInput,
+  submitStaffOrderSchema,
+  validateStaffCartSchema,
+  type SubmitStaffOrderRawInput,
 } from "@/app/lib/schemas/staffOrderSchema";
-import { StaffOrderService } from "@/app/services";
+import type { CartLineInput } from "@/app/lib/cart/cartValidation";
+import {
+  CartValidationService,
+  OrderListService,
+  StaffOrderService,
+} from "@/app/services";
 
 /**
- * Design doc section 7 ("staff place a new order directly") — the one
- * customer-order code path that authenticates via NextAuth
- * (requireStaff — the session) instead of a QR-scan cookie, since there's no
- * physical scan involved: a manager is placing this order themselves,
- * from inside the Backoffice. Everything downstream of session
- * creation (Order rows, OrdersAddon rows, status transitions) reuses
- * the exact same OrderSessionService methods a real customer session
- * would — this file's only job is the auth boundary and wiring a
- * chosen tableId into startStaffSession/addItem, which a real scan
- * would otherwise have supplied via the cookie. Every table / session id
- * here comes from the browser, so StaffOrderService checks it against
- * the staff scope (the company; a manager's own location only).
+ * Design doc section 7 ("staff place a new order directly"). The cart is
+ * kept in the browser (lib/cart/staffCart.ts) until "Send to kitchen":
+ * two read-only calls — the cart check while it's being built and the
+ * tables' In use / Free for the picker — and the one write when it's
+ * sent. All authenticate via the staff session (requireStaff), never a
+ * QR cookie, and take the location from that session, never from the
+ * input.
  */
 
-const safeStartStaffOrder = toSafeResult(async (tableId: number) => {
-  const scope = await requireStaff({ withLocation: true });
-  return StaffOrderService.startStaffSession(tableId, scope);
-});
-
-export async function startStaffOrderAction(tableId: number) {
-  const result = await safeStartStaffOrder(tableId);
-  return toActionResult(result);
-}
-
-const safeAddStaffCartItem = toSafeResult(
-  async (input: StaffAddCartItemInput) => {
-    const scope = await requireStaff({ withLocation: true });
-    return StaffOrderService.addItem(scope, input);
-  },
+const safeRequireStaffAtLocation = toSafeResult(() =>
+  requireStaff({ withLocation: true }),
 );
 
-export async function addStaffCartItemAction(
-  sessionId: number,
-  tableId: number,
-  menuId: number,
-  quantity: number,
-  addonIds: number[] = [],
-  note?: string,
-) {
-  const result = await validateWith(staffAddCartItemSchema, {
-    sessionId,
-    tableId,
-    menuId,
-    quantity,
-    addonIds,
-    note,
-  }).asyncAndThen(safeAddStaffCartItem);
-  return toActionResult(result);
-}
-
-const safeUpdateStaffCartItem = toSafeResult(
-  async (input: StaffUpdateCartItemInput) => {
-    const scope = await requireStaff({ withLocation: true });
-    return StaffOrderService.updateItem(scope, input);
-  },
+const safeValidateStaffCart = toSafeResult(
+  (input: { locationId: number; lines: CartLineInput[] }) =>
+    CartValidationService.validate(input.locationId, input.lines),
 );
 
-/** A line's quantity (the − / + stepper) or its add-ons and note (the
- *  edit dialog) of the staff's server-held cart (the Counter customer's
- *  cart lives in their browser instead — see useBrowserCart). */
-export async function updateStaffCartItemAction(
-  sessionId: number,
-  orderId: number,
-  quantity: number,
-  addonIds: number[] = [],
-  note?: string,
-) {
-  const result = await validateWith(staffUpdateCartItemSchema, {
-    sessionId,
-    orderId,
-    quantity,
-    addonIds,
-    note,
-  }).asyncAndThen(safeUpdateStaffCartItem);
+/** The live check while the order is being built ("Only 1 left", "Sold
+ *  out", "Not available", a new price) — against the staff member's own
+ *  selected location's menu, stock and prices. Writes nothing. */
+export async function validateStaffCartAction(input: {
+  lines: CartLineInput[];
+}) {
+  const result = await safeRequireStaffAtLocation()
+    .andThen(({ locationId }) =>
+      validateWith(validateStaffCartSchema, input).map((data) => ({
+        ...data,
+        locationId,
+      })),
+    )
+    .andThen(safeValidateStaffCart);
   return toActionResult(result);
 }
 
-const safeRemoveStaffCartItem = toSafeResult(
-  async (input: { sessionId: number; orderId: number }) => {
-    const scope = await requireStaff({ withLocation: true });
-    return StaffOrderService.removeItem(scope, input);
-  },
-);
+const safeSubmitStaffOrder = toSafeResult(StaffOrderService.submitStaffOrder);
 
-export async function removeStaffCartItemAction(
-  sessionId: number,
-  orderId: number,
-) {
-  const result = await safeRemoveStaffCartItem({ sessionId, orderId });
-  return toActionResult(result);
-}
+/** "Send to kitchen": the whole cart as one PENDING round (staff orders
+ *  skip approval). Guard FIRST; the table must be one this staff member
+ *  may order for (StaffOrderService). Safe to retry with the same
+ *  clientRequestId — a repeat returns the order the first call created.
+ *  A shortage or unavailable line comes back with the check and nothing
+ *  is written. */
+export async function submitStaffOrderAction(input: SubmitStaffOrderRawInput) {
+  const result = await safeRequireStaffAtLocation()
+    .andThen((scope) =>
+      validateWith(submitStaffOrderSchema, input).map((data) => ({
+        ...data,
+        scope,
+      })),
+    )
+    .andThen(safeSubmitStaffOrder);
 
-const safeSubmitStaffOrder = toSafeResult(async (sessionId: number) => {
-  const scope = await requireStaff({ withLocation: true });
-  return StaffOrderService.submitStaffOrder(sessionId, scope);
-});
-
-export async function submitStaffOrderAction(sessionId: number) {
-  const result = await safeSubmitStaffOrder(sessionId);
   const actionResult = toActionResult(result);
-  if (actionResult.success) {
+  if (actionResult.success && actionResult.data.status === "submitted") {
     revalidatePath("/backoffice/order");
   }
   return actionResult;
+}
+
+const safeGetTableOccupancy = toSafeResult(async () => {
+  const { locationId } = await requireStaff({ withLocation: true });
+  return OrderListService.getTableOccupancy(locationId);
+});
+
+/** Which tables are In use / Free at the staff member's own selected
+ *  location — for the "Order for" picker when it opens. Read-only; the
+ *  location comes from the session, never the input. */
+export async function getTableOccupancyAction() {
+  return toActionResult(await safeGetTableOccupancy());
 }

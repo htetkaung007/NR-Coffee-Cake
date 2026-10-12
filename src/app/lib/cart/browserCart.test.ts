@@ -8,6 +8,7 @@ import {
   itemCount,
   parseCart,
   pruneLastSubmitted,
+  quantityThatFits,
   recordSubmission,
   removeLine,
   restoreAfterRejection,
@@ -529,5 +530,26 @@ describe("parseCart — the submission record", () => {
   it("returns an empty cart when the submission record is malformed", () => {
     const raw = JSON.stringify({ ...submittedCart(), lastSubmitted: { lines: 1 } });
     expect(parseCart(raw, LOCATION)).toEqual(emptyCart(LOCATION));
+  });
+});
+
+describe("quantityThatFits", () => {
+  const lines = [
+    { menuId: LATTE, quantity: 2 },
+    { menuId: MOCHA, quantity: 5 },
+    { menuId: LATTE, quantity: 1 },
+  ];
+
+  it("leaves this line what the menu's other lines don't already take", () => {
+    // 4 Lattes in stock, the other Latte line keeps 1 → this one can have 3.
+    expect(quantityThatFits(lines, 0, 4)).toBe(3);
+  });
+
+  it("ignores other menus' lines", () => {
+    expect(quantityThatFits(lines, 1, 3)).toBe(3);
+  });
+
+  it("is 0, never negative, when the other lines already take it all", () => {
+    expect(quantityThatFits(lines, 2, 1)).toBe(0);
   });
 });

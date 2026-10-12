@@ -1,48 +1,60 @@
 import { prisma } from "@/app/utils/prisma";
-import { Prisma } from "../../../../prisma/generated/browser";
 import { shownCancelReason } from "@/app/lib/order/roundOutcome";
 import { ACTIVE_ORDER_LINES, ORDER_LINE_INCLUDE } from "./orderLineQuery";
-import { generateOrderNumber, isSessionTerminal } from "./orderSession.service";
+import { Prisma } from "../../../../prisma/generated/browser";
+import { AppError } from "@/app/lib/errors";
+import {
+  toTableDraftRows,
+  withdrawBlock,
+  WITHDRAW_BLOCK_MESSAGES,
+} from "@/app/lib/order/withdrawal";
+import { TableDraftService } from "../tableDraft.service";
+import { isSessionTerminal, OrderSessionService } from "./orderSession.service";
 
 type Tx = Prisma.TransactionClient;
 
 /** Table QR — the scan, and a table's rounds as the customer's pages
- *  show them (active, last rejected, detail, history). Sessions here are
- *  created by TableDraftService.submitDraft or startNewTableSession; the
- *  shared lifecycle (cancel, status) is OrderSessionService's. */
+ *  show them (active, last rejected, detail, history). Customer rounds
+ *  are created by TableDraftService.submitDraft (which also points
+ *  Table.activeSessionId at them); staff rounds by
+ *  StaffOrderService.submitStaffOrder (which never does). The shared
+ *  lifecycle (cancel, status) is OrderSessionService's. */
 export class TableSessionService {
-  /** Used by startStaffSession (a staff-placed order, no scan/cookie
-   *  involved) to create a Table-QR-shaped session directly. No longer
-   *  called from the customer-facing scan flow (see
-   *  resolveTableQrScan's own comment) — drafts replaced that path,
-   *  but a staff member manually opening a tab for a walk-in table
-   *  still needs a real session to exist right away, so this stays. */
-  static async startNewTableSession(table: { id: number; locationId: number }) {
-    return prisma.$transaction(async (tx: Tx) => {
-      const session = await tx.orderSession.create({
-        data: {
-          locationId: table.locationId,
-          tableId: table.id,
-          isCounter: false,
-          status: "CART",
-          orderNumber: "",
-        },
-      });
-
-      const numbered = await tx.orderSession.update({
-        where: { id: session.id },
-        data: { orderNumber: generateOrderNumber(session.id) },
-      });
-
-      // This write is what "opens the gate" for the table — see design
-      // doc section 3, rule 2.
-      await tx.table.update({
-        where: { id: table.id },
-        data: { activeSessionId: session.id },
-      });
-
-      return numbered;
+  /** Which of a table's rounds belong to the CURRENT tab, for its
+   *  customers' history and receipts: every open round (awaiting
+   *  approval, accepted, cooking), plus rounds a customer withdrew
+   *  ("Cancelled by you") since the table was last settled — an earlier
+   *  group's withdrawals never show. Never charged: callers leave
+   *  CANCELLED rounds out of their totals. */
+  private static async currentTabRounds(
+    tableId: number,
+  ): Promise<Prisma.OrderSessionWhereInput> {
+    const lastSettled = await prisma.orderSession.findFirst({
+      where: { tableId, status: { in: ["PAID", "COMPLETED"] } },
+      orderBy: { id: "desc" },
+      select: { id: true },
     });
+    return {
+      OR: [
+        { status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] } },
+        {
+          status: "CANCELLED",
+          cancelReason: "WITHDRAWN",
+          id: { gt: lastSettled?.id ?? 0 },
+        },
+      ],
+    };
+  }
+
+  /** The table's name for the customer's own screens ("Table 3") — only
+   *  a seated table that's still open; null otherwise. The caller has
+   *  checked the viewer's contributor token for it. */
+  static async getTableName(tableId: number) {
+    const table = await prisma.table.findFirst({
+      where: { id: tableId, isArchived: false, isCounter: false },
+      select: { name: true },
+    });
+    return table?.name ?? null;
   }
 
   /** Table QR — validates the table's rotating key
@@ -144,7 +156,7 @@ export class TableSessionService {
         id: roundId,
         tableId,
         isArchived: false,
-        status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
+        ...(await TableSessionService.currentTabRounds(tableId)),
       },
       include: {
         orders: { ...ACTIVE_ORDER_LINES, orderBy: { id: "asc" } },
@@ -161,7 +173,9 @@ export class TableSessionService {
    *  together in one bill — so this is everything on that bill so far.
    *
    *  Excludes CART (nothing submitted yet — that's the live draft,
-   *  shown on the menu/cart pages instead) and every terminal status.
+   *  shown on the menu/cart pages instead) and every terminal status —
+   *  except rounds a customer withdrew in this tab (currentTabRounds),
+   *  listed as "Cancelled by you" and never in the total.
    *  A caller only reaches this after requireContributorToken/
    *  isTokenCurrentForTable passes, and that check itself already goes
    *  stale the moment the table is paid (Table.contributorEpoch bumps
@@ -174,12 +188,75 @@ export class TableSessionService {
       where: {
         tableId,
         isArchived: false,
-        status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
+        ...(await TableSessionService.currentTabRounds(tableId)),
       },
       orderBy: { id: "asc" },
       include: {
         orders: ACTIVE_ORDER_LINES,
       },
     });
+  }
+
+  /**
+   * "Cancel order" / "Change order" on the Table waiting screen: the
+   * table's current round (the one its phones show — Table.activeSessionId)
+   * withdrawn while it waits for approval, for EVERYONE at the table —
+   * the caller has checked this phone holds the table's current
+   * contributor token; never a round named by id. Through
+   * cancelSession(…, "WITHDRAWN"), the one cancel writer (stock back, an
+   * OrderCancellation row), whose status check settles a race with the
+   * cashier: if Accept got there first, nothing is written and the
+   * customer is told why (AppError WITHDRAW_BLOCKED).
+   *
+   * "change" also, in the SAME transaction, turns the round's lines back
+   * into the table's shared draft (TableDraftService.restoreDraftRows),
+   * each keeping whose pick it was — so everyone can edit and send again.
+   */
+  static async withdrawPendingRound(tableId: number, mode: "cancel" | "change") {
+    const table = await prisma.table.findFirst({
+      where: { id: tableId, isArchived: false, isCounter: false },
+      select: { activeSessionId: true },
+    });
+    const round = table?.activeSessionId
+      ? await prisma.orderSession.findFirst({
+          where: { id: table.activeSessionId, tableId, isArchived: false },
+          include: { orders: { ...ACTIVE_ORDER_LINES, orderBy: { id: "asc" } } },
+        })
+      : null;
+    if (!round) {
+      throw new AppError(
+        "There's no order waiting at this table.",
+        "WITHDRAW_BLOCKED",
+      );
+    }
+    const block = withdrawBlock(round, new Date());
+    if (block) {
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[block], "WITHDRAW_BLOCKED");
+    }
+
+    const withdrawn = await prisma.$transaction(async (tx: Tx) => {
+      const cancelled = await OrderSessionService.cancelSession(
+        tx,
+        round.id,
+        "WITHDRAWN",
+      );
+      if (cancelled && mode === "change") {
+        await TableDraftService.restoreDraftRows(
+          tx,
+          toTableDraftRows(round.orders, tableId),
+        );
+      }
+      return cancelled;
+    });
+    if (!withdrawn) {
+      // Lost the race — say what happened instead.
+      const now = await prisma.orderSession.findUniqueOrThrow({
+        where: { id: round.id },
+        select: { status: true, isCounter: true, approvalExpiresAt: true },
+      });
+      const reason = withdrawBlock(now, new Date()) ?? "cancelled";
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], "WITHDRAW_BLOCKED");
+    }
+    return { sessionId: round.id, orderNumber: round.orderNumber };
   }
 }

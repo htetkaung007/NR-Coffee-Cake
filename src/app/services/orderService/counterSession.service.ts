@@ -1,6 +1,12 @@
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 import { orderLinesTotal } from "@/app/lib/order/orderTotals";
+import { AppError } from "@/app/lib/errors";
+import {
+  toCounterHandBack,
+  withdrawBlock,
+  WITHDRAW_BLOCK_MESSAGES,
+} from "@/app/lib/order/withdrawal";
 import { ACTIVE_ORDER_LINES } from "./orderLineQuery";
 import {
   OrderSessionService,
@@ -158,10 +164,15 @@ export class CounterSessionService {
    *
    *  combinedTotal reuses orderLinesTotal per round — no separate
    *  total math (Rule: reuse orderTotals helpers). */
-  static async getBillForSession(session: {
-    id: number;
-    billSessionId: number | null;
-  }) {
+  static async getBillForSession(
+    session: {
+      id: number;
+      billSessionId: number | null;
+    },
+    /** /history and its receipts: also the rounds the customer withdrew
+     *  ("Cancelled by you") — listed, never in combinedTotal. */
+    options: { includeWithdrawn?: boolean } = {},
+  ) {
     const rootId = session.billSessionId ?? session.id;
 
     const [root, rounds] = await Promise.all([
@@ -170,9 +181,18 @@ export class CounterSessionService {
       }),
       prisma.orderSession.findMany({
         where: {
-          OR: [{ id: rootId }, { billSessionId: rootId }],
+          AND: [
+            { OR: [{ id: rootId }, { billSessionId: rootId }] },
+            {
+              OR: [
+                { status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] } },
+                ...(options.includeWithdrawn
+                  ? [{ status: "CANCELLED" as const, cancelReason: "WITHDRAWN" as const }]
+                  : []),
+              ],
+            },
+          ],
           isArchived: false,
-          status: { in: ["PENDING_APPROVAL", "PENDING", "COOKING"] },
         },
         orderBy: { id: "asc" },
         include: {
@@ -182,10 +202,10 @@ export class CounterSessionService {
     ]);
 
     const billNumber = root?.orderNumber ?? generateOrderNumber(rootId);
-    const combinedTotal = rounds.reduce(
-      (sum, round) => sum + orderLinesTotal(round.orders),
-      0,
-    );
+    // A withdrawn round is never charged.
+    const combinedTotal = rounds
+      .filter((round) => round.status !== "CANCELLED")
+      .reduce((sum, round) => sum + orderLinesTotal(round.orders), 0);
 
     return { billNumber, rounds, combinedTotal };
   }
@@ -278,5 +298,66 @@ export class CounterSessionService {
         data: { orderNumber: generateOrderNumber(session.id) },
       });
     });
+  }
+
+  /**
+   * "Cancel order" / "Change order" on the Counter waiting screen: the
+   * round the customer's OWN cookie points at — never one named by id —
+   * withdrawn while it waits for approval (lib/order/withdrawal), through
+   * cancelSession(…, "WITHDRAWN"), the one cancel writer (stock back, an
+   * OrderCancellation row). Its status check settles a race with the
+   * cashier: if Accept (or the timeout) got there first, nothing is
+   * written and the customer is told why (AppError WITHDRAW_BLOCKED).
+   *
+   * Where the cookie goes next (`nextToken`, null = clear it): onto the
+   * bill's still-open first round if there is one (as after a
+   * rejection); else, for "change", onto a fresh cart round at the same
+   * counter, so the customer can send the changed order without scanning
+   * again; else nowhere. "change" also hands the lines back for the
+   * browser cart (toCounterHandBack).
+   */
+  static async withdrawByToken(token: string, mode: "cancel" | "change") {
+    const session = await CounterSessionService.getSessionByToken(token);
+    if (!session || !session.isCounter) {
+      throw new AppError(
+        "We couldn't find your order. Scan the counter QR code again.",
+        "NO_SESSION",
+      );
+    }
+    const block = withdrawBlock(session, new Date());
+    if (block) {
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[block], "WITHDRAW_BLOCKED");
+    }
+
+    const withdrawn = await prisma.$transaction((tx: Tx) =>
+      OrderSessionService.cancelSession(tx, session.id, "WITHDRAWN"),
+    );
+    if (!withdrawn) {
+      // Lost the race — say what happened instead.
+      const now = await prisma.orderSession.findUniqueOrThrow({
+        where: { id: session.id },
+        select: { status: true, isCounter: true, approvalExpiresAt: true },
+      });
+      const reason = withdrawBlock(now, new Date()) ?? "cancelled";
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], "WITHDRAW_BLOCKED");
+    }
+
+    const root = await CounterSessionService.getOpenBillRoot(session);
+    let nextToken: string | null = root?.token ?? null;
+    if (!nextToken && mode === "change" && session.tableId !== null) {
+      // After the commit: if this fails, the customer just scans again.
+      const fresh = await CounterSessionService.startNewCounterSession(
+        session.locationId,
+        session.tableId,
+      );
+      nextToken = fresh.token;
+    }
+
+    return {
+      sessionId: session.id,
+      orderNumber: session.orderNumber,
+      nextToken,
+      lines: mode === "change" ? toCounterHandBack(session.orders) : [],
+    };
   }
 }

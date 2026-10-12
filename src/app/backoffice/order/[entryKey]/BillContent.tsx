@@ -1,6 +1,8 @@
 "use client";
 
 import { useId } from "react";
+import Link from "next/link";
+import AddIcon from "@mui/icons-material/Add";
 import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
@@ -82,7 +84,11 @@ export default function BillContent({
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2 }}>
         {bill.acceptedRounds.length === 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ pt: 2 }}>
-            Nothing accepted yet.
+            {/* canPrint: some round was accepted — so it was all voided
+                (the bill lists only what's payable). */}
+            {canPrint
+              ? "Nothing to charge — everything accepted was voided."
+              : "Nothing accepted yet."}
           </Typography>
         )}
 
@@ -121,16 +127,30 @@ export default function BillContent({
 
       <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
         <BillTotal label="Total" amount={bill.total} sx={{ mb: 2 }} />
-        {/* Print beside Mark as paid from sm up, above it on phones.
-            Printing never settles anything — Mark as paid stays the
-            primary (and only) payment action. */}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-          <PrintBillButton
-            variant="full"
-            entryKey={entryKey}
-            disabled={!canPrint}
-            reasonId={printReasonId}
-          />
+        {/* Print and Add items side by side, Mark as paid under them —
+            the primary (and only) payment action. Printing never settles
+            anything; Add items opens New Order for this same bill (a NEW
+            round — sent rounds are never edited). The entry is open, so
+            it's unpaid whenever this shows. */}
+        <Stack spacing={1}>
+          <Stack direction="row" spacing={1}>
+            <PrintBillButton
+              variant="full"
+              entryKey={entryKey}
+              disabled={!canPrint}
+              reasonId={printReasonId}
+            />
+            <Button
+              component={Link}
+              href={`/backoffice/order/new?for=${entryKey}`}
+              fullWidth
+              variant="outlined"
+              startIcon={<AddIcon />}
+              sx={{ minHeight: 44 }}
+            >
+              Add items
+            </Button>
+          </Stack>
           <Button
             fullWidth
             variant="contained"

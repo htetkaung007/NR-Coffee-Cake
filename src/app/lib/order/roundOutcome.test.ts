@@ -10,6 +10,10 @@ describe("shownCancelReason", () => {
     expect(shownCancelReason("CANCELLED", "EXPIRED")).toBe("EXPIRED");
   });
 
+  it("tells everyone at the table about a round a customer withdrew", () => {
+    expect(shownCancelReason("CANCELLED", "WITHDRAWN")).toBe("WITHDRAWN");
+  });
+
   it("stays quiet about a cart that was never sent", () => {
     expect(shownCancelReason("CANCELLED", "UNSUBMITTED")).toBeNull();
   });

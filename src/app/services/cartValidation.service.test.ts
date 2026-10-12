@@ -29,16 +29,12 @@ vi.mock("@/app/utils/prisma", () => ({
     },
     table: {
       findFirst: async ({ where }: { where: { id: number } }) =>
-        where.id === 3 ? { locationId: 10 } : null,
+        where.id === 3
+          ? { id: 3, locationId: 10, isCounter: false, location: { companyId: 1 } }
+          : null,
     },
-    orderSession: {
-      findFirst: async () => ({
-        id: 7,
-        status: "CART",
-        locationId: 10,
-        location: { companyId: 1 },
-      }),
-    },
+    // No earlier send with this request id (StaffOrderService.findSubmitted).
+    orderSession: { findFirst: async () => null },
     order: {
       findMany: async () =>
         db.orders.map((order, index) => ({
@@ -78,7 +74,6 @@ vi.mock("@/app/utils/prisma", () => ({
 
 import { CartValidationService } from "./cartValidation.service";
 import { TableDraftService } from "./tableDraft.service";
-import { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 import { StaffOrderService } from "./orderService/staffOrder.service";
 
 /** A manager working at location 10 (the staff POS's scope). */
@@ -127,13 +122,6 @@ describe("adding a menu hidden at the location is refused on the server", () => 
       "written",
     );
   });
-
-  it("staff POS: addItemToCart refuses it before writing anything", async () => {
-    await expect(
-      OrderSessionCartService.addItemToCart(7, 3, 2, 1),
-    ).rejects.toMatchObject({ message: HIDDEN_MESSAGE });
-    expect(transaction).not.toHaveBeenCalled();
-  });
 });
 
 describe("sending a menu hidden at the location is refused on the server", () => {
@@ -145,10 +133,19 @@ describe("sending a menu hidden at the location is refused on the server", () =>
     expect(transaction).not.toHaveBeenCalled();
   });
 
-  it("staff POS: submit refuses a line added before the menu was hidden", async () => {
-    db.orders = [{ menuId: 2 }];
-    await expect(StaffOrderService.submitStaffOrder(7, staffAtLocation10)).rejects.toMatchObject({
-      message: HIDDEN_MESSAGE,
+  it("staff POS: Send to kitchen returns a hidden menu's line as unavailable, writing nothing", async () => {
+    const result = await StaffOrderService.submitStaffOrder({
+      scope: staffAtLocation10,
+      target: { kind: "table", tableId: 3 },
+      lines: [
+        { menuId: 1, addonIds: [], quantity: 1, note: null },
+        { menuId: 2, addonIds: [], quantity: 1, note: null },
+      ],
+      clientRequestId: "11111111-1111-4111-8111-111111111111",
+    });
+    expect(result).toMatchObject({
+      status: "needsAttention",
+      validation: { lines: [{ index: 0 }, { index: 1, status: "unavailable" }] },
     });
     expect(transaction).not.toHaveBeenCalled();
   });

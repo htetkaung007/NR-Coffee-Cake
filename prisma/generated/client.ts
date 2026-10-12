@@ -155,6 +155,15 @@ export type Bill = Prisma.BillModel
  */
 export type OrderCancellation = Prisma.OrderCancellationModel
 /**
+ * Model OrderVoid
+ * *
+ *  * One void: staff took `quantity` of one order line back off an
+ *  * accepted, unpaid order. Append-only history, in the same spirit as
+ *  * OrderCancellation — written once, never edited. A line can be voided
+ *  * more than once (each a row), never beyond its quantity.
+ */
+export type OrderVoid = Prisma.OrderVoidModel
+/**
  * Model UserPermission
  * *
  *  * One permission an owner granted one MANAGER — a row means "allowed",

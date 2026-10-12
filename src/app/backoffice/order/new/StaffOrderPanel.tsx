@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type Ref } from "react";
+import { useId, type ReactNode } from "react";
 import {
   Alert,
   Box,
@@ -8,9 +8,7 @@ import {
   ButtonBase,
   CircularProgress,
   IconButton,
-  MenuItem,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -29,32 +27,25 @@ import { moneySx } from "../orderTypography";
  *  cart schema enforces (staffOrderSchema's `quantity`). */
 const MAX_LINE_QUANTITY = 99;
 
-export interface StaffTable {
-  id: number;
-  name: string;
-  isCounter: boolean;
-}
-
+/** One line of the cart kept in this browser (lib/cart/staffCart.ts) —
+ *  its prices are the ones last shown; the server re-prices on send. */
 export interface StaffCartLine {
-  /** Negative while a quick add hasn't been saved yet (no row id). */
-  id: number;
+  /** Its position in the cart — how edits find it. */
+  index: number;
   menuId: number;
   menuName: string;
   quantity: number;
-  /** The line's unit price snapshot (today's price while pending). */
+  /** The unit price last shown (refreshed by every check). */
   price: number;
-  /** With their own price snapshots — part of what the line costs. */
+  /** With the prices last shown — part of what the line costs. */
   addons: LineAddon[];
   note: string | null;
-  /** A save for this line is in flight — its controls pause. */
-  isBusy: boolean;
-}
-
-/** "Counter (takeaway)" for the counter, the plain name for a table.
- *  More than one counter keeps each one's own name to tell them apart. */
-function tableLabel(table: StaffTable, counterCount: number) {
-  if (!table.isCounter) return table.name;
-  return counterCount > 1 ? `${table.name} (takeaway)` : "Counter (takeaway)";
+  /** The latest check's word on it ("Only 1 left", "Sold out", …), with
+   *  its fix-it action; null when it's fine or not checked yet. */
+  notice: ReactNode;
+  /** Can't be sent as it is (sold out, short, unavailable) — shown dimmed
+   *  and left out of the total. */
+  blocked: boolean;
 }
 
 const stepperButtonSx = {
@@ -78,12 +69,6 @@ function OrderLine({
   onChangeQuantity: (line: StaffCartLine, next: number) => void;
   onRemove: (line: StaffCartLine) => void;
 }) {
-  // While busy the buttons stay focusable (aria-disabled, clicks
-  // ignored) so repeated − / + presses don't drop keyboard focus.
-  const guard = (action: () => void) => () => {
-    if (!line.isBusy) action();
-  };
-
   return (
     <Box
       component="li"
@@ -91,8 +76,7 @@ function OrderLine({
     >
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
         <ButtonBase
-          onClick={guard(() => onEdit(line))}
-          aria-disabled={line.isBusy}
+          onClick={() => onEdit(line)}
           aria-label={`Edit ${line.menuName}`}
           sx={(theme) => ({
             flex: 1,
@@ -103,6 +87,8 @@ function OrderLine({
             px: 1,
             mx: -1,
             borderRadius: 1,
+            // Dimmed, not hidden: the staff still sees what can't go.
+            opacity: line.blocked ? 0.6 : 1,
             [hoverCapableMedia]: {
               "&:hover": { bgcolor: theme.palette.action.hover },
             },
@@ -141,6 +127,8 @@ function OrderLine({
         </ButtonBase>
       </Stack>
 
+      {line.notice && <Box sx={{ mt: 1 }}>{line.notice}</Box>}
+
       <Stack
         direction="row"
         spacing={1}
@@ -149,8 +137,7 @@ function OrderLine({
         {line.quantity === 1 ? (
           <IconButton
             aria-label={`Remove ${line.menuName}`}
-            aria-disabled={line.isBusy}
-            onClick={guard(() => onRemove(line))}
+            onClick={() => onRemove(line)}
             sx={stepperButtonSx}
           >
             <DeleteOutlinedIcon fontSize="small" />
@@ -158,8 +145,7 @@ function OrderLine({
         ) : (
           <IconButton
             aria-label={`One less ${line.menuName}`}
-            aria-disabled={line.isBusy}
-            onClick={guard(() => onChangeQuantity(line, line.quantity - 1))}
+            onClick={() => onChangeQuantity(line, line.quantity - 1)}
             sx={stepperButtonSx}
           >
             <RemoveIcon fontSize="small" />
@@ -174,9 +160,8 @@ function OrderLine({
         </Typography>
         <IconButton
           aria-label={`One more ${line.menuName}`}
-          aria-disabled={line.isBusy}
           disabled={line.quantity >= MAX_LINE_QUANTITY}
-          onClick={guard(() => onChangeQuantity(line, line.quantity + 1))}
+          onClick={() => onChangeQuantity(line, line.quantity + 1)}
           sx={stepperButtonSx}
         >
           <AddIcon fontSize="small" />
@@ -187,13 +172,9 @@ function OrderLine({
 }
 
 interface StaffOrderPanelProps {
-  tables: StaffTable[];
-  tableId: number | "";
-  onTableChange: (tableId: number) => void;
-  /** Shown under the picker when an add was tried with no table yet. */
-  tablePrompt: boolean;
-  pickerRef?: Ref<HTMLDivElement>;
-  autoFocusPicker?: boolean;
+  /** "Current order", or with its target in the sheet ("Current order —
+   *  Table 3"), where the "Order for" picker isn't in sight. */
+  title: string;
   lines: StaffCartLine[];
   total: number;
   onEdit: (line: StaffCartLine) => void;
@@ -210,17 +191,13 @@ interface StaffOrderPanelProps {
 }
 
 /**
- * The current order — the ONE markup behind the md+ side panel and the
- * below-md drawer / bottom sheet. A flex column: the picker and the
- * footer (total + Send to kitchen) stay put, only the lines scroll.
+ * The current order — the ONE markup behind the lg+ "Current order" card
+ * and the below-lg bottom sheet. A flex column: the header and the footer
+ * (total + Send to kitchen) stay put, only the lines scroll. Which table
+ * it's for is picked outside it (OrderTargetPicker).
  */
 export default function StaffOrderPanel({
-  tables,
-  tableId,
-  onTableChange,
-  tablePrompt,
-  pickerRef,
-  autoFocusPicker = false,
+  title,
   lines,
   total,
   onEdit,
@@ -234,13 +211,6 @@ export default function StaffOrderPanel({
   onClose,
 }: StaffOrderPanelProps) {
   const reasonId = useId();
-  const promptId = useId();
-  const counters = tables.filter((table) => table.isCounter);
-  // Counter first, then the tables.
-  const orderedTables = [
-    ...counters,
-    ...tables.filter((table) => !table.isCounter),
-  ];
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
@@ -248,10 +218,14 @@ export default function StaffOrderPanel({
         <Stack
           direction="row"
           spacing={1}
-          sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}
+          sx={{ alignItems: "center", justifyContent: "space-between" }}
         >
-          <Typography component="h2" variant="h6">
-            Current order
+          <Typography
+            component="h2"
+            variant="h6"
+            sx={{ minWidth: 0, overflowWrap: "anywhere" }}
+          >
+            {title}
           </Typography>
           {onClose && (
             <IconButton
@@ -263,26 +237,6 @@ export default function StaffOrderPanel({
             </IconButton>
           )}
         </Stack>
-        <TextField
-          select
-          label="Table"
-          value={tableId}
-          ref={pickerRef}
-          autoFocus={autoFocusPicker}
-          onChange={(event) => onTableChange(Number(event.target.value))}
-          error={tablePrompt}
-          helperText={tablePrompt ? "Choose a table or Counter first" : undefined}
-          slotProps={{
-            formHelperText: { id: promptId },
-            select: { "aria-describedby": tablePrompt ? promptId : undefined },
-          }}
-        >
-          {orderedTables.map((table) => (
-            <MenuItem key={table.id} value={table.id}>
-              {tableLabel(table, counters.length)}
-            </MenuItem>
-          ))}
-        </TextField>
         {error && (
           <Alert severity="error" onClose={onDismissError} sx={{ mt: 1.5 }}>
             {error}
@@ -313,7 +267,7 @@ export default function StaffOrderPanel({
           >
             {lines.map((line) => (
               <OrderLine
-                key={line.id}
+                key={line.index}
                 line={line}
                 onEdit={onEdit}
                 onChangeQuantity={onChangeQuantity}

@@ -18,6 +18,8 @@ import {
   updateDraftItemSchema,
   submitDraftSchema,
   pollTableSchema,
+  withdrawTableRoundSchema,
+  type WithdrawTableRoundInput,
   AddDraftItemInput,
   RemoveDraftItemInput,
   UpdateDraftItemInput,
@@ -271,4 +273,41 @@ export async function pollTableAction(tableId: number, locationId: number) {
     shortages,
     rejectedRound,
   };
+}
+
+/** "Cancel order" / "Change order" on the Table waiting screen — see
+ *  TableSessionService.withdrawPendingRound: any phone holding the
+ *  table's CURRENT contributor token may withdraw the table's round that
+ *  waits for approval, for everyone at the table; never a round named by
+ *  id. "change" turns its lines back into the shared draft. Customer
+ *  action: no staff guard — the token and the waiting status are the
+ *  limits. */
+function safeWithdrawTableRound(mode: "cancel" | "change") {
+  return toSafeResult(async (input: WithdrawTableRoundInput) => {
+    await requireContributorToken(input.tableId);
+    return TableSessionService.withdrawPendingRound(input.tableId, mode);
+  });
+}
+
+async function withdrawTableRound(tableId: number, mode: "cancel" | "change") {
+  const result = await validateWith(withdrawTableRoundSchema, {
+    tableId,
+  }).asyncAndThen(safeWithdrawTableRound(mode));
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath(`${url}/menu`);
+    revalidatePath(`${url}/cart`);
+  }
+  return actionResult;
+}
+
+/** Cancels the table's waiting order, for everyone at the table. */
+export async function withdrawRoundAction(tableId: number) {
+  return withdrawTableRound(tableId, "cancel");
+}
+
+/** Takes the table's waiting order back to change it: cancelled, and
+ *  its lines become the shared draft again. */
+export async function changeRoundAction(tableId: number) {
+  return withdrawTableRound(tableId, "change");
 }

@@ -64,6 +64,23 @@ export class TableService {
     return table;
   }
 
+  /** Chain lookup — the counter at the location `scope` works at (its
+   *  selected location; a manager's own), for a new staff takeaway. The
+   *  first one if there are several. NotFoundError when there's none. */
+  static async getCounterTable(scope: LocatedScope) {
+    const counter = await prisma.table.findFirst({
+      where: {
+        locationId: scope.locationId,
+        isCounter: true,
+        isArchived: false,
+        location: { companyId: scope.companyId },
+      },
+      orderBy: { id: "asc" },
+    });
+    if (!counter) throw new NotFoundError("Counter", scope.locationId);
+    return counter;
+  }
+
   /** True if this location already has a counter row — a location
    *  should only ever have one, so createTable checks this before
    *  creating a second one. */

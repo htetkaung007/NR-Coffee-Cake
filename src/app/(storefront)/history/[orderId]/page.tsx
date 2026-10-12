@@ -17,7 +17,9 @@ import {
   groupByContributor,
   type ContributorLabel,
 } from "@/app/lib/order/contributors";
-import { toLabelledCartLine } from "@/app/lib/order/roundLine";
+import { removedByStaff, toLabelledCartLine } from "@/app/lib/order/roundLine";
+import { effectiveQuantity } from "@/app/lib/order/voids";
+import { customerRoundStatus } from "@/app/lib/order/cancelReason";
 import OrderReceipt, {
   type ReceiptLine,
 } from "@/app/components/orderUI/OrderReceipt";
@@ -94,7 +96,9 @@ export default async function OrderReceiptPage({
     // one bill into several rounds (see OrderSession.billSessionId's
     // own schema comment), and /history now links to every one of
     // them (see getBillForSession), not just the newest.
-    const bill = await CounterSessionService.getBillForSession(session);
+    const bill = await CounterSessionService.getBillForSession(session, {
+      includeWithdrawn: true,
+    });
     const billRound = bill.rounds.find((candidate) => candidate.id === roundId);
     if (!billRound) {
       notFound();
@@ -117,8 +121,11 @@ export default async function OrderReceiptPage({
     imageUrl: order.menu.assetUrl,
     addonNames: order.OrdersAddons.map((link) => link.addon.name),
     note: order.note,
-    quantity: order.quantity,
+    // Staff-voided units left out; the receipt shows them struck through
+    // with the reason only (removedByStaff — never who or the note).
+    quantity: effectiveQuantity(order),
     total: orderLineTotal(order),
+    removedByStaff: removedByStaff(order.voids),
   }));
 
   // Table QR: the same lines per person, each with its subtotal.
@@ -138,6 +145,7 @@ export default async function OrderReceiptPage({
             note: line.note ?? null,
             quantity: line.quantity,
             total: cartLineTotal(line),
+            removedByStaff: line.removedByStaff ?? null,
           })),
         }))
       : undefined;
@@ -145,7 +153,7 @@ export default async function OrderReceiptPage({
   return (
     <OrderReceipt
       orderNumber={orderNumber ?? round.orderNumber}
-      status={round.status}
+      status={customerRoundStatus(round)}
       lines={lines}
       groups={groups}
       total={orderLinesTotal(round.orders)}

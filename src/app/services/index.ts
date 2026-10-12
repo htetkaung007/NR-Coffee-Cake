@@ -25,6 +25,7 @@ export { CounterSessionService } from "./orderService/counterSession.service";
 export { StaffOrderService } from "./orderService/staffOrder.service";
 export { OrderApprovalService } from "./orderService/orderApproval.service";
 export { OrderPaymentService } from "./orderService/orderPayment.service";
+export { OrderVoidService } from "./orderService/orderVoid.service";
 export { OrderListService } from "./orderService/orderList.service";
 export { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 export { TableDraftService } from "./tableDraft.service";

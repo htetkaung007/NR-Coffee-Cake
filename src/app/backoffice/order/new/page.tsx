@@ -1,5 +1,10 @@
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
-import { LocationService, MenuService, TableService } from "@/app/services";
+import {
+  LocationService,
+  MenuService,
+  OrderListService,
+  TableService,
+} from "@/app/services";
 import StaffOrderClient from "./StaffOrderClient";
 
 /**
@@ -9,7 +14,14 @@ import StaffOrderClient from "./StaffOrderClient";
  * picker just for this page — a Manager's location is already fixed
  * via User.locationId, an Admin's via their switched SelectedLocation.
  */
-export default async function NewStaffOrderPage() {
+export default async function NewStaffOrderPage({
+  searchParams,
+}: {
+  /** ?for=<entry key>: opened from an order's "Add items" — the client
+   *  checks it against what's open (lib/order/orderTarget). */
+  searchParams: Promise<{ for?: string }>;
+}) {
+  const { for: forParam } = await searchParams;
   const { scope, fallback } = await requireBackofficeAccess({
     signedOut: "Please sign in to place an order.",
     access: "staff",
@@ -25,7 +37,10 @@ export default async function NewStaffOrderPage() {
     return (
       <StaffOrderClient
         locationId={null}
+        userId={userId}
         tables={[]}
+        occupancy={{ tables: [], counterBills: [] }}
+        initialFor={null}
         menus={[]}
         categories={[]}
       />
@@ -36,14 +51,21 @@ export default async function NewStaffOrderPage() {
   // MenuCategoryService.getVisibleCategories) and the same category order
   // as the customer menu. `categories` already holds only the categories
   // that contain at least one menu — the customer menu's tab rule.
-  const [tables, { menus, categories }] = await Promise.all([
+  // Occupancy (In use / Free tables, open Counter bills) is refreshed by
+  // the client's auto-refresh
+  // (this page re-renders) and when the picker opens.
+  const [tables, { menus, categories }, occupancy] = await Promise.all([
     TableService.getTablesByLocation(selectedLocation.locationId),
     MenuService.getMenusForLocation(selectedLocation.locationId),
+    OrderListService.getTableOccupancy(selectedLocation.locationId),
   ]);
 
   return (
     <StaffOrderClient
       locationId={selectedLocation.locationId}
+      userId={userId}
+      occupancy={occupancy}
+      initialFor={forParam ?? null}
       tables={tables.map((table) => ({
         id: table.id,
         name: table.name,

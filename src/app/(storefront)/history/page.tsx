@@ -10,6 +10,8 @@ import {
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
 import { getContributorToken } from "@/app/lib/storefront/contributorToken";
 import { cartLinesTotal, orderLinesTotal } from "@/app/lib/order/orderTotals";
+import { effectiveQuantity, voidedQuantity } from "@/app/lib/order/voids";
+import { customerRoundStatus } from "@/app/lib/order/cancelReason";
 import { groupByContributor } from "@/app/lib/order/contributors";
 import { toLabelledCartLine } from "@/app/lib/order/roundLine";
 import { formatAmount } from "@/app/lib/orderFormat";
@@ -72,15 +74,19 @@ export default async function HistoryPage({
         round,
         lines: round.orders.map((order) => toLabelledCartLine(order, labels)),
       }));
+      // A round a customer withdrew is listed but never charged.
+      const chargedRounds = labelledRounds.filter(
+        ({ round }) => round.status !== "CANCELLED",
+      );
       // Display only: payment is still ONE bill for the whole table.
       const myTotal = cartLinesTotal(
-        labelledRounds.flatMap(({ lines }) => lines.filter((line) => line.isMine)),
+        chargedRounds.flatMap(({ lines }) => lines.filter((line) => line.isMine)),
       );
       // Every round listed below — the same set markSessionsPaid later
       // settles as one bill — so the sticky total always equals the sum
       // of the cards above it.
-      const tableTotal = rounds.reduce(
-        (sum, round) => sum + orderLinesTotal(round.orders),
+      const tableTotal = chargedRounds.reduce(
+        (sum, { round }) => sum + orderLinesTotal(round.orders),
         0,
       );
 
@@ -119,10 +125,11 @@ export default async function HistoryPage({
                     key={round.id}
                     href={`/history/${round.id}?locationId=${round.locationId}&tableId=${tableId}`}
                     orderNumber={round.orderNumber}
-                    status={round.status}
+                    status={customerRoundStatus(round)}
                     items={lines.map((line) => ({
                       quantity: line.quantity,
                       name: line.menuName,
+                      removed: line.removedByStaff?.quantity ?? 0,
                     }))}
                     groups={groupByContributor(lines).map((group) => ({
                       key: group.key,
@@ -130,6 +137,7 @@ export default async function HistoryPage({
                       items: group.lines.map((line) => ({
                         quantity: line.quantity,
                         name: line.menuName,
+                        removed: line.removedByStaff?.quantity ?? 0,
                       })),
                       subtotal: group.subtotal,
                     }))}
@@ -226,7 +234,7 @@ export default async function HistoryPage({
 
   const [shopName, bill] = await Promise.all([
     LocationService.getShopNameForLocation(session.locationId),
-    CounterSessionService.getBillForSession(session),
+    CounterSessionService.getBillForSession(session, { includeWithdrawn: true }),
   ]);
 
   return (
@@ -272,10 +280,12 @@ export default async function HistoryPage({
                 key={round.id}
                 href={`/history/${round.id}?locationId=${round.locationId}`}
                 orderNumber={`Round ${index + 1}`}
-                status={round.status}
+                status={customerRoundStatus(round)}
                 items={round.orders.map((order) => ({
-                  quantity: order.quantity,
+                  // Staff-voided units left out (lib/order/voids).
+                  quantity: effectiveQuantity(order),
                   name: order.menu.name,
+                  removed: voidedQuantity(order.voids),
                 }))}
                 total={orderLinesTotal(round.orders)}
               />

@@ -286,6 +286,24 @@ export function pruneLastSubmitted(
   return age > LAST_SUBMITTED_TTL_MS ? forgetLastSubmitted(cart) : cart;
 }
 
+/** How many of a short menu the line at `index` can keep, given the
+ *  menu's `available` stock and the menu's other lines as they are (they
+ *  share one stock) — the "Change to ×N" fix for "Only N left". */
+export function quantityThatFits(
+  lines: readonly Pick<BrowserCartLine, "menuId" | "quantity">[],
+  index: number,
+  available: number,
+): number {
+  const others = lines.reduce(
+    (sum, line, i) =>
+      i !== index && line.menuId === lines[index].menuId
+        ? sum + line.quantity
+        : sum,
+    0,
+  );
+  return Math.max(0, available - others);
+}
+
 /** How many items the cart badge counts — quantities summed. */
 export function itemCount(cart: BrowserCart): number {
   return cart.lines.reduce((sum, line) => sum + line.quantity, 0);
@@ -345,7 +363,9 @@ export function toBrowserCartLine(
 
 const money = z.number().int().nonnegative();
 
-const storedLineSchema = z.object({
+/** A stored cart line — shared with the staff New Order cart
+ *  (lib/cart/staffCart.ts), which keeps the same lines. */
+export const storedLineSchema = z.object({
   menuId: idSchema,
   addonIds: z.array(idSchema),
   // Any positive count: a merge can pass the per-add cap, and the

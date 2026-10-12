@@ -29,6 +29,7 @@ import {
   useNewPendingRoundsListener,
   useOrderAlerts,
   type NewPendingRoundsEvent,
+  type RecentWithdrawal,
 } from "../OrderAlertsProvider";
 import { markEntryPaidAction } from "./action";
 import ApprovalCountdown from "./ApprovalCountdown";
@@ -64,6 +65,9 @@ interface OrderEntry {
 
 interface OrderListViewProps {
   entries: OrderEntry[];
+  /** Rounds customers just withdrew — fed to the alerts provider for
+   *  its one-time toast. */
+  withdrawn: RecentWithdrawal[];
 }
 
 type SourceFilter = "all" | "table" | "counter";
@@ -401,7 +405,10 @@ function SourceSection({
   );
 }
 
-export default function OrderListView({ entries }: OrderListViewProps) {
+export default function OrderListView({
+  entries,
+  withdrawn,
+}: OrderListViewProps) {
   // So a newly submitted table/counter order shows up (and the
   // countdowns stay honest) without the cashier reloading.
   useAutoRefresh();
@@ -434,7 +441,7 @@ export default function OrderListView({ entries }: OrderListViewProps) {
   // After the listener above, so it's subscribed before the first feed.
   // This list's own refresh (useAutoRefresh) is the provider's data
   // source while mounted — the provider pauses its own poll.
-  useFeedPendingFromList(entries);
+  useFeedPendingFromList(entries, withdrawn);
 
   function clearCardEffect(entryKey: string) {
     setCardEffects((current) => {

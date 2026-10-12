@@ -186,6 +186,10 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
   — never write a money color out in a component.
 - Contrast: body text ≥ 4.5:1; large text and UI borders/icons ≥ 3:1.
 - Never convey state by color alone — pair it with an icon, label, or text.
+- **Table occupancy** (New Order's "Order for"): In use = error dot +
+  word, Free = success dot + word (dot and word only — never the row,
+  the name or the money). The word uses `palette.errorText` /
+  `palette.successText` (≥ 4.5:1 on paper and page, both modes).
 - Print output is always `common.black` on `common.white`, regardless of
   light/dark mode.
 
@@ -245,6 +249,17 @@ double-taps), or an optimistic update. A disabled control shows WHY
 - **Master-detail (Backoffice order detail, History):** side panel at `lg`
   and up; below `lg`, a bottom bar (total + action) that opens a right
   Drawer on tablets and a bottom sheet / full-screen Dialog on phones.
+- **New Order:** "Order for" picker above the menus below `lg` (its own
+  card above Current order from `lg`); Current order is a bottom sheet
+  below `lg` on all sizes (centred, max ~640px from `sm`); switching
+  table with items asks first; the order stays on this device until
+  Send. A "New order | Add to open bill (N)" toggle sits above "Order
+  for": New order lists "Counter · New takeaway" and the FREE tables;
+  Add to open bill lists the open counter bills and the tables IN USE
+  (open rounds or a customer draft). The toggle follows the selected
+  target (a table that becomes in use moves it); with N = 0 the second
+  segment is disabled, "No open bills". An order's "Add items" opens New Order for that same bill (a new
+  round — sent rounds are never edited) and comes back to it after Send.
 - Remember the permanent Backoffice sidebar when judging available width.
 - **Backoffice menu card states** (one status rule,
   `lib/menu/menuCardStatus.ts`; stock words from `lib/menu/stockLevel.ts`, shared
@@ -352,6 +367,17 @@ toggling an add-on). Printing never blocks or changes payment.
   pending rounds shown as "Waiting approval +X").
 - Identical items in the same cart are shown as one line with a quantity;
   lines with different notes or prices stay separate.
+- **While a round waits for approval** the customer can "Change order"
+  (it comes back to the cart / the table's draft) or "Cancel order"
+  (asks first; Table: for everyone at the table). Once the counter has
+  decided, they're told to ask the staff.
+- **Voided lines stay visible**, dimmed and struck through, with the
+  words saying why (staff: "Voided · 12:20 · Aye · Wrong item", the note
+  too; customers: "Removed by staff · Wrong item" only) — and are left
+  out of every total, count and report. A partly voided line shows what's
+  left ("2 × Latte (1 voided)"). Bill and printed bill show only what is
+  payable — voided units are left out; the round card keeps them, struck
+  through, for staff.
 
 ---
 

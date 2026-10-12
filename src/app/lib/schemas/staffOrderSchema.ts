@@ -1,29 +1,23 @@
 import { z } from "zod";
-import { idSchema } from "./common";
-import { addonIds, orderNoteSchema, quantity } from "./customerOrderSchema";
+import { cartLinesSchema } from "./customerOrderSchema";
+import { orderTargetSchema } from "@/app/lib/order/orderTarget";
 
-// The staff New Order page's cart actions — the same primitives (and the
-// same note rule: trimmed, MAX_ORDER_NOTE_WORDS words) as the customer
-// cart, plus the session/table ids a staff order carries explicitly
-// (there's no QR cookie to read them from).
+// The staff New Order page keeps its cart in the browser (lib/cart/
+// staffCart.ts) and sends the WHOLE cart — the same line schema (menu,
+// quantity, add-ons, note, the price last shown) and caps as the
+// customer's browser cart. The location always comes from the staff
+// session, never from this input.
 
-export const staffAddCartItemSchema = z.object({
-  sessionId: idSchema,
-  tableId: idSchema,
-  menuId: idSchema,
-  quantity,
-  addonIds,
-  note: orderNoteSchema,
+/** The live check while the order is being built (read-only). */
+export const validateStaffCartSchema = z.object({ lines: cartLinesSchema });
+
+/** "Send to kitchen": who it's for (a new takeaway, a round on an open
+ *  Counter bill, or a table — lib/order/orderTarget), the lines, and the
+ *  idempotency key the browser made when Send was first pressed (see
+ *  OrderSession.clientRequestId). */
+export const submitStaffOrderSchema = z.object({
+  target: orderTargetSchema,
+  lines: cartLinesSchema,
+  clientRequestId: z.uuid(),
 });
-export type StaffAddCartItemInput = z.infer<typeof staffAddCartItemSchema>;
-
-export const staffUpdateCartItemSchema = z.object({
-  sessionId: idSchema,
-  orderId: idSchema,
-  quantity,
-  addonIds,
-  note: orderNoteSchema,
-});
-export type StaffUpdateCartItemInput = z.infer<
-  typeof staffUpdateCartItemSchema
->;
+export type SubmitStaffOrderRawInput = z.input<typeof submitStaffOrderSchema>;

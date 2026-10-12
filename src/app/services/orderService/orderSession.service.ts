@@ -8,35 +8,26 @@ import {
   deriveRequestedAt,
 } from "@/app/lib/order/cancellation";
 import { APPROVAL_WINDOW_MINUTES } from "@/app/lib/approval/approvalWindow";
+import { isSessionTerminal } from "@/app/lib/order/sessionStatus";
 import { canActAtLocation } from "@/app/lib/access/ownership";
 import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 
 type Tx = Prisma.TransactionClient;
 
 /** cancelSession's reason, and what goes with it: a rejection always
- *  carries the cashier's reason (and, for Other only, a note); an expiry
- *  or an unsent cart never does (a compile error either way). */
+ *  carries the cashier's reason (and, for Other only, a note); an
+ *  expiry, a customer's withdrawal or an unsent cart never does (a
+ *  compile error either way). */
 type CancelArgs =
   | [reason: "REJECTED", details: RejectDetails]
   | [reason: "EXPIRED"]
+  | [reason: "WITHDRAWN"]
   | [reason: "UNSUBMITTED"];
 
-// A session that has reached one of these statuses is "done" — a new
-// scan (Table QR) or a new cookie-matched visit (Counter QR) must not
-// land inside it anymore. PAID is the expected/common case (design doc
-// section 3). COMPLETED and CANCELLED are treated the same way here so
-// a cancelled or already-served session can't silently keep a table or
-// a customer's cookie locked forever.
-const TERMINAL_STATUSES = ["PAID", "COMPLETED", "CANCELLED"];
-
-/** The single definition of "is this session done" — exported so
- *  Controllers (page.tsx / action.ts) ask the Service instead of each
- *  keeping their own copy of TERMINAL_STATUSES, which would drift out
- *  of sync the moment one of them is updated and the others aren't
- *  (Rule 1: Service owns business logic, Controller stays thin). */
-export function isSessionTerminal(status: string) {
-  return (TERMINAL_STATUSES as readonly string[]).includes(status);
-}
+// The "is this session done" rule lives in lib/order/sessionStatus.ts
+// (pure, shared with the client-safe table occupancy rule); re-exported
+// here so Services and the barrel keep one import address.
+export { isSessionTerminal };
 
 // A session still sitting in CART this long after being created — no
 // order ever submitted through it — is treated as abandoned (customer
@@ -147,7 +138,8 @@ export class OrderSessionService {
    *  CART round closed at payment) goes through here so the status,
    *  cancelReason and stock give-back can't drift apart.
    *
-   *  REJECTED / EXPIRED: the round was submitted, so stock was
+   *  REJECTED / EXPIRED / WITHDRAWN (the customer cancelled their own
+   *  round while it waited): the round was submitted, so stock was
    *  decremented at submit (decrementStockForSession /
    *  TableDraftService.submitDraft) — every line's quantity goes back.
    *  The round's own Order rows ARE what submit decremented (Counter
@@ -156,16 +148,21 @@ export class OrderSessionService {
    *  UNSUBMITTED: a CART round never touched stock — nothing to restore.
    *
    *  The write is conditional on the status the reason implies
-   *  (PENDING_APPROVAL for REJECTED/EXPIRED, CART for UNSUBMITTED), so:
+   *  (PENDING_APPROVAL for REJECTED/EXPIRED/WITHDRAWN, CART for
+   *  UNSUBMITTED), so:
    *  an already-CANCELLED round matches nothing and stock is never given
    *  back twice; and a round that moved on concurrently (e.g. the
    *  cashier Accepted it a moment before a lazy expiry ran) is left
-   *  alone rather than cancelled out from under the kitchen. Returns
+   *  alone rather than cancelled out from under the kitchen — which is
+   *  also what settles a customer's Cancel racing the cashier's Accept:
+   *  whichever writes first wins, the other matches nothing. Returns
    *  whether THIS call cancelled it. Must run inside the caller's
    *  transaction (Rule 7: status write + stock give-back + the
    *  cancellation record are one unit).
    *
-   *  REJECTED / EXPIRED also write the round's OrderCancellation row —
+   *  REJECTED / EXPIRED / WITHDRAWN also write the round's
+   *  OrderCancellation row (WITHDRAWN with no rejectReason or note — so
+   *  History and Reports can show it) —
    *  this is its only writer, and the row is never edited afterwards.
    *  Its times are derived from the session as it was BEFORE the write
    *  below (which clears approvalExpiresAt), so that's read first. Only

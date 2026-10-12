@@ -269,6 +269,7 @@ export type UserWhereInput = {
   location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
   permissions?: Prisma.UserPermissionListRelationFilter
   permissionGrants?: Prisma.UserPermissionListRelationFilter
+  orderVoids?: Prisma.OrderVoidListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -287,6 +288,7 @@ export type UserOrderByWithRelationInput = {
   location?: Prisma.LocationOrderByWithRelationInput
   permissions?: Prisma.UserPermissionOrderByRelationAggregateInput
   permissionGrants?: Prisma.UserPermissionOrderByRelationAggregateInput
+  orderVoids?: Prisma.OrderVoidOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -308,6 +310,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
   permissions?: Prisma.UserPermissionListRelationFilter
   permissionGrants?: Prisma.UserPermissionListRelationFilter
+  orderVoids?: Prisma.OrderVoidListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -357,6 +360,7 @@ export type UserCreateInput = {
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -373,6 +377,7 @@ export type UserUncheckedCreateInput = {
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserUpdateInput = {
@@ -388,6 +393,7 @@ export type UserUpdateInput = {
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -404,6 +410,7 @@ export type UserUncheckedUpdateInput = {
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -647,6 +654,22 @@ export type UserUpdateOneRequiredWithoutSelectedLocationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSelectedLocationsInput, Prisma.UserUpdateWithoutSelectedLocationsInput>, Prisma.UserUncheckedUpdateWithoutSelectedLocationsInput>
 }
 
+export type UserCreateNestedOneWithoutOrderVoidsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOrderVoidsInput, Prisma.UserUncheckedCreateWithoutOrderVoidsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOrderVoidsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutOrderVoidsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOrderVoidsInput, Prisma.UserUncheckedCreateWithoutOrderVoidsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOrderVoidsInput
+  upsert?: Prisma.UserUpsertWithoutOrderVoidsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOrderVoidsInput, Prisma.UserUpdateWithoutOrderVoidsInput>, Prisma.UserUncheckedUpdateWithoutOrderVoidsInput>
+}
+
 export type UserCreateNestedOneWithoutPermissionsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutPermissionsInput, Prisma.UserUncheckedCreateWithoutPermissionsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutPermissionsInput
@@ -689,6 +712,7 @@ export type UserCreateWithoutCompanyInput = {
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserUncheckedCreateWithoutCompanyInput = {
@@ -704,6 +728,7 @@ export type UserUncheckedCreateWithoutCompanyInput = {
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserCreateOrConnectWithoutCompanyInput = {
@@ -760,6 +785,7 @@ export type UserCreateWithoutLocationInput = {
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserUncheckedCreateWithoutLocationInput = {
@@ -775,6 +801,7 @@ export type UserUncheckedCreateWithoutLocationInput = {
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserCreateOrConnectWithoutLocationInput = {
@@ -815,6 +842,7 @@ export type UserCreateWithoutSelectedLocationsInput = {
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserUncheckedCreateWithoutSelectedLocationsInput = {
@@ -830,6 +858,7 @@ export type UserUncheckedCreateWithoutSelectedLocationsInput = {
   isArchived?: boolean
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserCreateOrConnectWithoutSelectedLocationsInput = {
@@ -860,6 +889,7 @@ export type UserUpdateWithoutSelectedLocationsInput = {
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSelectedLocationsInput = {
@@ -873,6 +903,85 @@ export type UserUncheckedUpdateWithoutSelectedLocationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
+}
+
+export type UserCreateWithoutOrderVoidsInput = {
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  company: Prisma.CompanyCreateNestedOneWithoutUsersInput
+  selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
+  location?: Prisma.LocationCreateNestedOneWithoutManagersInput
+  permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
+}
+
+export type UserUncheckedCreateWithoutOrderVoidsInput = {
+  id?: number
+  email: string
+  name?: string | null
+  password?: string | null
+  role?: $Enums.UserRole
+  companyId: number
+  locationId?: number | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
+  permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
+}
+
+export type UserCreateOrConnectWithoutOrderVoidsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutOrderVoidsInput, Prisma.UserUncheckedCreateWithoutOrderVoidsInput>
+}
+
+export type UserUpsertWithoutOrderVoidsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutOrderVoidsInput, Prisma.UserUncheckedUpdateWithoutOrderVoidsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutOrderVoidsInput, Prisma.UserUncheckedCreateWithoutOrderVoidsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutOrderVoidsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutOrderVoidsInput, Prisma.UserUncheckedUpdateWithoutOrderVoidsInput>
+}
+
+export type UserUpdateWithoutOrderVoidsInput = {
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
+  selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
+  location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
+  permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
+  permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutOrderVoidsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  companyId?: Prisma.IntFieldUpdateOperationsInput | number
+  locationId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
 }
@@ -889,6 +998,7 @@ export type UserCreateWithoutPermissionsInput = {
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
   permissionGrants?: Prisma.UserPermissionCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserUncheckedCreateWithoutPermissionsInput = {
@@ -904,6 +1014,7 @@ export type UserUncheckedCreateWithoutPermissionsInput = {
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
+  orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserCreateOrConnectWithoutPermissionsInput = {
@@ -923,6 +1034,7 @@ export type UserCreateWithoutPermissionGrantsInput = {
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
+  orderVoids?: Prisma.OrderVoidCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserUncheckedCreateWithoutPermissionGrantsInput = {
@@ -938,6 +1050,7 @@ export type UserUncheckedCreateWithoutPermissionGrantsInput = {
   isArchived?: boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
 }
 
 export type UserCreateOrConnectWithoutPermissionGrantsInput = {
@@ -968,6 +1081,7 @@ export type UserUpdateWithoutPermissionsInput = {
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
   permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPermissionsInput = {
@@ -983,6 +1097,7 @@ export type UserUncheckedUpdateWithoutPermissionsInput = {
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUpsertWithoutPermissionGrantsInput = {
@@ -1008,6 +1123,7 @@ export type UserUpdateWithoutPermissionGrantsInput = {
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
+  orderVoids?: Prisma.OrderVoidUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPermissionGrantsInput = {
@@ -1023,6 +1139,7 @@ export type UserUncheckedUpdateWithoutPermissionGrantsInput = {
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserCreateManyCompanyInput = {
@@ -1049,6 +1166,7 @@ export type UserUpdateWithoutCompanyInput = {
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCompanyInput = {
@@ -1064,6 +1182,7 @@ export type UserUncheckedUpdateWithoutCompanyInput = {
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutCompanyInput = {
@@ -1102,6 +1221,7 @@ export type UserUpdateWithoutLocationInput = {
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLocationInput = {
@@ -1117,6 +1237,7 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
+  orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutLocationInput = {
@@ -1140,12 +1261,14 @@ export type UserCountOutputType = {
   selectedLocations: number
   permissions: number
   permissionGrants: number
+  orderVoids: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   selectedLocations?: boolean | UserCountOutputTypeCountSelectedLocationsArgs
   permissions?: boolean | UserCountOutputTypeCountPermissionsArgs
   permissionGrants?: boolean | UserCountOutputTypeCountPermissionGrantsArgs
+  orderVoids?: boolean | UserCountOutputTypeCountOrderVoidsArgs
 }
 
 /**
@@ -1179,6 +1302,13 @@ export type UserCountOutputTypeCountPermissionGrantsArgs<ExtArgs extends runtime
   where?: Prisma.UserPermissionWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountOrderVoidsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrderVoidWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1196,6 +1326,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   location?: boolean | Prisma.User$locationArgs<ExtArgs>
   permissions?: boolean | Prisma.User$permissionsArgs<ExtArgs>
   permissionGrants?: boolean | Prisma.User$permissionGrantsArgs<ExtArgs>
+  orderVoids?: boolean | Prisma.User$orderVoidsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1249,6 +1380,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   location?: boolean | Prisma.User$locationArgs<ExtArgs>
   permissions?: boolean | Prisma.User$permissionsArgs<ExtArgs>
   permissionGrants?: boolean | Prisma.User$permissionGrantsArgs<ExtArgs>
+  orderVoids?: boolean | Prisma.User$orderVoidsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1268,6 +1400,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     location: Prisma.$LocationPayload<ExtArgs> | null
     permissions: Prisma.$UserPermissionPayload<ExtArgs>[]
     permissionGrants: Prisma.$UserPermissionPayload<ExtArgs>[]
+    orderVoids: Prisma.$OrderVoidPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1679,6 +1812,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   location<T extends Prisma.User$locationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$locationArgs<ExtArgs>>): Prisma.Prisma__LocationClient<runtime.Types.Result.GetResult<Prisma.$LocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   permissions<T extends Prisma.User$permissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$permissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   permissionGrants<T extends Prisma.User$permissionGrantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$permissionGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  orderVoids<T extends Prisma.User$orderVoidsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$orderVoidsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderVoidPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2207,6 +2341,30 @@ export type User$permissionGrantsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.UserPermissionScalarFieldEnum | Prisma.UserPermissionScalarFieldEnum[]
+}
+
+/**
+ * User.orderVoids
+ */
+export type User$orderVoidsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrderVoid
+   */
+  select?: Prisma.OrderVoidSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrderVoid
+   */
+  omit?: Prisma.OrderVoidOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrderVoidInclude<ExtArgs> | null
+  where?: Prisma.OrderVoidWhereInput
+  orderBy?: Prisma.OrderVoidOrderByWithRelationInput | Prisma.OrderVoidOrderByWithRelationInput[]
+  cursor?: Prisma.OrderVoidWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrderVoidScalarFieldEnum | Prisma.OrderVoidScalarFieldEnum[]
 }
 
 /**

@@ -3,7 +3,6 @@ import { NotFoundError, ValidationError } from "../lib/errors";
 import {
   buildEntryBill,
   orderLinesTotal,
-  sumQuantities,
 } from "../lib/order/orderTotals";
 import { dayRangeUtc, toShopDay } from "../lib/shopDay";
 import {
@@ -12,6 +11,15 @@ import {
 } from "../lib/order/cancellation";
 import { summarizeRejectReasons } from "../lib/order/rejectReason";
 import { Prisma } from "../../../prisma/generated/client";
+import { effectiveItemCount } from "../lib/order/voids";
+import {
+  SENT_CANCEL_REASONS,
+  SHOP_MISSED_CANCEL_REASONS,
+} from "../lib/order/cancelReason";
+import {
+  LINE_VOID_QUANTITIES,
+  STAFF_LINE_VOIDS,
+} from "./orderService/orderLineQuery";
 
 /** A page of cursor-paginated rows, oldest-cursor-last — see
  *  encodeCursor/decodeCursor. */
@@ -177,7 +185,7 @@ export class OrderHistoryService {
             table: { select: { name: true } },
             orders: {
               where: { isArchived: false },
-              select: { quantity: true },
+              select: { quantity: true, voids: LINE_VOID_QUANTITIES },
             },
           },
         },
@@ -199,7 +207,8 @@ export class OrderHistoryService {
           : "Counter",
         isCounter: firstRound?.isCounter ?? true,
         openedAt: firstRound?.createdAt ?? bill.createdAt,
-        itemCount: sumQuantities(bill.sessions.flatMap((s) => s.orders)),
+        // Voided units left out (lib/order/voids).
+        itemCount: effectiveItemCount(bill.sessions.flatMap((s) => s.orders)),
         orderNumbers: bill.sessions.map((s) => s.orderNumber),
       };
     });
@@ -242,11 +251,11 @@ export class OrderHistoryService {
     };
   }
 
-  /** Rounds cancelled at this location on this shop day — REJECTED/
-   *  EXPIRED only: those are the only reasons a round's stock was ever
-   *  actually decremented (see OrderSessionService.cancelSession), so
-   *  they're the only cancellations that belong on a "what didn't get
-   *  charged" report. UNSUBMITTED (never sent) and null (pre-cancelReason
+  /** Rounds cancelled at this location on this shop day — sent rounds
+   *  only (SENT_CANCEL_REASONS: REJECTED / EXPIRED, and WITHDRAWN — a
+   *  customer cancelled it while it waited, shown "Cancelled by
+   *  customer"): those are the only rounds whose stock was ever
+   *  actually decremented (see OrderSessionService.cancelSession). UNSUBMITTED (never sent) and null (pre-cancelReason
    *  history) are deliberately excluded — an abandoned cart was never
    *  really an order. `updateTime` doubles as "when cancelled" because
    *  cancelSession's write is the last write a cancelled round ever
@@ -280,7 +289,7 @@ export class OrderHistoryService {
       { locationId },
       { isArchived: false },
       { status: "CANCELLED" },
-      { cancelReason: { in: ["REJECTED", "EXPIRED"] } },
+      { cancelReason: { in: [...SENT_CANCEL_REASONS] } },
       { updateTime: { gte: start, lt: end } },
     ];
     if (trimmedSearch) {
@@ -320,6 +329,7 @@ export class OrderHistoryService {
             quantity: true,
             unitPrice: true,
             OrdersAddons: { select: { unitPrice: true } },
+            voids: LINE_VOID_QUANTITIES,
           },
         },
       },
@@ -338,7 +348,7 @@ export class OrderHistoryService {
       cancellation: toCancellationDetail(session.cancellation),
       cancelledAt: session.updateTime,
       createdAt: session.createdAt,
-      itemCount: sumQuantities(session.orders),
+      itemCount: effectiveItemCount(session.orders),
       amount: orderLinesTotal(session.orders),
     }));
 
@@ -352,8 +362,8 @@ export class OrderHistoryService {
     };
   }
 
-  /** Whole-day totals for the Cancelled tab's header — same
-   *  REJECTED/EXPIRED-only scope as listCancelledRounds, `search`
+  /** Whole-day totals for the Cancelled tab's header — the same rounds
+   *  listCancelledRounds lists (customer withdrawals included), `search`
    *  ignored for the same reason getPaidSummary ignores it. The
    *  counting itself is getCancelledSummaryForRange, shared with the
    *  Backoffice reports. */
@@ -365,34 +375,42 @@ export class OrderHistoryService {
     day: string;
   }) {
     const { start, end } = dayRangeUtc(day);
-    const { count, notCharged } =
-      await OrderHistoryService.getCancelledSummaryForRange({
-        locationId,
-        start,
-        end,
-      });
-    return { count, notCharged };
+    const summary = await OrderHistoryService.getCancelledSummaryForRange({
+      locationId,
+      start,
+      end,
+    });
+    // The tab lists every sent round that was cancelled, so its header
+    // counts (and sums) them all.
+    return {
+      count: summary.count + summary.withdrawn,
+      notCharged: summary.notCharged + summary.withdrawnValue,
+    };
   }
 
-  /** THE rule for "cancelled at this location in [start, end)":
-   *  REJECTED/EXPIRED only (see listCancelledRounds for why), counted by
-   *  when they were cancelled (updateTime). Shared by the summary below
-   *  (History header, the Reports Cancelled card) and the Reports'
-   *  cancelled-lines export, so the two can never pick different rounds. */
+  /** THE rule for "cancelled at this location in [start, end)": sent
+   *  rounds (see listCancelledRounds), counted by when they were
+   *  cancelled (updateTime). `reasons` narrows it — the Reports'
+   *  cancelled-lines export passes SHOP_MISSED_CANCEL_REASONS so its
+   *  lines add up to the Cancelled card's Not charged. Shared by the
+   *  summary below (History header, the Reports Cancelled card) and that
+   *  export, so the two can never pick different rounds. */
   static cancelledInRange({
     locationId,
     start,
     end,
+    reasons = SENT_CANCEL_REASONS,
   }: {
     locationId: number;
     start: Date;
     end: Date;
+    reasons?: readonly ("REJECTED" | "EXPIRED" | "WITHDRAWN")[];
   }): Prisma.OrderSessionWhereInput {
     return {
       locationId,
       isArchived: false,
       status: "CANCELLED",
-      cancelReason: { in: ["REJECTED", "EXPIRED"] },
+      cancelReason: { in: [...reasons] },
       updateTime: { gte: start, lt: end },
     };
   }
@@ -400,8 +418,10 @@ export class OrderHistoryService {
   /** What was cancelled at this location in [start, end) — the one
    *  definition behind the Order History Cancelled tab's header (one day,
    *  see getCancelledSummary) and the reports' "Not charged" figures (a
-   *  week or month). REJECTED/EXPIRED only (see listCancelledRounds for
-   *  why), counted by when they were cancelled. No stored total on
+   *  week or month), counted by when they were cancelled. `count`,
+   *  `rejected`, `timedOut` and `notCharged` are the shop's misses only
+   *  (REJECTED / EXPIRED); a customer's own withdrawal isn't one, so it's
+   *  counted apart (`withdrawn`, `withdrawnValue`). No stored total on
    *  OrderSession (unlike Bill), so — same as every other money figure in
    *  this app — notCharged is computed from each round's own price
    *  snapshots via orderLinesTotal, not a DB-side sum. One query. */
@@ -425,22 +445,32 @@ export class OrderHistoryService {
             quantity: true,
             unitPrice: true,
             OrdersAddons: { select: { unitPrice: true } },
+            voids: LINE_VOID_QUANTITIES,
           },
         },
       },
     });
 
+    const missed = sessions.filter((session) =>
+      (SHOP_MISSED_CANCEL_REASONS as readonly string[]).includes(
+        session.cancelReason ?? "",
+      ),
+    );
+    const withdrawn = sessions.filter(
+      (session) => session.cancelReason === "WITHDRAWN",
+    );
+    const valueOf = (rounds: typeof sessions) =>
+      rounds.reduce((sum, session) => sum + orderLinesTotal(session.orders), 0);
     return {
-      count: sessions.length,
-      rejected: sessions.filter((s) => s.cancelReason === "REJECTED").length,
-      timedOut: sessions.filter((s) => s.cancelReason === "EXPIRED").length,
+      count: missed.length,
+      rejected: missed.filter((s) => s.cancelReason === "REJECTED").length,
+      timedOut: missed.filter((s) => s.cancelReason === "EXPIRED").length,
       // Why the REJECTED ones were rejected (Reports) — from the same
       // rows, no extra query.
-      reasons: summarizeRejectReasons(sessions),
-      notCharged: sessions.reduce(
-        (sum, session) => sum + orderLinesTotal(session.orders),
-        0,
-      ),
+      reasons: summarizeRejectReasons(missed),
+      notCharged: valueOf(missed),
+      withdrawn: withdrawn.length,
+      withdrawnValue: valueOf(withdrawn),
     };
   }
 
@@ -458,6 +488,8 @@ export class OrderHistoryService {
           addon: { select: { name: true } },
         },
       },
+      // Voids with who / when / note — staff screens only.
+      voids: STAFF_LINE_VOIDS,
     },
   };
 
@@ -531,7 +563,7 @@ export class OrderHistoryService {
         id: sessionId,
         locationId,
         status: "CANCELLED",
-        cancelReason: { in: ["REJECTED", "EXPIRED"] },
+        cancelReason: { in: [...SENT_CANCEL_REASONS] },
       },
       include: {
         table: { select: { name: true } },

@@ -6,6 +6,7 @@ import EmptyState from "@/app/components/EmptyState";
 import { reportHref, type ReportParams } from "@/app/lib/report/reportView";
 import type { ReportOverview } from "./action";
 import CancelledCard from "./CancelledCard";
+import VoidedCard from "./VoidedCard";
 import ChannelsCard from "./ChannelsCard";
 import DailySalesChart from "./DailySalesChart";
 import KpiCards from "./KpiCards";
@@ -63,6 +64,7 @@ export default function OverviewTab({
         <Stack spacing={2}>
           <ChannelsCard channels={overview.current.channels} />
           <CancelledCard cancelled={overview.current.cancelled} />
+          <VoidedCard voided={overview.current.voided} />
         </Stack>
         <Stack spacing={2}>
           <SellersPreview

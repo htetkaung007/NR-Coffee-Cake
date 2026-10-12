@@ -15,6 +15,7 @@ import {
   acceptCounterSessionAction,
   markEntryPaidAction,
   rejectCounterSessionAction,
+  voidOrderLineAction,
 } from "../action";
 import MarkPaidDialog from "../MarkPaidDialog";
 import OrderBottomBar from "../OrderBottomBar";
@@ -22,7 +23,8 @@ import SidePanelDrawer from "@/app/components/SidePanelDrawer";
 import OrderSidePanel from "../OrderSidePanel";
 import BillContent from "./BillContent";
 import EntryHeader from "./EntryHeader";
-import type { Round } from "./RoundCard";
+import type { Round, RoundLine } from "./RoundCard";
+import type { VoidRequest } from "./VoidItemDialog";
 import RoundTimeline from "./RoundTimeline";
 
 interface OrderDetailViewProps {
@@ -83,6 +85,22 @@ export default function OrderDetailView({
       sessionId,
       rejectReason: reason,
       note,
+    });
+    if (result.success) startTransition(() => router.refresh());
+    return result;
+  }
+
+  // Display only — voidOrderLineAction checks ORDERS_VOID itself.
+  const canVoid = useCan("ORDERS_VOID");
+
+  /** Voids items off one line; the dialog shows the answer. */
+  async function voidLine(line: RoundLine, request: VoidRequest) {
+    const result = await voidOrderLineAction({
+      orderIds: line.orderIds,
+      quantity: request.quantity,
+      reason: request.reason,
+      note: request.note,
+      returnToStock: request.returnToStock,
     });
     if (result.success) startTransition(() => router.refresh());
     return result;
@@ -151,6 +169,7 @@ export default function OrderDetailView({
                 runAction(() => acceptCounterSessionAction(sessionId))
               }
               onReject={rejectRound}
+              onVoid={canVoid ? voidLine : undefined}
             />
           </Box>
           <OrderSidePanel label="Bill" showFrom="lg" width={360}>

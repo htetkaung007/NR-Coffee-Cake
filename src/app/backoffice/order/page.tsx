@@ -10,9 +10,11 @@ export default async function OrderPage() {
   if (!context) return fallback;
   const { location } = context;
 
-  const entries = await OrderListService.getOpenEntries(
-    location.locationId,
-  );
+  const [entries, withdrawn] = await Promise.all([
+    OrderListService.getOpenEntries(location.locationId),
+    // For the one-time "Customer cancelled order …" toast.
+    OrderListService.getRecentWithdrawals(location.locationId),
+  ]);
 
   // The list only needs each round's id (Mark-as-Paid settles them
   // together) and status — the items live on the entry's detail page —
@@ -33,5 +35,5 @@ export default async function OrderPage() {
     })),
   }));
 
-  return <OrderListView entries={listEntries} />;
+  return <OrderListView entries={listEntries} withdrawn={withdrawn} />;
 }

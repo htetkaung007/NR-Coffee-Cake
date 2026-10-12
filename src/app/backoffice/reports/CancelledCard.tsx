@@ -6,7 +6,9 @@ import { formatRejectReasonCounts } from "@/app/lib/order/rejectReason";
 import type { ReportOverview } from "./action";
 import { moneyToneSx, sectionHeadingSx } from "../order/orderTypography";
 
-function Cell({
+/** One figure of a Reports card: caption, neutral value, optional detail
+ *  line — shared with VoidedCard. */
+export function FigureCell({
   label,
   value,
   detail,
@@ -43,9 +45,10 @@ function Cell({
   );
 }
 
-/** Rejected · Timed out · Not charged — the Order History Cancelled
- *  tab's own definition (REJECTED / EXPIRED rounds, priced from their
- *  snapshots), over the whole period. Under Rejected, why: "Out of stock
+/** Rejected · Timed out · Not charged — the shop's misses (REJECTED /
+ *  EXPIRED rounds, priced from their snapshots), over the whole period.
+ *  Orders customers cancelled themselves while they waited are counted
+ *  apart, in a line under them — never part of these figures. Under Rejected, why: "Out of stock
  *  1 · Looks fake 2" (non-zero reasons only, in words — never colour).
  *  On a phone that line wraps inside its third of the card. */
 export default function CancelledCard({
@@ -67,14 +70,20 @@ export default function CancelledCard({
         divider={<Divider orientation="vertical" flexItem />}
         sx={{ mx: { xs: -1, sm: -2 } }}
       >
-        <Cell
+        <FigureCell
           label="Rejected"
           value={String(cancelled.rejected)}
           detail={formatRejectReasonCounts(cancelled.reasons) || undefined}
         />
-        <Cell label="Timed out" value={String(cancelled.timedOut)} />
-        <Cell label="Not charged" value={formatAmount(cancelled.notCharged)} />
+        <FigureCell label="Timed out" value={String(cancelled.timedOut)} />
+        <FigureCell label="Not charged" value={formatAmount(cancelled.notCharged)} />
       </Stack>
+      {cancelled.withdrawn > 0 && (
+        // Not the shop's miss — counted apart, never in the figures above.
+        <Typography variant="caption" component="p" color="text.secondary" sx={{ mt: 1 }}>
+          Also cancelled by customers before approval: {cancelled.withdrawn}
+        </Typography>
+      )}
     </Card>
   );
 }

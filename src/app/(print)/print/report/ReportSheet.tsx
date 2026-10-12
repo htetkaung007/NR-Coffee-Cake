@@ -6,6 +6,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import type { ReportItems, ReportOverview } from "@/app/backoffice/reports/action";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { formatRejectReasonCounts } from "@/app/lib/order/rejectReason";
+import { formatVoidReasonCounts } from "@/app/lib/report/voidReport";
 import {
   barRatio,
   formatDelta,
@@ -172,9 +173,10 @@ export default function ReportSheet({
   reportsHref,
 }: ReportSheetProps) {
   const { period, current, deltas } = overview;
-  const { summary, daily, channels, cancelled } = current;
+  const { summary, daily, channels, cancelled, voided } = current;
   const busiestDay = Math.max(0, ...daily.map((entry) => entry.sales));
   const reasons = formatRejectReasonCounts(cancelled.reasons);
+  const voidReasons = formatVoidReasonCounts(voided.reasons);
 
   return (
     <>
@@ -417,6 +419,29 @@ export default function ReportSheet({
               <tr>
                 <th scope="row">Not charged</th>
                 <td className="number">{formatAmount(cancelled.notCharged)}</td>
+              </tr>
+              <tr>
+                <th scope="row">Cancelled by customers (not counted above)</th>
+                <td className="number">{cancelled.withdrawn}</td>
+              </tr>
+            </Typography>
+          </Box>
+        </Section>
+
+        <Section title="Voided items">
+          <Box component="table" sx={tableSx}>
+            <Typography component="tbody" variant="body2">
+              <tr>
+                <th scope="row">Items voided</th>
+                <td className="number">{voided.count}</td>
+              </tr>
+              <tr>
+                <th scope="row">Why voided</th>
+                <td className="number">{voidReasons || "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Not charged</th>
+                <td className="number">{formatAmount(voided.value)}</td>
               </tr>
             </Typography>
           </Box>

@@ -18,6 +18,7 @@ import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLineTotal, type LineAddon } from "@/app/lib/order/orderTotals";
 import { formatAmount } from "@/app/lib/orderFormat";
 import type { ContributorLabel } from "@/app/lib/order/contributors";
+import type { RemovedByStaff } from "@/app/lib/order/roundLine";
 
 export interface CartLine {
   id: number;
@@ -36,6 +37,10 @@ export interface CartLine {
   addons: LineAddon[];
   /** Customer's per-item instruction ("no onion"); null/absent = none. */
   note?: string | null;
+  /** Units staff took back off a sent line — how many and why, nothing
+   *  more (roundLine.removedByStaff). `quantity` above is what's left;
+   *  0 means all of it went. Null/absent on a cart or draft line. */
+  removedByStaff?: RemovedByStaff | null;
 }
 
 export interface Shortage {
@@ -99,8 +104,13 @@ export function CartLineRow({
   onQuantityChange,
   priceLabel,
   status,
-  dimmed = false,
+  dimmed: dimmedByParent = false,
 }: CartLineRowProps) {
+  // Staff took every unit back: still shown, dimmed and struck through,
+  // with the words saying why (DESIGN.md Rule 26).
+  const removed = line.removedByStaff ?? null;
+  const isFullyRemoved = removed !== null && line.quantity === 0;
+  const dimmed = dimmedByParent || isFullyRemoved;
   const canEdit = actionable && !!onEdit && !disabled;
   const canRemove = actionable && !!onRemove;
   const changeQuantity = actionable ? onQuantityChange : undefined;
@@ -154,7 +164,11 @@ export function CartLineRow({
         >
           <Typography
             variant="body1"
-            sx={{ fontWeight: 700, lineHeight: 1.35 }}
+            sx={{
+              fontWeight: 700,
+              lineHeight: 1.35,
+              textDecoration: isFullyRemoved ? "line-through" : "none",
+            }}
           >
             {line.menuName}
           </Typography>
@@ -199,10 +213,18 @@ export function CartLineRow({
             />
           ) : (
             <Typography variant="body2" sx={mutedTextSx}>
-              Qty {line.quantity}
+              {isFullyRemoved ? `Qty ${removed.quantity}` : `Qty ${line.quantity}`}
             </Typography>
           )}
         </Box>
+
+        {removed && (
+          <Typography variant="body2" sx={[{ display: "block" }, mutedTextSx]}>
+            {isFullyRemoved
+              ? `Removed by staff · ${removed.reason}`
+              : `${removed.quantity} removed by staff · ${removed.reason}`}
+          </Typography>
+        )}
 
         {shortage && (
           <Typography variant="caption" color="error" sx={{ display: "block" }}>
@@ -216,18 +238,19 @@ export function CartLineRow({
       </Box>
 
       <Stack sx={{ alignItems: "flex-end", flexShrink: 0, gap: 1 }}>
-        {priceLabel ?? (
-          <Typography
-            variant="body1"
-            sx={{
-              fontWeight: 700,
-              color: "text.primary",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {formatAmount(cartLineTotal(line))}
-          </Typography>
-        )}
+        {priceLabel ??
+          (isFullyRemoved ? null : (
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: 700,
+                color: "text.primary",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {formatAmount(cartLineTotal(line))}
+            </Typography>
+          ))}
         {canRemove && (
           <IconButton
             aria-label={`Remove ${line.menuName}`}

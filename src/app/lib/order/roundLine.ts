@@ -5,6 +5,31 @@ import type {
 } from "@/app/(storefront)/cart/CartList";
 import type { ContributorLabel } from "@/app/lib/order/contributors";
 import type { LineAddon } from "@/app/lib/order/orderTotals";
+import {
+  effectiveQuantity,
+  voidedQuantity,
+  voidReasonLabel,
+  type VoidReason,
+} from "@/app/lib/order/voids";
+
+/** What a customer may know about items staff removed from their line:
+ *  how many and the reason(s) in words — never the staff's note or who
+ *  did it (the customer-safe void select carries neither). */
+export interface RemovedByStaff {
+  quantity: number;
+  /** "Wrong item", or "Wrong item, Other" for several voids. */
+  reason: string;
+}
+
+/** A line's voids as the customer sees them — null when none. */
+export function removedByStaff(
+  voids: readonly { quantity: number; reason: VoidReason }[],
+): RemovedByStaff | null {
+  const quantity = voidedQuantity(voids);
+  if (quantity === 0) return null;
+  const reasons = [...new Set(voids.map((entry) => voidReasonLabel(entry.reason)))];
+  return { quantity, reason: reasons.join(", ") };
+}
 
 /** An OrdersAddon link as fetched with its addon (for the name). */
 interface LineAddonSource {
@@ -36,12 +61,16 @@ export function toCartLine(order: {
   unitPrice: number;
   menu: { name: string; assetUrl: string | null };
   OrdersAddons: LineAddonSource[];
+  voids: readonly { quantity: number; reason: VoidReason }[];
 }): CartLine {
   return {
     id: order.id,
     menuId: order.menuId,
     menuName: order.menu.name,
-    quantity: order.quantity,
+    // What's still on the order — staff-voided units left out, so every
+    // customer total (cartLineTotal) leaves them out too.
+    quantity: effectiveQuantity(order),
+    removedByStaff: removedByStaff(order.voids),
     // The line's own price snapshot — never Menu.price, which can have
     // moved since this line was added (see Order.unitPrice).
     price: order.unitPrice,

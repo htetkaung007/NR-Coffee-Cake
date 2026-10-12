@@ -4,6 +4,7 @@ import timezone from "dayjs/plugin/timezone";
 import { formatDuration, type CancellationDetail } from "@/app/lib/order/cancellation";
 import { formatClockTime } from "@/app/lib/orderFormat";
 import { rejectReasonLabel } from "@/app/lib/order/rejectReason";
+import { cancelReasonLabel } from "@/app/lib/order/cancelReason";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -44,14 +45,15 @@ export function formatDurationMinutes(startIso: string, endIso: string) {
   return `${minutes} min`;
 }
 
-/** "Rejected" / "Timed out" — the only two reasons this page ever shows
- *  (see OrderHistoryService's own REJECTED/EXPIRED-only scope) — plus
- *  what was recorded: "Rejected · Out of stock", "Timed out · no
- *  decision in 10m". Without a record it stays the plain label. */
+/** "Rejected" / "Timed out" / "Cancelled by customer" — the reasons this
+ *  page shows (OrderHistoryService's sent-rounds scope) — plus what was
+ *  recorded: "Rejected · Out of stock", "Timed out · no decision in 10m".
+ *  Without a record it stays the plain label. */
 export function formatCancelReasonLabel(
   reason: string,
   cancellation: CancellationDetail | null = null,
 ) {
+  if (reason === "WITHDRAWN") return cancelReasonLabel(reason, "staff");
   if (reason === "REJECTED") {
     return cancellation?.rejectReason
       ? `Rejected · ${rejectReasonLabel(cancellation.rejectReason)}`

@@ -13,6 +13,7 @@ import { MenuStockService } from "./menuStock.service";
 import { PriceSnapshotService } from "./priceSnapshot.service";
 import { generateOrderNumber } from "./orderService/orderSession.service";
 import { ORDER_LINE_INCLUDE } from "./orderService/orderLineQuery";
+import type { DraftRow } from "../lib/order/withdrawal";
 import { OrderSessionCartService } from "./orderService/orderSessionCart.service";
 
 type Tx = Prisma.TransactionClient;
@@ -243,6 +244,47 @@ export class TableDraftService {
       orderBy: { id: "asc" },
       include: ORDER_LINE_INCLUDE,
     });
+  }
+
+  /** Table "Change order": a withdrawn round's lines become the table's
+   *  shared draft again (toTableDraftRows — each keeping its customer and
+   *  price snapshots), inside the withdrawal's own transaction. */
+  static async restoreDraftRows(tx: Tx, rows: readonly DraftRow[]) {
+    for (const row of rows) {
+      await tx.order.create({
+        data: {
+          tableId: row.tableId,
+          menuId: row.menuId,
+          quantity: row.quantity,
+          unitPrice: row.unitPrice,
+          note: row.note,
+          contributorToken: row.contributorToken,
+          orderSessionId: null,
+          OrdersAddons: {
+            create: row.addons.map(({ addonId, unitPrice }) => ({
+              addonId,
+              unitPrice,
+            })),
+          },
+        },
+      });
+    }
+  }
+
+  /** The tables at `locationId` with a customer draft holding at least
+   *  one line — for the staff "Order for" picker's In use / Free
+   *  (OrderListService.getTableOccupancy). One query, ids only. */
+  static async getTableIdsWithDraftLines(locationId: number) {
+    const rows = await prisma.order.findMany({
+      where: {
+        orderSessionId: null,
+        isArchived: false,
+        table: { locationId, isArchived: false },
+      },
+      distinct: ["tableId"],
+      select: { tableId: true },
+    });
+    return rows.map((row) => row.tableId);
   }
 
   /** Who ordered which line, as labels ("You" / "Customer 2" — never a

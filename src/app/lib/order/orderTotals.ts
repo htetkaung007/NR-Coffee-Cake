@@ -1,4 +1,5 @@
 import { mergeLinesForDisplay } from "./orderLineMerge";
+import { effectiveQuantity } from "./voids";
 
 /** An Order row with what its price depends on — see orderLineTotal.
  *  unitPrice/unitPrice below are each line's own PRICE SNAPSHOT (taken
@@ -8,6 +9,10 @@ interface PricedOrderLine {
   quantity: number;
   unitPrice: number;
   OrdersAddons: { unitPrice: number }[];
+  /** Units staff voided off it (OrderVoid). Required on purpose: every
+   *  query that prices lines must load them, or tsc fails — a voided
+   *  unit can never be charged by a caller that forgot. */
+  voids: readonly { quantity: number }[];
 }
 
 /** THE line-total rule — the only place it lives. Every line amount
@@ -36,10 +41,11 @@ export function lineTotal(
  *  the cashier list, the bill, the customer's receipt, the
  *  order-confirmed screen and history can't disagree. */
 export function orderLineTotal(order: PricedOrderLine) {
+  // Voided units are never charged (lib/order/voids).
   return lineTotal(
     order.unitPrice,
     order.OrdersAddons.map((link) => link.unitPrice),
-    order.quantity,
+    effectiveQuantity(order),
   );
 }
 
@@ -91,6 +97,7 @@ interface BillLine {
     unitPrice: number;
     addon: { name: string };
   }[];
+  voids: readonly { quantity: number }[];
 }
 
 /** One row of a bill line, item first then each add-on: its name, the
@@ -132,7 +139,9 @@ export function lineBreakdown(line: BreakdownSource): BreakdownRow[] {
   ];
 }
 
-interface BillSourceRound<Time> {
+/** One round as the bill reads it — also the table occupancy rule's
+ *  input (lib/order/tableOccupancy.ts). */
+export interface BillSourceRound<Time> {
   orderNumber: string;
   createdAt: Time;
   status: string;
@@ -173,27 +182,36 @@ export function buildEntryBill<Time>(rounds: BillSourceRound<Time>[]) {
   }));
 
   return {
-    acceptedRounds: accepted.map((round) => ({
-      orderNumber: round.orderNumber,
-      time: round.createdAt,
-      // Table rounds keep one row per customer per line; the Backoffice
-      // shows identical lines merged ("Iced Latte ×2") — display only,
-      // the total is unchanged.
-      lines: mergeLinesForDisplay(round.orders).map((line) => ({
-        id: line.id,
-        lineTotal: orderLineTotal(line),
-        // Item, then one row per add-on — what BillLineRows renders.
-        breakdown: lineBreakdown({
-          name: line.menu.name,
-          quantity: line.quantity,
-          unitPrice: line.unitPrice,
-          addons: line.OrdersAddons.map((link) => ({
-            name: link.addon.name,
-            unitPrice: link.unitPrice,
+    // Only what's payable: voided units are left out — a line voided in
+    // full isn't listed, a partly voided one shows what's left, and a
+    // round with nothing left isn't on the bill at all. (The round cards
+    // keep the voids, struck through, for staff.)
+    acceptedRounds: accepted
+      .map((round) => ({
+        orderNumber: round.orderNumber,
+        time: round.createdAt,
+        // Table rounds keep one row per customer per line; the Backoffice
+        // shows identical lines merged ("Iced Latte ×2") — display only,
+        // the total is unchanged.
+        lines: mergeLinesForDisplay(round.orders)
+          .filter((line) => effectiveQuantity(line) > 0)
+          .map((line) => ({
+            id: line.id,
+            lineTotal: orderLineTotal(line),
+            // Item, then one row per add-on — what BillLineRows renders —
+            // for the units still charged.
+            breakdown: lineBreakdown({
+              name: line.menu.name,
+              quantity: effectiveQuantity(line),
+              unitPrice: line.unitPrice,
+              addons: line.OrdersAddons.map((link) => ({
+                name: link.addon.name,
+                unitPrice: link.unitPrice,
+              })),
+            }),
           })),
-        }),
-      })),
-    })),
+      }))
+      .filter((round) => round.lines.length > 0),
     pendingRounds,
     total: accepted.reduce(
       (sum, round) => sum + orderLinesTotal(round.orders),

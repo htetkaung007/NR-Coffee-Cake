@@ -23,6 +23,14 @@ export const GRANTABLE_PERMISSIONS = [
     defaultForNewManager: true,
   },
   {
+    key: "ORDERS_VOID",
+    group: "Orders",
+    label: "Void items",
+    description:
+      "Take items back off an accepted, unpaid order (with a reason).",
+    defaultForNewManager: false,
+  },
+  {
     key: "MENU_AVAILABILITY",
     group: "Daily",
     label: "Turn menus on/off",

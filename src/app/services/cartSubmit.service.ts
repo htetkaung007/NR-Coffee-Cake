@@ -41,13 +41,16 @@ export type CartSubmitResult =
       validation: CartValidationResult;
     };
 
-/** Something changed between the server-side check and the write (a
- *  price, or the round was taken by another submit) — the transaction
- *  rolls back and submit re-checks. Internal to this file. */
-class CartChangedDuringSubmit extends Error {}
+/** A price changed between the server-side check and the write — the
+ *  transaction rolls back and the submit re-checks. Thrown by
+ *  priceAndMergeLines, so also caught by StaffOrderService's submit. */
+export class CartChangedDuringSubmit extends Error {}
+/** The round was taken by another submit — internal to this file. */
 class RoundNoLongerOpen extends Error {}
 
-function isUniqueViolation(error: unknown) {
+/** A unique index refused the write — here, a second order with the same
+ *  clientRequestId. Shared with StaffOrderService's submit. */
+export function isUniqueViolation(error: unknown) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"
@@ -56,7 +59,7 @@ function isUniqueViolation(error: unknown) {
 
 /** One order line to insert: identical cart lines (lineMergeKey) merged,
  *  priced from the snapshot taken inside the transaction. */
-interface MergedLine {
+export interface MergedLine {
   menuId: number;
   unitPrice: number;
   addons: PricedAddon[];
@@ -292,13 +295,29 @@ export class CartSubmitService {
       lines,
       validated,
     );
-    for (const line of merged) {
+    await CartSubmitService.writeLines(tx, {
+      sessionId: round.id,
+      tableId,
+      lines: merged,
+    });
+
+    return OrderSessionService.submitCartRoundForApproval(tx, round);
+  }
+
+  /** Inserts a browser cart's priced, merged lines (priceAndMergeLines)
+   *  into a round, each with its add-on price snapshots. Inside the
+   *  caller's transaction. Shared with StaffOrderService's submit. */
+  static async writeLines(
+    tx: Tx,
+    round: { sessionId: number; tableId: number; lines: readonly MergedLine[] },
+  ) {
+    for (const line of round.lines) {
       await tx.order.create({
         data: {
           menuId: line.menuId,
           quantity: line.quantity,
-          tableId,
-          orderSessionId: round.id,
+          tableId: round.tableId,
+          orderSessionId: round.sessionId,
           note: line.note,
           unitPrice: line.unitPrice,
           OrdersAddons: {
@@ -310,15 +329,15 @@ export class CartSubmitService {
         },
       });
     }
-
-    return OrderSessionService.submitCartRoundForApproval(tx, round);
   }
 
   /** Price snapshots for every line (one PriceSnapshotService lookup per
-   *  distinct menu, not per line), checked against the validated prices,
-   *  then identical lines merged by THE merge rule (lineMergeKey). The
-   *  first line's note is kept, as when adding to a server cart. */
-  private static async priceAndMergeLines(
+   *  distinct menu, not per line), checked against the validated prices
+   *  (CartChangedDuringSubmit if one moved), then identical lines merged
+   *  by THE merge rule (lineMergeKey). The first line's note is kept, as
+   *  when adding to a server cart. Shared with StaffOrderService's
+   *  submit. */
+  static async priceAndMergeLines(
     tx: Tx,
     lines: readonly CartLineInput[],
     validated: readonly ValidatedCartLine[],

@@ -8,10 +8,16 @@ import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import type { ApprovalTiming } from "@/app/lib/approval/approvalTiming";
 import ApprovalWaitingPanel from "./ApprovalWaitingPanel";
+import WithdrawRoundControls from "./WithdrawRoundControls";
+import {
+  changeRoundAction,
+  withdrawRoundAction,
+} from "@/app/(storefront)/counter/action";
 import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 import { useCartValidation } from "@/app/lib/hooks/useCartValidation";
 import { cartLineTotal, cartLinesTotal } from "@/app/lib/order/orderTotals";
 import {
+  quantityThatFits,
   toBrowserCartLine,
   toServerLines,
   type BrowserCartLine,
@@ -26,6 +32,7 @@ import { formatAmount } from "@/app/lib/orderFormat";
 import {
   getSubmittedOrderOutcomeAction,
   submitCartAction,
+  validateCartAction,
 } from "@/app/(storefront)/cart/action";
 import {
   shownCancelReason,
@@ -117,7 +124,7 @@ export default function CartPageClient({
   const browserCart = useBrowserCart(locationId);
   const { cart } = browserCart;
   const validation = useCartValidation(
-    locationId,
+    (lines) => validateCartAction({ locationId, lines }),
     cart,
     browserCart.applyValidation,
     initialSendState,
@@ -145,6 +152,32 @@ export default function CartPageClient({
     reason: ShownCancelReason;
   } | null>(null);
   const isWaiting = status === "PENDING_APPROVAL";
+
+  /** "Change order": the waiting round is withdrawn and its lines come
+   *  back into this cart to be edited and sent again (the cookie now
+   *  points at a round that can take them — counter/action.ts). */
+  async function changeOwnRound() {
+    const result = await changeRoundAction();
+    if (result.success) {
+      browserCart.forgetLastSubmitted();
+      browserCart.addLines(result.data.lines);
+      setRoundLines([]);
+      setApproval(null);
+      setStatus("CART");
+    }
+    return result;
+  }
+
+  /** "Cancel order": the waiting round is withdrawn; nothing comes back. */
+  async function cancelOwnRound() {
+    const result = await withdrawRoundAction();
+    if (result.success) {
+      browserCart.forgetLastSubmitted();
+      setStatus("CART");
+      goBackToMenu();
+    }
+    return result;
+  }
 
   /** The items go back into the cart (once — see restoreAfterRejection)
    *  and the screen explains why. */
@@ -275,15 +308,11 @@ export default function CartPageClient({
   /** How many of a short menu THIS line can keep, with the menu's other
    *  lines as they are (they share one stock). */
   function fitQuantity(index: number) {
-    const available = checkedLines[index]?.availableQuantity ?? 0;
-    const others = cart.lines.reduce(
-      (sum, line, i) =>
-        i !== index && line.menuId === cart.lines[index].menuId
-          ? sum + line.quantity
-          : sum,
-      0,
+    return quantityThatFits(
+      cart.lines,
+      index,
+      checkedLines[index]?.availableQuantity ?? 0,
     );
-    return Math.max(0, available - others);
   }
 
   function handleSubmit() {
@@ -418,7 +447,13 @@ export default function CartPageClient({
           <ApprovalWaitingPanel
             orderNumber={session.billNumber}
             approval={approval}
-          />
+          >
+            <WithdrawRoundControls
+              confirmMessage="The counter won't make it. Your items won't come back to the cart — use Change order for that."
+              onChange={changeOwnRound}
+              onCancel={cancelOwnRound}
+            />
+          </ApprovalWaitingPanel>
         )}
 
         {!isWaiting && (

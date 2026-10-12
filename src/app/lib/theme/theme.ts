@@ -42,6 +42,11 @@ export function getBoTheme(mode: PaletteMode) {
       // 5.1:1 on the page. Dark mode: success.main itself, 6.8:1 on paper
       // and 7.3:1 on the page.
       successText: isLight ? "#047857" : successMain,
+      // The error role as text — a table's "In use" (New Order). error.main
+      // is only 4.6:1 on the light page, so light mode uses error.dark
+      // (5.6:1 on paper, 5.2:1 on the page) and dark mode error.light
+      // (5.7:1 on paper, 6.2:1 on the page).
+      errorText: isLight ? "#c62828" : "#e57373",
       // The roles below are written out with MUI v9's own defaults (all
       // four shades, so nothing is re-derived) — declared only so every
       // Backoffice color can be changed from this file.

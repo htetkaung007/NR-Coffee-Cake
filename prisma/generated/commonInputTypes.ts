@@ -283,6 +283,23 @@ export type EnumRejectReasonNullableWithAggregatesFilter<$PrismaModel = never> =
   _max?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
 }
 
+export type EnumVoidReasonFilter<$PrismaModel = never> = {
+  equals?: $Enums.VoidReason | Prisma.EnumVoidReasonFieldRefInput<$PrismaModel>
+  in?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  notIn?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumVoidReasonFilter<$PrismaModel> | $Enums.VoidReason
+}
+
+export type EnumVoidReasonWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.VoidReason | Prisma.EnumVoidReasonFieldRefInput<$PrismaModel>
+  in?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  notIn?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumVoidReasonWithAggregatesFilter<$PrismaModel> | $Enums.VoidReason
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumVoidReasonFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumVoidReasonFilter<$PrismaModel>
+}
+
 export type EnumPermissionFilter<$PrismaModel = never> = {
   equals?: $Enums.Permission | Prisma.EnumPermissionFieldRefInput<$PrismaModel>
   in?: $Enums.Permission[] | Prisma.ListEnumPermissionFieldRefInput<$PrismaModel>
@@ -580,6 +597,23 @@ export type NestedEnumRejectReasonNullableWithAggregatesFilter<$PrismaModel = ne
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumRejectReasonNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumVoidReasonFilter<$PrismaModel = never> = {
+  equals?: $Enums.VoidReason | Prisma.EnumVoidReasonFieldRefInput<$PrismaModel>
+  in?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  notIn?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumVoidReasonFilter<$PrismaModel> | $Enums.VoidReason
+}
+
+export type NestedEnumVoidReasonWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.VoidReason | Prisma.EnumVoidReasonFieldRefInput<$PrismaModel>
+  in?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  notIn?: $Enums.VoidReason[] | Prisma.ListEnumVoidReasonFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumVoidReasonWithAggregatesFilter<$PrismaModel> | $Enums.VoidReason
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumVoidReasonFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumVoidReasonFilter<$PrismaModel>
 }
 
 export type NestedEnumPermissionFilter<$PrismaModel = never> = {

@@ -39,11 +39,17 @@ declare module "@mui/material/styles" {
      *  of success with ≥ 4.5:1 against background.paper AND
      *  background.default. Only the Bo theme defines it. */
     successText?: string;
+    /** The error role as TEXT (a table's "In use" on the staff New
+     *  Order picker): a shade of error with ≥ 4.5:1 against
+     *  background.paper AND background.default. Only the Bo theme
+     *  defines it. */
+    errorText?: string;
   }
   interface PaletteOptions {
     inputBorder?: string;
     decor?: DecorPalette;
     successText?: string;
+    errorText?: string;
   }
 }
 

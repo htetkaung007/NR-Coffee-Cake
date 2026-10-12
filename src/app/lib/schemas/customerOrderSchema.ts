@@ -8,10 +8,11 @@ import { countWords, MAX_ORDER_NOTE_WORDS } from "@/app/lib/order/orderNote";
 // the same thing (how many of one menu item) regardless of which
 // action it shows up in. One definition each so a future tightening
 // (e.g. a lower max on quantity) can't apply to only some actions by
-// accident. Exported so the staff order schemas (staffOrderSchema.ts)
-// enforce exactly the same rules.
+// accident. `quantity` is exported for the cart check
+// (lib/cart/cartValidation.ts); the staff New Order reuses the whole
+// cart line schema (cartLinesSchema) instead.
 export const quantity = z.number().int().min(1).max(99);
-export const addonIds = z.array(idSchema).default([]);
+const addonIds = z.array(idSchema).default([]);
 // Optional per-item instruction ("no onion"). Limited by WORDS, not
 // characters — see countWords for what counts as a word. Defined once
 // so every schema that takes a note enforces the same rule.
@@ -85,11 +86,15 @@ const cartLineSchema = z.object({
   displayedUnitPrice: z.number().int().nonnegative().optional(),
 });
 
+/** A whole browser-held cart's lines — also the staff New Order cart's
+ *  (staffOrderSchema.ts), which is checked and sent the same way. */
+export const cartLinesSchema = z
+  .array(cartLineSchema)
+  .max(MAX_CART_LINES, `A cart can have at most ${MAX_CART_LINES} lines.`);
+
 export const validateCartSchema = z.object({
   locationId: idSchema,
-  lines: z
-    .array(cartLineSchema)
-    .max(MAX_CART_LINES, `A cart can have at most ${MAX_CART_LINES} lines.`),
+  lines: cartLinesSchema,
 });
 export type ValidateCartInput = z.infer<typeof validateCartSchema>;
 export type ValidateCartRawInput = z.input<typeof validateCartSchema>;
@@ -113,3 +118,9 @@ export const pollTableSchema = z.object({
   locationId: idSchema,
 });
 export type PollTableInput = z.infer<typeof pollTableSchema>;
+
+// A customer withdrawing (cancelling or changing) the table's round
+// that waits for approval — which table only; the round is the table's
+// own current one, never named by id.
+export const withdrawTableRoundSchema = z.object({ tableId: idSchema });
+export type WithdrawTableRoundInput = z.infer<typeof withdrawTableRoundSchema>;

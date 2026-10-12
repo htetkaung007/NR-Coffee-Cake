@@ -10,8 +10,11 @@ import { formatAmount } from "@/app/lib/orderFormat";
 import { ORDER_STATUS_CHIP } from "./OrderReceipt";
 
 interface HistoryItem {
+  /** What's still on the order (staff-voided units left out). */
   quantity: number;
   name: string;
+  /** Units staff took back off it (0/absent: none). */
+  removed?: number;
 }
 
 interface OrderHistoryCardProps {
@@ -26,8 +29,11 @@ interface OrderHistoryCardProps {
   total: number;
 }
 
-/** "1 × Latte, 1 × Cake +2 more" — a one-line summary of some items. */
-function summarize(items: HistoryItem[]) {
+/** "1 × Latte, 1 × Cake +2 more" — a one-line summary of what's still
+ *  on the order (an item staff took back entirely isn't in it — the
+ *  receipt lists it, struck through). */
+function summarize(allItems: HistoryItem[]) {
+  const items = allItems.filter((item) => item.quantity > 0);
   const shown = items
     .slice(0, SUMMARY_ITEMS)
     .map((item) => `${item.quantity} × ${item.name}`)
@@ -58,6 +64,9 @@ export default function OrderHistoryCard({
     label: status,
     color: "default" as const,
   };
+  const kept = items.filter((item) => item.quantity > 0);
+  const isWithdrawn = status === "WITHDRAWN";
+  const removed = items.reduce((sum, item) => sum + (item.removed ?? 0), 0);
 
   return (
     <Card
@@ -137,11 +146,18 @@ export default function OrderHistoryCard({
           )}
           <Stack direction="row" sx={{ justifyContent: "space-between" }}>
             <Typography variant="caption" color="text.secondary">
-              {items.length} {items.length === 1 ? "item" : "items"}
+              {kept.length} {kept.length === 1 ? "item" : "items"}
+              {removed > 0 && ` · ${removed} removed by staff`}
             </Typography>
             <Typography
               variant="body2"
-              sx={{ fontWeight: 700, color: "primary.main" }}
+              sx={
+                isWithdrawn
+                  ? // Cancelled by the customer: never charged — struck
+                    // through, beside the "Cancelled by you" chip.
+                    { color: "text.secondary", textDecoration: "line-through" }
+                  : { fontWeight: 700, color: "primary.main" }
+              }
             >
               {formatAmount(total)}
             </Typography>

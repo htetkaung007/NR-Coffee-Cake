@@ -288,6 +288,7 @@ export type OrderWhereInput = {
   menu?: Prisma.XOR<Prisma.MenuScalarRelationFilter, Prisma.MenuWhereInput>
   table?: Prisma.XOR<Prisma.TableScalarRelationFilter, Prisma.TableWhereInput>
   OrdersAddons?: Prisma.OrdersAddonListRelationFilter
+  voids?: Prisma.OrderVoidListRelationFilter
 }
 
 export type OrderOrderByWithRelationInput = {
@@ -306,6 +307,7 @@ export type OrderOrderByWithRelationInput = {
   menu?: Prisma.MenuOrderByWithRelationInput
   table?: Prisma.TableOrderByWithRelationInput
   OrdersAddons?: Prisma.OrdersAddonOrderByRelationAggregateInput
+  voids?: Prisma.OrderVoidOrderByRelationAggregateInput
 }
 
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -327,6 +329,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   menu?: Prisma.XOR<Prisma.MenuScalarRelationFilter, Prisma.MenuWhereInput>
   table?: Prisma.XOR<Prisma.TableScalarRelationFilter, Prisma.TableWhereInput>
   OrdersAddons?: Prisma.OrdersAddonListRelationFilter
+  voids?: Prisma.OrderVoidListRelationFilter
 }, "id">
 
 export type OrderOrderByWithAggregationInput = {
@@ -377,6 +380,7 @@ export type OrderCreateInput = {
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
   table: Prisma.TableCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateInput = {
@@ -392,6 +396,7 @@ export type OrderUncheckedCreateInput = {
   updateTime?: Date | string
   isArchived?: boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUpdateInput = {
@@ -406,6 +411,7 @@ export type OrderUpdateInput = {
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
   table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateInput = {
@@ -421,6 +427,7 @@ export type OrderUncheckedUpdateInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateManyInput = {
@@ -676,6 +683,20 @@ export type OrderUncheckedUpdateManyWithoutOrderSessionNestedInput = {
   deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
 }
 
+export type OrderCreateNestedOneWithoutVoidsInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutVoidsInput, Prisma.OrderUncheckedCreateWithoutVoidsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutVoidsInput
+  connect?: Prisma.OrderWhereUniqueInput
+}
+
+export type OrderUpdateOneRequiredWithoutVoidsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutVoidsInput, Prisma.OrderUncheckedCreateWithoutVoidsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutVoidsInput
+  upsert?: Prisma.OrderUpsertWithoutVoidsInput
+  connect?: Prisma.OrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutVoidsInput, Prisma.OrderUpdateWithoutVoidsInput>, Prisma.OrderUncheckedUpdateWithoutVoidsInput>
+}
+
 export type OrderCreateWithoutTableInput = {
   quantity: number
   unitPrice: number
@@ -687,6 +708,7 @@ export type OrderCreateWithoutTableInput = {
   orderSession?: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutTableInput = {
@@ -701,6 +723,7 @@ export type OrderUncheckedCreateWithoutTableInput = {
   updateTime?: Date | string
   isArchived?: boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutTableInput = {
@@ -757,6 +780,7 @@ export type OrderCreateWithoutMenuInput = {
   orderSession?: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
   table: Prisma.TableCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutMenuInput = {
@@ -771,6 +795,7 @@ export type OrderUncheckedCreateWithoutMenuInput = {
   updateTime?: Date | string
   isArchived?: boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutMenuInput = {
@@ -810,6 +835,7 @@ export type OrderCreateWithoutOrdersAddonsInput = {
   orderSession?: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
   table: Prisma.TableCreateNestedOneWithoutOrdersInput
+  voids?: Prisma.OrderVoidCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutOrdersAddonsInput = {
@@ -824,6 +850,7 @@ export type OrderUncheckedCreateWithoutOrdersAddonsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  voids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutOrdersAddonsInput = {
@@ -853,6 +880,7 @@ export type OrderUpdateWithoutOrdersAddonsInput = {
   orderSession?: Prisma.OrderSessionUpdateOneWithoutOrdersNestedInput
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
   table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
+  voids?: Prisma.OrderVoidUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
@@ -867,6 +895,7 @@ export type OrderUncheckedUpdateWithoutOrdersAddonsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  voids?: Prisma.OrderVoidUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutOrderSessionInput = {
@@ -880,6 +909,7 @@ export type OrderCreateWithoutOrderSessionInput = {
   menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
   table: Prisma.TableCreateNestedOneWithoutOrdersInput
   OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutOrderSessionInput = {
@@ -894,6 +924,7 @@ export type OrderUncheckedCreateWithoutOrderSessionInput = {
   updateTime?: Date | string
   isArchived?: boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedCreateNestedManyWithoutOrderInput
+  voids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutOrderSessionInput = {
@@ -922,6 +953,80 @@ export type OrderUpdateManyWithWhereWithoutOrderSessionInput = {
   data: Prisma.XOR<Prisma.OrderUpdateManyMutationInput, Prisma.OrderUncheckedUpdateManyWithoutOrderSessionInput>
 }
 
+export type OrderCreateWithoutVoidsInput = {
+  quantity: number
+  unitPrice: number
+  contributorToken?: string | null
+  note?: string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  orderSession?: Prisma.OrderSessionCreateNestedOneWithoutOrdersInput
+  menu: Prisma.MenuCreateNestedOneWithoutOrdersInput
+  table: Prisma.TableCreateNestedOneWithoutOrdersInput
+  OrdersAddons?: Prisma.OrdersAddonCreateNestedManyWithoutOrderInput
+}
+
+export type OrderUncheckedCreateWithoutVoidsInput = {
+  id?: number
+  menuId: number
+  quantity: number
+  unitPrice: number
+  tableId: number
+  orderSessionId?: number | null
+  contributorToken?: string | null
+  note?: string | null
+  createdAt?: Date | string
+  updateTime?: Date | string
+  isArchived?: boolean
+  OrdersAddons?: Prisma.OrdersAddonUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type OrderCreateOrConnectWithoutVoidsInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutVoidsInput, Prisma.OrderUncheckedCreateWithoutVoidsInput>
+}
+
+export type OrderUpsertWithoutVoidsInput = {
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutVoidsInput, Prisma.OrderUncheckedUpdateWithoutVoidsInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutVoidsInput, Prisma.OrderUncheckedCreateWithoutVoidsInput>
+  where?: Prisma.OrderWhereInput
+}
+
+export type OrderUpdateToOneWithWhereWithoutVoidsInput = {
+  where?: Prisma.OrderWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutVoidsInput, Prisma.OrderUncheckedUpdateWithoutVoidsInput>
+}
+
+export type OrderUpdateWithoutVoidsInput = {
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  orderSession?: Prisma.OrderSessionUpdateOneWithoutOrdersNestedInput
+  menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
+  table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
+  OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutVoidsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  menuId?: Prisma.IntFieldUpdateOperationsInput | number
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  unitPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  tableId?: Prisma.IntFieldUpdateOperationsInput | number
+  orderSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contributorToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  OrdersAddons?: Prisma.OrdersAddonUncheckedUpdateManyWithoutOrderNestedInput
+}
+
 export type OrderCreateManyTableInput = {
   id?: number
   menuId: number
@@ -946,6 +1051,7 @@ export type OrderUpdateWithoutTableInput = {
   orderSession?: Prisma.OrderSessionUpdateOneWithoutOrdersNestedInput
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutTableInput = {
@@ -960,6 +1066,7 @@ export type OrderUncheckedUpdateWithoutTableInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutTableInput = {
@@ -999,6 +1106,7 @@ export type OrderUpdateWithoutMenuInput = {
   orderSession?: Prisma.OrderSessionUpdateOneWithoutOrdersNestedInput
   table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutMenuInput = {
@@ -1013,6 +1121,7 @@ export type OrderUncheckedUpdateWithoutMenuInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutMenuInput = {
@@ -1052,6 +1161,7 @@ export type OrderUpdateWithoutOrderSessionInput = {
   menu?: Prisma.MenuUpdateOneRequiredWithoutOrdersNestedInput
   table?: Prisma.TableUpdateOneRequiredWithoutOrdersNestedInput
   OrdersAddons?: Prisma.OrdersAddonUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutOrderSessionInput = {
@@ -1066,6 +1176,7 @@ export type OrderUncheckedUpdateWithoutOrderSessionInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   OrdersAddons?: Prisma.OrdersAddonUncheckedUpdateManyWithoutOrderNestedInput
+  voids?: Prisma.OrderVoidUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutOrderSessionInput = {
@@ -1088,10 +1199,12 @@ export type OrderUncheckedUpdateManyWithoutOrderSessionInput = {
 
 export type OrderCountOutputType = {
   OrdersAddons: number
+  voids: number
 }
 
 export type OrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   OrdersAddons?: boolean | OrderCountOutputTypeCountOrdersAddonsArgs
+  voids?: boolean | OrderCountOutputTypeCountVoidsArgs
 }
 
 /**
@@ -1111,6 +1224,13 @@ export type OrderCountOutputTypeCountOrdersAddonsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.OrdersAddonWhereInput
 }
 
+/**
+ * OrderCountOutputType without action
+ */
+export type OrderCountOutputTypeCountVoidsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrderVoidWhereInput
+}
+
 
 export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1128,6 +1248,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
   OrdersAddons?: boolean | Prisma.Order$OrdersAddonsArgs<ExtArgs>
+  voids?: boolean | Prisma.Order$voidsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
@@ -1185,6 +1306,7 @@ export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   menu?: boolean | Prisma.MenuDefaultArgs<ExtArgs>
   table?: boolean | Prisma.TableDefaultArgs<ExtArgs>
   OrdersAddons?: boolean | Prisma.Order$OrdersAddonsArgs<ExtArgs>
+  voids?: boolean | Prisma.Order$voidsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1205,6 +1327,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     menu: Prisma.$MenuPayload<ExtArgs>
     table: Prisma.$TablePayload<ExtArgs>
     OrdersAddons: Prisma.$OrdersAddonPayload<ExtArgs>[]
+    voids: Prisma.$OrderVoidPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1616,6 +1739,7 @@ export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Ty
   menu<T extends Prisma.MenuDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MenuDefaultArgs<ExtArgs>>): Prisma.Prisma__MenuClient<runtime.Types.Result.GetResult<Prisma.$MenuPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   table<T extends Prisma.TableDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TableDefaultArgs<ExtArgs>>): Prisma.Prisma__TableClient<runtime.Types.Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   OrdersAddons<T extends Prisma.Order$OrdersAddonsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$OrdersAddonsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdersAddonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  voids<T extends Prisma.Order$voidsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$voidsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderVoidPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2097,6 +2221,30 @@ export type Order$OrdersAddonsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.OrdersAddonScalarFieldEnum | Prisma.OrdersAddonScalarFieldEnum[]
+}
+
+/**
+ * Order.voids
+ */
+export type Order$voidsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrderVoid
+   */
+  select?: Prisma.OrderVoidSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrderVoid
+   */
+  omit?: Prisma.OrderVoidOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrderVoidInclude<ExtArgs> | null
+  where?: Prisma.OrderVoidWhereInput
+  orderBy?: Prisma.OrderVoidOrderByWithRelationInput | Prisma.OrderVoidOrderByWithRelationInput[]
+  cursor?: Prisma.OrderVoidWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrderVoidScalarFieldEnum | Prisma.OrderVoidScalarFieldEnum[]
 }
 
 /**

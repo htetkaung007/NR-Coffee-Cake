@@ -10,7 +10,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { Alert, Snackbar } from "@mui/material";
 import { usePolling } from "@/app/lib/hooks/usePolling";
+import { describeWithdrawals } from "@/app/lib/order/cancelReason";
 import { DEFAULT_REFRESH_INTERVAL_MS } from "@/app/lib/hooks/useAutoRefresh";
 import { useOrderAlertSound } from "@/app/lib/hooks/useOrderAlertSound";
 import { useDocumentTitleCount } from "@/app/lib/hooks/useDocumentTitle";
@@ -42,6 +44,16 @@ export interface NewPendingRoundsEvent {
 
 type NewRoundsListener = (event: NewPendingRoundsEvent) => void;
 
+/** A round a customer just withdrew (OrderListService.getRecentWithdrawals). */
+export interface RecentWithdrawal {
+  sessionId: number;
+  orderNumber: string;
+  tableName: string | null;
+}
+
+/** How long the "Customer cancelled order …" toast stays. */
+const WITHDRAWAL_TOAST_MS = 6000;
+
 /** The slice of an Order List entry useFeedPendingFromList reads. */
 interface ListEntry {
   key: string;
@@ -68,6 +80,7 @@ interface OrderAlertsContextValue {
   feedFromList: (
     pending: PendingApprovalRound[],
     allEntryKeys: string[],
+    withdrawn: RecentWithdrawal[],
   ) => void;
 }
 
@@ -126,6 +139,27 @@ export function OrderAlertsProvider({
     useOrderAlertSound();
 
   const seenSessionIds = useRef<Set<number> | null>(null);
+  // Withdrawals already shown (or already there when the Backoffice
+  // opened) — each toasts once.
+  const seenWithdrawalIds = useRef<Set<number> | null>(null);
+  const [withdrawalNotice, setWithdrawalNotice] = useState<{
+    id: number;
+    message: string;
+  } | null>(null);
+  const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
+
+  const ingestWithdrawals = useCallback((withdrawn: RecentWithdrawal[]) => {
+    const seen = seenWithdrawalIds.current;
+    if (seen === null) {
+      seenWithdrawalIds.current = new Set(withdrawn.map((round) => round.sessionId));
+      return;
+    }
+    const fresh = withdrawn.filter((round) => !seen.has(round.sessionId));
+    if (fresh.length === 0) return;
+    fresh.forEach((round) => seen.add(round.sessionId));
+    setWithdrawalNotice({ id: Date.now(), message: describeWithdrawals(fresh) });
+    setIsWithdrawalOpen(true);
+  }, []);
   const knownEntryKeys = useRef<Set<string>>(new Set());
   const listeners = useRef<Set<NewRoundsListener>>(new Set());
 
@@ -184,10 +218,12 @@ export function OrderAlertsProvider({
   }, []);
 
   const handlePollResult = useCallback(
-    (rounds: Awaited<ReturnType<typeof pollPendingApprovals>>) => {
+    (result: Awaited<ReturnType<typeof pollPendingApprovals>>) => {
       // The list took over while this request was in flight — its feed
       // is at least as fresh, so don't overwrite it.
-      if (!rounds || listFeedCountRef.current > 0) return;
+      if (!result || listFeedCountRef.current > 0) return;
+      const rounds = result.pending;
+      ingestWithdrawals(result.withdrawn);
       ingest(
         rounds.map(({ sessionId, entryKey, title, isTableGroup }) => ({
           sessionId,
@@ -200,7 +236,21 @@ export function OrderAlertsProvider({
         rounds.map((round) => round.entryKey),
       );
     },
-    [ingest],
+    [ingest, ingestWithdrawals],
+  );
+
+  /** The Order List's feed: its open entries' pending rounds, and the
+   *  withdrawals it loaded alongside them. */
+  const feedFromList = useCallback(
+    (
+      next: PendingApprovalRound[],
+      allEntryKeys: string[],
+      withdrawn: RecentWithdrawal[],
+    ) => {
+      ingestWithdrawals(withdrawn);
+      ingest(next, allEntryKeys);
+    },
+    [ingest, ingestWithdrawals],
   );
 
   const isPolling = listFeedCount === 0;
@@ -235,7 +285,7 @@ export function OrderAlertsProvider({
       sound: { enabled, isLocked, toggle, volume, setVolume, playTest },
       subscribeToNewRounds,
       registerListFeed,
-      feedFromList: ingest,
+      feedFromList,
     }),
     [
       pending,
@@ -247,13 +297,33 @@ export function OrderAlertsProvider({
       playTest,
       subscribeToNewRounds,
       registerListFeed,
-      ingest,
+      feedFromList,
     ],
   );
 
   return (
     <OrderAlertsContext.Provider value={value}>
       {children}
+      {/* On every Backoffice page: a customer withdrew a round that was
+          waiting for approval — it leaves "Needs approval" on the next
+          refresh, this says why (once). Info, not warning: nothing to do. */}
+      <Snackbar
+        key={withdrawalNotice?.id}
+        open={isWithdrawalOpen}
+        autoHideDuration={WITHDRAWAL_TOAST_MS}
+        onClose={() => setIsWithdrawalOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity="info"
+          variant="filled"
+          role="status"
+          onClose={() => setIsWithdrawalOpen(false)}
+          sx={{ width: "100%" }}
+        >
+          {withdrawalNotice?.message}
+        </Alert>
+      </Snackbar>
     </OrderAlertsContext.Provider>
   );
 }
@@ -291,7 +361,10 @@ export function useNewPendingRoundsListener(listener: NewRoundsListener) {
  * card's "appear" cue is set before the browser paints — it starts its
  * fade-in from opacity 0 instead of flashing fully visible first.
  */
-export function useFeedPendingFromList(entries: ListEntry[]) {
+export function useFeedPendingFromList(
+  entries: ListEntry[],
+  withdrawn: RecentWithdrawal[],
+) {
   const { registerListFeed, feedFromList } = useOrderAlerts();
 
   useEffect(() => registerListFeed(), [registerListFeed]);
@@ -309,6 +382,7 @@ export function useFeedPendingFromList(entries: ListEntry[]) {
           })),
       ),
       entries.map((entry) => entry.key),
+      withdrawn,
     );
-  }, [entries, feedFromList]);
+  }, [entries, withdrawn, feedFromList]);
 }

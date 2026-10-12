@@ -3,7 +3,8 @@
 import type { ActionResult } from "@/app/lib/actionResult";
 import type { RejectReason } from "@/app/lib/order/rejectReason";
 import { Box, Typography } from "@mui/material";
-import RoundCard, { type Round } from "./RoundCard";
+import RoundCard, { type Round, type RoundLine } from "./RoundCard";
+import type { VoidRequest } from "./VoidItemDialog";
 import { formatClockTime } from "@/app/lib/orderFormat";
 
 // Geometry of the decorative rail: a 2px line centred 11px from the
@@ -58,6 +59,7 @@ export default function RoundTimeline({
   isPending,
   onAccept,
   onReject,
+  onVoid,
 }: {
   rounds: Round[];
   isTableGroup: boolean;
@@ -70,6 +72,11 @@ export default function RoundTimeline({
     sessionId: number,
     reason: RejectReason,
     note?: string,
+  ) => Promise<ActionResult<unknown>>;
+  /** Voids items off a line — only when the viewer may (RoundCard). */
+  onVoid?: (
+    line: RoundLine,
+    request: VoidRequest,
   ) => Promise<ActionResult<unknown>>;
 }) {
   return (
@@ -110,6 +117,7 @@ export default function RoundTimeline({
             isPending={isPending}
             onAccept={() => onAccept(round.id)}
             onReject={(reason, note) => onReject(round.id, reason, note)}
+            onVoid={onVoid}
           />
         </Box>
       ))}

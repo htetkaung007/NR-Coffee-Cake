@@ -141,9 +141,13 @@ function Countdown({
 export default function ApprovalWaitingPanel({
   orderNumber,
   approval,
+  children,
 }: {
   orderNumber: string;
   approval: ApprovalTiming | null;
+  /** Under the countdown — the customer's own Change / Cancel buttons
+   *  (WithdrawRoundControls). */
+  children?: React.ReactNode;
 }) {
   const titleId = useId();
   // Without timing, the plain Counter wording (the only case that can
@@ -174,6 +178,7 @@ export default function ApprovalWaitingPanel({
         {copy.subtitle}
       </Typography>
       {approval && <Countdown approval={approval} orderNumber={orderNumber} />}
+      {children}
     </Box>
   );
 }

@@ -28,11 +28,12 @@ export function deriveRequestedAt(
   return session.isCounter ? session.updateTime : session.createdAt;
 }
 
-/** When it ended: a rejection when the cashier tapped Reject (now); an
- *  expiry at its deadline — not whenever a poll or sweep noticed it —
- *  or now if it somehow had none. */
+/** When it ended: a rejection when the cashier tapped Reject (now); a
+ *  withdrawal when the customer tapped Cancel (now); an expiry at its
+ *  deadline — not whenever a poll or sweep noticed it — or now if it
+ *  somehow had none. */
 export function deriveDecidedAt(
-  reason: "REJECTED" | "EXPIRED",
+  reason: "REJECTED" | "EXPIRED" | "WITHDRAWN",
   approvalExpiresAt: Date | null,
   now: Date,
 ): Date {

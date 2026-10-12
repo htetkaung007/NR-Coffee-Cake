@@ -9,6 +9,15 @@
 * 🟢 You can import this file directly.
 */
 
+export const VoidReason = {
+  CUSTOMER_CHANGED_MIND: 'CUSTOMER_CHANGED_MIND',
+  WRONG_ITEM: 'WRONG_ITEM',
+  OTHER: 'OTHER'
+} as const
+
+export type VoidReason = (typeof VoidReason)[keyof typeof VoidReason]
+
+
 export const ORDERSTATUS = {
   CART: 'CART',
   PENDING_APPROVAL: 'PENDING_APPROVAL',
@@ -25,7 +34,8 @@ export type ORDERSTATUS = (typeof ORDERSTATUS)[keyof typeof ORDERSTATUS]
 export const CancelReason = {
   REJECTED: 'REJECTED',
   EXPIRED: 'EXPIRED',
-  UNSUBMITTED: 'UNSUBMITTED'
+  UNSUBMITTED: 'UNSUBMITTED',
+  WITHDRAWN: 'WITHDRAWN'
 } as const
 
 export type CancelReason = (typeof CancelReason)[keyof typeof CancelReason]
@@ -54,7 +64,8 @@ export const Permission = {
   MENU_AVAILABILITY: 'MENU_AVAILABILITY',
   ADDON_AVAILABILITY: 'ADDON_AVAILABILITY',
   TABLES_MANAGE: 'TABLES_MANAGE',
-  REPORTS_VIEW: 'REPORTS_VIEW'
+  REPORTS_VIEW: 'REPORTS_VIEW',
+  ORDERS_VOID: 'ORDERS_VOID'
 } as const
 
 export type Permission = (typeof Permission)[keyof typeof Permission]

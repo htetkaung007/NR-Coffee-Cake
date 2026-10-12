@@ -130,6 +130,8 @@ interface DisplayMergeable {
   note: string | null;
   OrdersAddons: readonly PricedAddon[];
   contributorToken?: string | null;
+  /** Units voided off the row (OrderVoid) — merged lines keep them all. */
+  voids?: readonly unknown[];
 }
 
 /**
@@ -139,21 +141,33 @@ interface DisplayMergeable {
  * the quantities added ("Iced Latte ×2"). Same rule as everywhere else
  * (lineMergeKey): lines with a different note, add-on set or price
  * snapshot stay separate. A merged line keeps its first line's id (the
- * React key), add-ons and note; lines stay in order of first appearance,
- * and the total is unchanged (each part is the same per-unit price).
- * The contributorToken is dropped — the Backoffice never shows who. Pure:
- * the rows given aren't changed.
+ * React key), add-ons and note, every row's id in `orderIds` (what a
+ * void of the merged line acts on — lib/order/voids.planVoid) and every
+ * row's voids; lines stay in order of first appearance, and the total is
+ * unchanged (each part is the same per-unit price). The contributorToken
+ * is dropped — the Backoffice never shows who. Pure: the rows given
+ * aren't changed.
  */
 export function mergeLinesForDisplay<Line extends DisplayMergeable>(
   lines: readonly Line[],
-): Omit<Line, "contributorToken">[] {
-  const merged = new Map<string, Omit<Line, "contributorToken">>();
+): (Omit<Line, "contributorToken"> & { orderIds: number[] })[] {
+  const merged = new Map<
+    string,
+    Omit<Line, "contributorToken"> & { orderIds: number[] }
+  >();
   for (const { contributorToken: _owner, ...line } of lines) {
     void _owner;
     const key = lineMergeKey(line.menuId, line.unitPrice, line.OrdersAddons, line.note);
     const existing = merged.get(key);
-    if (existing) existing.quantity += line.quantity;
-    else merged.set(key, { ...line });
+    if (existing) {
+      existing.quantity += line.quantity;
+      existing.orderIds.push(line.id);
+      if (existing.voids && line.voids) {
+        existing.voids = [...existing.voids, ...line.voids];
+      }
+    } else {
+      merged.set(key, { ...line, orderIds: [line.id] });
+    }
   }
   return [...merged.values()];
 }

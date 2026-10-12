@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { AppError } from "@/app/lib/errors";
 import {
   CounterSessionService,
   isSessionTerminal,
@@ -13,6 +14,7 @@ import {
 import { toCartLine } from "@/app/lib/order/roundLine";
 import { orderLinesTotal } from "@/app/lib/order/orderTotals";
 import { approvalTiming } from "@/app/lib/approval/approvalTiming";
+import { toActionResult, toSafeResult } from "@/app/lib/actionHelper";
 
 /** The one place this file reads the Counter session cookie. The cart
  *  itself lives in the browser now (sent with submitCartAction, in
@@ -92,4 +94,48 @@ export async function pollOrderStatusAction() {
     total: orderLinesTotal(session.orders),
     cart: session.orders.map(toCartLine),
   };
+}
+
+/**
+ * "Cancel order" / "Change order" on the Counter waiting screen — see
+ * CounterSessionService.withdrawByToken: only the round THIS browser's
+ * cookie points at, only while it waits for approval. Moves (or clears)
+ * the cookie the way the poll does after a rejection — or, for a changed
+ * first round, onto a fresh cart round so the customer can resend without
+ * scanning again. "change" returns the lines for the browser cart.
+ * Customer action: no staff guard — the cookie and the waiting status
+ * are the limits.
+ */
+async function withdrawOwnRound(mode: "cancel" | "change") {
+  const { store, token } = await getCookieToken();
+  if (!token) {
+    throw new AppError(
+      "We couldn't find your order. Scan the counter QR code again.",
+      "NO_SESSION",
+    );
+  }
+  const result = await CounterSessionService.withdrawByToken(token, mode);
+  if (result.nextToken) {
+    store.set(COUNTER_SESSION_COOKIE, result.nextToken, counterSessionCookieOptions);
+  } else {
+    store.set(COUNTER_SESSION_COOKIE, "", { maxAge: 0 });
+  }
+  return {
+    sessionId: result.sessionId,
+    orderNumber: result.orderNumber,
+    lines: result.lines,
+  };
+}
+
+const safeWithdrawOwnRound = toSafeResult(withdrawOwnRound);
+
+/** The customer cancels their own order while it waits for approval. */
+export async function withdrawRoundAction() {
+  return toActionResult(await safeWithdrawOwnRound("cancel"));
+}
+
+/** The customer takes their order back to change it: cancelled the same
+ *  way, and its lines come back for the browser cart. */
+export async function changeRoundAction() {
+  return toActionResult(await safeWithdrawOwnRound("change"));
 }

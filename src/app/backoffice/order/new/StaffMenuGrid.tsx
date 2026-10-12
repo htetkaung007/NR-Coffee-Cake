@@ -59,7 +59,8 @@ export default function StaffMenuGrid({
   onSelect: (menu: StaffMenu) => void;
 }) {
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  // lg: where the page shows the current order beside the menus.
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 200);
   const [activeCategory, setActiveCategory] = useState<number | typeof ALL>(

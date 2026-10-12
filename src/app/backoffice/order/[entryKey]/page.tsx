@@ -4,6 +4,12 @@ import { approvalDeadline } from "@/app/lib/approval/approvalDeadline";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { buildEntryBillFromSessions } from "@/app/lib/order/orderTotals";
 import { mergeLinesForDisplay } from "@/app/lib/order/orderLineMerge";
+import {
+  effectiveItemCount,
+  effectiveQuantity,
+  isVoidableRoundStatus,
+  voidReasonLabel,
+} from "@/app/lib/order/voids";
 import OrderDetailView from "./OrderDetailView";
 
 // Awaiting approval first (oldest first — closest to expiring), then everything else newest first.
@@ -69,12 +75,23 @@ export default async function OrderDetailPage({
     // When it's due (approvalDeadline): Counter auto-cancels then; a
     // Table round only becomes overdue.
     approvalDue: approvalDueFor(session),
-    itemCount: session.orders.reduce((sum, order) => sum + order.quantity, 0),
+    // Voided units left out (lib/order/voids).
+    itemCount: effectiveItemCount(session.orders),
+    canVoid: isVoidableRoundStatus(session.status),
     // Identical lines from different customers shown as one ("Iced Latte
     // ×2") — display only; the Backoffice never shows who ordered what.
     lines: mergeLinesForDisplay(session.orders).map((order) => ({
       id: order.id,
+      orderIds: order.orderIds,
       quantity: order.quantity,
+      remaining: effectiveQuantity(order),
+      voids: order.voids.map((entry) => ({
+        quantity: entry.quantity,
+        reason: voidReasonLabel(entry.reason),
+        note: entry.note,
+        at: entry.createdAt.toISOString(),
+        by: entry.voidedBy?.name || entry.voidedBy?.email || null,
+      })),
       menuName: order.menu.name,
       imageUrl: order.menu.assetUrl || null,
       addonNames: order.OrdersAddons.map((link) => link.addon.name),

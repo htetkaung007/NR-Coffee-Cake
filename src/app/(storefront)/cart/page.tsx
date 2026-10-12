@@ -78,6 +78,7 @@ export default async function CartPage({
         shortages,
         rejectedRound,
         labels,
+        tableName,
       ] = await Promise.all([
         TableDraftService.getDraftItemsForTable(tableId),
         TableSessionService.getActiveRoundWithOrdersForTable(tableId),
@@ -86,11 +87,13 @@ export default async function CartPage({
         TableSessionService.getRejectedRoundForTable(tableId),
         // Who's who as labels — the tokens stay on the server.
         TableDraftService.getContributorLabels(tableId, contributorToken),
+        TableSessionService.getTableName(tableId),
       ]);
 
       return (
         <TableCartPageClient
           tableId={tableId}
+          tableName={tableName}
           locationId={locationId}
           shopName={shopName}
           initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}

@@ -6,6 +6,16 @@ import {
 } from "./historyFormat";
 
 describe("formatCancelReasonLabel", () => {
+  it("says the customer cancelled a withdrawn round, whatever was recorded", () => {
+    expect(
+      formatCancelReasonLabel("WITHDRAWN", {
+        rejectReason: null,
+        waitSeconds: 40,
+        note: null,
+      }),
+    ).toBe("Cancelled by customer");
+  });
+
   it("adds the cashier's reason to a recorded rejection", () => {
     expect(
       formatCancelReasonLabel("REJECTED", {

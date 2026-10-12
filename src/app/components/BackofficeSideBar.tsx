@@ -231,6 +231,11 @@ function NavSectionList({
                     bgcolor: "primary.main",
                     color: "primary.contrastText",
                   },
+                  // Touch screens keep :hover after a tap; without this,
+                  // MUI's default .Mui-selected:hover (a pale primary
+                  // tint) would show under the contrastText label. Before
+                  // the media query, so a real hover still darkens it.
+                  "&.Mui-selected:hover": { bgcolor: "primary.main" },
                   [hoverCapableMedia]: {
                     "&:hover": { bgcolor: "action.hover" },
                     "&.Mui-selected:hover": { bgcolor: "primary.dark" },

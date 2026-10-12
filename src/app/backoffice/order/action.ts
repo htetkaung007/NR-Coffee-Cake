@@ -13,10 +13,15 @@ import {
   type RejectRoundInput,
 } from "@/app/lib/schemas/rejectRoundSchema";
 import {
+  voidOrderLineSchema,
+  type VoidOrderLineInput,
+} from "@/app/lib/schemas/voidOrderLineSchema";
+import {
   LocationService,
   OrderApprovalService,
   OrderListService,
   OrderPaymentService,
+  OrderVoidService,
 } from "@/app/services";
 
 const safeGetPendingApprovals = toSafeResult(async () => {
@@ -27,15 +32,18 @@ const safeGetPendingApprovals = toSafeResult(async () => {
   );
   // No location chosen yet: nothing can be pending there — the pages
   // themselves already tell the user to pick one.
-  if (!selectedLocation) return [];
-  return OrderListService.getPendingApprovalSummary(
-    selectedLocation.locationId,
-  );
+  if (!selectedLocation) return { pending: [], withdrawn: [] };
+  const [pending, withdrawn] = await Promise.all([
+    OrderListService.getPendingApprovalSummary(selectedLocation.locationId),
+    OrderListService.getRecentWithdrawals(selectedLocation.locationId),
+  ]);
+  return { pending, withdrawn };
 });
 
 /** Read-only poll behind the Backoffice-wide new-order alerts
  *  (OrderAlertsProvider) — rounds awaiting approval at the user's
- *  selected location. See getPendingApprovalSummary. */
+ *  selected location (getPendingApprovalSummary), and the ones customers
+ *  just withdrew (getRecentWithdrawals). */
 export async function getPendingApprovalsAction() {
   const result = await safeGetPendingApprovals();
   return toActionResult(result);
@@ -107,6 +115,33 @@ export async function markEntryPaidAction(sessionIds: number[]) {
   const actionResult = toActionResult(result);
   if (actionResult.success) {
     revalidatePath("/backoffice/order");
+  }
+  return actionResult;
+}
+
+const safeRequireVoid = toSafeResult(() =>
+  requirePermission("ORDERS_VOID", { withLocation: true }),
+);
+
+const safeVoidLine = toSafeResult(OrderVoidService.voidLine);
+
+/** "Void…" on a line of an accepted, unpaid order: the owner, or a
+ *  manager the owner let void items — checked FIRST, before the input is
+ *  even read. The rows must be this company's (and, for a manager, at
+ *  their own location): OrderVoidService checks the ids. */
+export async function voidOrderLineAction(input: VoidOrderLineInput) {
+  const result = await safeRequireVoid()
+    .andThen((scope) =>
+      validateWith(voidOrderLineSchema, input).map((data) => ({
+        ...data,
+        scope,
+      })),
+    )
+    .andThen(safeVoidLine);
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) {
+    revalidatePath("/backoffice/order", "layout");
   }
   return actionResult;
 }

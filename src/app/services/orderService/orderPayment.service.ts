@@ -5,6 +5,7 @@ import { canActAtLocation, firstUnownedId } from "@/app/lib/access/ownership";
 import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 import { BillService } from "../bill.service";
 import { OrderSessionService } from "./orderSession.service";
+import { LINE_VOID_QUANTITIES } from "./orderLineQuery";
 
 type Tx = Prisma.TransactionClient;
 
@@ -123,7 +124,10 @@ export class OrderPaymentService {
    *   0. Every id must be a round `scope` may act on (its company; a
    *      manager's own location only — canActAtLocation); the first
    *      that isn't is the same NotFoundError as one that doesn't exist.
-   *   1. Load the sessions WITH their lines/add-ons (BillService needs
+   *   ½. Lock the rounds (a no-op row write) before reading their
+   *      lines, so a concurrent void is either counted or refused —
+   *      never charged (OrderVoidService takes the same lock).
+   *   1. Load the sessions WITH their lines/add-ons and voids (BillService needs
    *      those to price the bill) and refuse (ValidationError) if any
    *      is already PAID or already has a billId — the double-click/
    *      double-pay guard, since a second call for the same session(s)
@@ -141,6 +145,14 @@ export class OrderPaymentService {
     }
 
     return prisma.$transaction(async (tx) => {
+      // Lock the rounds FIRST (a row write), the same lock a void takes
+      // (OrderVoidService): a void that got there first is committed —
+      // and so counted — before the lines below are read; one that comes
+      // after waits, then finds the round PAID and refuses.
+      await tx.orderSession.updateMany({
+        where: { id: { in: sessionIds }, isArchived: false },
+        data: { updateTime: new Date() },
+      });
       const sessions = await tx.orderSession.findMany({
         where: {
           id: { in: sessionIds },
@@ -151,7 +163,7 @@ export class OrderPaymentService {
           location: { select: { companyId: true } },
           orders: {
             where: { isArchived: false },
-            include: { OrdersAddons: true },
+            include: { OrdersAddons: true, voids: LINE_VOID_QUANTITIES },
           },
         },
       });

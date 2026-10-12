@@ -14,6 +14,8 @@ interface PayableSession {
     quantity: number;
     unitPrice: number;
     OrdersAddons: { unitPrice: number }[];
+    /** Voided units are never charged (orderTotals.orderLineTotal). */
+    voids: { quantity: number }[];
   }[];
 }
 

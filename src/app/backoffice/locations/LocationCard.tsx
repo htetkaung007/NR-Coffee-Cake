@@ -56,10 +56,15 @@ export default function LocationCard({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          // A narrow card puts the "Archived" chip under the name rather
+          // than squeezing the name to a word per line.
+          flexWrap: "wrap",
           gap: 1,
         }}
       >
-        <Typography variant="body1">{location.name}</Typography>
+        <Typography variant="body1" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+          {location.name}
+        </Typography>
         {location.isArchived && (
           <Chip
             label={
@@ -93,7 +98,7 @@ export default function LocationCard({
           variant="text"
           disabled={isPending}
           onClick={handleSwitch}
-          sx={{ alignSelf: "flex-start", fontSize: "0.75rem", px: 0 }}
+          sx={{ alignSelf: "flex-start", fontSize: "0.75rem", px: 0, minHeight: 44 }}
         >
           {isPending ? "Switching..." : "Switch to this location"}
         </Button>
@@ -105,7 +110,7 @@ export default function LocationCard({
         size="small"
         variant="outlined"
         startIcon={<EditIcon sx={{ fontSize: 14 }} />}
-        sx={{ alignSelf: "flex-start", fontSize: "0.75rem" }}
+        sx={{ alignSelf: "flex-start", fontSize: "0.75rem", minHeight: 44 }}
       >
         Edit
       </Button>

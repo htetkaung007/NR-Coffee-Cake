@@ -169,6 +169,7 @@ const orderRow = (
     unitPrice: number;
     note: string | null;
     OrdersAddons: { addonId: number; unitPrice: number }[];
+    voids: { quantity: number }[];
   }> = {},
 ) => ({
   id,
@@ -178,6 +179,7 @@ const orderRow = (
   unitPrice: overrides.unitPrice ?? 2000,
   note: overrides.note ?? null,
   OrdersAddons: overrides.OrdersAddons ?? [],
+  voids: overrides.voids ?? [],
 });
 
 describe("mergeLinesForDisplay", () => {

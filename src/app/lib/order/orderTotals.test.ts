@@ -31,6 +31,7 @@ describe("orderLineTotal", () => {
       quantity: 2,
       unitPrice: 2000,
       OrdersAddons: [{ unitPrice: 500 }],
+      voids: [],
     };
     expect(orderLineTotal(order)).toBe(5000);
   });
@@ -46,8 +47,8 @@ describe("cartLineTotal", () => {
 describe("orderLinesTotal", () => {
   it("sums the totals of several lines", () => {
     const orders = [
-      { quantity: 2, unitPrice: 2000, OrdersAddons: [{ unitPrice: 500 }] },
-      { quantity: 1, unitPrice: 3000, OrdersAddons: [] },
+      { quantity: 2, unitPrice: 2000, OrdersAddons: [{ unitPrice: 500 }], voids: [] },
+      { quantity: 1, unitPrice: 3000, OrdersAddons: [], voids: [] },
     ];
     expect(orderLinesTotal(orders)).toBe(8000);
   });
@@ -81,6 +82,7 @@ function billLine(id: number, unitPrice: number, quantity = 1) {
     note: null,
     menu: { name: `Item ${id}` },
     OrdersAddons: [],
+    voids: [],
   };
 }
 

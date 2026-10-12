@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { validateCartAction } from "@/app/(storefront)/cart/action";
 import { toServerLines, type BrowserCart } from "@/app/lib/cart/browserCart";
+import type { ActionResult } from "@/app/lib/actionResult";
 import type {
+  CartLineInput,
   CartValidationResult,
   SendState,
 } from "@/app/lib/cart/cartValidation";
@@ -20,8 +21,16 @@ function choicesKey(cart: BrowserCart) {
   );
 }
 
+/** The server check a page uses: the Counter cart's validateCartAction
+ *  (which also says whether this browser could send — `sendState`), or
+ *  the staff New Order's validateStaffCartAction (no sendState: staff can
+ *  always send). */
+export type CartCheck = (
+  lines: CartLineInput[],
+) => Promise<ActionResult<CartValidationResult & { sendState?: SendState }>>;
+
 /**
- * Keeps a browser cart checked against the server (validateCartAction):
+ * Keeps a browser cart checked against the server (`check`):
  * on mount, after every change to the cart's lines, and whenever the
  * window regains focus or the tab becomes visible again — each debounced
  * ~300ms, one request in flight at a time (a trigger during a request
@@ -36,7 +45,7 @@ function choicesKey(cart: BrowserCart) {
  * at again (focus re-checks).
  */
 export function useCartValidation(
-  locationId: number,
+  check: CartCheck,
   cart: BrowserCart,
   onResult: (result: CartValidationResult) => void,
   initialSendState: SendState,
@@ -49,9 +58,9 @@ export function useCartValidation(
   } | null>(null);
   const [failedFor, setFailedFor] = useState<string | null>(null);
 
-  const latest = useRef({ locationId, cart, key, onResult });
+  const latest = useRef({ check, cart, key, onResult });
   useEffect(() => {
-    latest.current = { locationId, cart, key, onResult };
+    latest.current = { check, cart, key, onResult };
   });
   const inFlight = useRef(false);
   const runAgain = useRef(false);
@@ -67,18 +76,16 @@ export function useCartValidation(
       // A trigger that arrives mid-request is answered by one more pass.
       do {
         runAgain.current = false;
-        const { locationId, cart, key } = latest.current;
+        const { check, cart, key } = latest.current;
         if (cart.lines.length === 0) break;
         try {
-          const response = await validateCartAction({
-            locationId,
-            lines: toServerLines(cart),
-          });
+          const response = await check(toServerLines(cart));
           if (!response.success) {
             setFailedFor(key);
           } else {
             setValidated({ forKey: key, result: response.data });
-            setSendState(response.data.sendState);
+            const nextSendState = response.data.sendState;
+            if (nextSendState) setSendState(nextSendState);
             setFailedFor(null);
             if (key === latest.current.key) {
               latest.current.onResult(response.data);
