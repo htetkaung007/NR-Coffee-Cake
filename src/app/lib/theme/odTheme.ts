@@ -1,5 +1,6 @@
 import { alpha, createTheme, type PaletteMode } from "@mui/material/styles";
 import { sharedThemeOptions } from "./sharedThemeTokens";
+import { myanmarTypographyStyles } from "./myanmarTypography";
 
 /**
  * Order-app (Od) theme — customer-facing storefront. Warm terracotta / cream
@@ -8,7 +9,10 @@ import { sharedThemeOptions } from "./sharedThemeTokens";
  * components.
  *
  * Font / typography / shape are shared with the Bo theme
- * (sharedThemeTokens.ts) — this file holds the palette only.
+ * (sharedThemeTokens.ts) — this file holds the palette, plus the
+ * customer-only Myanmar text rules (myanmarTypography.ts: size scale and
+ * minimum line-heights for `:lang(my)` text — MYANMAR_FONT_SCALE is the
+ * knob).
  */
 export function getOdTheme(mode: PaletteMode) {
   const isLight = mode === "light";
@@ -17,7 +21,7 @@ export function getOdTheme(mode: PaletteMode) {
   // Red — menu prices, out-of-stock, addon prices, cart badge.
   const red = isLight ? "#C62828" : "#EF5350";
 
-  return createTheme({
+  const theme = createTheme({
     palette: {
       mode,
       primary: {
@@ -59,5 +63,17 @@ export function getOdTheme(mode: PaletteMode) {
       },
     },
     ...sharedThemeOptions,
+  });
+
+  // Myanmar text: a little smaller, with taller lines (customer side
+  // only — through this theme's CssBaseline, from its own variants).
+  return createTheme(theme, {
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: myanmarTypographyStyles(
+          theme.typography as unknown as Record<string, unknown>,
+        ),
+      },
+    },
   });
 }

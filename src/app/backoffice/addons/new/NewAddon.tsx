@@ -21,11 +21,16 @@ import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import MenuMultiSelect, { MenuOption } from "../MenuMultiSelect";
 import { emptyOptionRow, useOptionRows } from "@/app/lib/hooks/useOptionRows";
 
+/** Under the Myanmar name fields. */
+const MYANMAR_HELPER =
+  "Shown to customers who choose Myanmar. Empty → the English name is shown.";
+
 interface NewAddonInitialData {
   id: number;
   groupName: string;
+  groupNameMy: string | null;
   isRequired: boolean;
-  options: { id: number; name: string; price: number }[];
+  options: { id: number; name: string; nameMy: string | null; price: number }[];
   menuIds: number[];
 }
 
@@ -40,20 +45,25 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
   const isEditMode = Boolean(initialData);
 
   const [groupName, setGroupName] = useState(initialData?.groupName ?? "");
+  const [groupNameMy, setGroupNameMy] = useState(
+    initialData?.groupNameMy ?? "",
+  );
   const [isRequired, setIsRequired] = useState(
     initialData?.isRequired ?? false,
   );
   const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>(
     initialData?.menuIds ?? [],
   );
-  const { options, updateOption, addOption, removeOption } = useOptionRows(() =>
-    initialData
-      ? initialData.options.map((option) => ({
-          id: option.id,
-          name: option.name,
-          price: option.price === 0 ? "" : String(option.price),
-        }))
-      : [emptyOptionRow(), emptyOptionRow()],
+  const { options, updateOption, addOption, removeOption } = useOptionRows(
+    () =>
+      initialData
+        ? initialData.options.map((option) => ({
+            id: option.id,
+            name: option.name,
+            nameMy: option.nameMy ?? "",
+            price: option.price === 0 ? "" : String(option.price),
+          }))
+        : [emptyOptionRow(), emptyOptionRow()],
   );
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -62,12 +72,14 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
 
     const payload = {
       groupName,
+      groupNameMy,
       isRequired,
       options: options
         .filter((row) => row.name.trim() !== "")
         .map((row) => ({
           id: row.id,
           name: row.name,
+          nameMy: row.nameMy,
           price: row.price,
         })),
       menuIds: selectedMenuIds,
@@ -146,6 +158,15 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
             value={groupName}
             onChange={(event) => setGroupName(event.target.value)}
           />
+          <TextField
+            label="Myanmar name (optional)"
+            fullWidth
+            value={groupNameMy}
+            onChange={(event) => setGroupNameMy(event.target.value)}
+            helperText={MYANMAR_HELPER}
+            slotProps={{ htmlInput: { maxLength: 50, lang: "my" } }}
+            sx={{ mt: 1.5 }}
+          />
           <Typography
             variant="caption"
             color="text.secondary"
@@ -177,52 +198,64 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
 
           <Stack spacing={1.5} sx={{ mb: 3 }}>
             {options.map((row, index) => (
-              <Stack
-                key={index}
-                direction="row"
-                spacing={1}
-                sx={{ alignItems: "center" }}
-              >
-                <TextField
-                  placeholder="Option Name (e.g. Extra Sauce)"
-                  fullWidth
-                  value={row.name}
-                  onChange={(event) =>
-                    updateOption(index, "name", event.target.value)
-                  }
-                  sx={{
-                    flex: 2,
-                  }}
-                />
-                <TextField
-                  placeholder="Price (Blank = Free)"
-                  value={row.price}
-                  onChange={(event) => {
-                    // Keep only digits — avoids native type="number" quirks
-                    // (blocked keys, scroll-wheel changes, mobile keypad
-                    // differences) while still guaranteeing a clean integer.
-                    const digitsOnly = event.target.value.replace(
-                      /[^0-9]/g,
-                      "",
-                    );
-                    updateOption(index, "price", digitsOnly);
-                  }}
-                  slotProps={{
-                    htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
-                  }}
-                  sx={{
-                    flex: 1,
-                    minWidth: 140,
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => removeOption(index)}
-                  disabled={options.length === 1}
-                  aria-label="Remove option"
+              <Stack key={index} spacing={1}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center" }}
                 >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
+                  <TextField
+                    placeholder="Option Name (e.g. Extra Sauce)"
+                    fullWidth
+                    value={row.name}
+                    onChange={(event) =>
+                      updateOption(index, "name", event.target.value)
+                    }
+                    sx={{
+                      flex: 2,
+                    }}
+                  />
+                  <TextField
+                    placeholder="Price (Blank = Free)"
+                    value={row.price}
+                    onChange={(event) => {
+                      // Keep only digits — avoids native type="number" quirks
+                      // (blocked keys, scroll-wheel changes, mobile keypad
+                      // differences) while still guaranteeing a clean integer.
+                      const digitsOnly = event.target.value.replace(
+                        /[^0-9]/g,
+                        "",
+                      );
+                      updateOption(index, "price", digitsOnly);
+                    }}
+                    slotProps={{
+                      htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
+                    }}
+                    sx={{
+                      flex: 1,
+                      minWidth: 140,
+                    }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => removeOption(index)}
+                    disabled={options.length === 1}
+                    aria-label="Remove option"
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+                <TextField
+                  label="Myanmar name (optional)"
+                  size="small"
+                  value={row.nameMy}
+                  onChange={(event) =>
+                    updateOption(index, "nameMy", event.target.value)
+                  }
+                  slotProps={{ htmlInput: { maxLength: 120, lang: "my" } }}
+                  // Lines up under the option name, clear of the ✕.
+                  sx={{ mr: 5 }}
+                />
               </Stack>
             ))}
           </Stack>

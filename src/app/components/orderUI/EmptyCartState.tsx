@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Avatar, Box, Button, Stack, Typography } from "@mui/material";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 
@@ -21,6 +22,8 @@ export default function EmptyCartState({
   onBack,
   onBrowseMenu,
 }: EmptyCartStateProps) {
+  const t = useTranslations("cart");
+  const tCommon = useTranslations("common");
   return (
     <Box sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
       <Box
@@ -35,8 +38,8 @@ export default function EmptyCartState({
         }}
       >
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <BackCircleButton ariaLabel="Back to menu" onClick={onBack} />
-          <Typography variant="h6">Your cart</Typography>
+          <BackCircleButton ariaLabel={tCommon("backToMenu")} onClick={onBack} />
+          <Typography variant="h6">{t("yourCart")}</Typography>
         </Stack>
 
         <Stack
@@ -63,7 +66,7 @@ export default function EmptyCartState({
           </Avatar>
 
           <Typography variant="h6" sx={{ mb: 0.75 }}>
-            Your cart is empty
+            {t("emptyTitle")}
           </Typography>
           <Typography
             variant="body2"
@@ -72,7 +75,7 @@ export default function EmptyCartState({
               color: theme.palette.decor.mutedText,
             })}
           >
-            Add items from the menu to get started
+            {t("emptyHint")}
           </Typography>
 
           <Button
@@ -80,7 +83,7 @@ export default function EmptyCartState({
             onClick={onBrowseMenu}
             sx={{ mt: 3, borderRadius: 999, px: 4, py: 1.25 }}
           >
-            Browse menu
+            {t("browseMenu")}
           </Button>
         </Stack>
       </Box>

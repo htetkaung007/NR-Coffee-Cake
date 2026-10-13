@@ -10,6 +10,7 @@ import { AppError } from "@/app/lib/errors";
 import {
   toTableDraftRows,
   withdrawBlock,
+  WITHDRAW_BLOCK_CODES,
   WITHDRAW_BLOCK_MESSAGES,
 } from "@/app/lib/order/withdrawal";
 import { TableDraftService } from "../tableDraft.service";
@@ -51,11 +52,12 @@ export class TableSessionService {
   }
 
   /** The table's name for the customer's own screens ("Table 3") — only
-   *  a seated table that's still open; null otherwise. The caller has
-   *  checked the viewer's contributor token for it. */
-  static async getTableName(tableId: number) {
+   *  a seated table that's still open AT this location; null otherwise.
+   *  Selects the name only — never its access key or token epoch. The
+   *  caller has checked the viewer's contributor token for it. */
+  static async getTableName(tableId: number, locationId: number) {
     const table = await prisma.table.findFirst({
-      where: { id: tableId, isArchived: false, isCounter: false },
+      where: { id: tableId, locationId, isArchived: false, isCounter: false },
       select: { name: true },
     });
     return table?.name ?? null;
@@ -211,7 +213,7 @@ export class TableSessionService {
    * cancelSession(…, "WITHDRAWN"), the one cancel writer (stock back, an
    * OrderCancellation row), whose status check settles a race with the
    * cashier: if Accept got there first, nothing is written and the
-   * customer is told why (AppError WITHDRAW_BLOCKED).
+   * customer is told why (an AppError with WITHDRAW_BLOCK_CODES' code).
    *
    * "change" also, in the SAME transaction, turns the round's lines back
    * into the table's shared draft (TableDraftService.restoreDraftRows),
@@ -239,12 +241,12 @@ export class TableSessionService {
     if (!round) {
       throw new AppError(
         "There's no order waiting at this table.",
-        "WITHDRAW_BLOCKED",
+        "NO_WAITING_ORDER",
       );
     }
     const block = withdrawBlock(round, new Date());
     if (block) {
-      throw new AppError(WITHDRAW_BLOCK_MESSAGES[block], "WITHDRAW_BLOCKED");
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[block], WITHDRAW_BLOCK_CODES[block]);
     }
 
     const withdrawn = await prisma.$transaction(async (tx: Tx) => {
@@ -268,7 +270,7 @@ export class TableSessionService {
         select: { status: true, isCounter: true, approvalExpiresAt: true },
       });
       const reason = withdrawBlock(now, new Date()) ?? "cancelled";
-      throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], "WITHDRAW_BLOCKED");
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], WITHDRAW_BLOCK_CODES[reason]);
     }
     return { sessionId: round.id, orderNumber: round.orderNumber };
   }

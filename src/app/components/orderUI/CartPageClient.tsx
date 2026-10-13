@@ -1,5 +1,8 @@
 "use client";
 
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
+import { useTranslations } from "next-intl";
+import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Box, Button, Divider, Stack, Typography } from "@mui/material";
@@ -27,7 +30,6 @@ import {
   type SendState,
   type ValidatedCartLine,
 } from "@/app/lib/cart/cartValidation";
-import { formatAmount } from "@/app/lib/orderFormat";
 
 import {
   getSubmittedOrderOutcomeAction,
@@ -89,6 +91,7 @@ function toRowLine(line: BrowserCartLine, index: number): CartLine {
     id: index,
     menuId: line.menuId,
     menuName: line.display.name,
+    menuNameMy: line.display.nameMy ?? null,
     quantity: line.quantity,
     price: line.display.unitPrice,
     imageUrl: line.display.imageUrl,
@@ -121,6 +124,10 @@ export default function CartPageClient({
   justScanned,
 }: CartPageClientProps) {
   const router = useRouter();
+  const t = useTranslations("cart");
+  const { price } = useCustomerPrice();
+  const errorMessage = useErrorMessage();
+  const tCommon = useTranslations("common");
   const browserCart = useBrowserCart(locationId);
   const { cart } = browserCart;
   const validation = useCartValidation(
@@ -332,13 +339,11 @@ export default function CartPageClient({
       } catch {
         // The same request id goes with a retry, so it can never place
         // the order twice.
-        setError(
-          "Couldn't reach the counter. Check your connection and tap Submit again — your order won't be sent twice.",
-        );
+        setError(t("connectionFailed"));
         return;
       }
       if (!response.success) {
-        setError(response.error.message);
+        setError(errorMessage(response.error));
         return;
       }
       const outcome = response.data;
@@ -378,10 +383,10 @@ export default function CartPageClient({
       <OrderRejectedScreen
         orderNumber={rejection.orderNumber}
         reason={rejection.reason}
-        nextStep="Your items are back in your cart — change them if you like and send again."
-        primaryLabel="Review my cart"
+        nextStep={t("rejectedNextStep")}
+        primaryLabel={t("reviewMyCart")}
         onPrimary={() => browserCart.forgetLastSubmitted()}
-        secondaryLabel="Back to menu"
+        secondaryLabel={tCommon("backToMenu")}
         onSecondary={() => {
           browserCart.forgetLastSubmitted();
           goBackToMenu();
@@ -418,9 +423,9 @@ export default function CartPageClient({
 
   const sendDisabledReason =
     sendState === "awaitingApproval"
-      ? "Your last order is waiting for the counter to confirm."
+      ? t("lastOrderWaiting")
       : decision === "needsAttention"
-        ? "Fix the items marked above before sending."
+        ? t("fixItems")
         : null;
   const editingLine = editingIndex !== null ? cart.lines[editingIndex] : null;
 
@@ -432,10 +437,10 @@ export default function CartPageClient({
           spacing={1.5}
           sx={{ alignItems: "center", mb: 2 }}
         >
-          <BackCircleButton ariaLabel="Back to menu" onClick={goBackToMenu} />
+          <BackCircleButton ariaLabel={tCommon("backToMenu")} onClick={goBackToMenu} />
           <Stack>
             <Typography variant="h6">
-              {session?.billNumber ?? "Your cart"}
+              {session?.billNumber ?? t("yourCart")}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {shopName ?? "Café Maw"}
@@ -449,7 +454,7 @@ export default function CartPageClient({
             approval={approval}
           >
             <WithdrawRoundControls
-              confirmMessage="The counter won't make it. Your items won't come back to the cart — use Change order for that."
+              confirmMessage={t("counterCancelConfirm")}
               onChange={changeOwnRound}
               onCancel={cancelOwnRound}
             />
@@ -460,13 +465,12 @@ export default function CartPageClient({
           <Stack spacing={1} sx={{ mb: 2 }}>
             {justScanned && sendState === "canSend" && (
               <Alert severity="success" role="status">
-                ✓ Scanned — you can send your order now.
+                {t("scannedCanSend")}
               </Alert>
             )}
             {session?.hasEarlierRound && (
               <Alert severity="info">
-                Your earlier order is with the kitchen — these items will be
-                sent as a new order.
+                {t("earlierRound")}
               </Alert>
             )}
             {blockedCount > 0 && (
@@ -480,12 +484,12 @@ export default function CartPageClient({
                       sx={{ minHeight: 44 }}
                       onClick={() => browserCart.removeLines(removableIndexes)}
                     >
-                      Remove unavailable items
+                      {t("removeUnavailable")}
                     </Button>
                   ) : undefined
                 }
               >
-                Some items changed — review before sending.
+                {t("itemsChanged")}
               </Alert>
             )}
             {validation.failed && (
@@ -498,12 +502,11 @@ export default function CartPageClient({
                     sx={{ minHeight: 44 }}
                     onClick={() => void validation.retry()}
                   >
-                    Retry
+                    {tCommon("retry")}
                   </Button>
                 }
               >
-                Couldn&apos;t check the latest prices. You can still send — the
-                counter checks them again.
+                {t("priceCheckFailed")}
               </Alert>
             )}
             {error && <Alert severity="error">{error}</Alert>}
@@ -517,7 +520,7 @@ export default function CartPageClient({
             ) : (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 700 }}>
-                  Your order
+                  {t("yourOrder")}
                 </Typography>
                 <Stack divider={<Divider />}>
                   {rowLines.map((rowLine, index) => {
@@ -550,7 +553,7 @@ export default function CartPageClient({
                               textDecoration: blocked ? "line-through" : "none",
                             }}
                           >
-                            {formatAmount(
+                            {price(
                               checked?.lineTotal ?? cartLineTotal(rowLine),
                             )}
                           </Typography>
@@ -585,10 +588,10 @@ export default function CartPageClient({
               <Divider sx={{ mb: 1.5 }} />
               <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Total Price
+                  {tCommon("totalPrice")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {formatAmount(total)}
+                  {price(total)}
                 </Typography>
               </Stack>
               {/* Always takes its line, so the note coming and going
@@ -600,7 +603,7 @@ export default function CartPageClient({
                 aria-live="polite"
                 sx={{ display: "block", minHeight: "1.66em", mb: 1 }}
               >
-                {validation.checking ? "Checking latest prices…" : ""}
+                {validation.checking ? t("checkingPrices") : ""}
               </Typography>
               <Stack direction="row" spacing={1}>
                 <AddMoreButton onClick={goBackToMenu} />
@@ -614,12 +617,12 @@ export default function CartPageClient({
                       onClick={requestScan}
                       sx={{ minHeight: 44, whiteSpace: "nowrap" }}
                     >
-                      Scan counter QR
+                      {t("scanCounterQr")}
                     </Button>
                   ) : (
                     <CartButton
                       status="CART"
-                      submitLabel="Send order"
+                      submitLabel={t("sendOrder")}
                       disabled={
                         isSubmitting ||
                         sendDisabledReason !== null ||
@@ -637,7 +640,7 @@ export default function CartPageClient({
                   sx={{ display: "block", mt: 1 }}
                 >
                   {sendState === "needsScan"
-                    ? "Scan the QR code at the counter to send your order."
+                    ? t("scanToSend")
                     : sendDisabledReason}
                 </Typography>
               )}
@@ -664,7 +667,7 @@ export default function CartPageClient({
             : undefined
         }
         onSubmit={async (_menuId, quantity, addonIds, note, detail) => {
-          if (editingIndex === null) return "Nothing to update.";
+          if (editingIndex === null) return tCommon("nothingToUpdate");
           browserCart.updateLine(
             editingIndex,
             toBrowserCartLine(detail, quantity, addonIds, note),

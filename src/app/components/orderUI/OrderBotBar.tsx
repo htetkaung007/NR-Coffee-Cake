@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Box, BottomNavigation, BottomNavigationAction } from "@mui/material";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
@@ -16,12 +17,16 @@ interface OrderBotBarProps {
   active?: OrderBotBarTab;
 }
 
-const TABS: { value: OrderBotBarTab; label: string; icon: React.ReactNode }[] =
-  [
-    { value: "menu", label: "Menu", icon: <GridViewOutlinedIcon /> },
-    { value: "cart", label: "Cart", icon: <ShoppingCartOutlinedIcon /> },
-    { value: "history", label: "History", icon: <ReceiptLongOutlinedIcon /> },
-  ];
+/** The bar's height: MUI's BottomNavigation (56px) + its 1px top border
+ *  + the home-indicator safe area. */
+const BAR_HEIGHT = "calc(57px + env(safe-area-inset-bottom, 0px))";
+
+/** Each tab's label is nav.<value> in the customer's language. */
+const TABS: { value: OrderBotBarTab; icon: React.ReactNode }[] = [
+  { value: "menu", icon: <GridViewOutlinedIcon /> },
+  { value: "cart", icon: <ShoppingCartOutlinedIcon /> },
+  { value: "history", icon: <ReceiptLongOutlinedIcon /> },
+];
 
 /**
  * The customer-facing sticky bottom navigation: Menu / Cart / History.
@@ -38,6 +43,7 @@ export default function OrderBotBar({
   tableId,
   active = "menu",
 }: OrderBotBarProps) {
+  const t = useTranslations("nav");
   const router = useRouter();
   const query = tableId
     ? `locationId=${locationId}&tableId=${tableId}`
@@ -50,40 +56,49 @@ export default function OrderBotBar({
   }
 
   return (
-    <Box
-      component="nav"
-      aria-label="Order navigation"
-      sx={{
-        position: "sticky",
-        bottom: 0,
-        zIndex: 4,
-        bgcolor: "background.paper",
-        borderTop: "1px solid",
-        borderColor: "divider",
-        pb: "env(safe-area-inset-bottom, 0px)",
-      }}
-    >
-      <BottomNavigation
-        showLabels
-        value={active}
-        onChange={(_event, next: OrderBotBarTab) => go(next)}
-        sx={{ maxWidth: 1200, mx: "auto", bgcolor: "transparent" }}
+    <>
+      {/* Takes the fixed bar's height in the page's own flow, so the last
+         menu card scrolls clear of it — and a short page still fits in
+         100dvh with the bar showing. */}
+      <Box aria-hidden sx={{ flexShrink: 0, height: BAR_HEIGHT }} />
+      <Box
+        component="nav"
+        aria-label={t("label")}
+        sx={{
+          // Always on screen at the bottom (DESIGN.md §19 safe area).
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 4,
+          bgcolor: "background.paper",
+          borderTop: "1px solid",
+          borderColor: "divider",
+          pb: "env(safe-area-inset-bottom, 0px)",
+        }}
       >
-        {TABS.map((tab) => (
-          <BottomNavigationAction
-            key={tab.value}
-            value={tab.value}
-            label={tab.label}
-            icon={tab.icon}
-            sx={{
-              "& .MuiBottomNavigationAction-label": {
-                fontSize: "0.75rem",
-                fontWeight: 600,
-              },
-            }}
-          />
-        ))}
-      </BottomNavigation>
-    </Box>
+        <BottomNavigation
+          showLabels
+          value={active}
+          onChange={(_event, next: OrderBotBarTab) => go(next)}
+          sx={{ maxWidth: 1200, mx: "auto", bgcolor: "transparent" }}
+        >
+          {TABS.map((tab) => (
+            <BottomNavigationAction
+              key={tab.value}
+              value={tab.value}
+              label={t(tab.value)}
+              icon={tab.icon}
+              sx={{
+                "& .MuiBottomNavigationAction-label": {
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                },
+              }}
+            />
+          ))}
+        </BottomNavigation>
+      </Box>
+    </>
   );
 }

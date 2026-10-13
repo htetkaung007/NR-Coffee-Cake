@@ -1,11 +1,9 @@
 "use client";
 
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
 import { Card, Divider, Stack, Typography } from "@mui/material";
-import {
-  contributorGroupHeading,
-  groupByContributor,
-} from "@/app/lib/order/contributors";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { groupByContributor } from "@/app/lib/order/contributors";
+import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 import {
   CartLineRow,
   DraftLine,
@@ -43,6 +41,8 @@ export default function DraftList({
   onQuantityChange,
   isPending = false,
 }: DraftListProps) {
+  const labels = useCustomerLabels();
+  const { price } = useCustomerPrice();
   if (draftItems.length === 0) return null;
 
   const shortageByMenuId = new Map(
@@ -60,10 +60,10 @@ export default function DraftList({
               sx={{ justifyContent: "space-between", mb: 1 }}
             >
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                {contributorGroupHeading(group.label)}
+                {labels.contributorHeading(group.who)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {formatAmount(group.subtotal)}
+                {price(group.subtotal)}
               </Typography>
             </Stack>
 

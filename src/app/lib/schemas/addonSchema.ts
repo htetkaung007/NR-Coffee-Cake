@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { formIdSchema, idSchema, optionalIdListSchema } from "./common";
+import {
+  formIdSchema,
+  idSchema,
+  optionalIdListSchema,
+  optionalTextSchema,
+} from "./common";
 
 /**
  * "Or Create Custom Add-On Option" group form — creates an AddonCategories
@@ -14,11 +19,15 @@ const priceOrBlankIsFree = z
 
 const optionSchema = z.object({
   name: z.string().trim().min(1, "Option name is required.").max(120),
+  /** Shown to customers who choose Myanmar; null → the English name. */
+  nameMy: optionalTextSchema(120),
   price: priceOrBlankIsFree,
 });
 
 export const createAddonGroupSchema = z.object({
   groupName: z.string().trim().min(1, "Group title is required.").max(50),
+  /** Shown to customers who choose Myanmar; null → the English title. */
+  groupNameMy: optionalTextSchema(50),
   isRequired: z.boolean(),
   options: z.array(optionSchema).min(1, "Add at least one option."),
   menuIds: optionalIdListSchema(),
@@ -38,6 +47,8 @@ const editableOptionSchema = optionSchema.extend({
 
 export const updateAddonGroupSchema = z.object({
   groupName: z.string().trim().min(1, "Group title is required.").max(50),
+  /** Shown to customers who choose Myanmar; null → the English title. */
+  groupNameMy: optionalTextSchema(50),
   isRequired: z.boolean(),
   options: z.array(editableOptionSchema).min(1, "Add at least one option."),
   menuIds: optionalIdListSchema(),

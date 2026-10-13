@@ -83,15 +83,22 @@ export class OrderSessionCartService {
       })),
     );
     if (problem?.kind === "unavailable") {
-      throw new ValidationError(
-        problem.name
-          ? `"${problem.name}" is not available right now.`
-          : "That add-on is not available right now.",
-      );
+      throw problem.name
+        ? new ValidationError(
+            `"${problem.name}" is not available right now.`,
+            "ADDON_UNAVAILABLE",
+            { name: problem.name },
+          )
+        : new ValidationError(
+            "That add-on is not available right now.",
+            "ADDON_UNAVAILABLE_UNNAMED",
+          );
     }
     if (problem?.kind === "unpicked") {
       throw new ValidationError(
         `Please choose an option for "${problem.groupName}".`,
+        "ADDON_REQUIRED",
+        { group: problem.groupName },
       );
     }
   }

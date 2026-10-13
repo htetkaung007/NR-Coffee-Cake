@@ -151,6 +151,8 @@ export class MenuCategoryService {
     name: string,
     locationId: number,
     isEnabled: boolean,
+    /** Myanmar name (null: customers see the English one). */
+    nameMy: string | null = null,
   ) {
     const existing = await prisma.menuCategory.findFirst({
       where: {
@@ -171,7 +173,7 @@ export class MenuCategoryService {
       });
 
       const category = await tx.menuCategory.create({
-        data: { name, companyId, sortOrder: (_max.sortOrder ?? 0) + 1 },
+        data: { name, nameMy, companyId, sortOrder: (_max.sortOrder ?? 0) + 1 },
       });
 
       if (!isEnabled) {
@@ -203,6 +205,8 @@ export class MenuCategoryService {
     input: {
       companyId: number;
       name: string;
+      /** Myanmar name (null: customers see the English one). */
+      nameMy: string | null;
       locationId: number;
       isEnabled: boolean;
       removeMenuIds: readonly number[];
@@ -232,7 +236,7 @@ export class MenuCategoryService {
         async (tx: Tx) => {
           const updated = await tx.menuCategory.update({
             where: { id },
-            data: { name: input.name },
+            data: { name: input.name, nameMy: input.nameMy },
           });
 
           const existingDisableRow =

@@ -29,6 +29,7 @@ import MenuCategoryFields from "@/app/components/menuCategory/MenuCategoryFields
 export interface EditableMenuCategory {
   id: number;
   name: string;
+  nameMy: string | null;
   isEnabledAtLocation: boolean;
   /** Its menus, by name (MenuCategoryService.getCategoryMenus). */
   menus: CategoryMenu[];
@@ -173,6 +174,7 @@ export default function EditMenuCategoryDialog({
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
   const [name, setName] = useState(category?.name ?? "");
+  const [nameMy, setNameMy] = useState(category?.nameMy ?? "");
   const [isEnabled, setIsEnabled] = useState(
     category?.isEnabledAtLocation ?? true,
   );
@@ -189,6 +191,7 @@ export default function EditMenuCategoryDialog({
   if (category && category !== seededFor) {
     setSeededFor(category);
     setName(category.name);
+    setNameMy(category.nameMy ?? "");
     setIsEnabled(category.isEnabledAtLocation);
     setStagedIds(new Set());
     setQuery("");
@@ -199,6 +202,7 @@ export default function EditMenuCategoryDialog({
   const isDirty =
     category !== null &&
     (name !== category.name ||
+      nameMy !== (category.nameMy ?? "") ||
       isEnabled !== category.isEnabledAtLocation ||
       stagedIds.size > 0);
   const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -229,6 +233,7 @@ export default function EditMenuCategoryDialog({
 
     const result = await updateMenuCategoryAction(category.id, {
       name,
+      nameMy,
       isEnabled,
       removeMenuIds: [...stagedIds],
     });
@@ -282,6 +287,8 @@ export default function EditMenuCategoryDialog({
           <MenuCategoryFields
             name={name}
             onNameChange={setName}
+            nameMy={nameMy}
+            onNameMyChange={setNameMy}
             isEnabled={isEnabled}
             onEnabledChange={setIsEnabled}
           />

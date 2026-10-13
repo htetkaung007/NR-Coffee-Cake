@@ -20,6 +20,15 @@ export const WITHDRAW_BLOCK_MESSAGES: Record<WithdrawBlock, string> = {
   expired: "The counter didn't confirm this order in time.",
 };
 
+/** Each block's stable error code — what customer screens translate
+ *  (errors.<code>, lib/i18n/errorMessage). */
+export const WITHDRAW_BLOCK_CODES: Record<WithdrawBlock, string> = {
+  notSent: "WITHDRAW_NOT_SENT",
+  accepted: "ROUND_ALREADY_ACCEPTED",
+  cancelled: "ROUND_ALREADY_CANCELLED",
+  expired: "ROUND_EXPIRED",
+};
+
 /**
  * THE rule: a customer may withdraw a round only while it waits for
  * approval (PENDING_APPROVAL). A Counter round only while its countdown

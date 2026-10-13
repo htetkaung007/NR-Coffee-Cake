@@ -45,7 +45,6 @@ export type LocationMinAggregateOutputType = {
   updateTime: Date | null
   isArchived: boolean | null
   onlineMenuEnabled: boolean | null
-  publicMenuCode: string | null
 }
 
 export type LocationMaxAggregateOutputType = {
@@ -57,7 +56,6 @@ export type LocationMaxAggregateOutputType = {
   updateTime: Date | null
   isArchived: boolean | null
   onlineMenuEnabled: boolean | null
-  publicMenuCode: string | null
 }
 
 export type LocationCountAggregateOutputType = {
@@ -69,7 +67,6 @@ export type LocationCountAggregateOutputType = {
   updateTime: number
   isArchived: number
   onlineMenuEnabled: number
-  publicMenuCode: number
   _all: number
 }
 
@@ -93,7 +90,6 @@ export type LocationMinAggregateInputType = {
   updateTime?: true
   isArchived?: true
   onlineMenuEnabled?: true
-  publicMenuCode?: true
 }
 
 export type LocationMaxAggregateInputType = {
@@ -105,7 +101,6 @@ export type LocationMaxAggregateInputType = {
   updateTime?: true
   isArchived?: true
   onlineMenuEnabled?: true
-  publicMenuCode?: true
 }
 
 export type LocationCountAggregateInputType = {
@@ -117,7 +112,6 @@ export type LocationCountAggregateInputType = {
   updateTime?: true
   isArchived?: true
   onlineMenuEnabled?: true
-  publicMenuCode?: true
   _all?: true
 }
 
@@ -216,7 +210,6 @@ export type LocationGroupByOutputType = {
   updateTime: Date
   isArchived: boolean
   onlineMenuEnabled: boolean
-  publicMenuCode: string | null
   _count: LocationCountAggregateOutputType | null
   _avg: LocationAvgAggregateOutputType | null
   _sum: LocationSumAggregateOutputType | null
@@ -251,7 +244,6 @@ export type LocationWhereInput = {
   updateTime?: Prisma.DateTimeFilter<"Location"> | Date | string
   isArchived?: Prisma.BoolFilter<"Location"> | boolean
   onlineMenuEnabled?: Prisma.BoolFilter<"Location"> | boolean
-  publicMenuCode?: Prisma.StringNullableFilter<"Location"> | string | null
   tables?: Prisma.TableListRelationFilter
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
   menuStocks?: Prisma.MenuStockListRelationFilter
@@ -272,7 +264,6 @@ export type LocationOrderByWithRelationInput = {
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
   onlineMenuEnabled?: Prisma.SortOrder
-  publicMenuCode?: Prisma.SortOrderInput | Prisma.SortOrder
   tables?: Prisma.TableOrderByRelationAggregateInput
   selectedLocations?: Prisma.SelectedLocationOrderByRelationAggregateInput
   menuStocks?: Prisma.MenuStockOrderByRelationAggregateInput
@@ -286,7 +277,6 @@ export type LocationOrderByWithRelationInput = {
 
 export type LocationWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  publicMenuCode?: string
   AND?: Prisma.LocationWhereInput | Prisma.LocationWhereInput[]
   OR?: Prisma.LocationWhereInput[]
   NOT?: Prisma.LocationWhereInput | Prisma.LocationWhereInput[]
@@ -306,7 +296,7 @@ export type LocationWhereUniqueInput = Prisma.AtLeast<{
   disableLocationMenuCategories?: Prisma.DisableLocationMenuCategoriesListRelationFilter
   orderSessions?: Prisma.OrderSessionListRelationFilter
   bills?: Prisma.BillListRelationFilter
-}, "id" | "publicMenuCode">
+}, "id">
 
 export type LocationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -317,7 +307,6 @@ export type LocationOrderByWithAggregationInput = {
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
   onlineMenuEnabled?: Prisma.SortOrder
-  publicMenuCode?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.LocationCountOrderByAggregateInput
   _avg?: Prisma.LocationAvgOrderByAggregateInput
   _max?: Prisma.LocationMaxOrderByAggregateInput
@@ -337,7 +326,6 @@ export type LocationScalarWhereWithAggregatesInput = {
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"Location"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"Location"> | boolean
   onlineMenuEnabled?: Prisma.BoolWithAggregatesFilter<"Location"> | boolean
-  publicMenuCode?: Prisma.StringNullableWithAggregatesFilter<"Location"> | string | null
 }
 
 export type LocationCreateInput = {
@@ -347,7 +335,6 @@ export type LocationCreateInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
@@ -368,7 +355,6 @@ export type LocationUncheckedCreateInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
@@ -386,7 +372,6 @@ export type LocationUpdateInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
@@ -407,7 +392,6 @@ export type LocationUncheckedUpdateInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
@@ -427,7 +411,6 @@ export type LocationCreateManyInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
 }
 
 export type LocationUpdateManyMutationInput = {
@@ -437,7 +420,6 @@ export type LocationUpdateManyMutationInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type LocationUncheckedUpdateManyInput = {
@@ -449,7 +431,6 @@ export type LocationUncheckedUpdateManyInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type LocationNullableScalarRelationFilter = {
@@ -481,7 +462,6 @@ export type LocationCountOrderByAggregateInput = {
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
   onlineMenuEnabled?: Prisma.SortOrder
-  publicMenuCode?: Prisma.SortOrder
 }
 
 export type LocationAvgOrderByAggregateInput = {
@@ -498,7 +478,6 @@ export type LocationMaxOrderByAggregateInput = {
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
   onlineMenuEnabled?: Prisma.SortOrder
-  publicMenuCode?: Prisma.SortOrder
 }
 
 export type LocationMinOrderByAggregateInput = {
@@ -510,7 +489,6 @@ export type LocationMinOrderByAggregateInput = {
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
   onlineMenuEnabled?: Prisma.SortOrder
-  publicMenuCode?: Prisma.SortOrder
 }
 
 export type LocationSumOrderByAggregateInput = {
@@ -685,7 +663,6 @@ export type LocationCreateWithoutManagersInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
@@ -705,7 +682,6 @@ export type LocationUncheckedCreateWithoutManagersInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
@@ -738,7 +714,6 @@ export type LocationUpdateWithoutManagersInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
@@ -758,7 +733,6 @@ export type LocationUncheckedUpdateWithoutManagersInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
@@ -775,7 +749,6 @@ export type LocationCreateWithoutCompanyInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
@@ -794,7 +767,6 @@ export type LocationUncheckedCreateWithoutCompanyInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
@@ -843,7 +815,6 @@ export type LocationScalarWhereInput = {
   updateTime?: Prisma.DateTimeFilter<"Location"> | Date | string
   isArchived?: Prisma.BoolFilter<"Location"> | boolean
   onlineMenuEnabled?: Prisma.BoolFilter<"Location"> | boolean
-  publicMenuCode?: Prisma.StringNullableFilter<"Location"> | string | null
 }
 
 export type LocationCreateWithoutTablesInput = {
@@ -853,7 +824,6 @@ export type LocationCreateWithoutTablesInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
   managers?: Prisma.UserCreateNestedManyWithoutLocationInput
@@ -873,7 +843,6 @@ export type LocationUncheckedCreateWithoutTablesInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
   managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
@@ -906,7 +875,6 @@ export type LocationUpdateWithoutTablesInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
   managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
@@ -926,7 +894,6 @@ export type LocationUncheckedUpdateWithoutTablesInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
   managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
@@ -943,7 +910,6 @@ export type LocationCreateWithoutSelectedLocationsInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
   managers?: Prisma.UserCreateNestedManyWithoutLocationInput
@@ -963,7 +929,6 @@ export type LocationUncheckedCreateWithoutSelectedLocationsInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
   managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
@@ -996,7 +961,6 @@ export type LocationUpdateWithoutSelectedLocationsInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
   managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
@@ -1016,7 +980,6 @@ export type LocationUncheckedUpdateWithoutSelectedLocationsInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
   managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
@@ -1033,7 +996,6 @@ export type LocationCreateWithoutMenuStocksInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   managers?: Prisma.UserCreateNestedManyWithoutLocationInput
@@ -1053,7 +1015,6 @@ export type LocationUncheckedCreateWithoutMenuStocksInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   managers?: Prisma.UserUncheckedCreateNestedManyWithoutLocationInput
@@ -1086,7 +1047,6 @@ export type LocationUpdateWithoutMenuStocksInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   managers?: Prisma.UserUpdateManyWithoutLocationNestedInput
@@ -1106,7 +1066,6 @@ export type LocationUncheckedUpdateWithoutMenuStocksInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   managers?: Prisma.UserUncheckedUpdateManyWithoutLocationNestedInput
@@ -1123,7 +1082,6 @@ export type LocationCreateWithoutDisableLocationMenusInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
@@ -1143,7 +1101,6 @@ export type LocationUncheckedCreateWithoutDisableLocationMenusInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
@@ -1176,7 +1133,6 @@ export type LocationUpdateWithoutDisableLocationMenusInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
@@ -1196,7 +1152,6 @@ export type LocationUncheckedUpdateWithoutDisableLocationMenusInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
@@ -1213,7 +1168,6 @@ export type LocationCreateWithoutDisableLocationMenuCategoriesInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
@@ -1233,7 +1187,6 @@ export type LocationUncheckedCreateWithoutDisableLocationMenuCategoriesInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
@@ -1266,7 +1219,6 @@ export type LocationUpdateWithoutDisableLocationMenuCategoriesInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
@@ -1286,7 +1238,6 @@ export type LocationUncheckedUpdateWithoutDisableLocationMenuCategoriesInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
@@ -1303,7 +1254,6 @@ export type LocationCreateWithoutOrderSessionsInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
@@ -1323,7 +1273,6 @@ export type LocationUncheckedCreateWithoutOrderSessionsInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
@@ -1356,7 +1305,6 @@ export type LocationUpdateWithoutOrderSessionsInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
@@ -1376,7 +1324,6 @@ export type LocationUncheckedUpdateWithoutOrderSessionsInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
@@ -1393,7 +1340,6 @@ export type LocationCreateWithoutBillsInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockCreateNestedManyWithoutLocationInput
@@ -1413,7 +1359,6 @@ export type LocationUncheckedCreateWithoutBillsInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutLocationInput
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutLocationInput
   menuStocks?: Prisma.MenuStockUncheckedCreateNestedManyWithoutLocationInput
@@ -1446,7 +1391,6 @@ export type LocationUpdateWithoutBillsInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
@@ -1466,7 +1410,6 @@ export type LocationUncheckedUpdateWithoutBillsInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
@@ -1484,7 +1427,6 @@ export type LocationCreateManyCompanyInput = {
   updateTime?: Date | string
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: string | null
 }
 
 export type LocationUpdateWithoutCompanyInput = {
@@ -1494,7 +1436,6 @@ export type LocationUpdateWithoutCompanyInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUpdateManyWithoutLocationNestedInput
@@ -1513,7 +1454,6 @@ export type LocationUncheckedUpdateWithoutCompanyInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tables?: Prisma.TableUncheckedUpdateManyWithoutLocationNestedInput
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutLocationNestedInput
   menuStocks?: Prisma.MenuStockUncheckedUpdateManyWithoutLocationNestedInput
@@ -1532,7 +1472,6 @@ export type LocationUncheckedUpdateManyWithoutCompanyInput = {
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
   onlineMenuEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publicMenuCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1638,7 +1577,6 @@ export type LocationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   updateTime?: boolean
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: boolean
   tables?: boolean | Prisma.Location$tablesArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.Location$selectedLocationsArgs<ExtArgs>
   menuStocks?: boolean | Prisma.Location$menuStocksArgs<ExtArgs>
@@ -1660,7 +1598,6 @@ export type LocationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   updateTime?: boolean
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["location"]>
 
@@ -1673,7 +1610,6 @@ export type LocationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   updateTime?: boolean
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["location"]>
 
@@ -1686,10 +1622,9 @@ export type LocationSelectScalar = {
   updateTime?: boolean
   isArchived?: boolean
   onlineMenuEnabled?: boolean
-  publicMenuCode?: boolean
 }
 
-export type LocationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "archivedAt" | "companyId" | "createdAt" | "updateTime" | "isArchived" | "onlineMenuEnabled" | "publicMenuCode", ExtArgs["result"]["location"]>
+export type LocationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "archivedAt" | "companyId" | "createdAt" | "updateTime" | "isArchived" | "onlineMenuEnabled", ExtArgs["result"]["location"]>
 export type LocationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tables?: boolean | Prisma.Location$tablesArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.Location$selectedLocationsArgs<ExtArgs>
@@ -1731,7 +1666,6 @@ export type $LocationPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     updateTime: Date
     isArchived: boolean
     onlineMenuEnabled: boolean
-    publicMenuCode: string | null
   }, ExtArgs["result"]["location"]>
   composites: {}
 }
@@ -2172,7 +2106,6 @@ export interface LocationFieldRefs {
   readonly updateTime: Prisma.FieldRef<"Location", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"Location", 'Boolean'>
   readonly onlineMenuEnabled: Prisma.FieldRef<"Location", 'Boolean'>
-  readonly publicMenuCode: Prisma.FieldRef<"Location", 'String'>
 }
     
 

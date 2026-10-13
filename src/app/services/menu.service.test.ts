@@ -52,7 +52,7 @@ describe("listMenusAtLocation (what customers and the staff POS see)", () => {
       [menu(1), menu(2, { isHiddenHere: true, categoryRefs: [tea] })],
       [coffee, tea],
     );
-    expect(categories).toEqual([coffee]);
+    expect(categories).toEqual([{ ...coffee, nameMy: null }]);
   });
 
   it("orders menus by their first visible category, then id", () => {

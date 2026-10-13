@@ -41,6 +41,7 @@ export type MenuCategorySumAggregateOutputType = {
 export type MenuCategoryMinAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   companyId: number | null
   createdAt: Date | null
   updateTime: Date | null
@@ -51,6 +52,7 @@ export type MenuCategoryMinAggregateOutputType = {
 export type MenuCategoryMaxAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   companyId: number | null
   createdAt: Date | null
   updateTime: Date | null
@@ -61,6 +63,7 @@ export type MenuCategoryMaxAggregateOutputType = {
 export type MenuCategoryCountAggregateOutputType = {
   id: number
   name: number
+  nameMy: number
   companyId: number
   createdAt: number
   updateTime: number
@@ -85,6 +88,7 @@ export type MenuCategorySumAggregateInputType = {
 export type MenuCategoryMinAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   companyId?: true
   createdAt?: true
   updateTime?: true
@@ -95,6 +99,7 @@ export type MenuCategoryMinAggregateInputType = {
 export type MenuCategoryMaxAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   companyId?: true
   createdAt?: true
   updateTime?: true
@@ -105,6 +110,7 @@ export type MenuCategoryMaxAggregateInputType = {
 export type MenuCategoryCountAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   companyId?: true
   createdAt?: true
   updateTime?: true
@@ -202,6 +208,7 @@ export type MenuCategoryGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type MenuCategoryGroupByOutputType = {
   id: number
   name: string
+  nameMy: string | null
   companyId: number
   createdAt: Date
   updateTime: Date
@@ -235,6 +242,7 @@ export type MenuCategoryWhereInput = {
   NOT?: Prisma.MenuCategoryWhereInput | Prisma.MenuCategoryWhereInput[]
   id?: Prisma.IntFilter<"MenuCategory"> | number
   name?: Prisma.StringFilter<"MenuCategory"> | string
+  nameMy?: Prisma.StringNullableFilter<"MenuCategory"> | string | null
   companyId?: Prisma.IntFilter<"MenuCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
@@ -248,6 +256,7 @@ export type MenuCategoryWhereInput = {
 export type MenuCategoryOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -264,6 +273,7 @@ export type MenuCategoryWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.MenuCategoryWhereInput[]
   NOT?: Prisma.MenuCategoryWhereInput | Prisma.MenuCategoryWhereInput[]
   name?: Prisma.StringFilter<"MenuCategory"> | string
+  nameMy?: Prisma.StringNullableFilter<"MenuCategory"> | string | null
   companyId?: Prisma.IntFilter<"MenuCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
@@ -277,6 +287,7 @@ export type MenuCategoryWhereUniqueInput = Prisma.AtLeast<{
 export type MenuCategoryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -295,6 +306,7 @@ export type MenuCategoryScalarWhereWithAggregatesInput = {
   NOT?: Prisma.MenuCategoryScalarWhereWithAggregatesInput | Prisma.MenuCategoryScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"MenuCategory"> | number
   name?: Prisma.StringWithAggregatesFilter<"MenuCategory"> | string
+  nameMy?: Prisma.StringNullableWithAggregatesFilter<"MenuCategory"> | string | null
   companyId?: Prisma.IntWithAggregatesFilter<"MenuCategory"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"MenuCategory"> | Date | string
@@ -304,6 +316,7 @@ export type MenuCategoryScalarWhereWithAggregatesInput = {
 
 export type MenuCategoryCreateInput = {
   name: string
+  nameMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -316,6 +329,7 @@ export type MenuCategoryCreateInput = {
 export type MenuCategoryUncheckedCreateInput = {
   id?: number
   name: string
+  nameMy?: string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -327,6 +341,7 @@ export type MenuCategoryUncheckedCreateInput = {
 
 export type MenuCategoryUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -339,6 +354,7 @@ export type MenuCategoryUpdateInput = {
 export type MenuCategoryUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -351,6 +367,7 @@ export type MenuCategoryUncheckedUpdateInput = {
 export type MenuCategoryCreateManyInput = {
   id?: number
   name: string
+  nameMy?: string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -360,6 +377,7 @@ export type MenuCategoryCreateManyInput = {
 
 export type MenuCategoryUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -369,6 +387,7 @@ export type MenuCategoryUpdateManyMutationInput = {
 export type MenuCategoryUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -389,6 +408,7 @@ export type MenuCategoryOrderByRelationAggregateInput = {
 export type MenuCategoryCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -405,6 +425,7 @@ export type MenuCategoryAvgOrderByAggregateInput = {
 export type MenuCategoryMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -415,6 +436,7 @@ export type MenuCategoryMaxOrderByAggregateInput = {
 export type MenuCategoryMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -505,6 +527,7 @@ export type MenuCategoryUpdateOneRequiredWithoutDisableLocationMenuCategoriesNes
 
 export type MenuCategoryCreateWithoutCompanyInput = {
   name: string
+  nameMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -516,6 +539,7 @@ export type MenuCategoryCreateWithoutCompanyInput = {
 export type MenuCategoryUncheckedCreateWithoutCompanyInput = {
   id?: number
   name: string
+  nameMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -556,6 +580,7 @@ export type MenuCategoryScalarWhereInput = {
   NOT?: Prisma.MenuCategoryScalarWhereInput | Prisma.MenuCategoryScalarWhereInput[]
   id?: Prisma.IntFilter<"MenuCategory"> | number
   name?: Prisma.StringFilter<"MenuCategory"> | string
+  nameMy?: Prisma.StringNullableFilter<"MenuCategory"> | string | null
   companyId?: Prisma.IntFilter<"MenuCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"MenuCategory"> | Date | string
@@ -565,6 +590,7 @@ export type MenuCategoryScalarWhereInput = {
 
 export type MenuCategoryCreateWithoutMenuMenuCategoryInput = {
   name: string
+  nameMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -576,6 +602,7 @@ export type MenuCategoryCreateWithoutMenuMenuCategoryInput = {
 export type MenuCategoryUncheckedCreateWithoutMenuMenuCategoryInput = {
   id?: number
   name: string
+  nameMy?: string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -602,6 +629,7 @@ export type MenuCategoryUpdateToOneWithWhereWithoutMenuMenuCategoryInput = {
 
 export type MenuCategoryUpdateWithoutMenuMenuCategoryInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -613,6 +641,7 @@ export type MenuCategoryUpdateWithoutMenuMenuCategoryInput = {
 export type MenuCategoryUncheckedUpdateWithoutMenuMenuCategoryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -623,6 +652,7 @@ export type MenuCategoryUncheckedUpdateWithoutMenuMenuCategoryInput = {
 
 export type MenuCategoryCreateWithoutDisableLocationMenuCategoriesInput = {
   name: string
+  nameMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -634,6 +664,7 @@ export type MenuCategoryCreateWithoutDisableLocationMenuCategoriesInput = {
 export type MenuCategoryUncheckedCreateWithoutDisableLocationMenuCategoriesInput = {
   id?: number
   name: string
+  nameMy?: string | null
   companyId: number
   createdAt?: Date | string
   updateTime?: Date | string
@@ -660,6 +691,7 @@ export type MenuCategoryUpdateToOneWithWhereWithoutDisableLocationMenuCategories
 
 export type MenuCategoryUpdateWithoutDisableLocationMenuCategoriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -671,6 +703,7 @@ export type MenuCategoryUpdateWithoutDisableLocationMenuCategoriesInput = {
 export type MenuCategoryUncheckedUpdateWithoutDisableLocationMenuCategoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -682,6 +715,7 @@ export type MenuCategoryUncheckedUpdateWithoutDisableLocationMenuCategoriesInput
 export type MenuCategoryCreateManyCompanyInput = {
   id?: number
   name: string
+  nameMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -690,6 +724,7 @@ export type MenuCategoryCreateManyCompanyInput = {
 
 export type MenuCategoryUpdateWithoutCompanyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -701,6 +736,7 @@ export type MenuCategoryUpdateWithoutCompanyInput = {
 export type MenuCategoryUncheckedUpdateWithoutCompanyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -712,6 +748,7 @@ export type MenuCategoryUncheckedUpdateWithoutCompanyInput = {
 export type MenuCategoryUncheckedUpdateManyWithoutCompanyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -761,6 +798,7 @@ export type MenuCategoryCountOutputTypeCountDisableLocationMenuCategoriesArgs<Ex
 export type MenuCategorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -775,6 +813,7 @@ export type MenuCategorySelect<ExtArgs extends runtime.Types.Extensions.Internal
 export type MenuCategorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -786,6 +825,7 @@ export type MenuCategorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 export type MenuCategorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -797,6 +837,7 @@ export type MenuCategorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 export type MenuCategorySelectScalar = {
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   companyId?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -804,7 +845,7 @@ export type MenuCategorySelectScalar = {
   sortOrder?: boolean
 }
 
-export type MenuCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "companyId" | "createdAt" | "updateTime" | "isArchived" | "sortOrder", ExtArgs["result"]["menuCategory"]>
+export type MenuCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "nameMy" | "companyId" | "createdAt" | "updateTime" | "isArchived" | "sortOrder", ExtArgs["result"]["menuCategory"]>
 export type MenuCategoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   menuMenuCategory?: boolean | Prisma.MenuCategory$menuMenuCategoryArgs<ExtArgs>
@@ -828,6 +869,7 @@ export type $MenuCategoryPayload<ExtArgs extends runtime.Types.Extensions.Intern
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
+    nameMy: string | null
     companyId: number
     createdAt: Date
     updateTime: Date
@@ -1261,6 +1303,7 @@ export interface Prisma__MenuCategoryClient<T, Null = never, ExtArgs extends run
 export interface MenuCategoryFieldRefs {
   readonly id: Prisma.FieldRef<"MenuCategory", 'Int'>
   readonly name: Prisma.FieldRef<"MenuCategory", 'String'>
+  readonly nameMy: Prisma.FieldRef<"MenuCategory", 'String'>
   readonly companyId: Prisma.FieldRef<"MenuCategory", 'Int'>
   readonly createdAt: Prisma.FieldRef<"MenuCategory", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"MenuCategory", 'DateTime'>

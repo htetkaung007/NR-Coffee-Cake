@@ -1,13 +1,16 @@
 "use client";
 
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
 import Link from "next/link";
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
+import { useTranslations } from "next-intl";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { formatAmount } from "@/app/lib/orderFormat";
+import type { ContributorWho } from "@/app/lib/order/contributors";
+import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 
-import { ORDER_STATUS_CHIP } from "./OrderReceipt";
+import { statusChipColor } from "./OrderReceipt";
 
 interface HistoryItem {
   /** What's still on the order (staff-voided units left out). */
@@ -23,23 +26,24 @@ interface OrderHistoryCardProps {
   orderNumber: string;
   status: string;
   items: HistoryItem[];
-  /** Table QR: the same items per person ("You", "Customer 2"…), one
-   *  summary line each with that person's subtotal. Counter: absent. */
-  groups?: { key: string; label: string; items: HistoryItem[]; subtotal: number }[];
+  /** Table QR: the same items per person ("You", "Customer 2"… — put
+   *  into words here), one summary line each with that person's
+   *  subtotal. Counter: absent. */
+  groups?: { key: string; who: ContributorWho; items: HistoryItem[]; subtotal: number }[];
   total: number;
 }
 
 /** "1 × Latte, 1 × Cake +2 more" — a one-line summary of what's still
  *  on the order (an item staff took back entirely isn't in it — the
- *  receipt lists it, struck through). */
-function summarize(allItems: HistoryItem[]) {
+ *  receipt lists it, struck through). `more` words the "+N more". */
+function summarize(allItems: HistoryItem[], more: (count: number) => string) {
   const items = allItems.filter((item) => item.quantity > 0);
   const shown = items
     .slice(0, SUMMARY_ITEMS)
     .map((item) => `${item.quantity} × ${item.name}`)
     .join(", ");
   const hidden = items.length - SUMMARY_ITEMS;
-  return `${shown}${hidden > 0 ? ` +${hidden} more` : ""}`;
+  return `${shown}${hidden > 0 ? ` ${more(hidden)}` : ""}`;
 }
 
 /** How many item names the one-line summary spells out before
@@ -60,10 +64,10 @@ export default function OrderHistoryCard({
   groups,
   total,
 }: OrderHistoryCardProps) {
-  const chip = ORDER_STATUS_CHIP[status] ?? {
-    label: status,
-    color: "default" as const,
-  };
+  const t = useTranslations("history");
+  const { price } = useCustomerPrice();
+  const labels = useCustomerLabels();
+  const more = (count: number) => t("more", { count });
   const kept = items.filter((item) => item.quantity > 0);
   const isWithdrawn = status === "WITHDRAWN";
   const removed = items.reduce((sum, item) => sum + (item.removed ?? 0), 0);
@@ -106,7 +110,11 @@ export default function OrderHistoryCard({
             <Typography variant="body1" sx={{ fontWeight: 700 }}>
               {orderNumber}
             </Typography>
-            <Chip label={chip.label} color={chip.color} size="small" />
+            <Chip
+              label={labels.roundStatus(status)}
+              color={statusChipColor(status)}
+              size="small"
+            />
           </Stack>
           {groups ? (
             // One line per person, so each customer finds their own.
@@ -120,16 +128,16 @@ export default function OrderHistoryCard({
                 >
                   <Typography variant="body2" color="text.secondary" noWrap>
                     <Box component="span" sx={{ fontWeight: 700 }}>
-                      {group.label}:
+                      {labels.contributorLabel(group.who)}:
                     </Box>{" "}
-                    {summarize(group.items)}
+                    {summarize(group.items, more)}
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ flexShrink: 0 }}
                   >
-                    {formatAmount(group.subtotal)}
+                    {price(group.subtotal)}
                   </Typography>
                 </Stack>
               ))}
@@ -141,13 +149,13 @@ export default function OrderHistoryCard({
               noWrap
               sx={{ mb: 0.75 }}
             >
-              {summarize(items)}
+              {summarize(items, more)}
             </Typography>
           )}
           <Stack direction="row" sx={{ justifyContent: "space-between" }}>
             <Typography variant="caption" color="text.secondary">
-              {kept.length} {kept.length === 1 ? "item" : "items"}
-              {removed > 0 && ` · ${removed} removed by staff`}
+              {t("itemCount", { count: kept.length })}
+              {removed > 0 && ` · ${t("removedCount", { count: removed })}`}
             </Typography>
             <Typography
               variant="body2"
@@ -159,7 +167,7 @@ export default function OrderHistoryCard({
                   : { fontWeight: 700, color: "primary.main" }
               }
             >
-              {formatAmount(total)}
+              {price(total)}
             </Typography>
           </Stack>
         </Box>

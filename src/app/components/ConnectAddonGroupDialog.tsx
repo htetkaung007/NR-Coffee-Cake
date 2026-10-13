@@ -49,6 +49,7 @@ export default function ConnectAddonGroupDialog({
   const [draftIds, setDraftIds] = useState<number[]>(selectedIds);
   const [search, setSearch] = useState("");
   const [groupName, setGroupName] = useState("");
+  const [groupNameMy, setGroupNameMy] = useState("");
   const [isRequired, setIsRequired] = useState(false);
   const { options, setOptions, updateOption, addOption, removeOption } =
     useOptionRows([emptyOptionRow(), emptyOptionRow()]);
@@ -68,6 +69,7 @@ export default function ConnectAddonGroupDialog({
       setDraftIds(selectedIds);
       setSearch("");
       setGroupName("");
+      setGroupNameMy("");
       setIsRequired(false);
       setOptions([emptyOptionRow(), emptyOptionRow()]);
       setError(null);
@@ -97,10 +99,15 @@ export default function ConnectAddonGroupDialog({
       setIsSaving(true);
       const result = await createAddonGroupAction({
         groupName,
+        groupNameMy,
         isRequired,
         options: options
           .filter((row) => row.name.trim() !== "")
-          .map((row) => ({ name: row.name, price: row.price })),
+          .map((row) => ({
+            name: row.name,
+            nameMy: row.nameMy,
+            price: row.price,
+          })),
       });
       setIsSaving(false);
 
@@ -269,8 +276,17 @@ export default function ConnectAddonGroupDialog({
           value={groupName}
           onChange={(event) => setGroupName(event.target.value)}
           sx={{
-            mb: 2,
+            mb: 1.5,
           }}
+        />
+        <TextField
+          label="Myanmar name (optional)"
+          fullWidth
+          value={groupNameMy}
+          onChange={(event) => setGroupNameMy(event.target.value)}
+          helperText="Shown to customers who choose Myanmar. Empty → the English name is shown."
+          slotProps={{ htmlInput: { maxLength: 50, lang: "my" } }}
+          sx={{ mb: 2 }}
         />
 
         <Stack
@@ -296,48 +312,59 @@ export default function ConnectAddonGroupDialog({
 
         <Stack spacing={1.5}>
           {options.map((row, index) => (
-            <Stack
-              key={index}
-              direction="row"
-              spacing={1}
-              sx={{ alignItems: "center" }}
-            >
+            <Stack key={index} spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <TextField
+                  placeholder="Option Name (e.g. Extra Sauce)"
+                  size="small"
+                  fullWidth
+                  value={row.name}
+                  onChange={(event) =>
+                    updateOption(index, "name", event.target.value)
+                  }
+                  sx={{
+                    flex: 2,
+                  }}
+                />
+                <TextField
+                  placeholder="Price (Blank = Free)"
+                  size="small"
+                  value={row.price}
+                  onChange={(event) => {
+                    const digitsOnly = event.target.value.replace(
+                      /[^0-9]/g,
+                      "",
+                    );
+                    updateOption(index, "price", digitsOnly);
+                  }}
+                  slotProps={{
+                    htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
+                  }}
+                  sx={{
+                    flex: 1,
+                    minWidth: 120,
+                  }}
+                />
+                <IconButton
+                  size="small"
+                  onClick={() => removeOption(index)}
+                  disabled={options.length === 1}
+                  aria-label="Remove option"
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Stack>
               <TextField
-                placeholder="Option Name (e.g. Extra Sauce)"
+                label="Myanmar name (optional)"
                 size="small"
-                fullWidth
-                value={row.name}
+                value={row.nameMy}
                 onChange={(event) =>
-                  updateOption(index, "name", event.target.value)
+                  updateOption(index, "nameMy", event.target.value)
                 }
-                sx={{
-                  flex: 2,
-                }}
+                slotProps={{ htmlInput: { maxLength: 120, lang: "my" } }}
+                // Lines up under the option name, clear of the ✕.
+                sx={{ mr: 5 }}
               />
-              <TextField
-                placeholder="Price (Blank = Free)"
-                size="small"
-                value={row.price}
-                onChange={(event) => {
-                  const digitsOnly = event.target.value.replace(/[^0-9]/g, "");
-                  updateOption(index, "price", digitsOnly);
-                }}
-                slotProps={{
-                  htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
-                }}
-                sx={{
-                  flex: 1,
-                  minWidth: 120,
-                }}
-              />
-              <IconButton
-                size="small"
-                onClick={() => removeOption(index)}
-                disabled={options.length === 1}
-                aria-label="Remove option"
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
             </Stack>
           ))}
         </Stack>

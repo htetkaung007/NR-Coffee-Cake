@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import { useState } from "react";
 import { Alert, Button, Stack } from "@mui/material";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
@@ -24,6 +26,8 @@ export default function WithdrawRoundControls({
   onChange: () => Promise<ActionResult<unknown>>;
   onCancel: () => Promise<ActionResult<unknown>>;
 }) {
+  const t = useTranslations("withdraw");
+  const errorMessage = useErrorMessage();
   const [pending, setPending] = useState<"change" | "cancel" | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +38,7 @@ export default function WithdrawRoundControls({
     const result = await (kind === "change" ? onChange() : onCancel());
     setPending(null);
     setIsConfirmOpen(false);
-    if (!result.success) setError(result.error.message);
+    if (!result.success) setError(errorMessage(result.error));
   }
 
   return (
@@ -51,7 +55,7 @@ export default function WithdrawRoundControls({
           onClick={() => void run("change")}
           sx={{ minHeight: 44, borderRadius: 999 }}
         >
-          {pending === "change" ? "Opening…" : "Change order"}
+          {pending === "change" ? t("opening") : t("change")}
         </Button>
         <Button
           color="error"
@@ -59,16 +63,16 @@ export default function WithdrawRoundControls({
           onClick={() => setIsConfirmOpen(true)}
           sx={{ minHeight: 44, borderRadius: 999 }}
         >
-          Cancel order
+          {t("cancel")}
         </Button>
       </Stack>
       <ConfirmDialog
         open={isConfirmOpen}
-        title="Cancel this order?"
+        title={t("confirmTitle")}
         message={confirmMessage}
-        confirmLabel="Cancel order"
-        cancelLabel="Keep it"
-        pendingLabel="Cancelling…"
+        confirmLabel={t("cancel")}
+        cancelLabel={t("keep")}
+        pendingLabel={t("cancelling")}
         destructive
         pending={pending === "cancel"}
         onConfirm={() => void run("cancel")}

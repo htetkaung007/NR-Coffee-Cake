@@ -2070,8 +2070,7 @@ export const LocationScalarFieldEnum = {
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived',
-  onlineMenuEnabled: 'onlineMenuEnabled',
-  publicMenuCode: 'publicMenuCode'
+  onlineMenuEnabled: 'onlineMenuEnabled'
 } as const
 
 export type LocationScalarFieldEnum = (typeof LocationScalarFieldEnum)[keyof typeof LocationScalarFieldEnum]
@@ -2092,9 +2091,11 @@ export type SelectedLocationScalarFieldEnum = (typeof SelectedLocationScalarFiel
 export const MenuScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  nameMy: 'nameMy',
   price: 'price',
   assetUrl: 'assetUrl',
   description: 'description',
+  descriptionMy: 'descriptionMy',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
   isArchived: 'isArchived'
@@ -2120,6 +2121,7 @@ export type MenuStockScalarFieldEnum = (typeof MenuStockScalarFieldEnum)[keyof t
 export const MenuCategoryScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  nameMy: 'nameMy',
   companyId: 'companyId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
@@ -2145,6 +2147,7 @@ export type MenuMenuCategoryScalarFieldEnum = (typeof MenuMenuCategoryScalarFiel
 export const AddonScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  nameMy: 'nameMy',
   price: 'price',
   addonCategoryId: 'addonCategoryId',
   isAvailable: 'isAvailable',
@@ -2159,6 +2162,7 @@ export type AddonScalarFieldEnum = (typeof AddonScalarFieldEnum)[keyof typeof Ad
 export const AddonCategoriesScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  nameMy: 'nameMy',
   isRequired: 'isRequired',
   createdAt: 'createdAt',
   updateTime: 'updateTime',

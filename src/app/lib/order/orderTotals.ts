@@ -54,6 +54,9 @@ export function orderLineTotal(order: PricedOrderLine) {
 export interface LineAddon {
   id: number;
   name: string;
+  /** Its Myanmar name, for customer screens (null/absent: the English
+   *  name shows — lib/i18n/localizedText). Never part of the price. */
+  nameMy?: string | null;
   unitPrice: number;
 }
 

@@ -1,9 +1,10 @@
 "use client";
 
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Box, Button, Card, Stack, Typography } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
-import { formatAmount } from "@/app/lib/orderFormat";
 
 import OutcomeScreenShell from "./OutcomeScreenShell";
 
@@ -37,6 +38,9 @@ export default function OrderConfirmedScreen({
   onOrderMore,
   isPending = false,
 }: OrderConfirmedScreenProps) {
+  const t = useTranslations("outcome");
+  const tCommon = useTranslations("common");
+  const { price } = useCustomerPrice();
   return (
     <OutcomeScreenShell
       onBack={onBack}
@@ -44,22 +48,21 @@ export default function OrderConfirmedScreen({
       icon={<CheckIcon sx={{ fontSize: 52 }} />}
     >
       <Typography variant="h6" sx={{ mb: 1 }}>
-        Order confirmed
+        {t("confirmedTitle")}
       </Typography>
       <Typography
         variant="body2"
         color="text.secondary"
         sx={{ textAlign: "center", mb: 3 }}
       >
-        Order {orderNumber} has been approved by the counter — the kitchen is
-        preparing it now.
+        {t("confirmedBody", { number: orderNumber })}
       </Typography>
 
       <Card variant="outlined" sx={{ width: "100%", p: 2, mb: 3 }}>
         <Stack direction="row" sx={{ justifyContent: "space-between" }}>
           <Box>
             <Typography variant="caption" color="text.secondary">
-              Items
+              {tCommon("items")}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 700 }}>
               {itemCount}
@@ -67,13 +70,13 @@ export default function OrderConfirmedScreen({
           </Box>
           <Box sx={{ textAlign: "right" }}>
             <Typography variant="caption" color="text.secondary">
-              Total
+              {tCommon("total")}
             </Typography>
             <Typography
               variant="body1"
               sx={{ fontWeight: 700, color: "primary.main" }}
             >
-              {formatAmount(total)}
+              {price(total)}
             </Typography>
           </Box>
         </Stack>
@@ -87,7 +90,7 @@ export default function OrderConfirmedScreen({
           fullWidth
           sx={{ borderRadius: 999, py: 1.25 }}
         >
-          See your order
+          {t("seeOrder")}
         </Button>
         <Button
           variant="contained"
@@ -96,7 +99,7 @@ export default function OrderConfirmedScreen({
           onClick={onOrderMore}
           sx={{ borderRadius: 999, py: 1.25 }}
         >
-          Order more
+          {t("orderMore")}
         </Button>
       </Stack>
     </OutcomeScreenShell>

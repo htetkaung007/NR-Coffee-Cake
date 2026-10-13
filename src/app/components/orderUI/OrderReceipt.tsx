@@ -1,11 +1,13 @@
 "use client";
 
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
 import { Avatar, Box, Chip, Stack, Typography } from "@mui/material";
 import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
 import type { RemovedByStaff } from "@/app/lib/order/roundLine";
-import { WITHDRAWN_CUSTOMER_LABEL } from "@/app/lib/order/cancelReason";
+import type { ContributorWho } from "@/app/lib/order/contributors";
+import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 
 import BackCircleButton from "./BackCircleButton";
 
@@ -28,8 +30,9 @@ interface OrderReceiptProps {
   status: string;
   lines: ReceiptLine[];
   /** Table QR: the same lines per person ("Your order", "Customer 2
-   *  order"…), each with its subtotal. Counter: absent — a flat list. */
-  groups?: { key: string; heading: string; subtotal: number; lines: ReceiptLine[] }[];
+   *  order"… — put into words here), each with its subtotal. Counter:
+   *  absent — a flat list. */
+  groups?: { key: string; who: ContributorWho; subtotal: number; lines: ReceiptLine[] }[];
   total: number;
   backHref: string;
   /** The footer's "Order more" — a client component, so the page
@@ -37,23 +40,21 @@ interface OrderReceiptProps {
   orderMore: React.ReactNode;
 }
 
-/** Customer-facing status labels — used by the receipt and by the
- *  history list, so the same round reads the same in both. */
-export const ORDER_STATUS_CHIP: Record<
-  string,
-  { label: string; color: "default" | "success" }
-> = {
-  PENDING_APPROVAL: { label: "Awaiting approval", color: "default" },
-  PENDING: { label: "Approved", color: "success" },
-  COOKING: { label: "Cooking", color: "success" },
-  // customerRoundStatus — a round the customer cancelled themselves.
-  WITHDRAWN: { label: WITHDRAWN_CUSTOMER_LABEL, color: "default" },
-};
+/** A round status chip's colour — used by the receipt and by the history
+ *  list, so the same round reads the same in both. The words are the
+ *  customer's roundStatus.<STATUS> (useCustomerLabels). */
+export function statusChipColor(status: string): "default" | "success" {
+  return status === "PENDING" || status === "COOKING" ? "success" : "default";
+}
 
 /** One receipt line: photo, name, add-ons, note, quantity and amount.
  *  The one place this markup lives — the flat (Counter) and per-person
  *  (Table) layouts both render lines through it. */
 function ReceiptLineRow({ line }: { line: ReceiptLine }) {
+  const t = useTranslations("common");
+  const tReceipt = useTranslations("receipt");
+  const { price } = useCustomerPrice();
+  const labels = useCustomerLabels();
   const removed = line.removedByStaff;
   // Every unit taken back: still listed, dimmed and struck through, with
   // the words saying why (DESIGN.md Rule 26). Never in the total.
@@ -93,7 +94,7 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
         <Typography variant="caption" color="text.secondary">
           {line.addonNames.length > 0
             ? line.addonNames.join(", ")
-            : "No add-ons"}
+            : tReceipt("noAddons")}
         </Typography>
         {line.note && (
           <Stack
@@ -118,7 +119,7 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
           color="text.secondary"
           sx={{ display: "block", mt: 0.25 }}
         >
-          Qty {isFullyRemoved ? removed.quantity : line.quantity}
+          {t("qty", { quantity: isFullyRemoved ? removed.quantity : line.quantity })}
         </Typography>
         {removed && (
           <Typography
@@ -127,8 +128,11 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
             sx={{ display: "block", mt: 0.25 }}
           >
             {isFullyRemoved
-              ? `Removed by staff · ${removed.reason}`
-              : `${removed.quantity} removed by staff · ${removed.reason}`}
+              ? tReceipt("removedAll", { reasons: labels.voidReasons(removed.reasons) })
+              : tReceipt("removedSome", {
+                  count: removed.quantity,
+                  reasons: labels.voidReasons(removed.reasons),
+                })}
           </Typography>
         )}
       </Box>
@@ -138,7 +142,7 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
           variant="body1"
           sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
         >
-          {formatAmount(line.total)}
+          {price(line.total)}
         </Typography>
       )}
     </Stack>
@@ -157,10 +161,10 @@ export default function OrderReceipt({
   backHref,
   orderMore,
 }: OrderReceiptProps) {
-  const chip = ORDER_STATUS_CHIP[status] ?? {
-    label: status,
-    color: "default",
-  };
+  const t = useTranslations("common");
+  const tReceipt = useTranslations("receipt");
+  const { price } = useCustomerPrice();
+  const labels = useCustomerLabels();
 
   return (
     <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
@@ -182,11 +186,15 @@ export default function OrderReceipt({
         >
           <BackCircleButton
             href={backHref}
-            ariaLabel="Back to order history"
+            ariaLabel={tReceipt("backToHistory")}
           />
           <Box>
-            <Typography variant="h6">{`Order ${orderNumber}`}</Typography>
-            <Chip label={chip.label} color={chip.color} size="small" />
+            <Typography variant="h6">{t("orderNumber", { number: orderNumber })}</Typography>
+            <Chip
+              label={labels.roundStatus(status)}
+              color={statusChipColor(status)}
+              size="small"
+            />
           </Box>
         </Stack>
 
@@ -203,10 +211,10 @@ export default function OrderReceipt({
                     sx={{ justifyContent: "space-between" }}
                   >
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {group.heading}
+                      {labels.contributorHeading(group.who)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {formatAmount(group.subtotal)}
+                      {price(group.subtotal)}
                     </Typography>
                   </Stack>
                   {group.lines.map((line) => (
@@ -233,10 +241,10 @@ export default function OrderReceipt({
             sx={{ justifyContent: "space-between", mb: 0.5 }}
           >
             <Typography variant="body2" color="text.secondary">
-              Subtotal
+              {t("subtotal")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {formatAmount(total)}
+              {price(total)}
             </Typography>
           </Stack>
           <Stack
@@ -244,10 +252,10 @@ export default function OrderReceipt({
             sx={{ justifyContent: "space-between", mb: 1.5 }}
           >
             <Typography variant="body1" sx={{ fontWeight: 800 }}>
-              Total
+              {t("total")}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 800 }}>
-              {formatAmount(total)}
+              {price(total)}
             </Typography>
           </Stack>
           {orderMore}

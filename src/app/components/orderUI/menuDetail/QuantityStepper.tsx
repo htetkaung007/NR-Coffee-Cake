@@ -5,6 +5,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
 import { SHEET_TEXT } from "./sheetText";
+import { useOrderUiLabels } from "../OrderUiLabels";
 
 /** Everything a quantity control needs — built once by the dialog and
  *  handed to whichever piece shows the stepper (the dialog body on
@@ -31,6 +32,7 @@ export default function QuantityStepper({
   variant,
   disabled = false,
 }: QuantityStepperProps) {
+  const labels = useOrderUiLabels().menuDetail;
   const isPill = variant === "pill";
 
   return (
@@ -51,7 +53,7 @@ export default function QuantityStepper({
     >
       <IconButton
         size="small"
-        aria-label="Decrease quantity"
+        aria-label={labels.decrease}
         disabled={disabled || quantity.value <= 1}
         onClick={quantity.onDecrease}
       >
@@ -68,7 +70,7 @@ export default function QuantityStepper({
       </Typography>
       <IconButton
         size="small"
-        aria-label="Increase quantity"
+        aria-label={labels.increase}
         disabled={disabled || quantity.value >= quantity.max}
         onClick={quantity.onIncrease}
       >

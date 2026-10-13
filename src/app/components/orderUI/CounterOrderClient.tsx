@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Box, Snackbar, Typography, useTheme } from "@mui/material";
+import { Alert, Box, Snackbar, useTheme } from "@mui/material";
 
+import { useTranslations } from "next-intl";
 import OrderTopBar from "./OrderTopBar";
+import OrderPlaceHeader from "./OrderPlaceHeader";
 import OrderBotBar from "./OrderBotBar";
-import MenuBrowser, { MenuOption } from "./MenuBrowser";
+import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 import type { MenuDetail } from "./menuDetail/types";
 
 import { toBrowserCartLine } from "@/app/lib/cart/browserCart";
@@ -25,7 +27,7 @@ interface CounterOrderClientProps {
   menus: MenuOption[];
   /** The category tabs, in the server's order (see
    *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
-  categories: string[];
+  categories: CategoryTab[];
   shopName: string | null;
   /** Arrived from scanning the counter QR with an empty cart (see
    *  /counter/continue) — shows a one-time note. */
@@ -43,6 +45,7 @@ export default function CounterOrderClient({
   justScanned = false,
 }: CounterOrderClientProps) {
   const router = useRouter();
+  const tMenu = useTranslations("menu");
   const pageBackground = getOrderPageBackground(useTheme());
 
   // The cart lives in this browser (see useBrowserCart) — adding never
@@ -138,27 +141,23 @@ export default function CounterOrderClient({
           mx: "auto",
         }}
       >
-        {hasSession && (
-          <Typography variant="h6" sx={{ mb: 0.5 }}>
-            {orderNumber}
-          </Typography>
-        )}
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mb: 2 }}
-        >
-          {!hasSession
-            ? "Add items to your cart — scan the QR at the counter to send your order."
-            : isAwaitingApproval
-              ? "Your order is waiting for the counter to confirm. You can add more once it's accepted."
-              : "Add items, then check your cart to submit for counter approval."}
-        </Typography>
+        {/* Where am I: the Counter (with the bill's order number — never
+           the internal session id), or the Online menu without a scan. */}
+        <OrderPlaceHeader
+          place={
+            hasSession
+              ? {
+                  kind: "counter",
+                  orderNumber: orderNumber || null,
+                  awaitingApproval: isAwaitingApproval,
+                }
+              : { kind: "online" }
+          }
+        />
 
         {justScanned && (
           <Alert severity="success" role="status" sx={{ mb: 2 }}>
-            Scanned ✓ — add items to order. Items added in another browser
-            won&apos;t show here.
+            {tMenu("scanned")}
           </Alert>
         )}
 
@@ -180,7 +179,7 @@ export default function CounterOrderClient({
         open={addedName !== null}
         autoHideDuration={2000}
         onClose={() => setAddedName(null)}
-        message={addedName ? `Added ${addedName} to your cart` : ""}
+        message={addedName ? tMenu("added", { name: addedName }) : ""}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
         // Below the sticky top bar, clear of the notch.
         sx={{ top: "calc(72px + env(safe-area-inset-top, 0px))" }}

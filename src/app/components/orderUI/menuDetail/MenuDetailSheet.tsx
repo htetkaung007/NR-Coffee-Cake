@@ -2,6 +2,7 @@
 
 import { Box, IconButton, SwipeableDrawer } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useOrderUiLabels } from "../OrderUiLabels";
 
 /** Phone bottom sheet: full width, capped as a share of the viewport (dvh,
  *  so mobile browser bars don't cut it off) so the header and the sticky
@@ -27,6 +28,7 @@ export default function MenuDetailSheet({
   footer,
   children,
 }: MenuDetailSheetProps) {
+  const labels = useOrderUiLabels().menuDetail;
   return (
     <SwipeableDrawer
       anchor="bottom"
@@ -77,7 +79,7 @@ export default function MenuDetailSheet({
           }}
         />
         <IconButton
-          aria-label="Close"
+          aria-label={labels.close}
           size="small"
           onClick={onClose}
           sx={{ position: "absolute", right: 12, top: 8 }}

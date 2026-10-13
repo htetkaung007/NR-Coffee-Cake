@@ -37,6 +37,7 @@ export type AddonCategoriesSumAggregateOutputType = {
 export type AddonCategoriesMinAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   isRequired: boolean | null
   createdAt: Date | null
   updateTime: Date | null
@@ -46,6 +47,7 @@ export type AddonCategoriesMinAggregateOutputType = {
 export type AddonCategoriesMaxAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   isRequired: boolean | null
   createdAt: Date | null
   updateTime: Date | null
@@ -55,6 +57,7 @@ export type AddonCategoriesMaxAggregateOutputType = {
 export type AddonCategoriesCountAggregateOutputType = {
   id: number
   name: number
+  nameMy: number
   isRequired: number
   createdAt: number
   updateTime: number
@@ -74,6 +77,7 @@ export type AddonCategoriesSumAggregateInputType = {
 export type AddonCategoriesMinAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   isRequired?: true
   createdAt?: true
   updateTime?: true
@@ -83,6 +87,7 @@ export type AddonCategoriesMinAggregateInputType = {
 export type AddonCategoriesMaxAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   isRequired?: true
   createdAt?: true
   updateTime?: true
@@ -92,6 +97,7 @@ export type AddonCategoriesMaxAggregateInputType = {
 export type AddonCategoriesCountAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   isRequired?: true
   createdAt?: true
   updateTime?: true
@@ -188,6 +194,7 @@ export type AddonCategoriesGroupByArgs<ExtArgs extends runtime.Types.Extensions.
 export type AddonCategoriesGroupByOutputType = {
   id: number
   name: string
+  nameMy: string | null
   isRequired: boolean
   createdAt: Date
   updateTime: Date
@@ -220,6 +227,7 @@ export type AddonCategoriesWhereInput = {
   NOT?: Prisma.AddonCategoriesWhereInput | Prisma.AddonCategoriesWhereInput[]
   id?: Prisma.IntFilter<"AddonCategories"> | number
   name?: Prisma.StringFilter<"AddonCategories"> | string
+  nameMy?: Prisma.StringNullableFilter<"AddonCategories"> | string | null
   isRequired?: Prisma.BoolFilter<"AddonCategories"> | boolean
   createdAt?: Prisma.DateTimeFilter<"AddonCategories"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"AddonCategories"> | Date | string
@@ -231,6 +239,7 @@ export type AddonCategoriesWhereInput = {
 export type AddonCategoriesOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   isRequired?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -245,6 +254,7 @@ export type AddonCategoriesWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AddonCategoriesWhereInput[]
   NOT?: Prisma.AddonCategoriesWhereInput | Prisma.AddonCategoriesWhereInput[]
   name?: Prisma.StringFilter<"AddonCategories"> | string
+  nameMy?: Prisma.StringNullableFilter<"AddonCategories"> | string | null
   isRequired?: Prisma.BoolFilter<"AddonCategories"> | boolean
   createdAt?: Prisma.DateTimeFilter<"AddonCategories"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"AddonCategories"> | Date | string
@@ -256,6 +266,7 @@ export type AddonCategoriesWhereUniqueInput = Prisma.AtLeast<{
 export type AddonCategoriesOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   isRequired?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -273,6 +284,7 @@ export type AddonCategoriesScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AddonCategoriesScalarWhereWithAggregatesInput | Prisma.AddonCategoriesScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"AddonCategories"> | number
   name?: Prisma.StringWithAggregatesFilter<"AddonCategories"> | string
+  nameMy?: Prisma.StringNullableWithAggregatesFilter<"AddonCategories"> | string | null
   isRequired?: Prisma.BoolWithAggregatesFilter<"AddonCategories"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AddonCategories"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"AddonCategories"> | Date | string
@@ -281,6 +293,7 @@ export type AddonCategoriesScalarWhereWithAggregatesInput = {
 
 export type AddonCategoriesCreateInput = {
   name: string
+  nameMy?: string | null
   isRequired?: boolean
   createdAt?: Date | string
   updateTime?: Date | string
@@ -292,6 +305,7 @@ export type AddonCategoriesCreateInput = {
 export type AddonCategoriesUncheckedCreateInput = {
   id?: number
   name: string
+  nameMy?: string | null
   isRequired?: boolean
   createdAt?: Date | string
   updateTime?: Date | string
@@ -302,6 +316,7 @@ export type AddonCategoriesUncheckedCreateInput = {
 
 export type AddonCategoriesUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -313,6 +328,7 @@ export type AddonCategoriesUpdateInput = {
 export type AddonCategoriesUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -324,6 +340,7 @@ export type AddonCategoriesUncheckedUpdateInput = {
 export type AddonCategoriesCreateManyInput = {
   id?: number
   name: string
+  nameMy?: string | null
   isRequired?: boolean
   createdAt?: Date | string
   updateTime?: Date | string
@@ -332,6 +349,7 @@ export type AddonCategoriesCreateManyInput = {
 
 export type AddonCategoriesUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -341,6 +359,7 @@ export type AddonCategoriesUpdateManyMutationInput = {
 export type AddonCategoriesUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -355,6 +374,7 @@ export type AddonCategoriesScalarRelationFilter = {
 export type AddonCategoriesCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   isRequired?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -368,6 +388,7 @@ export type AddonCategoriesAvgOrderByAggregateInput = {
 export type AddonCategoriesMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   isRequired?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -377,6 +398,7 @@ export type AddonCategoriesMaxOrderByAggregateInput = {
 export type AddonCategoriesMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   isRequired?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
@@ -417,6 +439,7 @@ export type AddonCategoriesUpdateOneRequiredWithoutMenuAddonCategoryNestedInput 
 
 export type AddonCategoriesCreateWithoutAddonsInput = {
   name: string
+  nameMy?: string | null
   isRequired?: boolean
   createdAt?: Date | string
   updateTime?: Date | string
@@ -427,6 +450,7 @@ export type AddonCategoriesCreateWithoutAddonsInput = {
 export type AddonCategoriesUncheckedCreateWithoutAddonsInput = {
   id?: number
   name: string
+  nameMy?: string | null
   isRequired?: boolean
   createdAt?: Date | string
   updateTime?: Date | string
@@ -452,6 +476,7 @@ export type AddonCategoriesUpdateToOneWithWhereWithoutAddonsInput = {
 
 export type AddonCategoriesUpdateWithoutAddonsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -462,6 +487,7 @@ export type AddonCategoriesUpdateWithoutAddonsInput = {
 export type AddonCategoriesUncheckedUpdateWithoutAddonsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -471,6 +497,7 @@ export type AddonCategoriesUncheckedUpdateWithoutAddonsInput = {
 
 export type AddonCategoriesCreateWithoutMenuAddonCategoryInput = {
   name: string
+  nameMy?: string | null
   isRequired?: boolean
   createdAt?: Date | string
   updateTime?: Date | string
@@ -481,6 +508,7 @@ export type AddonCategoriesCreateWithoutMenuAddonCategoryInput = {
 export type AddonCategoriesUncheckedCreateWithoutMenuAddonCategoryInput = {
   id?: number
   name: string
+  nameMy?: string | null
   isRequired?: boolean
   createdAt?: Date | string
   updateTime?: Date | string
@@ -506,6 +534,7 @@ export type AddonCategoriesUpdateToOneWithWhereWithoutMenuAddonCategoryInput = {
 
 export type AddonCategoriesUpdateWithoutMenuAddonCategoryInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -516,6 +545,7 @@ export type AddonCategoriesUpdateWithoutMenuAddonCategoryInput = {
 export type AddonCategoriesUncheckedUpdateWithoutMenuAddonCategoryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isRequired?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -566,6 +596,7 @@ export type AddonCategoriesCountOutputTypeCountMenuAddonCategoryArgs<ExtArgs ext
 export type AddonCategoriesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   isRequired?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -578,6 +609,7 @@ export type AddonCategoriesSelect<ExtArgs extends runtime.Types.Extensions.Inter
 export type AddonCategoriesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   isRequired?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -587,6 +619,7 @@ export type AddonCategoriesSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
 export type AddonCategoriesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   isRequired?: boolean
   createdAt?: boolean
   updateTime?: boolean
@@ -596,13 +629,14 @@ export type AddonCategoriesSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
 export type AddonCategoriesSelectScalar = {
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   isRequired?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type AddonCategoriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "isRequired" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["addonCategories"]>
+export type AddonCategoriesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "nameMy" | "isRequired" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["addonCategories"]>
 export type AddonCategoriesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   addons?: boolean | Prisma.AddonCategories$addonsArgs<ExtArgs>
   menuAddonCategory?: boolean | Prisma.AddonCategories$menuAddonCategoryArgs<ExtArgs>
@@ -620,6 +654,7 @@ export type $AddonCategoriesPayload<ExtArgs extends runtime.Types.Extensions.Int
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
+    nameMy: string | null
     isRequired: boolean
     createdAt: Date
     updateTime: Date
@@ -1051,6 +1086,7 @@ export interface Prisma__AddonCategoriesClient<T, Null = never, ExtArgs extends 
 export interface AddonCategoriesFieldRefs {
   readonly id: Prisma.FieldRef<"AddonCategories", 'Int'>
   readonly name: Prisma.FieldRef<"AddonCategories", 'String'>
+  readonly nameMy: Prisma.FieldRef<"AddonCategories", 'String'>
   readonly isRequired: Prisma.FieldRef<"AddonCategories", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"AddonCategories", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"AddonCategories", 'DateTime'>

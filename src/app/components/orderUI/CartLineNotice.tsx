@@ -8,7 +8,7 @@ import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 
 import type { ValidatedCartLine } from "@/app/lib/cart/cartValidation";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useOrderUiLabels } from "./OrderUiLabels";
 
 interface CartLineNoticeProps {
   line: ValidatedCartLine;
@@ -30,6 +30,7 @@ export default function CartLineNotice({
   onRemove,
   onEdit,
 }: CartLineNoticeProps) {
+  const { lineNotice: labels, price } = useOrderUiLabels();
   switch (line.status) {
     case "ok":
       return null;
@@ -37,11 +38,11 @@ export default function CartLineNotice({
     case "priceChanged":
       return (
         <Notice icon={<SellOutlinedIcon color="warning" />}>
-          Price updated:{" "}
+          {labels.priceUpdated}{" "}
           <Box component="span" sx={{ textDecoration: "line-through" }}>
-            {formatAmount(line.previousUnitPrice ?? 0)}
+            {price(line.previousUnitPrice ?? 0)}
           </Box>{" "}
-          → {formatAmount(line.unitPrice ?? 0)} each
+          → {labels.priceEach(price(line.unitPrice ?? 0))}
         </Notice>
       );
 
@@ -52,14 +53,14 @@ export default function CartLineNotice({
           action={
             fitQuantity > 0 ? (
               <ActionButton onClick={() => onChangeQuantity(fitQuantity)}>
-                Change to ×{fitQuantity}
+                {labels.changeTo(fitQuantity)}
               </ActionButton>
             ) : (
-              <ActionButton onClick={onRemove}>Remove</ActionButton>
+              <ActionButton onClick={onRemove}>{labels.remove}</ActionButton>
             )
           }
         >
-          Only {line.availableQuantity} left
+          {labels.onlyLeft(line.availableQuantity ?? 0)}
         </Notice>
       );
 
@@ -67,9 +68,9 @@ export default function CartLineNotice({
       return (
         <Notice
           icon={<BlockOutlinedIcon color="error" />}
-          action={<ActionButton onClick={onRemove}>Remove</ActionButton>}
+          action={<ActionButton onClick={onRemove}>{labels.remove}</ActionButton>}
         >
-          Sold out — not included in the total
+          {labels.soldOut}
         </Notice>
       );
 
@@ -77,9 +78,9 @@ export default function CartLineNotice({
       return (
         <Notice
           icon={<BlockOutlinedIcon color="error" />}
-          action={<ActionButton onClick={onRemove}>Remove</ActionButton>}
+          action={<ActionButton onClick={onRemove}>{labels.remove}</ActionButton>}
         >
-          No longer available — not included in the total
+          {labels.unavailable}
         </Notice>
       );
 
@@ -87,16 +88,16 @@ export default function CartLineNotice({
       return (
         <Notice
           icon={<ErrorOutlineRoundedIcon color="warning" />}
-          action={<ActionButton onClick={onEdit}>Edit</ActionButton>}
+          action={<ActionButton onClick={onEdit}>{labels.edit}</ActionButton>}
         >
-          An option you picked is no longer available
+          {labels.addonUnavailable}
         </Notice>
       );
 
     case "invalid":
       return (
         <Notice icon={<ErrorOutlineRoundedIcon color="warning" />}>
-          Choose a quantity from 1 to 99
+          {labels.invalid}
         </Notice>
       );
   }

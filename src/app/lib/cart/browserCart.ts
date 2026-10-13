@@ -11,8 +11,11 @@ import { orderNoteSchema } from "../schemas/customerOrderSchema";
  *  displayedUnitPrice, to detect "the price changed since you saw it". */
 interface BrowserCartLineDisplay {
   name: string;
+  /** Myanmar names for the customer's cart (absent: the English ones
+   *  show — lib/i18n/localizedText). Display only, like the rest. */
+  nameMy?: string | null;
   unitPrice: number;
-  addons: { id: number; name: string; unitPrice: number }[];
+  addons: { id: number; name: string; nameMy?: string | null; unitPrice: number }[];
   imageUrl: string | null;
 }
 
@@ -328,10 +331,11 @@ export function toBrowserCartLine(
   detail: {
     id: number;
     name: string;
+    nameMy?: string | null;
     price: number;
     imageUrl: string | null;
     addonCategories: {
-      addons: { id: number; name: string; price: number }[];
+      addons: { id: number; name: string; nameMy?: string | null; price: number }[];
     }[];
   },
   quantity: number,
@@ -345,7 +349,16 @@ export function toBrowserCartLine(
   );
   const addons = [...new Set(addonIds)].flatMap((id) => {
     const addon = offered.get(id);
-    return addon ? [{ id, name: addon.name, unitPrice: addon.price }] : [];
+    return addon
+      ? [
+          {
+            id,
+            name: addon.name,
+            ...(addon.nameMy ? { nameMy: addon.nameMy } : {}),
+            unitPrice: addon.price,
+          },
+        ]
+      : [];
   });
   return {
     menuId: detail.id,
@@ -354,6 +367,7 @@ export function toBrowserCartLine(
     note,
     display: {
       name: detail.name,
+      ...(detail.nameMy ? { nameMy: detail.nameMy } : {}),
       unitPrice: detail.price,
       addons,
       imageUrl: detail.imageUrl,
@@ -375,9 +389,16 @@ export const storedLineSchema = z.object({
   note: orderNoteSchema.nullable().transform((note) => note ?? null),
   display: z.object({
     name: z.string(),
+    // Optional: absent on lines stored before Myanmar names existed.
+    nameMy: z.string().nullish(),
     unitPrice: money,
     addons: z.array(
-      z.object({ id: idSchema, name: z.string(), unitPrice: money }),
+      z.object({
+        id: idSchema,
+        name: z.string(),
+        nameMy: z.string().nullish(),
+        unitPrice: money,
+      }),
     ),
     imageUrl: z.string().nullable(),
   }),

@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Typography, useTheme } from "@mui/material";
+import { useTranslations } from "next-intl";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import {
   ORDER_PAGE_MIN_WIDTH,
@@ -14,6 +15,7 @@ import {
  * or closed — the same screen for every case, and no menu data at all.
  */
 export default function ShopUnavailable() {
+  const t = useTranslations("shop");
   const pageBackground = getOrderPageBackground(useTheme());
 
   return (
@@ -50,10 +52,10 @@ export default function ShopUnavailable() {
           sx={{ color: "text.secondary" }}
         />
         <Typography variant="h6" component="h1">
-          The shop is unavailable now
+          {t("unavailableTitle")}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Scan the QR code at your table or the counter to order.
+          {t("unavailableHint")}
         </Typography>
       </Box>
     </Box>

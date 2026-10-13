@@ -18,6 +18,17 @@ export class CompanyService {
 
   /** Chain lookup — the company of the user with this email (the
    *  Backoffice layout and the sign-in callback). */
+  /** The shop's name — single-shop mode has one company (CLAUDE.md
+   *  §13a). For customer screens that know no company id (the language
+   *  card's badge); null before the shop exists. */
+  static async getShopName() {
+    const company = await prisma.company.findFirst({
+      orderBy: { id: "asc" },
+      select: { name: true },
+    });
+    return company?.name ?? null;
+  }
+
   static async getByUserEmail(email: string) {
     const user = await AppService.getUserByEmail(email);
     if (!user) throw new NotFoundError("User", email);

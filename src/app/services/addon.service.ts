@@ -121,8 +121,10 @@ export class AddonService {
    *  into 0 by the time it reaches here. */
   static async createAddonCategoryWithAddons(input: {
     groupName: string;
+    /** Myanmar names (null: customers see the English ones). */
+    groupNameMy: string | null;
     isRequired: boolean;
-    options: { name: string; price: number }[];
+    options: { name: string; nameMy: string | null; price: number }[];
     menuIds: number[];
   }) {
     const existing = await prisma.addonCategories.findFirst({
@@ -139,12 +141,17 @@ export class AddonService {
 
     return prisma.$transaction(async (tx: Tx) => {
       const category = await tx.addonCategories.create({
-        data: { name: input.groupName, isRequired: input.isRequired },
+        data: {
+          name: input.groupName,
+          nameMy: input.groupNameMy,
+          isRequired: input.isRequired,
+        },
       });
 
       await tx.addon.createMany({
         data: input.options.map((option) => ({
           name: option.name,
+          nameMy: option.nameMy,
           price: option.price,
           addonCategoryId: category.id,
         })),
@@ -173,8 +180,10 @@ export class AddonService {
     id: number,
     input: {
       groupName: string;
+      /** Myanmar names (null: customers see the English ones). */
+      groupNameMy: string | null;
       isRequired: boolean;
-      options: { id?: number; name: string; price: number }[];
+      options: { id?: number; name: string; nameMy: string | null; price: number }[];
       menuIds: number[];
     },
   ) {
@@ -201,7 +210,11 @@ export class AddonService {
     return prisma.$transaction(async (tx: Tx) => {
       await tx.addonCategories.update({
         where: { id },
-        data: { name: input.groupName, isRequired: input.isRequired },
+        data: {
+          name: input.groupName,
+          nameMy: input.groupNameMy,
+          isRequired: input.isRequired,
+        },
       });
 
       const existingAddons = await tx.addon.findMany({
@@ -226,12 +239,13 @@ export class AddonService {
         if (option.id) {
           await tx.addon.update({
             where: { id: option.id },
-            data: { name: option.name, price: option.price },
+            data: { name: option.name, nameMy: option.nameMy, price: option.price },
           });
         } else {
           await tx.addon.create({
             data: {
               name: option.name,
+              nameMy: option.nameMy,
               price: option.price,
               addonCategoryId: id,
             },

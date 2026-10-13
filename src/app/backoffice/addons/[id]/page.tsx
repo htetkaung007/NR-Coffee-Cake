@@ -42,10 +42,12 @@ export default async function EditAddonGroupPage({
       initialData={{
         id: category.id,
         groupName: category.name,
+        groupNameMy: category.nameMy,
         isRequired: category.isRequired,
         options: category.addons.map((addon) => ({
           id: addon.id,
           name: addon.name,
+          nameMy: addon.nameMy,
           price: addon.price,
         })),
         menuIds: connectedMenuIds,

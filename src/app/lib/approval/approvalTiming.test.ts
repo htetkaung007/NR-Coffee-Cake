@@ -20,7 +20,6 @@ describe("approvalTiming", () => {
       windowSeconds: 600,
       expiresAt: "2026-10-05T10:07:30.000Z",
       // Asia/Yangon is UTC+6:30.
-      deadlineTime: "16:37",
       autoCancels: true,
     });
   });
@@ -66,7 +65,6 @@ describe("approvalTiming", () => {
       secondsRemaining: 360,
       windowSeconds: 600,
       expiresAt: "2026-10-05T10:06:00.000Z",
-      deadlineTime: "16:36",
       autoCancels: false,
     });
   });

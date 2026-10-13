@@ -6,4 +6,12 @@
  */
 export type ActionResult<T> =
   | { success: true; data: T }
-  | { success: false; error: { message: string; code: string } };
+  | {
+      success: false;
+      error: {
+        message: string;
+        code: string;
+        /** Values for the customer's translated message (errors.<code>). */
+        params?: Record<string, string | number>;
+      };
+    };

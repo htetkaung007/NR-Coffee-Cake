@@ -4,8 +4,8 @@ import { Box, Button, DialogActions, Stack, Typography } from "@mui/material";
 
 import QuantityStepper, { type QuantityControl } from "./QuantityStepper";
 import { SHEET_TEXT } from "./sheetText";
-import { formatAmount } from "@/app/lib/orderFormat";
 import type { MenuDetailVariant } from "./types";
+import { useOrderUiLabels } from "../OrderUiLabels";
 
 interface MenuDetailFooterProps {
   variant: MenuDetailVariant;
@@ -36,6 +36,7 @@ export default function MenuDetailFooter({
   submitLabel,
   onSubmit,
 }: MenuDetailFooterProps) {
+  const { menuDetail: labels, price } = useOrderUiLabels();
   if (variant === "sheet") {
     return (
       <Box
@@ -55,7 +56,7 @@ export default function MenuDetailFooter({
             color="warning.main"
             sx={{ display: "block", mb: 0.75 }}
           >
-            Only {quantity.max} left
+            {labels.onlyLeft(quantity.max)}
           </Typography>
         )}
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
@@ -73,7 +74,7 @@ export default function MenuDetailFooter({
             }}
           >
             {submitLabel}
-            {!isSoldOut && ` · ${formatAmount(totalPrice)}`}
+            {!isSoldOut && ` · ${price(totalPrice)}`}
           </Button>
         </Stack>
       </Box>
@@ -101,7 +102,7 @@ export default function MenuDetailFooter({
         >
           <Typography sx={{ fontWeight: 700 }}>{name}</Typography>
           <Typography sx={{ fontWeight: 700, color: "primary.main" }}>
-            {formatAmount(totalPrice)}
+            {price(totalPrice)}
           </Typography>
         </Stack>
       )}

@@ -41,6 +41,7 @@ export default function CreateMenuCategoryDialog({
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
   const [name, setName] = useState("");
+  const [nameMy, setNameMy] = useState("");
   const [isEnabled, setIsEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,6 +52,7 @@ export default function CreateMenuCategoryDialog({
     setWasOpen(open);
     if (open) {
       setName("");
+      setNameMy("");
       setIsEnabled(true);
       setError(null);
     }
@@ -61,7 +63,7 @@ export default function CreateMenuCategoryDialog({
     if (categoryNameError(name)) return;
     setError(null);
     setIsSaving(true);
-    const result = await createMenuCategoryAction({ name, isEnabled });
+    const result = await createMenuCategoryAction({ name, nameMy, isEnabled });
     setIsSaving(false);
 
     if (!result.success) {
@@ -109,6 +111,8 @@ export default function CreateMenuCategoryDialog({
         <MenuCategoryFields
           name={name}
           onNameChange={setName}
+          nameMy={nameMy}
+          onNameMyChange={setNameMy}
           isEnabled={isEnabled}
           onEnabledChange={setIsEnabled}
         />

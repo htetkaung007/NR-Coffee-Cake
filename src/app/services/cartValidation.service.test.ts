@@ -95,7 +95,7 @@ describe("CartValidationService.assertMenusListed", () => {
   it("refuses a menu hidden at the location, by name", async () => {
     await expect(
       CartValidationService.assertMenusListed(10, [1, 2]),
-    ).rejects.toMatchObject({ code: "VALIDATION_ERROR", message: HIDDEN_MESSAGE });
+    ).rejects.toMatchObject({ code: "MENU_NOT_AVAILABLE_HERE", message: HIDDEN_MESSAGE });
   });
 
   it("lets a listed menu through even when it is switched off and at 0 stock", async () => {

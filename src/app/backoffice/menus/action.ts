@@ -22,8 +22,10 @@ const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
 
   const menu = await MenuService.createMenu({
     name: input.name,
+    nameMy: input.nameMy,
     price: input.price,
     description: input.description,
+    descriptionMy: input.descriptionMy,
     quantity: input.quantity,
     isAvailable: input.isAvailable,
     categoryIds: input.categoryIds,
@@ -57,9 +59,11 @@ const safeUpdateMenu = toSafeResult(
 
     const menu = await MenuService.updateMenu(input.menuId, {
       name: input.name,
+      nameMy: input.nameMy,
       price: input.price,
       quantity: input.quantity,
       description: input.description,
+      descriptionMy: input.descriptionMy,
       isAvailable: input.isAvailable,
       categoryIds: input.categoryIds,
       addonCategoryIds: input.addonCategoryIds,

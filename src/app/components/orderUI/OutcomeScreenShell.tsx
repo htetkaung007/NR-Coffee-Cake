@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { Avatar, Box, Stack } from "@mui/material";
 import BackCircleButton from "./BackCircleButton";
 
@@ -26,6 +27,7 @@ export default function OutcomeScreenShell({
   beforeContent?: ReactNode;
   children: ReactNode;
 }) {
+  const tCommon = useTranslations("common");
   return (
     <Box
       sx={{
@@ -39,7 +41,7 @@ export default function OutcomeScreenShell({
       }}
     >
       <BackCircleButton
-        ariaLabel="Back to menu"
+        ariaLabel={tCommon("backToMenu")}
         onClick={onBack}
         sx={{ position: "absolute", top: 16, left: 16 }}
       />

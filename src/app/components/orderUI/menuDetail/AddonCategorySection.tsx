@@ -13,8 +13,9 @@ import {
 } from "@mui/material";
 
 import { SHEET_TEXT } from "./sheetText";
-import { formatMoneyDelta } from "@/app/lib/orderFormat";
 import type { Addon, AddonCategory, MenuDetailVariant } from "./types";
+import { useOrderUiLabels } from "../OrderUiLabels";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 
 /** Phone addon row: name + price on the left, the radio / checkbox at the
  *  right edge, a hairline between rows. */
@@ -57,6 +58,8 @@ export default function AddonCategorySection({
   onSelectRequired,
   onToggleOptional,
 }: AddonCategorySectionProps) {
+  const labelsAll = useOrderUiLabels();
+  const labels = labelsAll.menuDetail;
   const isSheet = variant === "sheet";
   const rowSx = isSheet ? sheetRowSx : dialogRowSx;
   const labelPlacement = isSheet ? "start" : "end";
@@ -73,11 +76,11 @@ export default function AddonCategorySection({
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {category.name}
+          {localizedText(labelsAll.locale, category.name, category.nameMy)}
         </Typography>
         {category.isRequired && (
           <Chip
-            label="Required"
+            label={labels.required}
             size="small"
             color="error"
             variant="outlined"
@@ -139,6 +142,7 @@ function AddonLabel({
   addon: Addon;
   variant: MenuDetailVariant;
 }) {
+  const { locale, menuDetail: labels, priceDelta } = useOrderUiLabels();
   return (
     <Stack
       direction="row"
@@ -148,7 +152,7 @@ function AddonLabel({
         alignItems: "center",
       }}
     >
-      <span>{addon.name}</span>
+      <span>{localizedText(locale, addon.name, addon.nameMy)}</span>
       <Typography
         variant="body2"
         sx={{
@@ -159,7 +163,7 @@ function AddonLabel({
           color: addon.price > 0 ? "decor.price" : "success.main",
         }}
       >
-        {addon.price > 0 ? formatMoneyDelta(addon.price) : "Free"}
+        {addon.price > 0 ? priceDelta(addon.price) : labels.free}
       </Typography>
     </Stack>
   );

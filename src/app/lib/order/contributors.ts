@@ -57,10 +57,17 @@ export function contributorLabelsById(
   );
 }
 
+/** Whose lines a group is — the screen puts it into words in the
+ *  customer's language (contributorMessages): "You", "Customer 2", or
+ *  "Shared" (lines with no token). */
+export type ContributorWho =
+  | { kind: "you" }
+  | { kind: "customer"; number: number }
+  | { kind: "shared" };
+
 export interface ContributorGroup<Line> {
   key: string;
-  /** "You", "Customer 2", or "Shared" (lines with no token). */
-  label: string;
+  who: ContributorWho;
   isMine: boolean;
   lines: Line[];
   subtotal: number;
@@ -97,11 +104,11 @@ export function groupByContributor<Line extends GroupableLine>(
     }
     groups.set(key, {
       key,
-      label: line.isMine
-        ? "You"
+      who: line.isMine
+        ? { kind: "you" }
         : line.contributorNo === null
-          ? "Shared"
-          : `Customer ${line.contributorNo}`,
+          ? { kind: "shared" }
+          : { kind: "customer", number: line.contributorNo },
       isMine: line.isMine,
       lines: [line],
       subtotal: 0,
@@ -119,8 +126,21 @@ export function groupByContributor<Line extends GroupableLine>(
     .map((group) => ({ ...group, subtotal: cartLinesTotal(group.lines) }));
 }
 
-/** A person's card heading: "Your order", "Customer 2 order", or
- *  "Shared order" (lines with no recorded owner). */
-export function contributorGroupHeading(label: string): string {
-  return label === "You" ? "Your order" : `${label} order`;
+/** The contributor message keys (messages/*.json `contributor`) for a
+ *  group: its short label ("You", "Customer 2", "Shared") and its card
+ *  heading ("Your order", "Customer 2 order", "Shared order"), with the
+ *  values both need. */
+export function contributorMessages(who: ContributorWho): {
+  label: "you" | "customer" | "shared";
+  heading: "yourOrder" | "customerOrder" | "sharedOrder";
+  values: { number?: number };
+} {
+  switch (who.kind) {
+    case "you":
+      return { label: "you", heading: "yourOrder", values: {} };
+    case "customer":
+      return { label: "customer", heading: "customerOrder", values: { number: who.number } };
+    case "shared":
+      return { label: "shared", heading: "sharedOrder", values: {} };
+  }
 }

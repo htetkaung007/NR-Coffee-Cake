@@ -8,6 +8,7 @@ import NoteField from "./NoteField";
 import QuantityStepper, { type QuantityControl } from "./QuantityStepper";
 import { SHEET_TEXT } from "./sheetText";
 import type { AddonCategory, MenuDetail, MenuDetailVariant } from "./types";
+import { useOrderUiLabels } from "../OrderUiLabels";
 
 interface MenuDetailBodyProps {
   variant: MenuDetailVariant;
@@ -45,6 +46,7 @@ export default function MenuDetailBody({
   onNoteChange,
   error,
 }: MenuDetailBodyProps) {
+  const labels = useOrderUiLabels().menuDetail;
   const isSheet = variant === "sheet";
 
   if (loading) {
@@ -61,7 +63,7 @@ export default function MenuDetailBody({
         color="text.secondary"
         sx={isSheet ? { fontSize: SHEET_TEXT.body } : undefined}
       >
-        This item couldn&apos;t be loaded.
+        {labels.couldNotLoad}
       </Typography>
     );
   }
@@ -70,20 +72,20 @@ export default function MenuDetailBody({
     <Stack spacing={2.5}>
       <MenuDetailHeader detail={detail} variant={variant} />
 
-      {isSoldOut && <Alert severity="warning">This item just sold out.</Alert>}
+      {isSoldOut && <Alert severity="warning">{labels.justSoldOut}</Alert>}
 
       {/* Tablet / desktop keep the stepper in the content; on phones it
          lives in the sticky footer instead (see MenuDetailFooter). */}
       {!isSheet && !isSoldOut && (
         <Box>
           <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-            Quantity
+            {labels.quantity}
           </Typography>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <QuantityStepper quantity={quantity} variant="plain" />
             {quantity.max <= 5 && (
               <Typography variant="caption" color="warning.main">
-                Only {quantity.max} left
+                {labels.onlyLeft(quantity.max)}
               </Typography>
             )}
           </Stack>

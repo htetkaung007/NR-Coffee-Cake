@@ -29,8 +29,10 @@ function buildMenuOptions(
   return menus.map((menu) => ({
     id: menu.id,
     name: menu.name,
+    nameMy: menu.nameMy,
     price: menu.price,
     description: menu.description,
+    descriptionMy: menu.descriptionMy,
     categories: menu.categories,
     imageUrl: menu.imageUrl,
     stockQuantity: menu.stockQuantity,
@@ -93,7 +95,7 @@ export default async function MenuPage({
       if ((await checkMenuAccess(locationId)) === "unavailable") {
         return <ShopUnavailable />;
       }
-      const [menuData, shopName, draftItems, activeRound, labels] =
+      const [menuData, shopName, draftItems, activeRound, labels, tableName] =
         await Promise.all([
           MenuService.getMenusForLocation(locationId),
           LocationService.getShopNameForLocation(locationId),
@@ -101,18 +103,24 @@ export default async function MenuPage({
           TableSessionService.getActiveRoundForTable(tableId),
           // Who's who as labels — the tokens stay on the server.
           TableDraftService.getContributorLabels(tableId, contributorToken),
+          // For the "where am I" line — the name only.
+          TableSessionService.getTableName(tableId, locationId),
         ]);
 
       return (
         <TableOrderClient
           tableId={tableId}
+          tableName={tableName ?? ""}
           locationId={locationId}
           shopName={shopName}
           initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}
           initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
           activeRoundId={activeRound?.id ?? null}
           menus={buildMenuOptions(menuData.menus)}
-          categories={menuData.categories.map((category) => category.name)}
+          categories={menuData.categories.map((category) => ({
+            name: category.name,
+            nameMy: category.nameMy,
+          }))}
         />
       );
     }
@@ -157,7 +165,10 @@ export default async function MenuPage({
       initialStatus={session?.status ?? "CART"}
       justScanned={scanned === "1"}
       menus={buildMenuOptions(menuData.menus)}
-      categories={menuData.categories.map((category) => category.name)}
+      categories={menuData.categories.map((category) => ({
+            name: category.name,
+            nameMy: category.nameMy,
+          }))}
     />
   );
 }

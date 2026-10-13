@@ -10,6 +10,8 @@ import MenuDetailCenteredDialog from "./menuDetail/MenuDetailCenteredDialog";
 import MenuDetailFooter from "./menuDetail/MenuDetailFooter";
 import MenuDetailSheet from "./menuDetail/MenuDetailSheet";
 import type { MenuDetail, MenuDetailVariant } from "./menuDetail/types";
+import { useOrderUiLabels } from "./OrderUiLabels";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 
 /** Pre-fills the dialog for editing an already-added line — see
  *  DraftList's Edit button. Presence of this prop (vs undefined) is
@@ -87,6 +89,7 @@ export default function MenuDetailDialog({
   editing,
   loadDetail = getMenuDetailAction,
 }: MenuDetailDialogProps) {
+  const { locale: uiLocale, menuDetail: labels } = useOrderUiLabels();
   const [fetchedForMenuId, setFetchedForMenuId] = useState<number | null>(null);
   const [detail, setDetail] = useState<MenuDetail | null>(null);
   const [selected, setSelected] = useState<Record<number, number[]>>({});
@@ -228,12 +231,12 @@ export default function MenuDetailDialog({
         !loading && detail && canOrder ? (
           <MenuDetailFooter
             variant={variant}
-            name={detail.name}
+            name={localizedText(uiLocale, detail.name, detail.nameMy)}
             totalPrice={totalPrice}
             quantity={quantityControl}
             isSoldOut={isSoldOut}
             submitDisabled={missingRequired || submitting || isSoldOut}
-            submitLabel={editing ? "Save Changes" : "Add to Cart"}
+            submitLabel={editing ? labels.saveChanges : labels.addToCart}
             onSubmit={handleSubmit}
           />
         ) : null

@@ -39,10 +39,17 @@ import {
   type MenuFormProblem,
 } from "@/app/lib/menu/menuFormProblems";
 
+/** Under each Myanmar field (shop data for customers who choose Myanmar). */
+const MYANMAR_HELPER =
+  "Shown to customers who choose Myanmar. Empty → the English name is shown.";
+
 interface MenuFormInitialData {
   id: number;
   name: string;
+  /** Shown to customers who choose Myanmar (null: the English name). */
+  nameMy: string | null;
   description: string | null;
+  descriptionMy: string | null;
   price: number;
   quantity: number;
   isAvailable: boolean;
@@ -91,6 +98,10 @@ export default function MenuForm({
     ? shownLocationIds
     : locations.map((location) => location.locationId);
   const [name, setName] = useState(initialData?.name ?? "");
+  const [nameMy, setNameMy] = useState(initialData?.nameMy ?? "");
+  const [descriptionMy, setDescriptionMy] = useState(
+    initialData?.descriptionMy ?? "",
+  );
   const [description, setDescription] = useState(
     initialData?.description ?? "",
   );
@@ -225,7 +236,9 @@ export default function MenuForm({
 
     const formData = new FormData();
     formData.set("name", name);
+    formData.set("nameMy", nameMy);
     formData.set("description", description);
+    formData.set("descriptionMy", descriptionMy);
     formData.set("price", price);
     formData.set("quantity", String(quantity));
     formData.set("isAvailable", String(isAvailable));
@@ -317,6 +330,16 @@ export default function MenuForm({
             }
           />
           <TextField
+            label="Myanmar name (optional)"
+            fullWidth
+            value={nameMy}
+            onChange={(event) => setNameMy(event.target.value)}
+            slotProps={{
+              htmlInput: { maxLength: MAX_NAME_LENGTH, lang: "my" },
+            }}
+            helperText={MYANMAR_HELPER}
+          />
+          <TextField
             label="Description"
             multiline
             minRows={2}
@@ -328,6 +351,19 @@ export default function MenuForm({
               htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH },
             }}
             helperText={`${description.length}/${MAX_DESCRIPTION_LENGTH} characters`}
+          />
+          <TextField
+            label="Myanmar description (optional)"
+            multiline
+            minRows={2}
+            maxRows={3}
+            fullWidth
+            value={descriptionMy}
+            onChange={(event) => setDescriptionMy(event.target.value)}
+            slotProps={{
+              htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH, lang: "my" },
+            }}
+            helperText={MYANMAR_HELPER}
           />
 
           <Box ref={categoriesRef}>

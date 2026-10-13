@@ -5,8 +5,10 @@ export function parseMenuFormData(formData: FormData) {
   const imageEntry = formData.get("image");
   return {
     name: formData.get("name"),
+    nameMy: formData.get("nameMy"),
     price: formData.get("price"),
     description: formData.get("description"),
+    descriptionMy: formData.get("descriptionMy"),
     quantity: formData.get("quantity"),
     isAvailable: formData.get("isAvailable") === "true",
     categoryIds: formData.getAll("categoryIds"),

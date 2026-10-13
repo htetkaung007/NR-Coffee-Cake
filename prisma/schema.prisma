@@ -113,10 +113,6 @@ model Location {
   // the menu without scanning a QR code. Ordering always still needs the
   // QR (table/counter token). Off by default.
   onlineMenuEnabled              Boolean                         @default(false)
-  // UNUSED — left from the dropped /m/<code> online page (#79b); the
-  // online menu is now the /menu page itself (onlineMenuEnabled above).
-  // Nothing reads or writes it; it will be dropped in a later migration.
-  publicMenuCode                 String?                         @unique @db.VarChar(16)
   disableLocationMenus           DisableLocationMenus[]
   disableLocationMenuCategories DisableLocationMenuCategories[]
   orderSessions                  OrderSession[]
@@ -138,9 +134,14 @@ model SelectedLocation {
 model Menu {
   id                   Int                    @id @default(autoincrement())
   name                 String
+  // Myanmar name (customer screens, Myanmar chosen); null = not
+  // translated yet — the English `name` (required) is shown instead.
+  nameMy               String?
   price                Int
   assetUrl             String?
   description          String?
+  // Myanmar description; null = show the English `description`.
+  descriptionMy        String?
   menuMenuCategory     MenuMenuCategory[]
   menuAddonCategories  MenuAddonCategories[]
   disableLocationMenus DisableLocationMenus[]
@@ -168,6 +169,9 @@ model MenuStock {
 model MenuCategory {
   id                            Int                             @id @default(autoincrement())
   name                          String
+  // Myanmar name (customer screens, Myanmar chosen); null = not
+  // translated yet — the English `name` (required) is shown instead.
+  nameMy                        String?
   company                       Company                         @relation(fields: [companyId], references: [id])
   companyId                     Int
   menuMenuCategory              MenuMenuCategory[]
@@ -198,6 +202,9 @@ model MenuMenuCategory {
 model Addon {
   id              Int             @id @default(autoincrement())
   name            String
+  // Myanmar name (customer screens, Myanmar chosen); null = not
+  // translated yet — the English `name` (required) is shown instead.
+  nameMy          String?
   price           Int
   addonCategory   AddonCategories @relation(fields: [addonCategoryId], references: [id])
   addonCategoryId Int
@@ -211,6 +218,9 @@ model Addon {
 model AddonCategories {
   id                Int                   @id @default(autoincrement())
   name              String
+  // Myanmar name (customer screens, Myanmar chosen); null = not
+  // translated yet — the English `name` (required) is shown instead.
+  nameMy            String?
   isRequired        Boolean               @default(false)
   addons            Addon[]
   menuAddonCategory MenuAddonCategories[]

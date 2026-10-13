@@ -41,6 +41,7 @@ export type AddonSumAggregateOutputType = {
 export type AddonMinAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   price: number | null
   addonCategoryId: number | null
   isAvailable: boolean | null
@@ -52,6 +53,7 @@ export type AddonMinAggregateOutputType = {
 export type AddonMaxAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   price: number | null
   addonCategoryId: number | null
   isAvailable: boolean | null
@@ -63,6 +65,7 @@ export type AddonMaxAggregateOutputType = {
 export type AddonCountAggregateOutputType = {
   id: number
   name: number
+  nameMy: number
   price: number
   addonCategoryId: number
   isAvailable: number
@@ -88,6 +91,7 @@ export type AddonSumAggregateInputType = {
 export type AddonMinAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   price?: true
   addonCategoryId?: true
   isAvailable?: true
@@ -99,6 +103,7 @@ export type AddonMinAggregateInputType = {
 export type AddonMaxAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   price?: true
   addonCategoryId?: true
   isAvailable?: true
@@ -110,6 +115,7 @@ export type AddonMaxAggregateInputType = {
 export type AddonCountAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   price?: true
   addonCategoryId?: true
   isAvailable?: true
@@ -208,6 +214,7 @@ export type AddonGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type AddonGroupByOutputType = {
   id: number
   name: string
+  nameMy: string | null
   price: number
   addonCategoryId: number
   isAvailable: boolean
@@ -242,6 +249,7 @@ export type AddonWhereInput = {
   NOT?: Prisma.AddonWhereInput | Prisma.AddonWhereInput[]
   id?: Prisma.IntFilter<"Addon"> | number
   name?: Prisma.StringFilter<"Addon"> | string
+  nameMy?: Prisma.StringNullableFilter<"Addon"> | string | null
   price?: Prisma.IntFilter<"Addon"> | number
   addonCategoryId?: Prisma.IntFilter<"Addon"> | number
   isAvailable?: Prisma.BoolFilter<"Addon"> | boolean
@@ -255,6 +263,7 @@ export type AddonWhereInput = {
 export type AddonOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   price?: Prisma.SortOrder
   addonCategoryId?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
@@ -271,6 +280,7 @@ export type AddonWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AddonWhereInput[]
   NOT?: Prisma.AddonWhereInput | Prisma.AddonWhereInput[]
   name?: Prisma.StringFilter<"Addon"> | string
+  nameMy?: Prisma.StringNullableFilter<"Addon"> | string | null
   price?: Prisma.IntFilter<"Addon"> | number
   addonCategoryId?: Prisma.IntFilter<"Addon"> | number
   isAvailable?: Prisma.BoolFilter<"Addon"> | boolean
@@ -284,6 +294,7 @@ export type AddonWhereUniqueInput = Prisma.AtLeast<{
 export type AddonOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   price?: Prisma.SortOrder
   addonCategoryId?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
@@ -303,6 +314,7 @@ export type AddonScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AddonScalarWhereWithAggregatesInput | Prisma.AddonScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Addon"> | number
   name?: Prisma.StringWithAggregatesFilter<"Addon"> | string
+  nameMy?: Prisma.StringNullableWithAggregatesFilter<"Addon"> | string | null
   price?: Prisma.IntWithAggregatesFilter<"Addon"> | number
   addonCategoryId?: Prisma.IntWithAggregatesFilter<"Addon"> | number
   isAvailable?: Prisma.BoolWithAggregatesFilter<"Addon"> | boolean
@@ -313,6 +325,7 @@ export type AddonScalarWhereWithAggregatesInput = {
 
 export type AddonCreateInput = {
   name: string
+  nameMy?: string | null
   price: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -325,6 +338,7 @@ export type AddonCreateInput = {
 export type AddonUncheckedCreateInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   addonCategoryId: number
   isAvailable?: boolean
@@ -336,6 +350,7 @@ export type AddonUncheckedCreateInput = {
 
 export type AddonUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -348,6 +363,7 @@ export type AddonUpdateInput = {
 export type AddonUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   addonCategoryId?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -360,6 +376,7 @@ export type AddonUncheckedUpdateInput = {
 export type AddonCreateManyInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   addonCategoryId: number
   isAvailable?: boolean
@@ -370,6 +387,7 @@ export type AddonCreateManyInput = {
 
 export type AddonUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -380,6 +398,7 @@ export type AddonUpdateManyMutationInput = {
 export type AddonUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   addonCategoryId?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -391,6 +410,7 @@ export type AddonUncheckedUpdateManyInput = {
 export type AddonCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   price?: Prisma.SortOrder
   addonCategoryId?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
@@ -408,6 +428,7 @@ export type AddonAvgOrderByAggregateInput = {
 export type AddonMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   price?: Prisma.SortOrder
   addonCategoryId?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
@@ -419,6 +440,7 @@ export type AddonMaxOrderByAggregateInput = {
 export type AddonMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   price?: Prisma.SortOrder
   addonCategoryId?: Prisma.SortOrder
   isAvailable?: Prisma.SortOrder
@@ -506,6 +528,7 @@ export type AddonUpdateOneRequiredWithoutOrdersAddonsNestedInput = {
 
 export type AddonCreateWithoutAddonCategoryInput = {
   name: string
+  nameMy?: string | null
   price: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -517,6 +540,7 @@ export type AddonCreateWithoutAddonCategoryInput = {
 export type AddonUncheckedCreateWithoutAddonCategoryInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -557,6 +581,7 @@ export type AddonScalarWhereInput = {
   NOT?: Prisma.AddonScalarWhereInput | Prisma.AddonScalarWhereInput[]
   id?: Prisma.IntFilter<"Addon"> | number
   name?: Prisma.StringFilter<"Addon"> | string
+  nameMy?: Prisma.StringNullableFilter<"Addon"> | string | null
   price?: Prisma.IntFilter<"Addon"> | number
   addonCategoryId?: Prisma.IntFilter<"Addon"> | number
   isAvailable?: Prisma.BoolFilter<"Addon"> | boolean
@@ -567,6 +592,7 @@ export type AddonScalarWhereInput = {
 
 export type AddonCreateWithoutOrdersAddonsInput = {
   name: string
+  nameMy?: string | null
   price: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -578,6 +604,7 @@ export type AddonCreateWithoutOrdersAddonsInput = {
 export type AddonUncheckedCreateWithoutOrdersAddonsInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   addonCategoryId: number
   isAvailable?: boolean
@@ -604,6 +631,7 @@ export type AddonUpdateToOneWithWhereWithoutOrdersAddonsInput = {
 
 export type AddonUpdateWithoutOrdersAddonsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -615,6 +643,7 @@ export type AddonUpdateWithoutOrdersAddonsInput = {
 export type AddonUncheckedUpdateWithoutOrdersAddonsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   addonCategoryId?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -626,6 +655,7 @@ export type AddonUncheckedUpdateWithoutOrdersAddonsInput = {
 export type AddonCreateManyAddonCategoryInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   isAvailable?: boolean
   createdAt?: Date | string
@@ -635,6 +665,7 @@ export type AddonCreateManyAddonCategoryInput = {
 
 export type AddonUpdateWithoutAddonCategoryInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -646,6 +677,7 @@ export type AddonUpdateWithoutAddonCategoryInput = {
 export type AddonUncheckedUpdateWithoutAddonCategoryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -657,6 +689,7 @@ export type AddonUncheckedUpdateWithoutAddonCategoryInput = {
 export type AddonUncheckedUpdateManyWithoutAddonCategoryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   isAvailable?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -698,6 +731,7 @@ export type AddonCountOutputTypeCountOrdersAddonsArgs<ExtArgs extends runtime.Ty
 export type AddonSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   addonCategoryId?: boolean
   isAvailable?: boolean
@@ -712,6 +746,7 @@ export type AddonSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type AddonSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   addonCategoryId?: boolean
   isAvailable?: boolean
@@ -724,6 +759,7 @@ export type AddonSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type AddonSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   addonCategoryId?: boolean
   isAvailable?: boolean
@@ -736,6 +772,7 @@ export type AddonSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type AddonSelectScalar = {
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   addonCategoryId?: boolean
   isAvailable?: boolean
@@ -744,7 +781,7 @@ export type AddonSelectScalar = {
   isArchived?: boolean
 }
 
-export type AddonOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "price" | "addonCategoryId" | "isAvailable" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["addon"]>
+export type AddonOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "nameMy" | "price" | "addonCategoryId" | "isAvailable" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["addon"]>
 export type AddonInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   addonCategory?: boolean | Prisma.AddonCategoriesDefaultArgs<ExtArgs>
   OrdersAddons?: boolean | Prisma.Addon$OrdersAddonsArgs<ExtArgs>
@@ -766,6 +803,7 @@ export type $AddonPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
+    nameMy: string | null
     price: number
     addonCategoryId: number
     isAvailable: boolean
@@ -1199,6 +1237,7 @@ export interface Prisma__AddonClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface AddonFieldRefs {
   readonly id: Prisma.FieldRef<"Addon", 'Int'>
   readonly name: Prisma.FieldRef<"Addon", 'String'>
+  readonly nameMy: Prisma.FieldRef<"Addon", 'String'>
   readonly price: Prisma.FieldRef<"Addon", 'Int'>
   readonly addonCategoryId: Prisma.FieldRef<"Addon", 'Int'>
   readonly isAvailable: Prisma.FieldRef<"Addon", 'Boolean'>

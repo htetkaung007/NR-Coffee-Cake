@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   announcementFor,
+  isJustSent,
   progressFraction,
   remainingLabel,
   remainingSeconds,
@@ -10,13 +11,13 @@ import {
 
 describe("remainingLabel", () => {
   it.each([
-    [541, "10 min left"],
-    [540, "9 min left"],
-    [60, "1 min left"],
-    [59, "59 sec left"],
-    [0, "Checking with the counter…"],
+    [541, { key: "minutesLeft", values: { minutes: 10 } }],
+    [540, { key: "minutesLeft", values: { minutes: 9 } }],
+    [60, { key: "minutesLeft", values: { minutes: 1 } }],
+    [59, { key: "secondsLeft", values: { seconds: 59 } }],
+    [0, { key: "checking" }],
   ])("writes %s seconds as %j", (seconds, label) => {
-    expect(remainingLabel(seconds)).toBe(label);
+    expect(remainingLabel(seconds)).toEqual(label);
   });
 });
 
@@ -45,11 +46,15 @@ describe("progressFraction", () => {
 
 describe("announcementFor", () => {
   it.each([
-    [301, 300, "5 minutes left to confirm"],
-    [121, 120, "2 minutes left to confirm"],
-    [61, 60, "1 minute left to confirm"],
-  ])("announces once when %s → %s", (previous, current, message) => {
-    expect(announcementFor(previous, current)).toBe(message);
+    [301, 300, 5],
+    [121, 120, 2],
+    [61, 60, 1],
+  ])("announces once when %s → %s", (previous, current, minutes) => {
+    expect(announcementFor(previous, current)).toBe(minutes);
+  });
+
+  it("announces the lowest mark when a re-sync jumps past several", () => {
+    expect(announcementFor(400, 30)).toBe(1);
   });
 
   it.each([
@@ -66,39 +71,46 @@ describe("announcementFor", () => {
   });
 });
 
+describe("isJustSent", () => {
+  it("is just sent for under a minute", () => {
+    expect(isJustSent(0)).toBe(true);
+    expect(isJustSent(59)).toBe(true);
+  });
+
+  it("isn't from a minute on", () => {
+    expect(isJustSent(60)).toBe(false);
+  });
+});
+
 describe("waitingCopy", () => {
   it("keeps the Counter copy: auto-cancel line and the counter hint", () => {
-    const copy = waitingCopy(true);
-    expect(copy.title).toBe("Waiting for the counter to confirm");
-    expect(copy.deadlineLine("10:12")).toBe(
-      "If it isn't confirmed by 10:12, it will be cancelled automatically — you won't be charged.",
-    );
-    expect(copy.hint?.("#A013")).toBe("Still waiting? Show order #A013 at the counter.");
-    expect(copy.overdue).toBeNull();
+    expect(waitingCopy(true)).toEqual({
+      title: "counterTitle",
+      deadline: "counterDeadline",
+      hint: "counterHint",
+      overdue: null,
+    });
   });
 
   it("gives a Table round a soft target, no hint, and a calm overdue line", () => {
-    const copy = waitingCopy(false);
-    expect(copy.title).toBe("Waiting for our staff to confirm");
-    expect(copy.subtitle).toBe("Usually confirmed within a few minutes.");
-    expect(copy.deadlineLine("10:12")).toBe("Usually confirmed by 10:12.");
-    expect(copy.hint).toBeNull();
-    expect(copy.overdue).toBe(
-      "Taking a little longer than usual — please let our staff know.",
-    );
+    expect(waitingCopy(false)).toEqual({
+      title: "tableTitle",
+      deadline: "tableDeadline",
+      hint: null,
+      overdue: "tableOverdue",
+    });
   });
 });
 
 describe("waitingAnnouncement", () => {
   it("announces the minute marks for both kinds of round", () => {
-    expect(waitingAnnouncement(121, 120, true)).toBe("2 minutes left to confirm");
-    expect(waitingAnnouncement(121, 120, false)).toBe("2 minutes left to confirm");
+    const twoMinutes = { key: "minutesLeftToConfirm", values: { minutes: 2 } };
+    expect(waitingAnnouncement(121, 120, true)).toEqual(twoMinutes);
+    expect(waitingAnnouncement(121, 120, false)).toEqual(twoMinutes);
   });
 
   it("announces a Table round's 'taking longer' once, as it reaches 0", () => {
-    expect(waitingAnnouncement(1, 0, false)).toBe(
-      "Taking a little longer than usual — please let our staff know.",
-    );
+    expect(waitingAnnouncement(1, 0, false)).toEqual({ key: "tableOverdue" });
     expect(waitingAnnouncement(0, 0, false)).toBeNull();
   });
 

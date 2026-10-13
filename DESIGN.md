@@ -137,7 +137,7 @@ sx={{ [hoverCapableMedia]: { "&:hover": { backgroundColor: "primary.dark" } } }}
   the card's link area.
 - **Whole-card pattern:** when the entire card is the action (menu cards,
   history rows), the card is ONE semantic button/link. Any icon inside it
-  (e.g. the round "+" on menu cards) is a visual affordance only:
+  (e.g. the Add square on menu cards) is a visual affordance only:
   `aria-hidden`, no own `onClick`, not focusable.
 - An element hidden per layout must be `display: none` (not just visually
   hidden) so it leaves the tab order.
@@ -254,7 +254,13 @@ double-taps), or an optimistic update. A disabled control shows WHY
   grid capped at ~1400px and centered, equal-height rows.
 - **Menu card:** ONE layout at every width — image (1.45/1) → name (1 line)
   → description (1 line, ellipsis) + "See more" (never truncated) → price +
-  round "+" affordance.
+  the Add affordance: a ROUNDED SQUARE (32px tall, min 32px wide, theme
+  radius, primary fill, contrastText, no shadow) — the + icon in English
+  and on the staff New Order page, the words "ထည့်မယ်" for Myanmar
+  customers. It's decoration only (aria-hidden, the whole card is the
+  button). Price + Add wrap: when they don't fit, the Add square moves
+  under the price. **Prices never wrap** (whiteSpace nowrap). Customer
+  prices read "4,500 Kyats" / "4,500 ကျပ်"; staff screens keep "MMK".
 - **Master-detail (Backoffice order detail, History):** side panel at `lg`
   and up; below `lg`, a bottom bar (total + action) that opens a right
   Drawer on tablets and a bottom sheet / full-screen Dialog on phones.
@@ -288,6 +294,49 @@ double-taps), or an optimistic update. A disabled control shows WHY
   the QR code at your table or the counter to order." (customer theme,
   `role="status"`, no menu data). The /cart page follows the same rule.
   Ordering always needs the QR, ON or OFF.
+- **Customer pages: 320px minimum, never a sideways scroll**
+  (`ORDER_PAGE_MIN_WIDTH` = 320). Nothing may be wider than the screen
+  at 320 / 360 / 375 / 412 / 600px in either language — text that can't
+  wrap gets `noWrap` + ellipsis (with `minWidth: 0` on its flex parent)
+  or `overflowWrap: "anywhere"`. Never raise a min-width to hide an
+  overflow: on a phone narrower than it, the browser zooms the whole page
+  out (cut-off search, cart off-screen, a page taller than the screen).
+  Heights use `dvh`, never `vh`.
+- **Customer top bar:** [shop icon + name][language switch][cart] — the
+  cart and the switch never shrink; the shop name truncates first. The
+  switch shows a globe + the OTHER language's short label ("EN" /
+  "မြန်မာ"), the globe alone below 360px (its accessible name stays).
+- **Customer bottom bar** (Menu / Cart / History) is `position: fixed` at
+  the bottom with the safe-area padding (Rule 19); a spacer of the same
+  height ends the page, so the last card scrolls clear of it and a short
+  page fits in 100dvh with the bar showing.
+- **Language card** (first visit on a device, NEXT_LOCALE not set yet;
+  /menu, /cart, /history only, never the QR scan routes): a compact
+  floating card at the bottom over the dimmed page — 12–16px from the
+  sides and bottom (+ safe area), max 400px centred, radius × 2, soft
+  shadow, × top-right (44px). Top: a 40px primary badge with the shop's
+  initials (shop data), "ဘာသာစကား ရွေးပါ" (subtitle1 bold) and "Choose
+  your language" (caption). Two radio rows (≥ 56px, 8px apart): a 36px
+  tinted tile ("က" / "A"), the language in itself (body1 600) and its
+  name in the other language (caption), a filled primary check on the
+  selected row (2px primary edge), an empty circle otherwise —
+  role="radiogroup" / "radio" + aria-checked, each label with its own
+  lang. Tapping a row applies it and closes; ×, Escape or a tap outside
+  keeps Myanmar — either way it never asks again. Footer: globe +
+  "နောက်မှ ပြောင်းလို့ရပါတယ် · Change anytime". Fits 320×568 without
+  scrolling; fades in with translateY(8px → 0), 220ms ease-out.
+- **/menu starts with OrderPlaceHeader — a compact chip**, one ~48px row
+  (ONE button): [32px icon tile][place, subtitle2 bold][short helper,
+  caption, ellipsis][chevron]. Table (primary tile, "Table 5", "Orders go
+  to this table"), Counter (primary tile, "Order #A024" — or "Counter"
+  before a number; while waiting for approval a warning tint, warning
+  border and a warning dot + "Waiting for the counter" — words, never
+  colour alone), Online (neutral tile, DASHED border, transparent,
+  "Online", "Scan a QR at the café to order"). Never the internal session
+  id. Tapping it opens a details card BELOW it, over the content (it
+  never pushes the search bar down); it closes on the chevron, a tap
+  outside, Escape or a scroll; the chevron turns 180° (160ms ease-out).
+  Only subtitle2 / body2 / caption on it.
 - **Dialog vs page:** a **dialog** for short tasks — about 1–3 fields,
   confirmations, and quick creates that must not lose the form behind
   them (e.g. "New category" from the menu form). A **page** for long

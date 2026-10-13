@@ -7,13 +7,15 @@ export interface OptionRow {
   /** Present only for options that already exist (editing a group). */
   id?: number;
   name: string;
+  /** Its Myanmar name for customers ("" = none: the English name shows). */
+  nameMy: string;
   /** Blank string = Free. */
   price: string;
 }
 
 /** A new, blank option row. */
 export function emptyOptionRow(): OptionRow {
-  return { name: "", price: "" };
+  return { name: "", nameMy: "", price: "" };
 }
 
 /** The editable option rows of an add-on group form (the add-on group
@@ -22,7 +24,11 @@ export function emptyOptionRow(): OptionRow {
 export function useOptionRows(initialRows: OptionRow[] | (() => OptionRow[])) {
   const [options, setOptions] = useState<OptionRow[]>(initialRows);
 
-  function updateOption(index: number, field: "name" | "price", value: string) {
+  function updateOption(
+    index: number,
+    field: "name" | "nameMy" | "price",
+    value: string,
+  ) {
     setOptions((rows) =>
       rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
     );

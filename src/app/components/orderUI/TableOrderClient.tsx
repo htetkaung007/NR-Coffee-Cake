@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 
+import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import OrderTopBar from "./OrderTopBar";
+import OrderPlaceHeader from "./OrderPlaceHeader";
 import OrderBotBar from "./OrderBotBar";
-import MenuBrowser, { MenuOption } from "./MenuBrowser";
+import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 
 import {
   addDraftItemAction,
@@ -26,6 +28,9 @@ import {
 
 interface TableOrderClientProps {
   tableId: number;
+  /** The table's display name for the "where am I" line ("" when it
+   *  couldn't be read — the line says "Your table"). */
+  tableName: string;
   locationId: number;
   shopName: string | null;
   initialDraftItems: DraftLine[];
@@ -38,7 +43,7 @@ interface TableOrderClientProps {
   menus: MenuOption[];
   /** The category tabs, in the server's order (see
    *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
-  categories: string[];
+  categories: CategoryTab[];
 }
 
 /**
@@ -63,6 +68,7 @@ interface TableOrderClientProps {
  * screen still polls continuously. */
 export default function TableOrderClient({
   tableId,
+  tableName,
   locationId,
   shopName,
   initialDraftItems,
@@ -72,8 +78,16 @@ export default function TableOrderClient({
   categories,
 }: TableOrderClientProps) {
   const router = useRouter();
+  const errorMessage = useErrorMessage();
   const pageBackground = getOrderPageBackground(useTheme());
   const [draftItems, setDraftItems] = useState(initialDraftItems);
+  // How many other people have picks at this table (the server's labels
+  // — a count only, never tokens), for the place header's details.
+  const otherContributors = new Set(
+    draftItems
+      .filter((item) => !item.isMine && item.contributorNo !== null)
+      .map((item) => item.contributorNo),
+  ).size;
 
   useRefreshOnVisible(() => router.refresh());
 
@@ -99,7 +113,7 @@ export default function TableOrderClient({
   );
 
   async function handleAddToCart(
-    menu: { id: number; name: string; price: number },
+    menu: { id: number; name: string; nameMy?: string | null; price: number },
     quantity: number,
     addonIds: number[],
     note: string,
@@ -112,7 +126,7 @@ export default function TableOrderClient({
       note,
     );
     if (!result.success) {
-      return result.error.message;
+      return errorMessage(result.error);
     }
     // Starting the next order: the previous round's "Order confirmed"
     // screen is done with, even if this item is removed again later.
@@ -125,6 +139,7 @@ export default function TableOrderClient({
         id: result.data.id,
         menuId: menu.id,
         menuName: menu.name,
+        menuNameMy: menu.nameMy ?? null,
         quantity: result.data.quantity,
         // The server's own snapshot, not this component's (possibly
         // stale) menu prop — see Order.unitPrice's own schema comment.
@@ -170,13 +185,9 @@ export default function TableOrderClient({
           mx: "auto",
         }}
       >
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mb: 2 }}
-        >
-          Add items — everyone at your table shares the same order.
-        </Typography>
+        <OrderPlaceHeader
+          place={{ kind: "table", tableName, othersCount: otherContributors }}
+        />
 
         <MenuBrowser
           menus={menus}

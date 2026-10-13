@@ -1,16 +1,8 @@
 "use client";
 
 import { Chip } from "@mui/material";
+import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 import type { ApprovalTiming } from "@/app/lib/approval/approvalTiming";
-
-/** Exported so the History page (see /history/page.tsx) can label past
- *  rounds the same way this banner labels the current one, instead of
- *  keeping a second copy that could drift. */
-const ROUND_STATUS_LABEL: Record<string, string> = {
-  PENDING_APPROVAL: "Awaiting counter approval",
-  PENDING: "Confirmed — cooking soon",
-  COOKING: "Cooking",
-};
 
 export interface ActiveRound {
   orderNumber: string;
@@ -37,13 +29,13 @@ export default function ActiveRoundBanner({
 }: {
   activeRound: ActiveRound | null;
 }) {
+  // The same words as the history chips (roundStatus.<STATUS>).
+  const labels = useCustomerLabels();
   if (!activeRound) return null;
 
   return (
     <Chip
-      label={`${activeRound.orderNumber} — ${
-        ROUND_STATUS_LABEL[activeRound.status] ?? activeRound.status
-      }`}
+      label={`${activeRound.orderNumber} — ${labels.roundStatus(activeRound.status)}`}
       color="success"
       sx={{ mb: 1.5 }}
     />

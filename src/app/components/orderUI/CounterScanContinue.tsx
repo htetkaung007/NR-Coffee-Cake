@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 
 /**
@@ -17,6 +18,7 @@ export default function CounterScanContinue({
 }: {
   locationId: number;
 }) {
+  const t = useTranslations("shop");
   const router = useRouter();
   const { isLoaded, itemCount } = useBrowserCart(locationId);
 
@@ -35,7 +37,7 @@ export default function CounterScanContinue({
         justifyContent: "center",
       }}
     >
-      <CircularProgress aria-label="Opening your order" />
+      <CircularProgress aria-label={t("openingOrder")} />
     </Box>
   );
 }

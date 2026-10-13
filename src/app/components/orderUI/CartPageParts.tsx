@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { Box, Button } from "@mui/material";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
@@ -51,6 +52,7 @@ export function CartListPanel({ children }: { children: ReactNode }) {
 
 /** "Add More" — back to the menu, beside the cart's main button. */
 export function AddMoreButton({ onClick }: { onClick: () => void }) {
+  const t = useTranslations("common");
   return (
     <Button
       variant="outlined"
@@ -67,7 +69,7 @@ export function AddMoreButton({ onClick }: { onClick: () => void }) {
       }}
       onClick={onClick}
     >
-      Add More
+      {t("addMore")}
     </Button>
   );
 }

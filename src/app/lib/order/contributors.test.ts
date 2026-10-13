@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  contributorGroupHeading,
+  contributorMessages,
   contributorLabelsById,
   groupByContributor,
   labelContributors,
@@ -93,11 +93,11 @@ describe("groupByContributor", () => {
       line(3, true, 2),
       line(4, false, 1),
     ]);
-    expect(groups.map((group) => group.label)).toEqual([
-      "You",
-      "Customer 1",
-      "Customer 3",
-      "Shared",
+    expect(groups.map((group) => group.who)).toEqual([
+      { kind: "you" },
+      { kind: "customer", number: 1 },
+      { kind: "customer", number: 3 },
+      { kind: "shared" },
     ]);
   });
 
@@ -128,12 +128,28 @@ describe("groupByContributor", () => {
   });
 });
 
-describe("contributorGroupHeading", () => {
-  it.each([
-    ["You", "Your order"],
-    ["Customer 2", "Customer 2 order"],
-    ["Shared", "Shared order"],
-  ])("heads %s's card %j", (label, heading) => {
-    expect(contributorGroupHeading(label)).toBe(heading);
+describe("contributorMessages", () => {
+  it("labels the viewer's own lines You, under Your order", () => {
+    expect(contributorMessages({ kind: "you" })).toEqual({
+      label: "you",
+      heading: "yourOrder",
+      values: {},
+    });
+  });
+
+  it("labels another customer by number, under their own order", () => {
+    expect(contributorMessages({ kind: "customer", number: 2 })).toEqual({
+      label: "customer",
+      heading: "customerOrder",
+      values: { number: 2 },
+    });
+  });
+
+  it("labels lines with no owner Shared, under Shared order", () => {
+    expect(contributorMessages({ kind: "shared" })).toEqual({
+      label: "shared",
+      heading: "sharedOrder",
+      values: {},
+    });
   });
 });

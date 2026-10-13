@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@mui/material";
 
@@ -23,6 +24,7 @@ export default function OrderMoreButton({
   menuHref,
   startNewRound = false,
 }: OrderMoreButtonProps) {
+  const t = useTranslations("outcome");
   if (!startNewRound) {
     return (
       <Button
@@ -32,7 +34,7 @@ export default function OrderMoreButton({
         fullWidth
         sx={{ borderRadius: 999, py: 1.25 }}
       >
-        Order more
+        {t("orderMore")}
       </Button>
     );
   }
@@ -47,7 +49,7 @@ export default function OrderMoreButton({
       fullWidth
       sx={{ borderRadius: 999, py: 1.25 }}
     >
-      Order more
+      {t("orderMore")}
     </Button>
   );
 }

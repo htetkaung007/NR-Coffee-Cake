@@ -362,6 +362,73 @@ independently of the app config). Everything else still goes through
 - Location.publicMenuCode is unused (left from the dropped /m/<code>
   page) and will be dropped in a later migration.
 
+## 13c. Customer languages (Myanmar / English)
+
+- **next-intl, WITHOUT i18n routing**: no /[locale] segment, nothing in
+  the URL, QR links or `src/proxy.ts`. The request config is
+  `src/i18n/request.ts` (plugin in next.config.ts).
+- The language is the **`NEXT_LOCALE` cookie** ("my" | "en", default
+  "my" — `lib/i18n/locale.ts`), read on the SERVER so the first render
+  is already right. Never localStorage. It's set only by
+  `setLocaleAction` ((storefront)/language/action.ts): the first-visit
+  LanguageCard and the top-bar switch, each followed by
+  router.refresh().
+- Messages: `messages/en.json` + `messages/my.json` (repo root),
+  namespaced by screen. Keys are type-safe (`src/types/next-intl.d.ts`
+  registers en.json) — a wrong key fails tsc; `lib/i18n/messages.test.ts`
+  checks both files have the same keys and placeholders.
+- The provider (NextIntlClientProvider) lives ONLY in the (storefront)
+  layout. A component shared with the Backoffice (e.g. MenuCard) takes
+  its words as props with English defaults — never useTranslations.
+- Glossary (Unicode Burmese, never Zawgyi): order → အော်ဒါ · counter →
+  ကောင်တာ · table → စားပွဲ · cart → ခြင်းတောင်း · send order → အော်ဒါ
+  တင်မည် · add → ထည့်မည် · menu → မီနူး · the price unit stays "MMK".
+- **Shop data is never translated** by us: menu, category and table
+  names, the shop name, staff-typed notes — only our own UI text. The
+  OWNER may give a Myanmar name: Menu (`nameMy`, `descriptionMy`),
+  MenuCategory, AddonCategories (add-on group) and Addon (option) have an
+  optional `nameMy` (null = not given). Customer screens show it through
+  `localizedText(locale, en, my)` (lib/i18n/localizedText) — Myanmar when
+  chosen AND not blank, else the English name, which is always there.
+  Order/price snapshots and stored history stay English and are never
+  rewritten. The Backoffice, staff New Order, Order List, print, reports
+  and CSV always show the English name. The customer menu search matches
+  BOTH names (lib/storefront/menuSearch), whatever the language.
+- **Customer prices**: `common.price` — "{amount} Kyats" / "{amount}
+  ကျပ်" (the amount from `formatAmountParts`: en-US digits and
+  separators), via `useCustomerPrice` (or `getTranslations` on a server
+  page); shared components (MenuCard, menu detail, line notices) take it
+  through their labels. The Backoffice, /print, Reports and CSV keep
+  `formatAmount` — "MMK".
+- **Myanmar typography** is tuned in ONE place, the customer theme:
+  `lib/theme/myanmarTypography.ts` (`MYANMAR_FONT_SCALE`, minimum
+  line-heights 1.6 / 1.8) applied to `:lang(my)` text through odTheme's
+  CssBaseline. Never set Myanmar sizes in components.
+- The Backoffice stays English (root `<html lang="en">`).
+- Components shared with the Backoffice whose words customers see —
+  MenuCard (a `labels` prop), the menu detail dialog/sheet and
+  CartLineNotice (the `OrderUiLabels` context) — default to English; the
+  storefront supplies the translations. Never useTranslations in them.
+- **Enum labels via keys**: one key per enum value — `voidReason.<V>`,
+  `roundStatus.<V>` (plus WITHDRAWN), `cancelReason.<V>` — looked up with
+  `useCustomerLabels` (lib/hooks). The value lists are
+  `lib/i18n/customerEnums.ts`, built from the Prisma enums, and a test
+  checks every value has words in both files. The Backoffice keeps its
+  own English labels (lib/order/voids, lib/order/cancelReason).
+- **Customer errors → `errors.<CODE>`**: a customer screen never shows
+  an action's English `message`; it shows `useErrorMessage()(error)`
+  (lib/i18n/errorMessage), which translates `error.code` (filling in
+  `error.params` — names, counts, never ids) or falls back to
+  `errors.generic`. A customer-reachable error needs its own stable code
+  (`new ValidationError(message, "DRAFT_NOT_YOURS")`, AppError's
+  `params`) and an entry in CUSTOMER_ERROR_CODES + both message files
+  (tested).
+- **Dates and times** on customer screens go through next-intl's
+  formatter (`useFormatter` / `getFormatter`: dateTime, relativeTime),
+  which uses the SHOP timezone (src/i18n/request.ts sets `timeZone` from
+  config) — never the phone's. Send ISO times to the client, not
+  server-formatted strings. Numbers and prices keep `formatAmount`.
+
 ## 14. Service imports — always via the barrel file, never the concrete path
 
 ```typescript

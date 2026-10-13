@@ -21,11 +21,16 @@ export function categoryNameError(name: string): string | null {
 export default function MenuCategoryFields({
   name,
   onNameChange,
+  nameMy,
+  onNameMyChange,
   isEnabled,
   onEnabledChange,
 }: {
   name: string;
   onNameChange: (name: string) => void;
+  /** Shown to customers who choose Myanmar; empty → the English name. */
+  nameMy: string;
+  onNameMyChange: (nameMy: string) => void;
   isEnabled: boolean;
   onEnabledChange: (isEnabled: boolean) => void;
 }) {
@@ -46,6 +51,15 @@ export default function MenuCategoryFields({
         helperText={nameError ?? " "}
         slotProps={{ htmlInput: { maxLength: 50 } }}
         sx={{ mb: 1 }}
+      />
+      <TextField
+        label="Myanmar name (optional)"
+        fullWidth
+        value={nameMy}
+        onChange={(event) => onNameMyChange(event.target.value)}
+        helperText="Shown to customers who choose Myanmar. Empty → the English name is shown."
+        slotProps={{ htmlInput: { maxLength: 50, lang: "my" } }}
+        sx={{ mb: 2 }}
       />
 
       <Box

@@ -5,6 +5,7 @@ import { AppError } from "@/app/lib/errors";
 import {
   toCounterHandBack,
   withdrawBlock,
+  WITHDRAW_BLOCK_CODES,
   WITHDRAW_BLOCK_MESSAGES,
 } from "@/app/lib/order/withdrawal";
 import { ACTIVE_ORDER_LINES } from "./orderLineQuery";
@@ -307,7 +308,7 @@ export class CounterSessionService {
    * cancelSession(…, "WITHDRAWN"), the one cancel writer (stock back, an
    * OrderCancellation row). Its status check settles a race with the
    * cashier: if Accept (or the timeout) got there first, nothing is
-   * written and the customer is told why (AppError WITHDRAW_BLOCKED).
+   * written and the customer is told why (an AppError with WITHDRAW_BLOCK_CODES' code).
    *
    * Where the cookie goes next (`nextToken`, null = clear it): onto the
    * bill's still-open first round if there is one (as after a
@@ -326,7 +327,7 @@ export class CounterSessionService {
     }
     const block = withdrawBlock(session, new Date());
     if (block) {
-      throw new AppError(WITHDRAW_BLOCK_MESSAGES[block], "WITHDRAW_BLOCKED");
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[block], WITHDRAW_BLOCK_CODES[block]);
     }
 
     const withdrawn = await prisma.$transaction((tx: Tx) =>
@@ -339,7 +340,7 @@ export class CounterSessionService {
         select: { status: true, isCounter: true, approvalExpiresAt: true },
       });
       const reason = withdrawBlock(now, new Date()) ?? "cancelled";
-      throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], "WITHDRAW_BLOCKED");
+      throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], WITHDRAW_BLOCK_CODES[reason]);
     }
 
     const root = await CounterSessionService.getOpenBillRoot(session);

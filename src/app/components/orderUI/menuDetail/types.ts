@@ -1,6 +1,9 @@
+/** Shop data names carry an optional Myanmar twin (`nameMy`; null or
+ *  absent: the English name shows — lib/i18n/localizedText). */
 export interface Addon {
   id: number;
   name: string;
+  nameMy?: string | null;
   price: number;
   isAvailable: boolean;
 }
@@ -8,6 +11,7 @@ export interface Addon {
 export interface AddonCategory {
   id: number;
   name: string;
+  nameMy?: string | null;
   isRequired: boolean;
   addons: Addon[];
 }
@@ -15,8 +19,10 @@ export interface AddonCategory {
 export interface MenuDetail {
   id: number;
   name: string;
+  nameMy?: string | null;
   price: number;
   description: string;
+  descriptionMy?: string | null;
   imageUrl: string | null;
   quantity: number;
   isAvailable: boolean;

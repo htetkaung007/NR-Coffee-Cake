@@ -13,7 +13,9 @@ export function toSafeResult<Args extends unknown[], SuccessValue>(
   return (...args: Args): ResultAsync<SuccessValue, ErrorInfo> =>
     ResultAsync.fromPromise(serviceFn(...args), (error): ErrorInfo => {
       if (error instanceof AppError) {
-        return { message: error.message, code: error.code };
+        return error.params
+          ? { message: error.message, code: error.code, params: error.params }
+          : { message: error.message, code: error.code };
       }
       console.error("[ServerAction] Unhandled error:", error);
       return {

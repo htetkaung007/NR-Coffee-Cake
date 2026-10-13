@@ -33,7 +33,7 @@ export const SHOP_MISSED_CANCEL_REASONS = [
 const WITHDRAWN_STAFF_LABEL = "Cancelled by customer";
 
 /** WITHDRAWN as the customer reads it (/history, receipts). */
-export const WITHDRAWN_CUSTOMER_LABEL = "Cancelled by you";
+const WITHDRAWN_CUSTOMER_LABEL = "Cancelled by you";
 
 /** A sent round's cancel reason in words, for staff or for the customer.
  *  Null for a reason that's never shown (a cart never sent, none). */

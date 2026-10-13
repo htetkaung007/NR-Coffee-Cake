@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   Box,
@@ -27,43 +28,16 @@ type Phase =
   | { kind: "scanning" }
   | { kind: "failed"; reason: CameraFailure };
 
-/** What the customer is told for each failure, and whether "Try again"
- *  can help (e.g. after allowing the camera in the browser's settings). */
-const FAILURE_TEXT: Record<
-  CameraFailure,
-  { title: string; detail: string; canRetry: boolean }
-> = {
-  permissionDenied: {
-    title: "Camera permission was blocked",
-    detail:
-      "To scan here, allow camera access for this site in your browser's settings, then tap Try again.",
-    canRetry: true,
-  },
-  noCamera: {
-    title: "No camera available",
-    detail: "This device doesn't have a camera the browser can use.",
-    canRetry: false,
-  },
-  cameraBusy: {
-    title: "The camera is in use",
-    detail: "Another app is using the camera. Close it, then tap Try again.",
-    canRetry: true,
-  },
-  insecureContext: {
-    title: "The camera isn't available on this page",
-    detail: "Your browser only allows the camera on secure (https) pages.",
-    canRetry: false,
-  },
-  loadFailed: {
-    title: "The scanner couldn't load",
-    detail: "Check your connection, then tap Try again.",
-    canRetry: true,
-  },
-  unknown: {
-    title: "The camera couldn't start",
-    detail: "Tap Try again, or close the scanner and open it again.",
-    canRetry: true,
-  },
+/** Whether "Try again" can help for each failure (e.g. after allowing
+ *  the camera in the browser's settings). What the customer is told is
+ *  scanner.<failure>Title / <failure>Detail in messages/*.json. */
+const CAN_RETRY: Record<CameraFailure, boolean> = {
+  permissionDenied: true,
+  noCamera: false,
+  cameraBusy: true,
+  insecureContext: false,
+  loadFailed: true,
+  unknown: true,
 };
 
 /** Checked before anything else: no secure context or no camera API
@@ -96,6 +70,8 @@ export default function CounterQrScannerDialog({
 }: {
   onClose: () => void;
 }) {
+  const t = useTranslations("scanner");
+  const tCommon = useTranslations("common");
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const titleId = useId();
@@ -225,14 +201,21 @@ export default function CounterQrScannerDialog({
     setAttempt((count) => count + 1);
   }
 
-  const failure = phase.kind === "failed" ? FAILURE_TEXT[phase.reason] : null;
+  const failure =
+    phase.kind === "failed"
+      ? {
+          title: t(`${phase.reason}Title`),
+          detail: t(`${phase.reason}Detail`),
+          canRetry: CAN_RETRY[phase.reason],
+        }
+      : null;
   const status = failure
     ? failure.title
     : wrongCode
-      ? "This isn't this shop's counter QR. Point your camera at the QR code on the counter."
+      ? t("wrongCode")
       : cameraLive
         ? ""
-        : "Starting the camera…";
+        : t("starting");
 
   return (
     <Dialog
@@ -248,10 +231,10 @@ export default function CounterQrScannerDialog({
         sx={{ alignItems: "center", justifyContent: "space-between", px: 2, py: 1 }}
       >
         <Typography id={titleId} variant="h6" component="h2">
-          Scan counter QR
+          {t("title")}
         </Typography>
         <IconButton
-          aria-label="Close"
+          aria-label={tCommon("close")}
           onClick={() => onCloseRef.current()}
           sx={{ width: 44, height: 44 }}
         >
@@ -300,7 +283,7 @@ export default function CounterQrScannerDialog({
               />
             </Box>
             <Typography variant="body1" sx={{ textAlign: "center" }}>
-              Point your camera at the QR code on the counter
+              {t("pointCamera")}
             </Typography>
           </>
         )}
@@ -320,8 +303,7 @@ export default function CounterQrScannerDialog({
           <Stack spacing={2}>
             <Typography variant="body2">{failure.detail}</Typography>
             <Typography variant="body2" color="text.secondary">
-              You can also scan the counter QR with your phone&apos;s camera
-              app — your cart will still be here.
+              {t("phoneCameraHint")}
             </Typography>
             <Stack direction="row" spacing={1}>
               {failure.canRetry && (
@@ -330,7 +312,7 @@ export default function CounterQrScannerDialog({
                   onClick={tryAgain}
                   sx={{ minHeight: 44, flex: 1 }}
                 >
-                  Try again
+                  {tCommon("tryAgain")}
                 </Button>
               )}
               <Button
@@ -338,7 +320,7 @@ export default function CounterQrScannerDialog({
                 onClick={() => onCloseRef.current()}
                 sx={{ minHeight: 44, flex: 1 }}
               >
-                Close
+                {tCommon("close")}
               </Button>
             </Stack>
           </Stack>

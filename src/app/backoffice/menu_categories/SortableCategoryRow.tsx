@@ -29,6 +29,8 @@ const arrowButtonSx = {
 export interface CategoryItem {
   id: number;
   name: string;
+  /** Shown to customers who choose Myanmar (null: the English name). */
+  nameMy: string | null;
   /** Always menus.length. */
   itemCount: number;
   /** Its menus, by name (MenuCategoryService.getCategoryMenus). */

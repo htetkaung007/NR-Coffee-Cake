@@ -277,7 +277,11 @@ export class CartValidationService {
       if (orderability.isListed(menuId)) continue;
       const name = nameById.get(menuId);
       if (name === undefined) throw new NotFoundError("Menu", menuId);
-      throw new ValidationError(notAvailableHereMessage(name));
+      throw new ValidationError(
+        notAvailableHereMessage(name),
+        "MENU_NOT_AVAILABLE_HERE",
+        { name },
+      );
     }
   }
 

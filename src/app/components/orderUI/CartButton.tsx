@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
@@ -32,15 +33,16 @@ export default function CartButton({
   status,
   disabled,
   onClick,
-  submitLabel = "Submit Order",
+  submitLabel,
 }: CartButtonProps) {
+  const t = useTranslations("cart");
   if (status === "PENDING_APPROVAL") {
     return (
       <Button variant="contained" fullWidth disabled sx={{ opacity: 1 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <CircularProgress size={18} color="inherit" />
           <Typography component="span" sx={{ fontWeight: 700 }}>
-            Waiting counter approval...
+            {t("waitingApproval")}
           </Typography>
         </Stack>
       </Button>
@@ -59,7 +61,7 @@ export default function CartButton({
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <CheckCircleOutlinedIcon fontSize="small" />
           <Typography component="span" sx={{ fontWeight: 700 }}>
-            Order confirmed
+            {t("orderConfirmed")}
           </Typography>
         </Stack>
       </Button>
@@ -81,7 +83,7 @@ export default function CartButton({
       }}
     >
       <Typography component="span" sx={{ fontWeight: 700 }}>
-        {submitLabel}
+        {submitLabel ?? t("submitOrder")}
       </Typography>
     </Button>
   );

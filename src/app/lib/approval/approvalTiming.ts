@@ -1,10 +1,11 @@
 import { approvalDeadline } from "./approvalDeadline";
 import { APPROVAL_WINDOW_SECONDS } from "./approvalWindow";
-import { toShopTime } from "../shopDay";
 
 /** What a round awaiting approval tells the customer's screen: the
  *  seconds left (server clock), the whole window, the deadline (for "If
- *  it isn't confirmed by 10:12…" / "Usually confirmed by 10:12."), and
+ *  it isn't confirmed by 10:12…" / "Usually confirmed by 10:12." — the
+ *  screen formats expiresAt in the shop's timezone, in the customer's
+ *  language, with next-intl), and
  *  whether the round cancels itself then (Counter) or only becomes
  *  overdue (Table). null when the round isn't waiting, or a Counter round
  *  unexpectedly has no deadline — the screen then shows the plain
@@ -17,18 +18,15 @@ export interface ApprovalTiming {
    *  goes below 0. */
   secondsRemaining: number;
   windowSeconds: number;
-  /** ISO. */
+  /** ISO — the deadline. Shown in the SHOP's timezone (next-intl's
+   *  timeZone, src/i18n/request.ts), never the phone's own. */
   expiresAt: string;
-  /** The deadline as "10:12" on the SHOP's clock — formatted on the
-   *  server, so the phone's own timezone never matters. */
-  deadlineTime: string;
   /** Counter: true. Table: false — never cancelled, see approvalDeadline. */
   autoCancels: boolean;
 }
 
-/** Server-side only (it reads the shop's timezone from the server's
- *  config). The deadline itself comes from approvalDeadline — the one
- *  place it's decided. */
+/** The deadline itself comes from approvalDeadline — the one place it's
+ *  decided. */
 export function approvalTiming(
   round: {
     status: string;
@@ -44,7 +42,6 @@ export function approvalTiming(
     secondsRemaining: Math.round((due.deadline.getTime() - now.getTime()) / 1000),
     windowSeconds: APPROVAL_WINDOW_SECONDS,
     expiresAt: due.deadline.toISOString(),
-    deadlineTime: toShopTime(due.deadline),
     autoCancels: due.autoCancels,
   };
 }

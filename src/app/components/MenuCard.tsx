@@ -24,6 +24,34 @@ export interface MenuCardData {
   isAvailable: boolean;
 }
 
+/** The card's own words. The customer grid passes them translated
+ *  (MenuBrowser, next-intl); the Backoffice (staff New Order, the menu
+ *  preview) leaves them out and gets the English defaults below. */
+export interface MenuCardLabels {
+  outOfStock: string;
+  onlyLeft: (count: number) => string;
+  seeMore: string;
+  /** The card button's accessible name, orderable / not. */
+  viewDetails: (name: string, price: string) => string;
+  outOfStockLabel: (name: string, price: string) => string;
+  /** The price as shown: "4,500 MMK" (default — staff) or the
+   *  customer's "4,500 Kyats" / "4,500 ကျပ်". */
+  price: (amount: number) => string;
+  /** The Add affordance's words — given (customer Myanmar: "ထည့်မယ်")
+   *  it shows them; null (English, staff New Order) shows the + icon. */
+  addText: string | null;
+}
+
+const ENGLISH_LABELS: MenuCardLabels = {
+  outOfStock: "out of stock",
+  onlyLeft: (count) => `Only ${count} left`,
+  seeMore: "See more",
+  viewDetails: (name, price) => `${name}, ${price} — view details`,
+  outOfStockLabel: (name, price) => `${name}, ${price} — out of stock`,
+  price: formatAmount,
+  addText: null,
+};
+
 interface MenuCardProps {
   item: MenuCardData;
   /** Optional — tapping the card opens the caller's own flow (e.g.
@@ -36,6 +64,8 @@ interface MenuCardProps {
    *  Order page turns it off for a denser grid; the price + "+" row
    *  stays either way. */
   showDescription?: boolean;
+  /** Translated words (customer side); English when left out. */
+  labels?: MenuCardLabels;
 }
 
 /** How faded an unavailable (out-of-stock) card's photo and text are. */
@@ -102,6 +132,7 @@ export default function MenuCard({
   item,
   onAddToCart,
   showDescription = true,
+  labels = ENGLISH_LABELS,
 }: MenuCardProps) {
   const { palette } = useTheme();
   const isAvailable = item.stockQuantity > 0 && item.isAvailable;
@@ -114,7 +145,7 @@ export default function MenuCard({
   // ordered; the hover/pressed feedback follows the same condition.
   const isInteractive = Boolean(onAddToCart) && isAvailable;
   const hasDescription = item.description.trim().length > 0;
-  const priceLabel = formatAmount(item.price);
+  const priceLabel = labels.price(item.price);
 
   const content = (
     <>
@@ -167,7 +198,7 @@ export default function MenuCard({
             size="small"
             label={
               <Typography component="span" variant="caption">
-                out of stock
+                {labels.outOfStock}
               </Typography>
             }
             sx={{
@@ -186,7 +217,7 @@ export default function MenuCard({
             size="small"
             label={
               <Typography component="span" variant="caption">
-                {`Only ${item.stockQuantity} left`}
+                {labels.onlyLeft(item.stockQuantity)}
               </Typography>
             }
             sx={{
@@ -275,22 +306,26 @@ export default function MenuCard({
                   isAvailable && hasDescription ? "visible" : "hidden",
               }}
             >
-              See more
+              {labels.seeMore}
             </Typography>
           </Box>
         )}
 
+        {/* Price + Add: side by side, and when they don't fit (Myanmar
+           on a 320px screen) the Add square wraps under the price — the
+           price itself never wraps. */}
         <Box
           component="span"
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            columnGap: 1,
+            flexWrap: "wrap",
+            gap: 1,
             mt: "auto",
             pt: 0.5,
-            // 4px padding + the 32px circle: same height whether or not
-            // the "+" is shown.
+            // 4px padding + the 32px square: same height whether or not
+            // the Add square is shown.
             minHeight: 36,
           }}
         >
@@ -301,8 +336,9 @@ export default function MenuCard({
               minWidth: 0,
               fontWeight: 700,
               color: palette.decor.price,
-              // A freak-long price gives way (ellipsis) before the "+"
-              // could be pushed out of a narrow card.
+              // Never wraps; only a price wider than the whole card
+              // would give way (ellipsis).
+              maxWidth: "100%",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -310,10 +346,11 @@ export default function MenuCard({
           >
             {priceLabel}
           </Typography>
-          {/* Look only: not a button, no handler, not focusable, hidden
-             from assistive tech. Tapping it lands on the card's own
-             action. Not drawn at all for an item that can't be ordered
-             (no disabled-looking circle). */}
+          {/* The Add affordance — a rounded square, the + icon or (customer
+             Myanmar) "ထည့်မယ်". Look only: not a button, no handler, not
+             focusable, hidden from assistive tech; tapping it lands on the
+             card's own action. Not drawn at all for an item that can't be
+             ordered (no disabled-looking square). */}
           {isAvailable && (
             <Box
               component="span"
@@ -324,18 +361,26 @@ export default function MenuCard({
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
-                width: 32,
                 height: 32,
-                borderRadius: "50%",
+                minWidth: 32,
+                px: labels.addText ? 1.25 : 0,
+                borderRadius: 1,
                 color: "primary.contrastText",
                 bgcolor: "primary.main",
-                border: `2px solid ${palette.decor.ink}`,
-                boxShadow: `2px 2px 0 ${palette.decor.ink}`,
-                transition:
-                  "background-color 160ms ease-out, box-shadow 160ms ease-out, transform 160ms ease-out",
+                transition: "background-color 160ms ease-out",
               }}
             >
-              <AddIcon fontSize="small" />
+              {labels.addText ? (
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
+                >
+                  {labels.addText}
+                </Typography>
+              ) : (
+                <AddIcon fontSize="small" />
+              )}
             </Box>
           )}
         </Box>
@@ -376,11 +421,7 @@ export default function MenuCard({
           [hoverCapableMedia]: {
             "&:hover": { transform: "translateY(-2px)", boxShadow: 3 },
             "&:hover .menucard-image": { transform: "scale(1.08)" },
-            "&:hover .menucard-plus": {
-              bgcolor: "primary.dark",
-              boxShadow: `1px 1px 0 ${palette.decor.ink}`,
-              transform: "translate(1px, 1px)",
-            },
+            "&:hover .menucard-plus": { bgcolor: "primary.dark" },
           },
           "&:active": { transform: "scale(0.98)" },
         }),
@@ -392,8 +433,8 @@ export default function MenuCard({
           disabled={!isAvailable}
           aria-label={
             isAvailable
-              ? `${item.name}, ${priceLabel} — view details`
-              : `${item.name}, ${priceLabel} — out of stock`
+              ? labels.viewDetails(item.name, priceLabel)
+              : labels.outOfStockLabel(item.name, priceLabel)
           }
           sx={{
             ...areaSx,

@@ -1,6 +1,10 @@
 "use client";
 
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
 import { forwardRef, type ReactNode } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 import {
   ButtonBase,
   Box,
@@ -16,7 +20,6 @@ import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper
 import MenuThumb from "@/app/components/MenuThumb";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLineTotal, type LineAddon } from "@/app/lib/order/orderTotals";
-import { formatAmount } from "@/app/lib/orderFormat";
 import type { ContributorLabel } from "@/app/lib/order/contributors";
 import type { RemovedByStaff } from "@/app/lib/order/roundLine";
 
@@ -24,6 +27,9 @@ export interface CartLine {
   id: number;
   menuId: number;
   menuName: string;
+  /** The menu's Myanmar name (null/absent: menuName shows — the row
+   *  picks with lib/i18n/localizedText). */
+  menuNameMy?: string | null;
   quantity: number;
   price: number;
   /** The menu's photo (Menu.assetUrl); null/absent falls back to an icon. */
@@ -108,6 +114,14 @@ export function CartLineRow({
 }: CartLineRowProps) {
   // Staff took every unit back: still shown, dimmed and struck through,
   // with the words saying why (DESIGN.md Rule 26).
+  const t = useTranslations("common");
+  const tReceipt = useTranslations("receipt");
+  const tNotice = useTranslations("lineNotice");
+  const labels = useCustomerLabels();
+  const { price } = useCustomerPrice();
+  const locale = useLocale();
+  // Shop data in the customer's language (English when no Myanmar name).
+  const menuName = localizedText(locale, line.menuName, line.menuNameMy);
   const removed = line.removedByStaff ?? null;
   const isFullyRemoved = removed !== null && line.quantity === 0;
   const dimmed = dimmedByParent || isFullyRemoved;
@@ -146,7 +160,7 @@ export function CartLineRow({
           opacity: dimmed ? 0.5 : 1,
         }}
       >
-        <MenuThumb name={line.menuName} imageUrl={line.imageUrl} />
+        <MenuThumb name={menuName} imageUrl={line.imageUrl} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -158,7 +172,7 @@ export function CartLineRow({
            read-only row is plain text. */}
         <EditTarget
           canEdit={canEdit}
-          label={`Edit ${line.menuName}`}
+          label={t("editItem", { name: menuName })}
           onEdit={onEdit}
           dimmed={dimmed}
         >
@@ -170,11 +184,11 @@ export function CartLineRow({
               textDecoration: isFullyRemoved ? "line-through" : "none",
             }}
           >
-            {line.menuName}
+            {menuName}
           </Typography>
           {line.addons.length > 0 && (
             <Typography variant="body2" sx={mutedTextSx}>
-              + {line.addons.map((addon) => addon.name).join(", ")}
+              + {line.addons.map((addon) => localizedText(locale, addon.name, addon.nameMy)).join(", ")}
             </Typography>
           )}
           {line.note && (
@@ -213,7 +227,9 @@ export function CartLineRow({
             />
           ) : (
             <Typography variant="body2" sx={mutedTextSx}>
-              {isFullyRemoved ? `Qty ${removed.quantity}` : `Qty ${line.quantity}`}
+              {t("qty", {
+                quantity: isFullyRemoved ? removed.quantity : line.quantity,
+              })}
             </Typography>
           )}
         </Box>
@@ -221,17 +237,20 @@ export function CartLineRow({
         {removed && (
           <Typography variant="body2" sx={[{ display: "block" }, mutedTextSx]}>
             {isFullyRemoved
-              ? `Removed by staff · ${removed.reason}`
-              : `${removed.quantity} removed by staff · ${removed.reason}`}
+              ? tReceipt("removedAll", { reasons: labels.voidReasons(removed.reasons) })
+              : tReceipt("removedSome", {
+                  count: removed.quantity,
+                  reasons: labels.voidReasons(removed.reasons),
+                })}
           </Typography>
         )}
 
         {shortage && (
           <Typography variant="caption" color="error" sx={{ display: "block" }}>
             {shortage.available > 0
-              ? `Only ${shortage.available} left`
-              : "This just sold out"}
-            {actionable ? " — change the quantity or remove it." : "."}
+              ? tNotice("shortageLeft", { count: shortage.available })
+              : tNotice("shortageSoldOut")}
+            {actionable ? tNotice("shortageAction") : tNotice("shortageEnd")}
           </Typography>
         )}
         {status}
@@ -248,12 +267,12 @@ export function CartLineRow({
                 whiteSpace: "nowrap",
               }}
             >
-              {formatAmount(cartLineTotal(line))}
+              {price(cartLineTotal(line))}
             </Typography>
           ))}
         {canRemove && (
           <IconButton
-            aria-label={`Remove ${line.menuName}`}
+            aria-label={t("removeItem", { name: menuName })}
             size="small"
             disabled={disabled}
             onClick={(event) => {
@@ -386,10 +405,11 @@ const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
     onEdit,
     onQuantityChange,
     isPending = false,
-    title = "Your order",
+    title,
   },
   ref,
 ) {
+  const tCart = useTranslations("cart");
   if (cart.length === 0) return null;
 
   const shortageByMenuId = new Map(
@@ -399,7 +419,7 @@ const CartList = forwardRef<HTMLDivElement, CartListProps>(function CartList(
   return (
     <Box ref={ref} sx={{ mb: 3 }}>
       <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 700 }}>
-        {title}
+        {title ?? tCart("yourOrder")}
       </Typography>
       <Stack divider={<Divider />}>
         {cart.map((line) => (

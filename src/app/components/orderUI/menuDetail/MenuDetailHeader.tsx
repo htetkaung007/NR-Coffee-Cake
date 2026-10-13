@@ -2,8 +2,9 @@ import { Box, Typography } from "@mui/material";
 import MenuThumb from "@/app/components/MenuThumb";
 
 import { SHEET_TEXT } from "./sheetText";
-import { formatAmount } from "@/app/lib/orderFormat";
 import type { MenuDetail, MenuDetailVariant } from "./types";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useOrderUiLabels } from "../OrderUiLabels";
 
 interface MenuDetailHeaderProps {
   detail: MenuDetail;
@@ -19,6 +20,10 @@ export default function MenuDetailHeader({
   detail,
   variant,
 }: MenuDetailHeaderProps) {
+  // Shop data in the surface's language (English in the Backoffice).
+  const { locale, price } = useOrderUiLabels();
+  const name = localizedText(locale, detail.name, detail.nameMy);
+  const description = localizedText(locale, detail.description, detail.descriptionMy);
   if (variant === "sheet") {
     return (
       <Box>
@@ -33,9 +38,9 @@ export default function MenuDetailHeader({
             }}
           >
             <MenuThumb
-              name={detail.name}
+              name={name}
               imageUrl={detail.imageUrl}
-              alt={detail.name}
+              alt={name}
             />
           </Box>
         )}
@@ -43,7 +48,7 @@ export default function MenuDetailHeader({
           variant="h6"
           sx={{ fontWeight: 700, fontSize: SHEET_TEXT.title }}
         >
-          {detail.name}
+          {name}
         </Typography>
         <Typography
           variant="subtitle1"
@@ -55,15 +60,15 @@ export default function MenuDetailHeader({
             color: "decor.price",
           }}
         >
-          {formatAmount(detail.price)}
+          {price(detail.price)}
         </Typography>
-        {detail.description && (
+        {description && (
           <Typography
             variant="body2"
             color="text.secondary"
             sx={{ mt: 0.5, fontSize: SHEET_TEXT.small, lineHeight: 1.5 }}
           >
-            {detail.description}
+            {description}
           </Typography>
         )}
       </Box>
@@ -85,25 +90,25 @@ export default function MenuDetailHeader({
             }}
           >
             <MenuThumb
-              name={detail.name}
+              name={name}
               imageUrl={detail.imageUrl}
-              alt={detail.name}
+              alt={name}
             />
           </Box>
         )}
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          {detail.name}
+          {name}
         </Typography>
       </Box>
 
       {/* subtitle2, not subtitle1: subtitle1 is now a bold title size
          (1.2rem from md) and would rival the item name above it. */}
       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-        {formatAmount(detail.price)}
+        {price(detail.price)}
       </Typography>
-      {detail.description && (
+      {description && (
         <Typography variant="body2" color="text.secondary">
-          {detail.description}
+          {description}
         </Typography>
       )}
     </>

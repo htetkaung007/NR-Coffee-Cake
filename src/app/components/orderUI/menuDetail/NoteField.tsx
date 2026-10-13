@@ -10,6 +10,7 @@ import {
 
 import { SHEET_TEXT } from "./sheetText";
 import type { MenuDetailVariant } from "./types";
+import { useOrderUiLabels } from "../OrderUiLabels";
 
 interface NoteFieldProps {
   value: string;
@@ -25,17 +26,18 @@ export default function NoteField({
   onChange,
   variant,
 }: NoteFieldProps) {
+  const labels = useOrderUiLabels().menuDetail;
   return (
     <Box>
       <Divider sx={{ mb: 1.5 }} />
       <TextField
-        label="Special instructions (optional)"
+        label={labels.noteLabel}
         multiline
         rows={2}
         fullWidth
         value={value}
         onChange={(event) => onChange(limitWords(event.target.value))}
-        helperText={`${countWords(value)}/${MAX_ORDER_NOTE_WORDS} words`}
+        helperText={labels.noteWords(countWords(value), MAX_ORDER_NOTE_WORDS)}
         sx={
           variant === "sheet"
             ? {

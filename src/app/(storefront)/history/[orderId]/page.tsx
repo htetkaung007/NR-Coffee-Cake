@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { getLocale } from "next-intl/server";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import { notFound } from "next/navigation";
 import {
   CounterSessionService,
@@ -13,7 +15,6 @@ import {
   orderLinesTotal,
 } from "@/app/lib/order/orderTotals";
 import {
-  contributorGroupHeading,
   groupByContributor,
   type ContributorLabel,
 } from "@/app/lib/order/contributors";
@@ -115,11 +116,16 @@ export default async function OrderReceiptPage({
       ? `locationId=${round.locationId}`
       : `locationId=${round.locationId}&tableId=${tableId}`;
 
+  // Shop data (menu / add-on names) in the customer's language.
+  const locale = await getLocale();
+
   const lines: ReceiptLine[] = round.orders.map((order) => ({
     id: order.id,
-    menuName: order.menu.name,
+    menuName: localizedText(locale, order.menu.name, order.menu.nameMy),
     imageUrl: order.menu.assetUrl,
-    addonNames: order.OrdersAddons.map((link) => link.addon.name),
+    addonNames: order.OrdersAddons.map((link) =>
+      localizedText(locale, link.addon.name, link.addon.nameMy),
+    ),
     note: order.note,
     // Staff-voided units left out; the receipt shows them struck through
     // with the reason only (removedByStaff — never who or the note).
@@ -135,13 +141,15 @@ export default async function OrderReceiptPage({
           round.orders.map((order) => toLabelledCartLine(order, labels)),
         ).map((group) => ({
           key: group.key,
-          heading: contributorGroupHeading(group.label),
+          who: group.who,
           subtotal: group.subtotal,
           lines: group.lines.map((line) => ({
             id: line.id,
-            menuName: line.menuName,
+            menuName: localizedText(locale, line.menuName, line.menuNameMy),
             imageUrl: line.imageUrl ?? null,
-            addonNames: line.addons.map((addon) => addon.name),
+            addonNames: line.addons.map((addon) =>
+              localizedText(locale, addon.name, addon.nameMy),
+            ),
             note: line.note ?? null,
             quantity: line.quantity,
             total: cartLineTotal(line),

@@ -8,17 +8,17 @@ import type { LineAddon } from "@/app/lib/order/orderTotals";
 import {
   effectiveQuantity,
   voidedQuantity,
-  voidReasonLabel,
   type VoidReason,
 } from "@/app/lib/order/voids";
 
 /** What a customer may know about items staff removed from their line:
- *  how many and the reason(s) in words — never the staff's note or who
- *  did it (the customer-safe void select carries neither). */
+ *  how many and the reason(s) — never the staff's note or who did it
+ *  (the customer-safe void select carries neither). The screen puts the
+ *  reasons into words in the customer's language (voidReason.<VALUE>). */
 export interface RemovedByStaff {
   quantity: number;
-  /** "Wrong item", or "Wrong item, Other" for several voids. */
-  reason: string;
+  /** Each reason once, in the order the voids were made. */
+  reasons: VoidReason[];
 }
 
 /** A line's voids as the customer sees them — null when none. */
@@ -27,15 +27,14 @@ export function removedByStaff(
 ): RemovedByStaff | null {
   const quantity = voidedQuantity(voids);
   if (quantity === 0) return null;
-  const reasons = [...new Set(voids.map((entry) => voidReasonLabel(entry.reason)))];
-  return { quantity, reason: reasons.join(", ") };
+  return { quantity, reasons: [...new Set(voids.map((entry) => entry.reason))] };
 }
 
 /** An OrdersAddon link as fetched with its addon (for the name). */
 interface LineAddonSource {
   addonId: number;
   unitPrice: number;
-  addon: { name: string };
+  addon: { name: string; nameMy?: string | null };
 }
 
 /** A line's addon links as the client-side LineAddon shape — the
@@ -47,6 +46,7 @@ export function toLineAddons(links: readonly LineAddonSource[]): LineAddon[] {
   return links.map((link) => ({
     id: link.addonId,
     name: link.addon.name,
+    nameMy: link.addon.nameMy ?? null,
     unitPrice: link.unitPrice,
   }));
 }
@@ -59,7 +59,7 @@ export function toCartLine(order: {
   quantity: number;
   note: string | null;
   unitPrice: number;
-  menu: { name: string; assetUrl: string | null };
+  menu: { name: string; nameMy?: string | null; assetUrl: string | null };
   OrdersAddons: LineAddonSource[];
   voids: readonly { quantity: number; reason: VoidReason }[];
 }): CartLine {
@@ -67,6 +67,7 @@ export function toCartLine(order: {
     id: order.id,
     menuId: order.menuId,
     menuName: order.menu.name,
+    menuNameMy: order.menu.nameMy ?? null,
     // What's still on the order — staff-voided units left out, so every
     // customer total (cartLineTotal) leaves them out too.
     quantity: effectiveQuantity(order),

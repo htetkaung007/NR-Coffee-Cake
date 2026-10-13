@@ -265,6 +265,7 @@ export class OrderSessionService {
     if (session.status !== "PENDING" && session.status !== "COOKING") {
       throw new ValidationError(
         "This order must be confirmed by the counter before you can start a new one.",
+        "ROUND_NOT_CONFIRMED",
       );
     }
     if (!session.tableId) {
@@ -349,11 +350,12 @@ export class OrderSessionService {
     if (session.status === "PENDING_APPROVAL") {
       throw new ValidationError(
         "Your order is waiting for the counter to confirm. You can add more once it's accepted.",
+        "ROUND_AWAITING_APPROVAL",
       );
     }
 
     if (session.status !== "PENDING" && session.status !== "COOKING") {
-      throw new ValidationError("This order can no longer be edited.");
+      throw new ValidationError("This order can no longer be edited.", "ROUND_CLOSED");
     }
 
     const rootId = session.billSessionId ?? session.id;

@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { getLocale, getTranslations } from "next-intl/server";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import Link from "next/link";
 import { Box, Stack, Typography } from "@mui/material";
 import {
@@ -14,7 +16,7 @@ import { effectiveQuantity, voidedQuantity } from "@/app/lib/order/voids";
 import { customerRoundStatus } from "@/app/lib/order/cancelReason";
 import { groupByContributor } from "@/app/lib/order/contributors";
 import { toLabelledCartLine } from "@/app/lib/order/roundLine";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { formatAmountParts } from "@/app/lib/orderFormat";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
 import BackCircleButton from "@/app/components/orderUI/BackCircleButton";
@@ -45,6 +47,13 @@ export default async function HistoryPage({
 }) {
   const { locationId: locationIdParam, tableId: tableIdParam } =
     await searchParams;
+  const t = await getTranslations("history");
+  // Shop data (menu names) in the customer's language.
+  const locale = await getLocale();
+  const tCommon = await getTranslations("common");
+  // Customer prices: "4,500 Kyats" / "4,500 ကျပ်" — never "MMK".
+  const price = (amount: number) =>
+    tCommon("price", { amount: formatAmountParts(amount).value });
   const tableId = tableIdParam ? Number(tableIdParam) : null;
   const backHref = tableId
     ? `/menu?locationId=${locationIdParam}&tableId=${tableId}`
@@ -109,14 +118,13 @@ export default async function HistoryPage({
               spacing={1.5}
               sx={{ alignItems: "center", mb: 2 }}
             >
-              <BackCircleButton href={backHref} ariaLabel="Back to menu" />
-              <Typography variant="h6">Order history</Typography>
+              <BackCircleButton href={backHref} ariaLabel={tCommon("backToMenu")} />
+              <Typography variant="h6">{t("title")}</Typography>
             </Stack>
 
             {rounds.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                Nothing sent to the kitchen yet — items you send to the kitchen
-                will show up here until the table is settled.
+                {t("emptyTable")}
               </Typography>
             ) : (
               <Stack spacing={{ xs: 1.5, sm: 2 }}>
@@ -128,15 +136,15 @@ export default async function HistoryPage({
                     status={customerRoundStatus(round)}
                     items={lines.map((line) => ({
                       quantity: line.quantity,
-                      name: line.menuName,
+                      name: localizedText(locale, line.menuName, line.menuNameMy),
                       removed: line.removedByStaff?.quantity ?? 0,
                     }))}
                     groups={groupByContributor(lines).map((group) => ({
                       key: group.key,
-                      label: group.label,
+                      who: group.who,
                       items: group.lines.map((line) => ({
                         quantity: line.quantity,
-                        name: line.menuName,
+                        name: localizedText(locale, line.menuName, line.menuNameMy),
                         removed: line.removedByStaff?.quantity ?? 0,
                       })),
                       subtotal: group.subtotal,
@@ -173,10 +181,10 @@ export default async function HistoryPage({
               >
                 <Box>
                   <Typography variant="body1" sx={{ fontWeight: 800 }}>
-                    Table total
+                    {t("tableTotal")}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {rounds.length} {rounds.length === 1 ? "order" : "orders"}
+                    {t("orderCount", { count: rounds.length })}
                   </Typography>
                   {/* Display only — the table still pays one bill. */}
                   <Typography
@@ -184,14 +192,14 @@ export default async function HistoryPage({
                     color="text.secondary"
                     component="p"
                   >
-                    Your total so far: {formatAmount(myTotal)}
+                    {t("yourTotal", { amount: price(myTotal) })}
                   </Typography>
                 </Box>
                 <Typography
                   variant="body1"
                   sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
                 >
-                  {formatAmount(tableTotal)}
+                  {price(tableTotal)}
                 </Typography>
               </Stack>
             </Box>
@@ -211,20 +219,18 @@ export default async function HistoryPage({
 
   if (!session || session.status === "CART") {
     return (
-      <Box sx={{ minHeight: "100vh" }}>
+      <Box sx={{ minHeight: "100dvh" }}>
         <OrderTopBar shopName={null} cartItemCount={0} />
         <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            No order history
+            {t("noHistoryTitle")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {session
-              ? "Submit your order first — it'll show up here once it's sent to the kitchen."
-              : "You don't have an active order yet. Scan the table or counter QR to start one."}
+            {session ? t("noHistorySubmitFirst") : t("noHistoryNoOrder")}
           </Typography>
           <Link href={backHref} style={{ color: "inherit" }}>
             <Typography variant="body2" sx={{ textDecoration: "underline" }}>
-              Back to menu
+              {tCommon("backToMenu")}
             </Typography>
           </Link>
         </Box>
@@ -258,10 +264,10 @@ export default async function HistoryPage({
         >
           <BackCircleButton
             href={`/menu?locationId=${session.locationId}`}
-            ariaLabel="Back to menu"
+            ariaLabel={tCommon("backToMenu")}
           />
           <Box>
-            <Typography variant="h6">Order history</Typography>
+            <Typography variant="h6">{t("title")}</Typography>
             <Typography variant="caption" color="text.secondary">
               {bill.billNumber}
             </Typography>
@@ -270,8 +276,7 @@ export default async function HistoryPage({
 
         {bill.rounds.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            Nothing sent to the kitchen yet — items you send to the kitchen
-            will show up here until your order is settled.
+            {t("emptyCounter")}
           </Typography>
         ) : (
           <Stack spacing={{ xs: 1.5, sm: 2 }}>
@@ -279,12 +284,12 @@ export default async function HistoryPage({
               <OrderHistoryCard
                 key={round.id}
                 href={`/history/${round.id}?locationId=${round.locationId}`}
-                orderNumber={`Round ${index + 1}`}
+                orderNumber={t("round", { number: index + 1 })}
                 status={customerRoundStatus(round)}
                 items={round.orders.map((order) => ({
                   // Staff-voided units left out (lib/order/voids).
                   quantity: effectiveQuantity(order),
-                  name: order.menu.name,
+                  name: localizedText(locale, order.menu.name, order.menu.nameMy),
                   removed: voidedQuantity(order.voids),
                 }))}
                 total={orderLinesTotal(round.orders)}
@@ -322,15 +327,14 @@ export default async function HistoryPage({
                 {bill.billNumber}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {bill.rounds.length}{" "}
-                {bill.rounds.length === 1 ? "round" : "rounds"}
+                {t("roundCount", { count: bill.rounds.length })}
               </Typography>
             </Box>
             <Typography
               variant="body1"
               sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
             >
-              {formatAmount(bill.combinedTotal)}
+              {price(bill.combinedTotal)}
             </Typography>
           </Stack>
         </Box>

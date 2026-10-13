@@ -39,9 +39,11 @@ export type MenuSumAggregateOutputType = {
 export type MenuMinAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   price: number | null
   assetUrl: string | null
   description: string | null
+  descriptionMy: string | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -50,9 +52,11 @@ export type MenuMinAggregateOutputType = {
 export type MenuMaxAggregateOutputType = {
   id: number | null
   name: string | null
+  nameMy: string | null
   price: number | null
   assetUrl: string | null
   description: string | null
+  descriptionMy: string | null
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
@@ -61,9 +65,11 @@ export type MenuMaxAggregateOutputType = {
 export type MenuCountAggregateOutputType = {
   id: number
   name: number
+  nameMy: number
   price: number
   assetUrl: number
   description: number
+  descriptionMy: number
   createdAt: number
   updateTime: number
   isArchived: number
@@ -84,9 +90,11 @@ export type MenuSumAggregateInputType = {
 export type MenuMinAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   price?: true
   assetUrl?: true
   description?: true
+  descriptionMy?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -95,9 +103,11 @@ export type MenuMinAggregateInputType = {
 export type MenuMaxAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   price?: true
   assetUrl?: true
   description?: true
+  descriptionMy?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -106,9 +116,11 @@ export type MenuMaxAggregateInputType = {
 export type MenuCountAggregateInputType = {
   id?: true
   name?: true
+  nameMy?: true
   price?: true
   assetUrl?: true
   description?: true
+  descriptionMy?: true
   createdAt?: true
   updateTime?: true
   isArchived?: true
@@ -204,9 +216,11 @@ export type MenuGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type MenuGroupByOutputType = {
   id: number
   name: string
+  nameMy: string | null
   price: number
   assetUrl: string | null
   description: string | null
+  descriptionMy: string | null
   createdAt: Date
   updateTime: Date
   isArchived: boolean
@@ -238,9 +252,11 @@ export type MenuWhereInput = {
   NOT?: Prisma.MenuWhereInput | Prisma.MenuWhereInput[]
   id?: Prisma.IntFilter<"Menu"> | number
   name?: Prisma.StringFilter<"Menu"> | string
+  nameMy?: Prisma.StringNullableFilter<"Menu"> | string | null
   price?: Prisma.IntFilter<"Menu"> | number
   assetUrl?: Prisma.StringNullableFilter<"Menu"> | string | null
   description?: Prisma.StringNullableFilter<"Menu"> | string | null
+  descriptionMy?: Prisma.StringNullableFilter<"Menu"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Menu"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Menu"> | Date | string
   isArchived?: Prisma.BoolFilter<"Menu"> | boolean
@@ -254,9 +270,11 @@ export type MenuWhereInput = {
 export type MenuOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   price?: Prisma.SortOrder
   assetUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  descriptionMy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -273,9 +291,11 @@ export type MenuWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.MenuWhereInput[]
   NOT?: Prisma.MenuWhereInput | Prisma.MenuWhereInput[]
   name?: Prisma.StringFilter<"Menu"> | string
+  nameMy?: Prisma.StringNullableFilter<"Menu"> | string | null
   price?: Prisma.IntFilter<"Menu"> | number
   assetUrl?: Prisma.StringNullableFilter<"Menu"> | string | null
   description?: Prisma.StringNullableFilter<"Menu"> | string | null
+  descriptionMy?: Prisma.StringNullableFilter<"Menu"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Menu"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"Menu"> | Date | string
   isArchived?: Prisma.BoolFilter<"Menu"> | boolean
@@ -289,9 +309,11 @@ export type MenuWhereUniqueInput = Prisma.AtLeast<{
 export type MenuOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrderInput | Prisma.SortOrder
   price?: Prisma.SortOrder
   assetUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  descriptionMy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -308,9 +330,11 @@ export type MenuScalarWhereWithAggregatesInput = {
   NOT?: Prisma.MenuScalarWhereWithAggregatesInput | Prisma.MenuScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Menu"> | number
   name?: Prisma.StringWithAggregatesFilter<"Menu"> | string
+  nameMy?: Prisma.StringNullableWithAggregatesFilter<"Menu"> | string | null
   price?: Prisma.IntWithAggregatesFilter<"Menu"> | number
   assetUrl?: Prisma.StringNullableWithAggregatesFilter<"Menu"> | string | null
   description?: Prisma.StringNullableWithAggregatesFilter<"Menu"> | string | null
+  descriptionMy?: Prisma.StringNullableWithAggregatesFilter<"Menu"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Menu"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"Menu"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"Menu"> | boolean
@@ -318,9 +342,11 @@ export type MenuScalarWhereWithAggregatesInput = {
 
 export type MenuCreateInput = {
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -334,9 +360,11 @@ export type MenuCreateInput = {
 export type MenuUncheckedCreateInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -349,9 +377,11 @@ export type MenuUncheckedCreateInput = {
 
 export type MenuUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -365,9 +395,11 @@ export type MenuUpdateInput = {
 export type MenuUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -381,9 +413,11 @@ export type MenuUncheckedUpdateInput = {
 export type MenuCreateManyInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -391,9 +425,11 @@ export type MenuCreateManyInput = {
 
 export type MenuUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -402,9 +438,11 @@ export type MenuUpdateManyMutationInput = {
 export type MenuUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -413,9 +451,11 @@ export type MenuUncheckedUpdateManyInput = {
 export type MenuCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   price?: Prisma.SortOrder
   assetUrl?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  descriptionMy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -429,9 +469,11 @@ export type MenuAvgOrderByAggregateInput = {
 export type MenuMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   price?: Prisma.SortOrder
   assetUrl?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  descriptionMy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -440,9 +482,11 @@ export type MenuMaxOrderByAggregateInput = {
 export type MenuMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  nameMy?: Prisma.SortOrder
   price?: Prisma.SortOrder
   assetUrl?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  descriptionMy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
@@ -530,9 +574,11 @@ export type MenuUpdateOneRequiredWithoutOrdersNestedInput = {
 
 export type MenuCreateWithoutMenuStocksInput = {
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -545,9 +591,11 @@ export type MenuCreateWithoutMenuStocksInput = {
 export type MenuUncheckedCreateWithoutMenuStocksInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -575,9 +623,11 @@ export type MenuUpdateToOneWithWhereWithoutMenuStocksInput = {
 
 export type MenuUpdateWithoutMenuStocksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -590,9 +640,11 @@ export type MenuUpdateWithoutMenuStocksInput = {
 export type MenuUncheckedUpdateWithoutMenuStocksInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -604,9 +656,11 @@ export type MenuUncheckedUpdateWithoutMenuStocksInput = {
 
 export type MenuCreateWithoutMenuMenuCategoryInput = {
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -619,9 +673,11 @@ export type MenuCreateWithoutMenuMenuCategoryInput = {
 export type MenuUncheckedCreateWithoutMenuMenuCategoryInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -649,9 +705,11 @@ export type MenuUpdateToOneWithWhereWithoutMenuMenuCategoryInput = {
 
 export type MenuUpdateWithoutMenuMenuCategoryInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -664,9 +722,11 @@ export type MenuUpdateWithoutMenuMenuCategoryInput = {
 export type MenuUncheckedUpdateWithoutMenuMenuCategoryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -678,9 +738,11 @@ export type MenuUncheckedUpdateWithoutMenuMenuCategoryInput = {
 
 export type MenuCreateWithoutMenuAddonCategoriesInput = {
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -693,9 +755,11 @@ export type MenuCreateWithoutMenuAddonCategoriesInput = {
 export type MenuUncheckedCreateWithoutMenuAddonCategoriesInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -723,9 +787,11 @@ export type MenuUpdateToOneWithWhereWithoutMenuAddonCategoriesInput = {
 
 export type MenuUpdateWithoutMenuAddonCategoriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -738,9 +804,11 @@ export type MenuUpdateWithoutMenuAddonCategoriesInput = {
 export type MenuUncheckedUpdateWithoutMenuAddonCategoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -752,9 +820,11 @@ export type MenuUncheckedUpdateWithoutMenuAddonCategoriesInput = {
 
 export type MenuCreateWithoutDisableLocationMenusInput = {
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -767,9 +837,11 @@ export type MenuCreateWithoutDisableLocationMenusInput = {
 export type MenuUncheckedCreateWithoutDisableLocationMenusInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -797,9 +869,11 @@ export type MenuUpdateToOneWithWhereWithoutDisableLocationMenusInput = {
 
 export type MenuUpdateWithoutDisableLocationMenusInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -812,9 +886,11 @@ export type MenuUpdateWithoutDisableLocationMenusInput = {
 export type MenuUncheckedUpdateWithoutDisableLocationMenusInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -826,9 +902,11 @@ export type MenuUncheckedUpdateWithoutDisableLocationMenusInput = {
 
 export type MenuCreateWithoutOrdersInput = {
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -841,9 +919,11 @@ export type MenuCreateWithoutOrdersInput = {
 export type MenuUncheckedCreateWithoutOrdersInput = {
   id?: number
   name: string
+  nameMy?: string | null
   price: number
   assetUrl?: string | null
   description?: string | null
+  descriptionMy?: string | null
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
@@ -871,9 +951,11 @@ export type MenuUpdateToOneWithWhereWithoutOrdersInput = {
 
 export type MenuUpdateWithoutOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -886,9 +968,11 @@ export type MenuUpdateWithoutOrdersInput = {
 export type MenuUncheckedUpdateWithoutOrdersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  nameMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   price?: Prisma.IntFieldUpdateOperationsInput | number
   assetUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptionMy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -968,9 +1052,11 @@ export type MenuCountOutputTypeCountOrdersArgs<ExtArgs extends runtime.Types.Ext
 export type MenuSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   assetUrl?: boolean
   description?: boolean
+  descriptionMy?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -985,9 +1071,11 @@ export type MenuSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type MenuSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   assetUrl?: boolean
   description?: boolean
+  descriptionMy?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -996,9 +1084,11 @@ export type MenuSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type MenuSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   assetUrl?: boolean
   description?: boolean
+  descriptionMy?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
@@ -1007,15 +1097,17 @@ export type MenuSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type MenuSelectScalar = {
   id?: boolean
   name?: boolean
+  nameMy?: boolean
   price?: boolean
   assetUrl?: boolean
   description?: boolean
+  descriptionMy?: boolean
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
 }
 
-export type MenuOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "price" | "assetUrl" | "description" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["menu"]>
+export type MenuOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "nameMy" | "price" | "assetUrl" | "description" | "descriptionMy" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["menu"]>
 export type MenuInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   menuMenuCategory?: boolean | Prisma.Menu$menuMenuCategoryArgs<ExtArgs>
   menuAddonCategories?: boolean | Prisma.Menu$menuAddonCategoriesArgs<ExtArgs>
@@ -1039,9 +1131,11 @@ export type $MenuPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
+    nameMy: string | null
     price: number
     assetUrl: string | null
     description: string | null
+    descriptionMy: string | null
     createdAt: Date
     updateTime: Date
     isArchived: boolean
@@ -1475,9 +1569,11 @@ export interface Prisma__MenuClient<T, Null = never, ExtArgs extends runtime.Typ
 export interface MenuFieldRefs {
   readonly id: Prisma.FieldRef<"Menu", 'Int'>
   readonly name: Prisma.FieldRef<"Menu", 'String'>
+  readonly nameMy: Prisma.FieldRef<"Menu", 'String'>
   readonly price: Prisma.FieldRef<"Menu", 'Int'>
   readonly assetUrl: Prisma.FieldRef<"Menu", 'String'>
   readonly description: Prisma.FieldRef<"Menu", 'String'>
+  readonly descriptionMy: Prisma.FieldRef<"Menu", 'String'>
   readonly createdAt: Prisma.FieldRef<"Menu", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"Menu", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"Menu", 'Boolean'>

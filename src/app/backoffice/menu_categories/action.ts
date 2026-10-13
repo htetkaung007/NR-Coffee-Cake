@@ -28,6 +28,7 @@ const CreateMenuCategory = toSafeResult(
       input.name,
       locationId,
       input.isEnabled,
+      input.nameMy,
     );
   },
 );
@@ -59,6 +60,7 @@ const UpdateMenuCategory = toSafeResult(
     return MenuCategoryService.updateMenuCategory(input.menuCategoryId, {
       companyId,
       name: input.name,
+      nameMy: input.nameMy,
       locationId,
       isEnabled: input.isEnabled,
       removeMenuIds: input.removeMenuIds,

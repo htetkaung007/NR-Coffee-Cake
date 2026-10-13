@@ -2,11 +2,12 @@
 
 import { useEffect, useId, useRef } from "react";
 import { Box, Stack, Typography } from "@mui/material";
+import { useFormatter, useTranslations } from "next-intl";
 import {
+  isJustSent,
   progressFraction,
   remainingLabel,
   remainingSeconds,
-  sentAgoLabel,
   waitingAnnouncement,
   waitingCopy,
 } from "@/app/lib/approval/approvalCountdown";
@@ -29,6 +30,8 @@ function Countdown({
   approval: ApprovalTiming;
   orderNumber: string;
 }) {
+  const t = useTranslations("approval");
+  const format = useFormatter();
   const copy = waitingCopy(approval.autoCancels);
   const elapsedMs = useMonotonicElapsed(approval, TICK_MS);
   const seconds = remainingSeconds(approval.secondsRemaining, elapsedMs);
@@ -49,22 +52,43 @@ function Countdown({
   const liveRef = useRef<HTMLDivElement | null>(null);
   const previousSeconds = useRef<number | null>(null);
   useEffect(() => {
-    const message = waitingAnnouncement(
+    const announcement = waitingAnnouncement(
       previousSeconds.current,
       seconds,
       approval.autoCancels,
     );
     previousSeconds.current = seconds;
-    if (message && liveRef.current) liveRef.current.textContent = message;
-  }, [seconds, approval.autoCancels]);
+    if (announcement && liveRef.current) {
+      liveRef.current.textContent =
+        announcement.key === "minutesLeftToConfirm"
+          ? t(announcement.key, announcement.values)
+          : t(announcement.key);
+    }
+  }, [seconds, approval.autoCancels, t]);
+
+  // "Sent 3 minutes ago" in the customer's language — worked out from
+  // the seconds alone (only their difference matters), not the phone's
+  // clock.
+  const sentAgo = isJustSent(secondsSinceSent)
+    ? t("sentJustNow")
+    : t("sentAgo", {
+        ago: format.relativeTime(new Date(0), new Date(secondsSinceSent * 1000)),
+      });
+  const remaining = remainingLabel(seconds);
+  // The deadline on the shop's clock (next-intl's timeZone), in the
+  // customer's language.
+  const deadlineTime = format.dateTime(new Date(approval.expiresAt), {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
   return (
     <>
       {isOverdue ? (
         <Box sx={{ mt: 2 }}>
-          <Typography variant="body2">{copy.overdue}</Typography>
+          {copy.overdue && <Typography variant="body2">{t(copy.overdue)}</Typography>}
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {sentAgoLabel(secondsSinceSent)}
+            {sentAgo}
           </Typography>
         </Box>
       ) : (
@@ -98,19 +122,21 @@ function Countdown({
               variant="body2"
               sx={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
             >
-              {remainingLabel(seconds)}
+              {remaining.key === "checking"
+                ? t("checking")
+                : t(remaining.key, remaining.values)}
             </Typography>
           </Stack>
 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {copy.deadlineLine(approval.deadlineTime)}
+            {t(copy.deadline, { time: deadlineTime })}
           </Typography>
         </>
       )}
 
       {copy.hint && seconds > 0 && seconds <= HINT_FROM_SECONDS && (
         <Typography variant="body2" sx={{ mt: 1 }}>
-          {copy.hint(orderNumber)}
+          {t(copy.hint, { number: orderNumber })}
         </Typography>
       )}
 
@@ -152,6 +178,8 @@ export default function ApprovalWaitingPanel({
   const titleId = useId();
   // Without timing, the plain Counter wording (the only case that can
   // lack one).
+  const t = useTranslations("approval");
+  const tCommon = useTranslations("common");
   const copy = waitingCopy(approval?.autoCancels ?? true);
 
   return (
@@ -169,13 +197,13 @@ export default function ApprovalWaitingPanel({
       }}
     >
       <Typography id={titleId} variant="h6" component="h2">
-        {copy.title}
+        {t(copy.title)}
       </Typography>
       <Typography variant="body1" sx={{ mt: 0.5 }}>
-        Order {orderNumber}
+        {tCommon("orderNumber", { number: orderNumber })}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-        {copy.subtitle}
+        {t("subtitle")}
       </Typography>
       {approval && <Countdown approval={approval} orderNumber={orderNumber} />}
       {children}

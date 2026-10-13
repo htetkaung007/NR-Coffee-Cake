@@ -15,7 +15,9 @@ import { firstUnownedId } from "../lib/access/ownership";
 
 type Tx = Prisma.TransactionClient;
 
-type CategoryRef = { id: number; name: string };
+/** A category as the menu lists carry it — with its Myanmar name (null:
+ *  customers see the English one). */
+type CategoryRef = { id: number; name: string; nameMy?: string | null };
 
 /** getMenusForLocation's list, pure (unit-tested): only menus LISTED
  *  here (isMenuListed — not hidden at the location, in at least one
@@ -64,7 +66,11 @@ export function listMenusAtLocation<
     menus: listed,
     categories: visibleCategories
       .filter((category) => usedIds.has(category.id))
-      .map((category) => ({ id: category.id, name: category.name })),
+      .map((category) => ({
+        id: category.id,
+        name: category.name,
+        nameMy: category.nameMy ?? null,
+      })),
   };
 }
 
@@ -77,6 +83,9 @@ export class MenuService {
     name: string;
     price: number;
     description?: string;
+    /** Myanmar name / description (null: show the English ones). */
+    nameMy: string | null;
+    descriptionMy: string | null;
     quantity: number;
     isAvailable: boolean;
     categoryIds: number[];
@@ -93,9 +102,11 @@ export class MenuService {
       const menu = await tx.menu.create({
         data: {
           name: input.name,
+          nameMy: input.nameMy,
           price: input.price,
           assetUrl: "",
           description: input.description,
+          descriptionMy: input.descriptionMy,
         },
       });
 
@@ -210,14 +221,14 @@ export class MenuService {
         isArchived: false,
         menuCategory: { isArchived: false },
       },
-      include: { menuCategory: { select: { id: true, name: true } } },
+      include: { menuCategory: { select: { id: true, name: true, nameMy: true } } },
       orderBy: MENU_CATEGORY_ORDER.map((order) => ({ menuCategory: order })),
     });
     // A menu can be linked to more than one category (see createMenu/
     // updateMenu's categoryIds array) — collect every one per menu
     // instead of a Map keyed by menuId, which would silently keep only
     // the last link and drop the rest.
-    const categoriesByMenuId = new Map<number, { id: number; name: string }[]>();
+    const categoriesByMenuId = new Map<number, CategoryRef[]>();
     for (const link of categoryLinks) {
       const categories = categoriesByMenuId.get(link.menuId) ?? [];
       categories.push(link.menuCategory);
@@ -248,7 +259,11 @@ export class MenuService {
       return {
         id: menu.id,
         name: menu.name,
+        // Myanmar name / description for customers who choose Myanmar
+        // (null: the English ones show — lib/i18n/localizedText).
+        nameMy: menu.nameMy,
         description: menu.description || "",
+        descriptionMy: menu.descriptionMy,
         price: menu.price,
         categoryRefs,
         categories:
@@ -329,8 +344,10 @@ export class MenuService {
     return {
       id: menu.id,
       name: menu.name,
+      nameMy: menu.nameMy,
       price: menu.price,
       description: menu.description || "",
+      descriptionMy: menu.descriptionMy,
       imageUrl: menu.assetUrl || null,
       quantity: stock?.quantity ?? 0,
       isAvailable: !(stock?.isManuallyDisabled ?? false),
@@ -339,10 +356,12 @@ export class MenuService {
         .map((link) => ({
           id: link.addonCategory.id,
           name: link.addonCategory.name,
+          nameMy: link.addonCategory.nameMy,
           isRequired: link.addonCategory.isRequired,
           addons: link.addonCategory.addons.map((addon) => ({
             id: addon.id,
             name: addon.name,
+            nameMy: addon.nameMy,
             price: addon.price,
             isAvailable: addon.isAvailable,
           })),
@@ -399,8 +418,10 @@ export class MenuService {
     return {
       id: menu.id,
       name: menu.name,
+      nameMy: menu.nameMy,
       price: menu.price,
       description: menu.description || "",
+      descriptionMy: menu.descriptionMy,
       imageUrl: menu.assetUrl || null,
       categoryIds: categoryLinks.map((link) => link.menuCategoryId),
       addonCategoryIds: addonCategoryLinks.map((link) => link.addonCategoryId),
@@ -415,6 +436,9 @@ export class MenuService {
       price: number;
       quantity: number;
       description?: string;
+      /** Myanmar name / description (null: show the English ones). */
+      nameMy: string | null;
+      descriptionMy: string | null;
       isAvailable: boolean;
       categoryIds: number[];
       addonCategoryIds: number[];
@@ -437,8 +461,10 @@ export class MenuService {
         where: { id: menuId },
         data: {
           name: input.name,
+          nameMy: input.nameMy,
           price: input.price,
           description: input.description,
+          descriptionMy: input.descriptionMy,
         },
       });
 

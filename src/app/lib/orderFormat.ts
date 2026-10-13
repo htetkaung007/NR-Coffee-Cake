@@ -11,7 +11,9 @@ export const CURRENCY_LABEL = "MMK";
  *  place that styles them apart (a big number, a small currency). The
  *  ONE place an amount is formatted; formatAmount joins the parts. */
 export function formatAmountParts(amount: number) {
-  return { value: amount.toLocaleString(), currency: CURRENCY_LABEL };
+  // en-US: thousands separators and Western digits on every device (a
+  // phone set to Burmese would otherwise get Myanmar digits).
+  return { value: amount.toLocaleString("en-US"), currency: CURRENCY_LABEL };
 }
 
 /** "1,234 MMK" — every price and total on screen and on paper. */

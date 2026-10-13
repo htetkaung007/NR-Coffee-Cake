@@ -1,5 +1,8 @@
 "use client";
 
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
+import { useTranslations } from "next-intl";
+import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Box, Divider, Stack, Typography } from "@mui/material";
@@ -38,7 +41,6 @@ import type {
   Shortage,
 } from "@/app/(storefront)/cart/CartList";
 import { AddMoreButton, CartListPanel, CartPageShell } from "./CartPageParts";
-import { formatAmount } from "@/app/lib/orderFormat";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -88,6 +90,10 @@ export default function TableCartPageClient({
   initialRejectedRound,
 }: TableCartPageClientProps) {
   const router = useRouter();
+  const t = useTranslations("cart");
+  const { price } = useCustomerPrice();
+  const errorMessage = useErrorMessage();
+  const tCommon = useTranslations("common");
   const [draftItems, setDraftItems] = useState(initialDraftItems);
   const [activeRound, setActiveRound] = useState(initialActiveRound);
   // Has the customer already moved on from this round's "Order confirmed"
@@ -162,7 +168,7 @@ export default function TableCartPageClient({
         line.note ?? undefined,
       );
       if (!result.success) {
-        setError(result.error.message);
+        setError(errorMessage(result.error));
         return;
       }
       setDraftItems((current) =>
@@ -178,7 +184,7 @@ export default function TableCartPageClient({
     startTransition(async () => {
       const result = await removeDraftItemAction(tableId, orderId);
       if (!result.success) {
-        setError(result.error.message);
+        setError(errorMessage(result.error));
         return;
       }
       setDraftItems((current) => current.filter((item) => item.id !== orderId));
@@ -191,7 +197,7 @@ export default function TableCartPageClient({
     startTransition(async () => {
       const result = await submitDraftAction(tableId, locationId);
       if (!result.success) {
-        setError(result.error.message);
+        setError(errorMessage(result.error));
         setIsSending(false);
         return;
       }
@@ -253,8 +259,8 @@ export default function TableCartPageClient({
         <OrderRejectedScreen
           orderNumber={rejectedRound.orderNumber}
           reason={rejectedRound.cancelReason}
-          nextStep="You can add items and send again."
-          primaryLabel="Back to menu"
+          nextStep={t("tableRejectedNextStep")}
+          primaryLabel={tCommon("backToMenu")}
           onPrimary={() => {
             dismissRejectedRound(tableId, roundId);
             goBackToMenu();
@@ -312,9 +318,9 @@ export default function TableCartPageClient({
           spacing={1.5}
           sx={{ alignItems: "center", mb: 2 }}
         >
-          <BackCircleButton ariaLabel="Back to menu" onClick={goBackToMenu} />
+          <BackCircleButton ariaLabel={tCommon("backToMenu")} onClick={goBackToMenu} />
           <Stack>
-            <Typography variant="h6">Table order</Typography>
+            <Typography variant="h6">{t("tableOrder")}</Typography>
             <Typography variant="caption" color="text.secondary">
               {shopName ?? "Café Maw"}
             </Typography>
@@ -334,7 +340,9 @@ export default function TableCartPageClient({
               approval={activeRound.approval}
             >
               <WithdrawRoundControls
-                confirmMessage={`This cancels the order for everyone at ${tableName ?? "your table"}.`}
+                confirmMessage={t("tableCancelConfirm", {
+                  table: tableName ?? t("yourTable"),
+                })}
                 onChange={() => withdrawOwnRound("change")}
                 onCancel={() => withdrawOwnRound("cancel")}
               />
@@ -360,7 +368,7 @@ export default function TableCartPageClient({
               {showingRound ? (
                 <>
                   <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 700 }}>
-                    Sent to kitchen · {activeRound?.orderNumber ?? ""}
+                    {t("sentToKitchen", { number: activeRound?.orderNumber ?? "" })}
                   </Typography>
                   {/* Same per-person cards as before Send, read-only. */}
                   <DraftList draftItems={roundItems} readOnly />
@@ -383,10 +391,10 @@ export default function TableCartPageClient({
                 sx={{ justifyContent: "space-between", mb: 1.5 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  Total Price
+                  {tCommon("totalPrice")}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {formatAmount(showingRound ? roundTotal : draftTotal)}
+                  {price(showingRound ? roundTotal : draftTotal)}
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1}>
@@ -401,7 +409,7 @@ export default function TableCartPageClient({
                       hasShortage
                     }
                     onClick={handleSendToKitchen}
-                    submitLabel="Send to Kitchen"
+                    submitLabel={t("sendToKitchen")}
                   />
                 </Box>
               </Stack>
@@ -413,8 +421,7 @@ export default function TableCartPageClient({
               color="error"
               sx={{ display: "block", mt: 1 }}
             >
-              Some items ran out — remove or reduce them before sending to the
-              kitchen.
+              {t("shortage")}
             </Typography>
           )}
         </Box>
@@ -436,7 +443,7 @@ export default function TableCartPageClient({
             : undefined
         }
         onSubmit={async (_menuId, quantity, addonIds, note) => {
-          if (!editingItem) return "Nothing to update.";
+          if (!editingItem) return tCommon("nothingToUpdate");
           const result = await updateDraftItemAction(
             tableId,
             editingItem.id,
@@ -445,7 +452,7 @@ export default function TableCartPageClient({
             note,
           );
           if (!result.success) {
-            return result.error.message;
+            return errorMessage(result.error);
           }
           // The server's saved line — its add-ons carry their own
           // price snapshots, which the line total needs.

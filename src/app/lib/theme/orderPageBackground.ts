@@ -1,10 +1,12 @@
 import { alpha, type Theme } from "@mui/material/styles";
 
-/** Narrowest the menu page's frame is allowed to be. Below this the page
- *  stops shrinking (and scrolls sideways) instead of squeezing the top
- *  bar, search/category bar, card grid and bottom bar into a layout that
- *  breaks on very small phones. */
-export const ORDER_PAGE_MIN_WIDTH = 375;
+/** Narrowest the customer pages are built for (DESIGN.md §18: 320px
+ *  first). Every customer page must fit this without sideways scrolling
+ *  — a larger floor here made phones narrower than it (e.g. 360px) lay
+ *  the page out wider than the screen and zoom out, cutting off the
+ *  search field and the cart button. Never raise it to hide an overflow;
+ *  fix what doesn't shrink instead. */
+export const ORDER_PAGE_MIN_WIDTH = 320;
 
 /** Shared by TableOrderClient and CounterOrderClient (page background)
  *  and MenuBrowser (sticky search/category bar, via its backgroundImage

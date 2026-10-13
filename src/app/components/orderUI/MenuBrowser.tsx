@@ -5,31 +5,48 @@ import { Box, InputAdornment, Tab, Tabs, TextField } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 import MenuDetailDialog from "./MenuDetailDialog";
-import MenuCard from "../MenuCard";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
+import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
+import MenuCard, { type MenuCardLabels } from "../MenuCard";
 import type { MenuDetail } from "./menuDetail/types";
 
 export interface MenuOption {
   id: number;
   name: string;
+  /** Myanmar name / description (null: the English ones show). */
+  nameMy?: string | null;
   price: number;
   description: string;
+  descriptionMy?: string | null;
+  /** The menu's categories by their English name — the tab filter's key
+   *  (a tab shows its localized label, never filters on it). */
   categories: string[];
   imageUrl: string | null;
   stockQuantity: number;
   isAvailable: boolean;
 }
 
+/** A category tab: its English name (the key) and Myanmar name. */
+export interface CategoryTab {
+  name: string;
+  nameMy?: string | null;
+}
+
 /** "All" is a synthetic tab, never a real category name from the DB —
  *  kept as a constant so the comparison below can't drift out of sync
- *  with the Tab's own value. */
+ *  with the Tab's own value. Its LABEL is translated (menu.all); this
+ *  value never shows. */
 const ALL_CATEGORIES = "All";
 
 interface MenuBrowserProps {
   menus: MenuOption[];
   /** The category tabs after "All", in the server's order — the visible
    *  categories that hold at least one of `menus` (see
-   *  MenuService.getMenusForLocation). Rendered as-is, never re-sorted. */
-  categories: string[];
+   *  MenuService.getMenusForLocation). Rendered as-is, never re-sorted.
+   *  `name` (English) is the tab's key; the label is localizedText. */
+  categories: CategoryTab[];
   locationId: number;
   canOrder: boolean;
   /** Matches the caller page's own background so the sticky search/
@@ -51,7 +68,7 @@ interface MenuBrowserProps {
    *  error message string to show inline in the dialog, or null on
    *  success — same contract MenuDetailDialog itself expects. */
   onAddToCart: (
-    menu: { id: number; name: string; price: number },
+    menu: { id: number; name: string; nameMy?: string | null; price: number },
     quantity: number,
     addonIds: number[],
     note: string,
@@ -86,10 +103,31 @@ export default function MenuBrowser({
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORIES);
   const [detailMenuId, setDetailMenuId] = useState<number | null>(null);
+  const t = useTranslations("menu");
+  const locale = useLocale();
+  const { price } = useCustomerPrice();
+  const cardLabels: MenuCardLabels = {
+    outOfStock: t("outOfStock"),
+    onlyLeft: (count) => t("onlyLeft", { count }),
+    seeMore: t("seeMore"),
+    viewDetails: (name, price) => t("viewDetails", { name, price }),
+    outOfStockLabel: (name, price) => t("outOfStockLabel", { name, price }),
+    price,
+    // Myanmar: the words "ထည့်မယ်"; English: the + icon.
+    addText: locale === "my" ? t("addShort") : null,
+  };
 
+  // Each tab: its key (the English name, what menus are filtered by)
+  // and its label in the customer's language.
   const categories = useMemo(
-    () => [ALL_CATEGORIES, ...categoryNames],
-    [categoryNames],
+    () => [
+      { key: ALL_CATEGORIES, label: t("all") },
+      ...categoryNames.map((category) => ({
+        key: category.name,
+        label: localizedText(locale, category.name, category.nameMy),
+      })),
+    ],
+    [categoryNames, locale, t],
   );
 
   // MUI's scrollable Tabs only nudges the newly-selected tab just far
@@ -100,17 +138,17 @@ export default function MenuBrowser({
   // to be tapped while only partly visible.
   const tabRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const visibleMenus = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    return menus.filter((menu) => {
-      const matchesCategory =
-        activeCategory === ALL_CATEGORIES ||
-        menu.categories.includes(activeCategory);
-      const matchesSearch =
-        term.length === 0 || menu.name.toLowerCase().includes(term);
-      return matchesCategory && matchesSearch;
-    });
-  }, [menus, activeCategory, searchTerm]);
+  const visibleMenus = useMemo(
+    () =>
+      menus.filter(
+        (menu) =>
+          (activeCategory === ALL_CATEGORIES ||
+            menu.categories.includes(activeCategory)) &&
+          // Both names, whatever language is chosen.
+          matchesMenuSearch(menu, searchTerm),
+      ),
+    [menus, activeCategory, searchTerm],
+  );
 
   return (
     <>
@@ -131,7 +169,7 @@ export default function MenuBrowser({
         <TextField
           fullWidth
           size="small"
-          placeholder="Search Menus"
+          placeholder={t("searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{ mb: 2 }}
@@ -170,11 +208,11 @@ export default function MenuBrowser({
         >
           {categories.map((category) => (
             <Tab
-              key={category}
-              value={category}
-              label={category}
+              key={category.key}
+              value={category.key}
+              label={category.label}
               ref={(el) => {
-                tabRefs.current[category] = el;
+                tabRefs.current[category.key] = el;
               }}
               sx={{ minHeight: 36 }}
             />
@@ -184,7 +222,9 @@ export default function MenuBrowser({
 
       <Box
         sx={{
-          minWidth: 320,
+          // No min width of its own: the grid fits whatever the page's
+          // content column is (288px at a 320px screen).
+          minWidth: 0,
           // Don't let cards balloon on very wide screens.
           maxWidth: 1400,
           mx: "auto",
@@ -209,8 +249,10 @@ export default function MenuBrowser({
           <MenuCard
             key={menu.id}
             item={{
-              name: menu.name,
-              description: menu.description,
+              // Shop data in the customer's language (English when no
+              // Myanmar text — lib/i18n/localizedText).
+              name: localizedText(locale, menu.name, menu.nameMy),
+              description: localizedText(locale, menu.description, menu.descriptionMy),
               price: menu.price,
               category: menu.categories.join(", "),
               imageUrl: menu.imageUrl,
@@ -218,6 +260,7 @@ export default function MenuBrowser({
               isAvailable: menu.isAvailable,
             }}
             onAddToCart={() => setDetailMenuId(menu.id)}
+            labels={cardLabels}
           />
         ))}
       </Box>
@@ -230,7 +273,7 @@ export default function MenuBrowser({
         onClose={() => setDetailMenuId(null)}
         onSubmit={async (menuId, quantity, addonIds, note, detail) => {
           const menu = menus.find((item) => item.id === menuId);
-          if (!menu) return "This item is no longer available.";
+          if (!menu) return t("itemUnavailable");
           return onAddToCart(menu, quantity, addonIds, note, detail);
         }}
       />

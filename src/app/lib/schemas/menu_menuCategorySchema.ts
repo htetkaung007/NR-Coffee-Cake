@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { idListSchema, idSchema, optionalIdListSchema } from "./common";
+import {
+  idListSchema,
+  idSchema,
+  optionalIdListSchema,
+  optionalTextSchema,
+} from "./common";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 import { NO_LOCATION_MESSAGE } from "@/app/lib/menu/menuLocations";
 
@@ -20,10 +25,16 @@ export const createMenuSchema = z.object({
     .trim()
     .min(1, MENU_NAME_REQUIRED_MESSAGE)
     .max(50, "Menu item name cannot exceed 50 characters."),
+  /** Shown to customers who choose Myanmar; null → the English name. */
+  nameMy: optionalTextSchema(50, "Myanmar name cannot exceed 50 characters."),
   description: z
     .string()
     .trim()
     .max(100, "Description cannot exceed 100 characters."),
+  descriptionMy: optionalTextSchema(
+    100,
+    "Myanmar description cannot exceed 100 characters.",
+  ),
   price: z.coerce
     .number()
     .int(MENU_PRICE_WHOLE_MESSAGE)
@@ -73,6 +84,8 @@ export type SetMenuAvailableInput = z.infer<typeof setMenuAvailableSchema>;
 
 export const createMenuCategorySchema = z.object({
   name: z.string().trim().min(1, "Category name is required.").max(50),
+  /** Shown to customers who choose Myanmar; null → the English name. */
+  nameMy: optionalTextSchema(50),
   isEnabled: z.boolean(),
 });
 

@@ -168,11 +168,11 @@ export class AppService {
 
   private static async createDefaultMenu(tx: Tx, companyId: number) {
     const menuCategory = await tx.menuCategory.create({
-      data: { name: "Default MenuCategory", companyId },
+      data: { name: "Default MenuCategory", nameMy: "နမူနာ အမျိုးအစား", companyId },
     });
 
     const menu = await tx.menu.create({
-      data: { name: "Default Menu", price: 100, assetUrl: "" },
+      data: { name: "Default Menu", nameMy: "နမူနာ မီနူး", price: 100, assetUrl: "" },
     });
 
     await tx.menuMenuCategory.create({
@@ -184,17 +184,24 @@ export class AppService {
 
   private static async createDefaultAddons(tx: Tx, menuId: number) {
     const addonCategory = await tx.addonCategories.create({
-      data: { name: "Default Addon Category" },
+      data: { name: "Default Addon Category", nameMy: "နမူနာ အပိုထည့်စရာ" },
     });
 
     await tx.menuAddonCategories.create({
       data: { menuId, addonCategoryId: addonCategory.id },
     });
 
-    const addonNames = ["Default Addon1", "Default Addon2", "Default Addon3"];
+    // English name + Myanmar name (a new setup only — existing rows are
+    // never touched).
+    const addonNames = [
+      ["Default Addon1", "နမူနာ ထည့်စရာ ၁"],
+      ["Default Addon2", "နမူနာ ထည့်စရာ ၂"],
+      ["Default Addon3", "နမူနာ ထည့်စရာ ၃"],
+    ] as const;
     await tx.addon.createMany({
-      data: addonNames.map((name) => ({
+      data: addonNames.map(([name, nameMy]) => ({
         name,
+        nameMy,
         addonCategoryId: addonCategory.id,
         price: 10,
       })),

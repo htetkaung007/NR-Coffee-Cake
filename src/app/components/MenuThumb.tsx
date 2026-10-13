@@ -39,6 +39,15 @@ export default function MenuThumb({
         loading="lazy"
         className={imageClassName}
         onError={() => setFailedUrl(imageUrl)}
+        // A server-rendered image can fail BEFORE hydration attaches
+        // onError — the browser's broken icon and alt text would stay.
+        // So it's checked once it's in the page too: loaded with no
+        // pixels means it failed.
+        ref={(element: HTMLImageElement | null) => {
+          if (element?.complete && element.naturalWidth === 0) {
+            setFailedUrl(imageUrl);
+          }
+        }}
         sx={[
           { display: "block", width: "100%", height: "100%", objectFit: "cover" },
           ...(Array.isArray(imageSx) ? imageSx : [imageSx]),

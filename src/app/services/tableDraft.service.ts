@@ -253,10 +253,10 @@ export class TableDraftService {
       where: { id: orderId, orderSessionId: null },
     });
     if (!order) {
-      throw new NotFoundError("Order", orderId);
+      throw new NotFoundError("Order", orderId, "DRAFT_NOT_FOUND");
     }
     if (order.contributorToken !== contributorToken) {
-      throw new ValidationError("This item belongs to someone else.");
+      throw new ValidationError("This item belongs to someone else.", "DRAFT_NOT_YOURS");
     }
     return order;
   }
@@ -421,7 +421,7 @@ export class TableDraftService {
       include: { OrdersAddons: true, menu: true },
     });
     if (draftItems.length === 0) {
-      throw new ValidationError("Nothing to submit yet.");
+      throw new ValidationError("Nothing to submit yet.", "NOTHING_TO_SUBMIT");
     }
     // A draft picked before its menu was hidden here can't be sent.
     await CartValidationService.assertMenusListed(

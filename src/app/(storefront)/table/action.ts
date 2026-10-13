@@ -50,7 +50,7 @@ async function requireContributorToken(tableId: number) {
   ) {
     throw new AppError(
       "This table's order was closed. Scan the QR code again to start a new one.",
-      "UNAUTHORIZED",
+      "TABLE_SESSION_CLOSED",
     );
   }
   return token;

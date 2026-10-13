@@ -91,7 +91,7 @@ export default async function CartPage({
         TableSessionService.getRejectedRoundForTable(tableId),
         // Who's who as labels — the tokens stay on the server.
         TableDraftService.getContributorLabels(tableId, contributorToken),
-        TableSessionService.getTableName(tableId),
+        TableSessionService.getTableName(tableId, locationId),
       ]);
 
       return (

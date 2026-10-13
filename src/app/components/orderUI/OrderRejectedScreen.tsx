@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
@@ -7,23 +8,10 @@ import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import type { ShownCancelReason } from "@/app/lib/order/roundOutcome";
 import OutcomeScreenShell from "./OutcomeScreenShell";
 
-/** The heading: the counter's decision, or a customer's own cancel. */
-function titleFor(reason: ShownCancelReason) {
-  return reason === "WITHDRAWN"
-    ? "Your last order was cancelled"
-    : "Your last order wasn't accepted";
-}
-
-/** What happened to it, in one line. */
-function explanationFor(reason: ShownCancelReason, orderNumber: string) {
-  switch (reason) {
-    case "REJECTED":
-      return `Order ${orderNumber} was not accepted by the counter.`;
-    case "EXPIRED":
-      return `The counter didn't confirm Order ${orderNumber} in time.`;
-    case "WITHDRAWN":
-      return `Order ${orderNumber} was cancelled before the counter accepted it.`;
-  }
+/** The heading's message: the counter's decision, or a customer's own
+ *  cancel. (What happened is cancelReason.<REASON>.) */
+function titleKey(reason: ShownCancelReason) {
+  return reason === "WITHDRAWN" ? "cancelledTitle" : "notAcceptedTitle";
 }
 
 interface OrderRejectedScreenProps {
@@ -62,11 +50,14 @@ export default function OrderRejectedScreen({
 }: OrderRejectedScreenProps) {
   // Filled just after mount: a live region inserted with its text already
   // in it isn't reliably announced, a change to an existing one is.
+  const t = useTranslations("outcome");
+  const tReason = useTranslations("cancelReason");
+  const title = t(titleKey(reason));
   const [announcement, setAnnouncement] = useState("");
   useEffect(() => {
-    const timeout = setTimeout(() => setAnnouncement(titleFor(reason)), 100);
+    const timeout = setTimeout(() => setAnnouncement(title), 100);
     return () => clearTimeout(timeout);
-  }, [reason]);
+  }, [title]);
 
   return (
     <OutcomeScreenShell
@@ -95,14 +86,14 @@ export default function OrderRejectedScreen({
         component="h1"
         sx={{ mb: 1, textAlign: "center" }}
       >
-        {titleFor(reason)}
+        {title}
       </Typography>
       <Typography
         variant="body2"
         color="text.secondary"
         sx={{ textAlign: "center", mb: 1 }}
       >
-        {explanationFor(reason, orderNumber)}
+        {tReason(reason, { number: orderNumber })}
       </Typography>
       <Typography
         variant="body2"

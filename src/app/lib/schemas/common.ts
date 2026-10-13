@@ -30,3 +30,15 @@ export function optionalIdListSchema() {
     .optional()
     .transform((ids) => unique(ids ?? []));
 }
+
+/** An optional free-text field (e.g. a Myanmar name): trimmed, at most
+ *  `max` characters (the same limit as its English field); empty,
+ *  missing or null all read as null. Any script is allowed. */
+export function optionalTextSchema(max: number, maxMessage?: string) {
+  return z
+    .string()
+    .trim()
+    .max(max, maxMessage)
+    .nullish()
+    .transform((value) => (value ? value : null));
+}

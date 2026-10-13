@@ -24,6 +24,7 @@ export default async function MenuCategoriesPage() {
     return {
       id: category.id,
       name: category.name,
+      nameMy: category.nameMy,
       itemCount: menus.length,
       menus,
     };
