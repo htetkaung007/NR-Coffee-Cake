@@ -4,16 +4,28 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Box, Button } from "@mui/material";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
 
 /** The cart pages' frame (Counter: CartPageClient; Table:
  *  TableCartPageClient) — full height, content centred at 720px, the
- *  list panel taking the remaining height. */
+ *  list panel taking the remaining height. Its bottom keeps the floating
+ *  bottom bar's room, so the panel's Send area ends 8px above the bar
+ *  (both visible; the list scrolls inside the panel, under neither). */
 export function CartPageShell({ children }: { children: ReactNode }) {
   return (
-    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        height: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        pb: BOTTOM_BAR_CLEARANCE,
+      }}
+    >
       <Box
         sx={{
           p: { xs: 2, sm: 3 },
+          // The clearance below already holds the 8px gap.
+          pb: { xs: 0, sm: 0 },
           maxWidth: 720,
           mx: "auto",
           width: "100%",

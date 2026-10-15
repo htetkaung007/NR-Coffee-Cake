@@ -7,6 +7,7 @@ import {
   Chip,
   IconButton,
   InputAdornment,
+  Skeleton,
   Stack,
   TextField,
   Typography,
@@ -18,12 +19,20 @@ import SearchIcon from "@mui/icons-material/Search";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useDebouncedValue } from "@/app/lib/hooks/useDebouncedValue";
 import MenuCard from "@/app/components/MenuCard";
+import type { AppLocale } from "@/app/lib/i18n/locale";
+import { customerWords } from "@/app/lib/i18n/customerWords";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
 
 /** What MenuCard needs, plus what the grid filters and adds by. */
 export interface StaffMenu {
   id: number;
   name: string;
+  /** Myanmar names for the menu side's မြန်မာ view (null = none: the
+   *  English shows). */
+  nameMy: string | null;
   description: string;
+  descriptionMy: string | null;
   /** Today's price, for browsing. */
   price: number;
   imageUrl: string | null;
@@ -40,24 +49,51 @@ export interface StaffMenu {
 export interface StaffCategory {
   id: number;
   name: string;
+  nameMy?: string | null;
 }
 
 const ALL = "all" as const;
+
+/** The grid's columns — the cards and their placeholders alike. */
+const gridSx = {
+  display: "grid",
+  // Phones: 2 columns. From sm: as many 150–200px cards as fit —
+  // 3–4 on tablets, 5–7 on wide desktops beside the order panel.
+  gridTemplateColumns: {
+    xs: "repeat(2, 1fr)",
+    sm: "repeat(auto-fill, minmax(150px, 200px))",
+  },
+  gap: 1.5,
+  alignItems: "stretch",
+} as const;
 
 /**
  * The New Order page's left side: search, category chips ("All" first,
  * then the categories in the server's order — never re-sorted) and the
  * menu grid. What a tap on a card does is the parent's call (onSelect).
+ *
+ * `language` is the menu side's EN | မြန်မာ view (names, chips, the
+ * card's price and Add words) — null until this device's choice is read,
+ * when chips and cards hold their space as placeholders so the other
+ * language never flashes. The search matches BOTH names either way.
  */
 export default function StaffMenuGrid({
   menus,
   categories,
+  language,
   onSelect,
 }: {
   menus: StaffMenu[];
   categories: StaffCategory[];
+  language: AppLocale | null;
   onSelect: (menu: StaffMenu) => void;
 }) {
+  // Myanmar: the customer's own words (lib/i18n/customerWords); English:
+  // the card's Backoffice defaults ("MMK", the + icon).
+  const myanmar = useMemo(
+    () => (language === "my" ? customerWords("my") : null),
+    [language],
+  );
   const theme = useTheme();
   // lg: where the page shows the current order beside the menus.
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
@@ -79,19 +115,19 @@ export default function StaffMenuGrid({
   }, [isDesktop]);
 
   const visibleMenus = useMemo(() => {
-    const term = debouncedSearch.trim().toLowerCase();
     return menus.filter(
       (menu) =>
         (activeCategory === ALL || menu.categoryIds.includes(activeCategory)) &&
-        (term === "" || menu.name.toLowerCase().includes(term)),
+        // Both names, whichever language is shown (as the customer menu).
+        matchesMenuSearch(menu, debouncedSearch),
     );
   }, [menus, activeCategory, debouncedSearch]);
 
   const chips: { value: number | typeof ALL; label: string }[] = [
-    { value: ALL, label: "All" },
+    { value: ALL, label: myanmar?.allCategories ?? "All" },
     ...categories.map((category) => ({
       value: category.id,
-      label: category.name,
+      label: localizedText(language ?? "en", category.name, category.nameMy),
     })),
   ];
 
@@ -140,7 +176,16 @@ export default function StaffMenuGrid({
           "&::-webkit-scrollbar": { display: "none" },
         }}
       >
-        {chips.map((chip) => {
+        {language === null
+          ? [0, 1, 2, 3].map((placeholder) => (
+              <Skeleton
+                key={placeholder}
+                variant="rounded"
+                aria-hidden
+                sx={{ flexShrink: 0, width: 88, height: 44, borderRadius: 999 }}
+              />
+            ))
+          : chips.map((chip) => {
           const selected = chip.value === activeCategory;
           return (
             <Chip
@@ -151,17 +196,31 @@ export default function StaffMenuGrid({
               variant={selected ? "filled" : "outlined"}
               onClick={() => setActiveCategory(chip.value)}
               label={
-                <Typography variant="body2" component="span">
+                <Typography
+                  variant="body2"
+                  component="span"
+                  lang={language === "my" ? "my" : undefined}
+                >
                   {chip.label}
                 </Typography>
               }
               sx={{ flexShrink: 0, minHeight: 44, borderRadius: 999 }}
             />
           );
-        })}
+            })}
       </Stack>
 
-      {visibleMenus.length === 0 ? (
+      {language === null ? (
+        <Box aria-hidden sx={gridSx}>
+          {Array.from({ length: 8 }, (_, placeholder) => (
+            <Skeleton
+              key={placeholder}
+              variant="rounded"
+              sx={{ height: "auto", aspectRatio: "0.95" }}
+            />
+          ))}
+        </Box>
+      ) : visibleMenus.length === 0 ? (
         <Stack
           spacing={1}
           sx={{
@@ -188,25 +247,17 @@ export default function StaffMenuGrid({
           )}
         </Stack>
       ) : (
-        <Box
-          sx={{
-            display: "grid",
-            // Phones: 2 columns. From sm: as many 150–200px cards as fit —
-            // 3–4 on tablets, 5–7 on wide desktops beside the order panel.
-            gridTemplateColumns: {
-              xs: "repeat(2, 1fr)",
-              sm: "repeat(auto-fill, minmax(150px, 200px))",
-            },
-            gap: 1.5,
-            alignItems: "stretch",
-          }}
-        >
+        <Box sx={gridSx} lang={language === "my" ? "my" : undefined}>
           {visibleMenus.map((menu) => (
             <MenuCard
               key={menu.id}
               item={{
-                name: menu.name,
-                description: menu.description,
+                name: localizedText(language, menu.name, menu.nameMy),
+                description: localizedText(
+                  language,
+                  menu.description,
+                  menu.descriptionMy,
+                ),
                 price: menu.price,
                 category: menu.categoryNames.join(", "),
                 imageUrl: menu.imageUrl,
@@ -214,6 +265,9 @@ export default function StaffMenuGrid({
                 isAvailable: menu.isAvailable,
               }}
               showDescription={false}
+              // မြန်မာ: "3,500 ကျပ်" and the "ထည့်မယ်" Add, as customers
+              // see it; EN: the card's own defaults.
+              labels={myanmar?.cardLabels}
               // The card's own disabled state covers out-of-stock menus.
               onAddToCart={() => onSelect(menu)}
             />

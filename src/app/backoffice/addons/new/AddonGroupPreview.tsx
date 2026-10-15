@@ -5,8 +5,6 @@ import {
   Box,
   Card,
   Stack,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import AddonCategorySection from "@/app/components/orderUI/menuDetail/AddonCategorySection";
@@ -17,6 +15,7 @@ import {
 } from "@/app/components/orderUI/OrderUiLabels";
 import type { OptionRow } from "@/app/lib/hooks/useOptionRows";
 import type { AppLocale } from "@/app/lib/i18n/locale";
+import NameLanguageToggle from "@/app/components/NameLanguageToggle";
 import { customerWords } from "@/app/lib/i18n/customerWords";
 import { myanmarTypographyStyles } from "@/app/lib/theme/myanmarTypography";
 import { SurfaceThemeScope } from "@/app/lib/theme/ThemeModeProvider";
@@ -103,26 +102,11 @@ export default function AddonGroupPreview({
         <Typography variant="subtitle2" component="h2">
           Customer sees
         </Typography>
-        <ToggleButtonGroup
-          exclusive
-          size="small"
+        <NameLanguageToggle
           value={previewLocale}
-          onChange={(_, next: AppLocale | null) => {
-            if (next) setPreviewLocale(next);
-          }}
-          aria-label="Preview language"
-        >
-          <ToggleButton value="en" sx={{ minWidth: 44, minHeight: 44 }}>
-            EN
-          </ToggleButton>
-          <ToggleButton
-            value="my"
-            lang="my"
-            sx={{ minWidth: 44, minHeight: 44 }}
-          >
-            မြန်မာ
-          </ToggleButton>
-        </ToggleButtonGroup>
+          onChange={setPreviewLocale}
+          ariaLabel="Preview language"
+        />
       </Stack>
 
       {isEmpty ? (

@@ -17,6 +17,7 @@ import {
   withdrawRoundAction,
 } from "@/app/(storefront)/counter/action";
 import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
+import { useBottomBarPage } from "./OrderBotBar";
 import { useCartValidation } from "@/app/lib/hooks/useCartValidation";
 import { cartLineTotal, cartLinesTotal } from "@/app/lib/order/orderTotals";
 import {
@@ -129,6 +130,7 @@ export default function CartPageClient({
   const errorMessage = useErrorMessage();
   const tCommon = useTranslations("common");
   const browserCart = useBrowserCart(locationId);
+  useBottomBarPage({ cartCount: browserCart.itemCount, locationId });
   const { cart } = browserCart;
   const validation = useCartValidation(
     (lines) => validateCartAction({ locationId, lines }),

@@ -407,6 +407,14 @@ independently of the app config). Everything else still goes through
 - The Backoffice stays English (root `<html lang="en">`) — **decided: no
   Backoffice translation.** Its only Myanmar is shop data the owner
   typed (e.g. the Add-ons panel's EN | မြန်မာ names toggle).
+- **NameLanguageToggle** (`components/NameLanguageToggle.tsx`) is THE
+  EN | မြန်မာ switch for Backoffice views of what customers could read
+  (the Add-ons panel, the add-on form's preview, staff New Order's menu
+  side). It is display only — it never changes stored data: the staff
+  cart keeps what it stores today, the order sent and every Order List /
+  detail / kitchen / print / report screen stay English. Its Myanmar
+  words come from `lib/i18n/customerWords` → `lib/i18n/customerLabels`,
+  the same key → label mapping the storefront uses (never literals).
 - **Add-on names on order lines are read LIVE** from Addon /
   AddonCategories (`LINE_ADDONS_WITH_GROUP` in orderLineQuery — the
   group's name and nameMy only), not snapshotted: renaming a group or

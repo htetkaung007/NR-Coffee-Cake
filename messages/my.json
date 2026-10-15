@@ -99,7 +99,8 @@
     "label": "အော်ဒါ လမ်းညွှန်",
     "menu": "မီနူး",
     "cart": "ခြင်းတောင်း",
-    "history": "မှတ်တမ်း"
+    "history": "မှတ်တမ်း",
+    "cartWithCount": "ခြင်းတောင်း၊ ပစ္စည်း {count} ခု"
   },
   "shop": {
     "unavailableTitle": "ဆိုင် ယခု မဖွင့်သေးပါ",
@@ -200,7 +201,13 @@
     "noteLabel": "အထူး မှာကြားချက် (မဖြစ်မနေ မဟုတ်)",
     "noteWords": "{count}/{max} စကားလုံး",
     "couldNotLoad": "ဤပစ္စည်းကို ဖွင့်၍ မရပါ။",
-    "justSoldOut": "ဤပစ္စည်း ကုန်သွားပါပြီ။"
+    "justSoldOut": "ဤပစ္စည်း ကုန်သွားပါပြီ။",
+    "chooseOne": "၁ ခု ရွေးပါ",
+    "chooseAny": "ကြိုက်သလောက် ရွေးပါ",
+    "optional": "ရွေးချယ်နိုင်",
+    "done": "✓ ပြီးပြီ",
+    "pleaseChoose": "ရွေးရန် လိုအပ်သည်: {groups}",
+    "yourChoice": "သင့်ရွေးချယ်မှု: {choices}"
   },
   "lineNotice": {
     "priceUpdated": "ဈေးနှုန်း ပြောင်းသွားပါပြီ:",

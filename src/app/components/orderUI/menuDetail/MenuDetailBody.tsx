@@ -5,7 +5,6 @@ import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 import AddonCategorySection from "./AddonCategorySection";
 import MenuDetailHeader from "./MenuDetailHeader";
 import NoteField from "./NoteField";
-import QuantityStepper, { type QuantityControl } from "./QuantityStepper";
 import { SHEET_TEXT } from "./sheetText";
 import type { AddonCategory, MenuDetail, MenuDetailVariant } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
@@ -20,17 +19,22 @@ interface MenuDetailBodyProps {
   selected: Record<number, number[]>;
   onSelectRequired: (categoryId: number, addonId: number) => void;
   onToggleOptional: (categoryId: number, addonId: number) => void;
-  quantity: QuantityControl;
   isSoldOut: boolean;
   showNote: boolean;
   note: string;
   onNoteChange: (next: string) => void;
   error: string | null;
+  /** Each group's section element, by group id — so the "Please choose"
+   *  line can bring the first missing one into view. */
+  registerGroup?: (groupId: number, element: HTMLDivElement | null) => void;
 }
 
-/** The scrollable middle of the item detail: loading / couldn't-load
- *  states, or the item (header, sold-out notice, quantity on tablet /
- *  desktop, addon groups, note, error). */
+/** The scrollable part of the item detail: loading / couldn't-load
+ *  states, or the item — on the phone sheet: header, sold-out notice,
+ *  addon groups, note, error; in the tablet / desktop dialog (its right
+ *  column): sold-out notice, addon groups as tiles, note, error (the
+ *  photo, name and price are MenuDetailAside's, the quantity is in the
+ *  footer). */
 export default function MenuDetailBody({
   variant,
   loading,
@@ -39,12 +43,12 @@ export default function MenuDetailBody({
   selected,
   onSelectRequired,
   onToggleOptional,
-  quantity,
   isSoldOut,
   showNote,
   note,
   onNoteChange,
   error,
+  registerGroup,
 }: MenuDetailBodyProps) {
   const labels = useOrderUiLabels().menuDetail;
   const isSheet = variant === "sheet";
@@ -70,31 +74,21 @@ export default function MenuDetailBody({
 
   return (
     <Stack spacing={2.5}>
-      <MenuDetailHeader detail={detail} variant={variant} />
+      {isSheet && <MenuDetailHeader detail={detail} />}
 
-      {isSoldOut && <Alert severity="warning">{labels.justSoldOut}</Alert>}
-
-      {/* Tablet / desktop keep the stepper in the content; on phones it
-         lives in the sticky footer instead (see MenuDetailFooter). */}
-      {!isSheet && !isSoldOut && (
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-            {labels.quantity}
-          </Typography>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <QuantityStepper quantity={quantity} variant="plain" />
-            {quantity.max <= 5 && (
-              <Typography variant="caption" color="warning.main">
-                {labels.onlyLeft(quantity.max)}
-              </Typography>
-            )}
-          </Stack>
-        </Box>
+      {isSoldOut && (
+        // In the dialog it can be the first block: clear of the close
+        // button in the top-right corner.
+        <Alert severity="warning" sx={isSheet ? undefined : { mr: 5 }}>
+          {labels.justSoldOut}
+        </Alert>
       )}
 
-      {categories.map((category) => (
+      {categories.map((category, index) => (
         <AddonCategorySection
           key={category.id}
+          isFirst={!isSheet && index === 0 && !isSoldOut}
+          ref={(element) => registerGroup?.(category.id, element)}
           category={category}
           selectedIds={selected[category.id] ?? []}
           variant={variant}
@@ -104,7 +98,17 @@ export default function MenuDetailBody({
       ))}
 
       {showNote && (
-        <NoteField value={note} onChange={onNoteChange} variant={variant} />
+        <Box
+          // With no groups, the note is the dialog's first block.
+          sx={!isSheet && categories.length === 0 ? { mr: 5 } : undefined}
+        >
+          <NoteField
+            value={note}
+            onChange={onNoteChange}
+            variant={variant}
+            showDivider={isSheet || categories.length > 0}
+          />
+        </Box>
       )}
 
       {error && <Alert severity="error">{error}</Alert>}

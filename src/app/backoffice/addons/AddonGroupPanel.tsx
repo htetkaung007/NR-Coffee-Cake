@@ -11,8 +11,6 @@ import {
   IconButton,
   Stack,
   Switch,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -22,6 +20,7 @@ import { formatAmount } from "@/app/lib/orderFormat";
 import { OWNER_ONLY_MESSAGE } from "@/app/lib/access/rolePolicy";
 import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
 import type { AppLocale } from "@/app/lib/i18n/locale";
+import NameLanguageToggle from "@/app/components/NameLanguageToggle";
 import { customerWords } from "@/app/lib/i18n/customerWords";
 import LocalizedName, { hasNoMyanmarName } from "@/app/components/LocalizedName";
 import RequiredChip from "./RequiredChip";
@@ -119,23 +118,11 @@ export default function AddonGroupPanel({
             <RequiredChip isRequired={group.isRequired} />
           </Box>
         </Box>
-        <ToggleButtonGroup
-          exclusive
-          size="small"
+        <NameLanguageToggle
           value={nameLocale}
-          onChange={(_, next: AppLocale | null) => {
-            if (next) setNameLocale(next);
-          }}
-          aria-label="Show names in"
-          sx={{ flexShrink: 0 }}
-        >
-          <ToggleButton value="en" sx={{ minWidth: 44, minHeight: 44 }}>
-            EN
-          </ToggleButton>
-          <ToggleButton value="my" lang="my" sx={{ minWidth: 44, minHeight: 44 }}>
-            မြန်မာ
-          </ToggleButton>
-        </ToggleButtonGroup>
+          onChange={setNameLocale}
+          ariaLabel="Show names in"
+        />
         {isOwner && (
           <Button
             component={Link}

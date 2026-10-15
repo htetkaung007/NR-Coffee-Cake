@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef } from "react";
 import {
   Box,
   Checkbox,
@@ -11,6 +12,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha, type Theme } from "@mui/material/styles";
 
 import { SHEET_TEXT } from "./sheetText";
 import type { Addon, AddonCategory, MenuDetailVariant } from "./types";
@@ -33,12 +35,40 @@ const sheetRowSx = {
   },
 };
 
-/** Tablet / desktop addon row: control on the left, as before. */
-const dialogRowSx = {
-  width: "100%",
-  mr: 0,
-  "& .MuiFormControlLabel-label": { width: "100%" },
-};
+/** Tablet / desktop: the options as a grid of tiles — 2 columns once the
+ *  column is ≥ 420px wide (a container query on the scrolling column),
+ *  1 below. */
+const tileGridSx = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr)",
+  gap: 1,
+  "@container (min-width: 420px)": {
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  },
+} as const;
+
+/** One option tile — the WHOLE tile is the label of its radio / checkbox
+ *  (one control). Selected: a 2px primary edge drawn as the 1px border +
+ *  a 1px inset ring, so the box never changes size. */
+function tileSx(selected: boolean) {
+  return (theme: Theme) => ({
+    m: 0,
+    width: "100%",
+    minHeight: 48,
+    pr: 1.5,
+    border: "1px solid",
+    borderColor: selected ? "primary.main" : "divider",
+    borderRadius: 1,
+    boxShadow: selected
+      ? `inset 0 0 0 1px ${theme.palette.primary.main}`
+      : "none",
+    bgcolor: selected
+      ? alpha(theme.palette.primary.main, 0.06)
+      : "background.paper",
+    transition: "background-color 150ms ease, border-color 150ms ease",
+    "& .MuiFormControlLabel-label": { flex: 1, minWidth: 0 },
+  });
+}
 
 interface AddonCategorySectionProps {
   category: AddonCategory;
@@ -50,28 +80,69 @@ interface AddonCategorySectionProps {
   /** The Backoffice's "Customer sees" preview only: in Myanmar, a name
    *  with no Myanmar twin gets a dotted warning underline. */
   markUntranslated?: boolean;
+  /** The dialog's first block: no divider above it (dividers only go
+   *  BETWEEN groups), and its header keeps clear of the dialog's
+   *  top-right close button. */
+  isFirst?: boolean;
 }
 
-/** One addon group: its title (with a "Required" chip when it is), then
- *  a radio list (required — pick one) or a checkbox list (optional). */
-export default function AddonCategorySection({
-  category,
-  selectedIds,
-  variant,
-  onSelectRequired,
-  onToggleOptional,
-  markUntranslated = false,
-}: AddonCategorySectionProps) {
-  const labelsAll = useOrderUiLabels();
-  const labels = labelsAll.menuDetail;
+/**
+ * One addon group: its title and a radio list (required — pick one) or
+ * a checkbox list (optional).
+ * - sheet (phone): rows with the control on the right, a "Required" chip
+ *   (warning) beside the title — as before.
+ * - dialog (tablet / desktop): title + "Choose 1" / "Choose any", a
+ *   status chip (Required → ✓ Done; Optional), and the options as tiles.
+ * The section's root takes a ref and focus (tabIndex -1), so the
+ * "Please choose: …" line can bring a missing group into view.
+ */
+const AddonCategorySection = forwardRef<
+  HTMLDivElement,
+  AddonCategorySectionProps
+>(function AddonCategorySection(
+  {
+    category,
+    selectedIds,
+    variant,
+    onSelectRequired,
+    onToggleOptional,
+    markUntranslated = false,
+    isFirst = false,
+  },
+  ref,
+) {
+  const labels = useOrderUiLabels().menuDetail;
   const isSheet = variant === "sheet";
-  const rowSx = isSheet ? sheetRowSx : dialogRowSx;
-  const labelPlacement = isSheet ? "start" : "end";
+  const isAnswered = selectedIds.length > 0;
+  const headingId = `addon-group-${category.id}-title`;
+
+  const title = (
+    <Typography
+      id={headingId}
+      variant="subtitle1"
+      component="h3"
+      sx={{ fontWeight: 600, minWidth: 0, overflowWrap: "anywhere" }}
+    >
+      <ShopName
+        en={category.name}
+        my={category.nameMy}
+        mark={markUntranslated}
+      />
+    </Typography>
+  );
+
+  const optionLabel = (addon: Addon) => (
+    <AddonLabel
+      addon={addon}
+      variant={variant}
+      markUntranslated={markUntranslated}
+    />
+  );
 
   return (
-    <Box>
+    <Box ref={ref} tabIndex={-1} sx={{ outline: "none", scrollMarginTop: 16 }}>
       {/* 16px above the group's title, 8px below it. */}
-      <Divider sx={{ mb: 2 }} />
+      {!isFirst && <Divider sx={{ mb: 2 }} />}
       <Stack
         direction="row"
         spacing={1}
@@ -79,43 +150,42 @@ export default function AddonCategorySection({
           justifyContent: "space-between",
           alignItems: "center",
           mb: 1,
+          // The 44px close button sits 12px in; + 8px → its chip stays
+          // clear of it (24px column padding + 40px = 64px from the edge).
+          ...(isFirst && { pr: 5 }),
         }}
       >
-        {/* Larger than the option rows (body2), so each group reads as
-            its own question; long names wrap (Myanmar too) instead of
-            pushing the chip off a 320px screen. */}
-        <Typography
-          variant="subtitle1"
-          component="h3"
-          sx={{ fontWeight: 600, minWidth: 0, overflowWrap: "anywhere" }}
-        >
-          <ShopName
-            en={category.name}
-            my={category.nameMy}
-            mark={markUntranslated}
-          />
-        </Typography>
-        {category.isRequired && (
-          <Chip
-            label={labels.required}
-            size="small"
-            color="error"
-            variant="outlined"
-            sx={{
-              flexShrink: 0,
-              height: 20,
-              fontSize: isSheet ? "0.65rem" : "0.7rem",
-              fontWeight: 600,
-              borderRadius: 1,
-            }}
-          />
+        {isSheet ? (
+          title
+        ) : (
+          <Box sx={{ minWidth: 0 }}>
+            {title}
+            <Typography variant="caption" component="p" color="text.secondary">
+              {category.isRequired ? labels.chooseOne : labels.chooseAny}
+            </Typography>
+          </Box>
+        )}
+        {isSheet ? (
+          category.isRequired && (
+            <StatusChip tone="warning" label={labels.required} />
+          )
+        ) : category.isRequired ? (
+          isAnswered ? (
+            <StatusChip tone="success" label={labels.done} />
+          ) : (
+            <StatusChip tone="warning" label={labels.required} />
+          )
+        ) : (
+          <StatusChip tone="neutral" label={labels.optional} />
         )}
       </Stack>
 
       {category.isRequired ? (
         <RadioGroup
+          aria-labelledby={headingId}
           value={selectedIds[0] ?? ""}
           onChange={(event) => onSelectRequired(Number(event.target.value))}
+          sx={isSheet ? undefined : tileGridSx}
         >
           {category.addons.map((addon) => (
             <FormControlLabel
@@ -123,20 +193,20 @@ export default function AddonCategorySection({
               value={addon.id}
               disabled={!addon.isAvailable}
               control={<Radio size="small" />}
-              label={
-                <AddonLabel
-                  addon={addon}
-                  variant={variant}
-                  markUntranslated={markUntranslated}
-                />
-              }
-              labelPlacement={labelPlacement}
-              sx={rowSx}
+              label={optionLabel(addon)}
+              labelPlacement={isSheet ? "start" : "end"}
+              sx={isSheet ? sheetRowSx : tileSx(selectedIds.includes(addon.id))}
             />
           ))}
         </RadioGroup>
       ) : (
-        <Stack>
+        <Box
+          role="group"
+          aria-labelledby={headingId}
+          sx={
+            isSheet ? { display: "flex", flexDirection: "column" } : tileGridSx
+          }
+        >
           {category.addons.map((addon) => (
             <FormControlLabel
               key={addon.id}
@@ -148,20 +218,59 @@ export default function AddonCategorySection({
                   onChange={() => onToggleOptional(addon.id)}
                 />
               }
-              label={
-                <AddonLabel
-                  addon={addon}
-                  variant={variant}
-                  markUntranslated={markUntranslated}
-                />
-              }
-              labelPlacement={labelPlacement}
-              sx={rowSx}
+              label={optionLabel(addon)}
+              labelPlacement={isSheet ? "start" : "end"}
+              sx={isSheet ? sheetRowSx : tileSx(selectedIds.includes(addon.id))}
             />
           ))}
-        </Stack>
+        </Box>
       )}
     </Box>
+  );
+});
+
+export default AddonCategorySection;
+
+/** A group's state as a small chip — words always (never colour alone):
+ *  warning "Required" until answered, success "✓ Done", neutral
+ *  "Optional". Text in the roles' text shades (≥ 4.5:1). */
+function StatusChip({
+  tone,
+  label,
+}: {
+  tone: "warning" | "success" | "neutral";
+  label: string;
+}) {
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      label={
+        <Typography variant="caption" component="span">
+          {label}
+        </Typography>
+      }
+      sx={(theme) => {
+        if (tone === "neutral") {
+          return {
+            flexShrink: 0,
+            color: "text.secondary",
+            borderColor: "divider",
+          };
+        }
+        const role = theme.palette[tone];
+        const text =
+          (tone === "warning"
+            ? theme.palette.warningText
+            : theme.palette.successText) ?? theme.palette.text.primary;
+        return {
+          flexShrink: 0,
+          color: text,
+          borderColor: role.main,
+          bgcolor: alpha(role.main, 0.12),
+        };
+      }}
+    />
   );
 }
 
@@ -192,27 +301,46 @@ function AddonLabel({
   markUntranslated: boolean;
 }) {
   const { menuDetail: labels, priceDelta } = useOrderUiLabels();
+  const isSheet = variant === "sheet";
   return (
     <Stack
       direction="row"
+      spacing={1}
       sx={{
         width: "100%",
         justifyContent: "space-between",
         alignItems: "center",
       }}
     >
-      <span>
-        <ShopName en={addon.name} my={addon.nameMy} mark={markUntranslated} />
-      </span>
+      {isSheet ? (
+        <span>
+          <ShopName en={addon.name} my={addon.nameMy} mark={markUntranslated} />
+        </span>
+      ) : (
+        <Typography
+          variant="body2"
+          component="span"
+          sx={{ fontWeight: 600, minWidth: 0, overflowWrap: "anywhere" }}
+        >
+          <ShopName en={addon.name} my={addon.nameMy} mark={markUntranslated} />
+        </Typography>
+      )}
       <Typography
         variant="body2"
-        sx={{
+        component="span"
+        sx={(theme) => ({
+          flexShrink: 0,
+          whiteSpace: "nowrap",
           fontWeight: 600,
-          ...(variant === "sheet" && { fontSize: SHEET_TEXT.small }),
-          // The theme's menu price color (the storefront's red; never red
-          // under the Backoffice theme) — "Free" stays success.
-          color: addon.price > 0 ? "decor.price" : "success.main",
-        }}
+          ...(isSheet && { fontSize: SHEET_TEXT.small }),
+          // The menu card's price tone (decor.price: the storefront's
+          // red; text.primary under the Backoffice theme). "Free" in the
+          // success role's text shade.
+          color:
+            addon.price > 0
+              ? theme.palette.decor.price
+              : (theme.palette.successText ?? theme.palette.success.main),
+        })}
       >
         {addon.price > 0 ? priceDelta(addon.price) : labels.free}
       </Typography>

@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { getMenuDetailAction } from "@/app/(storefront)/menu/action";
 import { lineTotal } from "@/app/lib/order/orderTotals";
 
+import MenuDetailAside from "./menuDetail/MenuDetailAside";
 import MenuDetailBody from "./menuDetail/MenuDetailBody";
+import MissingChoiceNotice from "./menuDetail/MissingChoiceNotice";
 import MenuDetailCenteredDialog from "./menuDetail/MenuDetailCenteredDialog";
 import MenuDetailFooter from "./menuDetail/MenuDetailFooter";
 import MenuDetailSheet from "./menuDetail/MenuDetailSheet";
 import type { MenuDetail, MenuDetailVariant } from "./menuDetail/types";
 import { useOrderUiLabels } from "./OrderUiLabels";
 import { localizedText } from "@/app/lib/i18n/localizedText";
+import {
+  choiceSummary,
+  missingRequiredGroups,
+} from "@/app/lib/menu/menuDetailChoice";
 
 /** Pre-fills the dialog for editing an already-added line — see
  *  DraftList's Edit button. Presence of this prop (vs undefined) is
@@ -156,14 +162,6 @@ export default function MenuDetailDialog({
     });
   }
 
-  // Every required category must have a selection before Add to Cart
-  // is enabled — this is UX-only, the real enforcement is server-side
-  // (see OrderSessionService.validateAddonSelection), same reasoning
-  // as the hasSession button-hiding in CounterOrderClient.
-  const missingRequired =
-    detail?.addonCategories
-      .filter((category) => category.isRequired)
-      .some((category) => (selected[category.id] ?? []).length === 0) ?? false;
 
   // Editing an existing line still shows the stock cap so the
   // customer knows how far they can raise the quantity, but a
@@ -213,6 +211,34 @@ export default function MenuDetailDialog({
     (a, b) => Number(b.isRequired) - Number(a.isRequired),
   );
 
+  // Every required category must have a selection before Add to Cart
+  // is enabled — this is UX-only, the real enforcement is server-side
+  // (see OrderSessionService.validateAddonSelection), same reasoning
+  // as the hasSession button-hiding in CounterOrderClient. The missing
+  // ones are named above the button, in display order.
+  const missingGroups = missingRequiredGroups(categories, selected);
+  const missingRequired = missingGroups.length > 0;
+
+  // Each group's section, so "Please choose: …" can show the first one.
+  const groupElements = useRef(new Map<number, HTMLDivElement>());
+  function registerGroup(groupId: number, element: HTMLDivElement | null) {
+    if (element) groupElements.current.set(groupId, element);
+    else groupElements.current.delete(groupId);
+  }
+  function showFirstMissing() {
+    const first = missingGroups[0];
+    const element = first && groupElements.current.get(first.id);
+    if (!element) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    element.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+    element.focus({ preventScroll: true });
+  }
+
   const quantityControl = {
     value: quantity,
     max: maxQuantity,
@@ -227,11 +253,31 @@ export default function MenuDetailDialog({
     <Shell
       open={open}
       onClose={onClose}
+      aside={
+        !isMobile && !loading && detail ? (
+          <MenuDetailAside
+            detail={detail}
+            choices={choiceSummary(uiLocale, categories, selected)}
+          />
+        ) : null
+      }
       footer={
         !loading && detail && canOrder ? (
           <MenuDetailFooter
             variant={variant}
-            name={localizedText(uiLocale, detail.name, detail.nameMy)}
+            notice={
+              isSoldOut ? null : (
+                <MissingChoiceNotice
+                  hasRequiredGroups={categories.some(
+                    (category) => category.isRequired,
+                  )}
+                  missingNames={missingGroups.map((group) =>
+                    localizedText(uiLocale, group.name, group.nameMy),
+                  )}
+                  onShowFirst={showFirstMissing}
+                />
+              )
+            }
             totalPrice={totalPrice}
             quantity={quantityControl}
             isSoldOut={isSoldOut}
@@ -250,8 +296,8 @@ export default function MenuDetailDialog({
         selected={selected}
         onSelectRequired={selectRequired}
         onToggleOptional={toggleOptional}
-        quantity={quantityControl}
         isSoldOut={isSoldOut}
+        registerGroup={registerGroup}
         showNote={canOrder && !isSoldOut}
         note={note}
         onNoteChange={setNote}

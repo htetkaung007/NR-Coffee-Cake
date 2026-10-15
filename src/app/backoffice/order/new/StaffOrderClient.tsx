@@ -56,6 +56,13 @@ import {
   validateStaffCartAction,
 } from "./action";
 import StaffMenuGrid, { type StaffCategory, type StaffMenu } from "./StaffMenuGrid";
+import NameLanguageToggle from "@/app/components/NameLanguageToggle";
+import {
+  OrderUiLabelsProvider,
+  useOrderUiLabels,
+} from "@/app/components/orderUI/OrderUiLabels";
+import { customerWords } from "@/app/lib/i18n/customerWords";
+import { useStaffMenuLanguage } from "@/app/lib/hooks/useStaffMenuLanguage";
 import StaffOrderPanel, {
   type SendCheck,
   type StaffCartLine,
@@ -135,6 +142,17 @@ export default function StaffOrderClient({
 }: StaffOrderClientProps) {
   const router = useRouter();
   const theme = useTheme();
+  // The menu side's EN | မြန်မာ (this device's choice; null until read).
+  // Display only — the stored cart and the order sent never change.
+  const [menuLanguage, setMenuLanguage] = useStaffMenuLanguage();
+  const englishDetailLabels = useOrderUiLabels();
+  const detailLabels = useMemo(
+    () =>
+      menuLanguage === "my"
+        ? customerWords("my").orderUi
+        : englishDetailLabels,
+    [menuLanguage, englishDetailLabels],
+  );
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
   // Tables' In use / Free: re-rendered by the server on the Order List's
@@ -257,6 +275,7 @@ export default function StaffOrderClient({
       index,
       menuId: line.menuId,
       menuName: line.display.name,
+      menuNameMy: line.display.nameMy ?? null,
       quantity: line.quantity,
       price: line.display.unitPrice,
       addons: line.display.addons,
@@ -588,6 +607,7 @@ export default function StaffOrderClient({
         if (cart.pendingRequestId) void checkSendStatus(cart.pendingRequestId);
       }}
       onClose={inDrawer ? () => setIsOrderOpen(false) : undefined}
+      language={menuLanguage ?? "en"}
     />
   );
 
@@ -652,13 +672,31 @@ export default function StaffOrderClient({
     <Box sx={{ px: { xs: 0, sm: 2, lg: 3 }, pt: { xs: 1.5, sm: 2, lg: 3 } }}>
       <Stack direction="row" useFlexGap sx={{ gap: 3, alignItems: "flex-start" }}>
         <Box sx={{ flex: 1, minWidth: 0, pb: { lg: 3 } }}>
-          <Typography component="h1" variant="h6" sx={{ mb: 2 }}>
-            New Order
-          </Typography>
+          {/* The title, and the menu side's EN | မြန်မာ on its right —
+             in sight on every size. */}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
+            <Typography component="h1" variant="h6">
+              New Order
+            </Typography>
+            <NameLanguageToggle
+              value={menuLanguage ?? "en"}
+              onChange={setMenuLanguage}
+              ariaLabel="Menu language"
+            />
+          </Stack>
           {!isDesktop && <Box sx={{ mb: 2 }}>{picker}</Box>}
           <StaffMenuGrid
             menus={menus}
             categories={categories}
+            language={menuLanguage}
             onSelect={handleSelectMenu}
           />
         </Box>
@@ -744,16 +782,21 @@ export default function StaffOrderClient({
         onCancel={() => setPendingSwitch(null)}
       />
 
-      <MenuDetailDialog
-        open={dialog !== null}
-        menuId={dialog?.menuId ?? null}
-        locationId={locationId}
-        canOrder={target !== null}
-        editing={dialog?.editing}
-        onClose={() => setDialog(null)}
-        onSubmit={handleDialogSubmit}
-        loadDetail={getStaffMenuDetailAction}
-      />
+      {/* The detail sheet in the menu side's language: its names and
+         its own words (quantity, note, Required, Add) — the customer's,
+         from the shared OrderUiLabels — or the Backoffice's English. */}
+      <OrderUiLabelsProvider value={detailLabels}>
+        <MenuDetailDialog
+          open={dialog !== null}
+          menuId={dialog?.menuId ?? null}
+          locationId={locationId}
+          canOrder={target !== null}
+          editing={dialog?.editing}
+          onClose={() => setDialog(null)}
+          onSubmit={handleDialogSubmit}
+          loadDetail={getStaffMenuDetailAction}
+        />
+      </OrderUiLabelsProvider>
 
       <Snackbar
         open={sent !== null}

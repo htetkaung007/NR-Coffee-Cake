@@ -7,7 +7,8 @@ import { Box, Snackbar, useTheme } from "@mui/material";
 import { useTranslations } from "next-intl";
 import OrderTopBar from "./OrderTopBar";
 import OrderPlaceHeader from "./OrderPlaceHeader";
-import OrderBotBar from "./OrderBotBar";
+import { useBottomBarPage } from "./OrderBotBar";
+import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
 import ScannedNotice from "./ScannedNotice";
 import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 import type { MenuDetail } from "./menuDetail/types";
@@ -53,6 +54,8 @@ export default function CounterOrderClient({
   // The cart lives in this browser (see useBrowserCart) — adding never
   // calls the server; the cart page checks and submits it.
   const browserCart = useBrowserCart(locationId);
+  // The bottom bar's cart badge: the same count as the top bar's.
+  useBottomBarPage({ cartCount: browserCart.itemCount, locationId });
   // Instant feedback for an add (DESIGN.md Rule 15): the dialog closes,
   // the badge counts up, and this names what was added.
   const [addedName, setAddedName] = useState<string | null>(null);
@@ -120,6 +123,8 @@ export default function CounterOrderClient({
         minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
+        // The floating bottom bar's room — the last card scrolls clear.
+        pb: BOTTOM_BAR_CLEARANCE,
         backgroundColor: pageBackground.color,
         backgroundImage: pageBackground.image,
         backgroundAttachment: "fixed",
@@ -177,7 +182,6 @@ export default function CounterOrderClient({
           onAddToCart={addToCart}
         />
       </Box>
-      <OrderBotBar locationId={locationId} />
       <Snackbar
         open={addedName !== null}
         autoHideDuration={2000}

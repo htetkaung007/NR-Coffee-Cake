@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { useId, useMemo, type ReactNode } from "react";
 import {
   Alert,
   Box,
@@ -22,6 +22,11 @@ import BillLineRows from "@/app/components/BillLineRows";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import BillTotal from "../BillTotal";
 import { moneySx } from "../orderTypography";
+import type { AppLocale } from "@/app/lib/i18n/locale";
+import { customerWords } from "@/app/lib/i18n/customerWords";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { localizeAddonSelections } from "@/app/lib/order/addonLabel";
+import { formatAmount } from "@/app/lib/orderFormat";
 
 /** Highest quantity a line can be raised to — the same cap the staff
  *  cart schema enforces (staffOrderSchema's `quantity`). */
@@ -34,6 +39,9 @@ export interface StaffCartLine {
   index: number;
   menuId: number;
   menuName: string;
+  /** Its Myanmar name, kept with the stored line when it had one — for
+   *  the menu side's မြန်မာ view only (null: the English shows). */
+  menuNameMy: string | null;
   quantity: number;
   /** The unit price last shown (refreshed by every check). */
   price: number;
@@ -64,14 +72,23 @@ const stepperButtonSx = {
   "&.Mui-disabled": { opacity: 0.4 },
 } as const;
 
+/** The menu side's language for the lines' names and prices: English
+ *  keeps the Backoffice's "MMK"; မြန်မာ uses the customer's words. */
+interface LineWords {
+  language: AppLocale;
+  formatMoney: (amount: number) => string;
+}
+
 function OrderLine({
   line,
+  words,
   locked,
   onEdit,
   onChangeQuantity,
   onRemove,
 }: {
   line: StaffCartLine;
+  words: LineWords;
   /** A send is unconfirmed — nothing on the line can change. */
   locked: boolean;
   onEdit: (line: StaffCartLine) => void;
@@ -110,15 +127,24 @@ function OrderLine({
         >
           {/* Itemised like every bill: the item, then each add-on with
              what it adds — the same rows as the order detail's bill. */}
-          <BillLineRows
-            rows={lineBreakdown({
-              name: line.menuName,
-              quantity: line.quantity,
-              unitPrice: line.price,
-              addons: line.addons,
-            })}
-            itemAmountSx={moneySx}
-          />
+          <Box lang={words.language === "my" ? "my" : undefined}>
+            <BillLineRows
+              rows={lineBreakdown({
+                name: localizedText(words.language, line.menuName, line.menuNameMy),
+                quantity: line.quantity,
+                unitPrice: line.price,
+                // "Sweet: Low" in the chosen language (both names).
+                addons: localizeAddonSelections(words.language, line.addons).map(
+                  (addon, index) => ({
+                    ...addon,
+                    unitPrice: line.addons[index].unitPrice,
+                  }),
+                ),
+              })}
+              itemAmountSx={moneySx}
+              formatMoney={words.formatMoney}
+            />
+          </Box>
           {line.note && (
             <Stack
               direction="row"
@@ -206,6 +232,9 @@ interface StaffOrderPanelProps {
   /** The check of an unanswered send, shown above the lines. */
   sendCheck: SendCheck | null;
   onRetryCheck: () => void;
+  /** The menu side's EN | မြန်မာ view: the lines' names and the prices
+   *  (labels and Send stay English). */
+  language: AppLocale;
 }
 
 /**
@@ -230,8 +259,16 @@ export default function StaffOrderPanel({
   locked,
   sendCheck,
   onRetryCheck,
+  language,
 }: StaffOrderPanelProps) {
   const reasonId = useId();
+  const words = useMemo<LineWords>(
+    () => ({
+      language,
+      formatMoney: language === "my" ? customerWords("my").price : formatAmount,
+    }),
+    [language],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
@@ -315,6 +352,7 @@ export default function StaffOrderPanel({
               <OrderLine
                 key={line.index}
                 line={line}
+                words={words}
                 locked={locked}
                 onEdit={onEdit}
                 onChangeQuantity={onChangeQuantity}
@@ -326,7 +364,12 @@ export default function StaffOrderPanel({
       </Box>
 
       <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
-        <BillTotal label="Total" amount={total} sx={{ mb: 2 }} />
+        <BillTotal
+          label="Total"
+          amount={total}
+          formatMoney={words.formatMoney}
+          sx={{ mb: 2 }}
+        />
         <Button
           fullWidth
           variant="contained"

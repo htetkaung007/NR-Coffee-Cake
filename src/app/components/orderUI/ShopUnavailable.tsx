@@ -7,6 +7,7 @@ import {
   ORDER_PAGE_MIN_WIDTH,
   getOrderPageBackground,
 } from "@/app/lib/theme/orderPageBackground";
+import { HideBottomBar } from "./OrderBotBar";
 
 /**
  * What a customer page shows when the menu may not be seen
@@ -35,6 +36,8 @@ export default function ShopUnavailable() {
         backgroundAttachment: "fixed",
       }}
     >
+      {/* A dead end with nothing to navigate to — no bottom bar. */}
+      <HideBottomBar />
       <Box
         role="status"
         sx={{

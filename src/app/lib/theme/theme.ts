@@ -46,6 +46,11 @@ export function getBoTheme(mode: PaletteMode) {
       // (5.6:1 on paper, 5.2:1 on the page) and dark mode error.light
       // (5.7:1 on paper, 6.2:1 on the page).
       errorText: isLight ? "#c62828" : "#e57373",
+      // The warning role as text (the menu detail's "Please choose: …",
+      // shared with the customer side). warning.main is only 3.2:1 on
+      // white; light mode uses a deep amber (6.0:1 on paper, 5.6:1 on
+      // the page), dark mode warning.main itself (8.5:1 / 9.6:1).
+      warningText: isLight ? "#A14A00" : "#ffa726",
       // The roles below are written out with MUI v9's own defaults (all
       // four shades, so nothing is re-derived) — declared only so every
       // Backoffice color can be changed from this file.

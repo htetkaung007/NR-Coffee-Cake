@@ -113,6 +113,8 @@ export default function OrderTopBar({
         bgcolor: "background.paper",
         borderBottom: "1px solid",
         borderColor: "divider",
+        // DESIGN.md §19: clear of the status bar / notch (installed app).
+        pt: "env(safe-area-inset-top, 0px)",
       }}
     >
       {/* [shop icon + name][language][cart] — the cart and the switch

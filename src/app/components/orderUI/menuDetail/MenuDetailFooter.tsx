@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, DialogActions, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 
 import QuantityStepper, { type QuantityControl } from "./QuantityStepper";
 import { SHEET_TEXT } from "./sheetText";
@@ -9,8 +9,6 @@ import { useOrderUiLabels } from "../OrderUiLabels";
 
 interface MenuDetailFooterProps {
   variant: MenuDetailVariant;
-  /** The item's name — shown beside the total in the dialog footer. */
-  name: string;
   totalPrice: number;
   quantity: QuantityControl;
   isSoldOut: boolean;
@@ -19,24 +17,38 @@ interface MenuDetailFooterProps {
   submitDisabled: boolean;
   submitLabel: string;
   onSubmit: () => void;
+  /** Above the button: why it's off (MissingChoiceNotice), if anything. */
+  notice?: React.ReactNode;
 }
 
-/** The sticky action area.
+/** The pinned action area — the button keeps its label always (never
+ *  "Choose …"); why it's off is the notice line above it.
  *  - sheet (phone): stepper + one wide "Add to Cart · total" button on a
- *    single row ("Only N left" above it).
- *  - dialog (tablet / desktop): name + total on a row, then a full-width
- *    button — as it always was. */
+ *    single row ("Only N left" above it) — as before.
+ *  - dialog (tablet / desktop, the right column's foot): stepper on the
+ *    left; the line total (the menu card's price tone) beside the
+ *    button on the right. Wraps under a narrow column. */
 export default function MenuDetailFooter({
   variant,
-  name,
   totalPrice,
   quantity,
   isSoldOut,
   submitDisabled,
   submitLabel,
   onSubmit,
+  notice,
 }: MenuDetailFooterProps) {
   const { menuDetail: labels, price } = useOrderUiLabels();
+  const onlyLeft = !isSoldOut && quantity.max <= 5 && (
+    <Typography
+      variant="caption"
+      color="warning.main"
+      sx={{ display: "block", mb: 0.75 }}
+    >
+      {labels.onlyLeft(quantity.max)}
+    </Typography>
+  );
+
   if (variant === "sheet") {
     return (
       <Box
@@ -50,15 +62,8 @@ export default function MenuDetailFooter({
           pb: "calc(12px + env(safe-area-inset-bottom, 0px))",
         }}
       >
-        {!isSoldOut && quantity.max <= 5 && (
-          <Typography
-            variant="caption"
-            color="warning.main"
-            sx={{ display: "block", mb: 0.75 }}
-          >
-            {labels.onlyLeft(quantity.max)}
-          </Typography>
-        )}
+        {notice}
+        {onlyLeft}
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           {!isSoldOut && <QuantityStepper quantity={quantity} variant="pill" />}
           <Button
@@ -82,38 +87,62 @@ export default function MenuDetailFooter({
   }
 
   return (
-    <DialogActions
+    <Box
       sx={{
-        flexDirection: "column",
-        alignItems: "stretch",
         flexShrink: 0,
         px: 3,
         py: 2,
-        gap: 1,
         borderTop: 1,
         borderColor: "divider",
         bgcolor: "background.paper",
       }}
     >
-      {!isSoldOut && (
+      {notice}
+      {onlyLeft}
+      <Stack
+        direction="row"
+        useFlexGap
+        sx={{ alignItems: "center", flexWrap: "wrap", gap: 1.5 }}
+      >
+        {!isSoldOut && <QuantityStepper quantity={quantity} variant="plain" />}
         <Stack
           direction="row"
-          sx={{ justifyContent: "space-between", alignItems: "center" }}
+          useFlexGap
+          sx={{
+            alignItems: "center",
+            justifyContent: "flex-end",
+            flexWrap: "wrap",
+            gap: 1.5,
+            flex: "1 1 auto",
+            minWidth: 0,
+          }}
         >
-          <Typography sx={{ fontWeight: 700 }}>{name}</Typography>
-          <Typography sx={{ fontWeight: 700, color: "primary.main" }}>
-            {price(totalPrice)}
-          </Typography>
+          {!isSoldOut && (
+            <Typography
+              variant="subtitle1"
+              component="p"
+              sx={{
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+                // The menu card's price tone (decor.price).
+                color: "decor.price",
+              }}
+            >
+              {price(totalPrice)}
+            </Typography>
+          )}
+          <Button
+            variant="contained"
+            disabled={submitDisabled}
+            onClick={onSubmit}
+            // A long label (Myanmar) wraps inside a narrow column rather
+            // than pushing past it.
+            sx={{ minHeight: 44, px: 3, maxWidth: "100%" }}
+          >
+            {submitLabel}
+          </Button>
         </Stack>
-      )}
-      <Button
-        variant="contained"
-        fullWidth
-        disabled={submitDisabled}
-        onClick={onSubmit}
-      >
-        {submitLabel}
-      </Button>
-    </DialogActions>
+      </Stack>
+    </Box>
   );
 }

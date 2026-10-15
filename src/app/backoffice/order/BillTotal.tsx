@@ -11,10 +11,13 @@ import { formatAmount } from "@/app/lib/orderFormat";
 export default function BillTotal({
   label,
   amount,
+  formatMoney = formatAmount,
   sx,
 }: {
   label: string;
   amount: number;
+  /** How the amount reads — "8,997 MMK" (default). */
+  formatMoney?: (amount: number) => string;
   /** Layout only (e.g. the gap to the button below). */
   sx?: SxProps<Theme>;
 }) {
@@ -29,7 +32,7 @@ export default function BillTotal({
     >
       <Typography variant="body1">{label}</Typography>
       <Typography component="p" variant="h5">
-        {formatAmount(amount)}
+        {formatMoney(amount)}
       </Typography>
     </Stack>
   );

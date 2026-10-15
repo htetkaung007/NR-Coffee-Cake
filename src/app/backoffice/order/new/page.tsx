@@ -74,7 +74,10 @@ export default async function NewStaffOrderPage({
       menus={menus.map((menu) => ({
         id: menu.id,
         name: menu.name,
+        // For the menu side's မြန်မာ view only (display).
+        nameMy: menu.nameMy ?? null,
         description: menu.description,
+        descriptionMy: menu.descriptionMy ?? null,
         // Today's price, for browsing — each added line gets its own
         // price snapshot on the server.
         price: menu.price,

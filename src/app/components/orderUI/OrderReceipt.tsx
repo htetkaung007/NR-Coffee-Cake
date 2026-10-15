@@ -10,6 +10,7 @@ import type { ContributorWho } from "@/app/lib/order/contributors";
 import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 
 import BackCircleButton from "./BackCircleButton";
+import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
 
 export interface ReceiptLine {
   id: number;
@@ -167,7 +168,15 @@ export default function OrderReceipt({
   const labels = useCustomerLabels();
 
   return (
-    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        height: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        // The total + Order more stack 8px above the floating bottom bar.
+        pb: BOTTOM_BAR_CLEARANCE,
+      }}
+    >
       <Box
         sx={{
           flex: 1,

@@ -1,36 +1,39 @@
-import { createTranslator } from "next-intl";
 import en from "../../../../messages/en.json";
 import my from "../../../../messages/my.json";
 import type { AppLocale } from "./locale";
-import { formatAmountParts } from "../orderFormat";
+import {
+  allCategoriesLabel,
+  customerPrices,
+  menuCardLabels,
+  orderUiLabels,
+} from "./customerLabels";
 
 const MESSAGES = { en, my } as const;
 
 /**
- * The customer's own money words in `locale`, for Backoffice screens that
- * show what customers see (the add-on group form's "Customer sees"
- * preview, the Add-ons panel's မြန်မာ view) — no next-intl provider
- * there. The SAME keys and number formatting as the storefront
- * (common.price / common.priceDelta via useCustomerPrice, menuDetail.free
- * / .required), read from messages/*.json; never repeated as literals.
- * Pure, client-safe.
+ * The customer's own words in `locale`, for Backoffice screens that show
+ * what a customer could read (the add-on group form's "Customer sees"
+ * preview, the Add-ons panel's and staff New Order's မြန်မာ views) — no
+ * next-intl provider there, so the bundled messages/*.json are read
+ * through the same builders the storefront uses (lib/i18n/
+ * customerLabels); never repeated as literals. Pure, client-safe.
  */
 export function customerWords(locale: AppLocale) {
   const messages = MESSAGES[locale];
-  const tCommon = createTranslator({ locale, messages, namespace: "common" });
-  const tDetail = createTranslator({
-    locale,
-    messages,
-    namespace: "menuDetail",
-  });
+  const orderUi = orderUiLabels(locale, messages);
+  const { price, priceDelta } = customerPrices(locale, messages);
   return {
     /** "1,000 ကျပ်" / "1,000 Kyats". */
-    price: (amount: number) =>
-      tCommon("price", { amount: formatAmountParts(amount).value }),
+    price,
     /** "+500 ကျပ်" / "+500 Kyats". */
-    priceDelta: (amount: number) =>
-      tCommon("priceDelta", { amount: formatAmountParts(amount).value }),
-    free: tDetail("free"),
-    required: tDetail("required"),
+    priceDelta,
+    free: orderUi.menuDetail.free,
+    required: orderUi.menuDetail.required,
+    /** The menu's "All" tab. */
+    allCategories: allCategoriesLabel(locale, messages),
+    /** MenuCard's words (the Myanmar Add: "ထည့်မယ်"). */
+    cardLabels: menuCardLabels(locale, messages),
+    /** The menu detail dialog / sheet's words (OrderUiLabels). */
+    orderUi,
   };
 }

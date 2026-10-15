@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import type { Viewport } from "next";
 import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
@@ -7,6 +9,20 @@ import LanguageCard from "@/app/components/orderUI/LanguageCard";
 import { CompanyService } from "@/app/services";
 import HtmlLang from "@/app/components/orderUI/HtmlLang";
 import { CustomerOrderUiLabels } from "@/app/components/orderUI/OrderUiLabels";
+import OrderBotBar, { BottomBarProvider } from "@/app/components/orderUI/OrderBotBar";
+
+/**
+ * The customer pages draw edge to edge, so env(safe-area-inset-*) holds
+ * the real insets on iPhones — without "cover" iOS reports them as 0 and
+ * every "12px + safe area" bottom offset (the floating bottom bar, the
+ * sheets' footers) ends up under the home indicator. The insets are
+ * applied where the design says (DESIGN.md §19; body sides in the
+ * customer theme's CssBaseline). Merged with Next's default
+ * width=device-width, initial-scale=1.
+ */
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
 
 /**
  * The customer side: the customer theme and the customer's language
@@ -34,7 +50,16 @@ export default async function StorefrontLayout({
         <div lang={locale} style={{ display: "contents" }}>
           {/* The words of the order parts shared with the Backoffice
              (menu detail, line notices), in the customer's language. */}
-          <CustomerOrderUiLabels>{children}</CustomerOrderUiLabels>
+          <BottomBarProvider>
+            <CustomerOrderUiLabels>{children}</CustomerOrderUiLabels>
+            {/* Menu / Cart / History — ONE bar for every tab page, so it
+               stays put between them (lib/storefront/bottomBarVisibility
+               decides where it shows). It reads the URL: Suspense keeps
+               useSearchParams from opting the whole layout out. */}
+            <Suspense fallback={null}>
+              <OrderBotBar />
+            </Suspense>
+          </BottomBarProvider>
           <HtmlLang lang={locale} />
           <LanguageCard hasChosenLanguage={hasChosenLanguage} shopName={shopName} />
         </div>

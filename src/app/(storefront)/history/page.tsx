@@ -20,6 +20,7 @@ import { formatAmountParts } from "@/app/lib/orderFormat";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
 import BackCircleButton from "@/app/components/orderUI/BackCircleButton";
+import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
 
 // Same reasoning as /menu and /cart — see those pages' own comment.
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export const dynamic = "force-dynamic";
 /**
  * Read-only "what have I ordered so far" screen for a customer still
  * waiting to pay — reachable from the bottom bar's History tab (see
- * OrderBotBar).
+ * OrderBotBar, mounted in the storefront layout).
  *
  * Branches the same way /menu and /cart do: a tableId with a matching
  * contributorToken means Table QR, where "history" is every round
@@ -101,7 +102,13 @@ export default async function HistoryPage({
 
       return (
         <Box
-          sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}
+          sx={{
+            minHeight: "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            // The floating bottom bar's room.
+            pb: BOTTOM_BAR_CLEARANCE,
+          }}
         >
           <OrderTopBar shopName={shopName} cartItemCount={0} />
           <Box
@@ -160,14 +167,15 @@ export default async function HistoryPage({
             <Box
               sx={{
                 position: "sticky",
-                bottom: 0,
+                // Stacked 8px above the floating bottom bar.
+                bottom: BOTTOM_BAR_CLEARANCE,
                 zIndex: 1,
                 bgcolor: "background.paper",
                 borderTop: "1px solid",
                 borderColor: "divider",
                 px: { xs: 2, sm: 3 },
                 pt: 1.5,
-                pb: "calc(12px + env(safe-area-inset-bottom, 0px))",
+                pb: 1.5,
               }}
             >
               <Stack
@@ -219,7 +227,7 @@ export default async function HistoryPage({
 
   if (!session || session.status === "CART") {
     return (
-      <Box sx={{ minHeight: "100dvh" }}>
+      <Box sx={{ minHeight: "100dvh", pb: BOTTOM_BAR_CLEARANCE }}>
         <OrderTopBar shopName={null} cartItemCount={0} />
         <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
@@ -245,7 +253,13 @@ export default async function HistoryPage({
 
   return (
     <Box
-      sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}
+      sx={{
+            minHeight: "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            // The floating bottom bar's room.
+            pb: BOTTOM_BAR_CLEARANCE,
+          }}
     >
       <OrderTopBar shopName={shopName} cartItemCount={0} />
       <Box
@@ -303,14 +317,15 @@ export default async function HistoryPage({
         <Box
           sx={{
             position: "sticky",
-            bottom: 0,
+            // Stacked 8px above the floating bottom bar.
+            bottom: BOTTOM_BAR_CLEARANCE,
             zIndex: 1,
             bgcolor: "background.paper",
             borderTop: "1px solid",
             borderColor: "divider",
             px: { xs: 2, sm: 3 },
             pt: 1.5,
-            pb: "calc(12px + env(safe-area-inset-bottom, 0px))",
+            pb: 1.5,
           }}
         >
           <Stack

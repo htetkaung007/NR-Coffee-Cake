@@ -12,11 +12,11 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 
 import MenuDetailDialog from "./MenuDetailDialog";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale, useMessages, useTranslations } from "next-intl";
 import { localizedText } from "@/app/lib/i18n/localizedText";
-import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
 import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
-import MenuCard, { type MenuCardLabels } from "../MenuCard";
+import MenuCard from "../MenuCard";
+import { menuCardLabels } from "@/app/lib/i18n/customerLabels";
 import type { MenuDetail } from "./menuDetail/types";
 
 export interface MenuOption {
@@ -112,17 +112,13 @@ export default function MenuBrowser({
   const [detailMenuId, setDetailMenuId] = useState<number | null>(null);
   const t = useTranslations("menu");
   const locale = useLocale();
-  const { price } = useCustomerPrice();
-  const cardLabels: MenuCardLabels = {
-    outOfStock: t("outOfStock"),
-    onlyLeft: (count) => t("onlyLeft", { count }),
-    seeMore: t("seeMore"),
-    viewDetails: (name, price) => t("viewDetails", { name, price }),
-    outOfStockLabel: (name, price) => t("outOfStockLabel", { name, price }),
-    price,
-    // Myanmar: the words "ထည့်မယ်"; English: the + icon.
-    addText: locale === "my" ? t("addShort") : null,
-  };
+  const messages = useMessages();
+  // The one key → label mapping (lib/i18n/customerLabels), shared with
+  // staff New Order's မြန်မာ view.
+  const cardLabels = useMemo(
+    () => menuCardLabels(locale, messages),
+    [locale, messages],
+  );
 
   // Each tab: its key (the English name, what menus are filtered by)
   // and its label in the customer's language.

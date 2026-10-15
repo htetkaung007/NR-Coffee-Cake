@@ -26,6 +26,9 @@ interface BillLineRowsProps {
   print?: boolean;
   /** Extra style for the item's amount (e.g. the staff panel's bold). */
   itemAmountSx?: object;
+  /** How an amount reads — "3,000 MMK" (default); New Order's မြန်မာ
+   *  view passes the customer's "3,000 ကျပ်". */
+  formatMoney?: (amount: number) => string;
 }
 
 /**
@@ -43,6 +46,7 @@ export default function BillLineRows({
   density = "regular",
   print = false,
   itemAmountSx,
+  formatMoney = formatAmount,
 }: BillLineRowsProps) {
   const itemVariant = density === "regular" ? "body1" : "body2";
   const addonVariant = density === "regular" ? "body2" : "caption";
@@ -77,7 +81,7 @@ export default function BillLineRows({
               component="span"
               sx={{ ...amountSx, ...(isItem && itemAmountSx) }}
             >
-              {formatAmount(row.amount)}
+              {formatMoney(row.amount)}
             </Typography>
           </Stack>
         );

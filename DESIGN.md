@@ -183,7 +183,14 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
   and page in both modes). All other money stays neutral; never red, and
   never green outside Reports' income. Pick the tone with
   `moneyToneSx(tone)` / `moneyColor(tone)` (`backoffice/order/orderTypography.ts`)
-  — never write a money color out in a component.
+  — never write a money color out in a component. These are the
+  Backoffice rules.
+- **Customer side (owner's decision):** prices use the menu card's
+  **price tone**, `palette.decor.price` (the customer theme's red) —
+  the menu card, and in the menu detail the item price, each option's
+  "+500 Kyats" and the footer total ("Free" uses the success text
+  shade). The same parts under the Backoffice theme (staff New Order)
+  get `decor.price` = text.primary, so staff money stays neutral.
 - Contrast: body text ≥ 4.5:1; large text and UI borders/icons ≥ 3:1.
 - Never convey state by color alone — pair it with an icon, label, or text.
 - **Table occupancy** (New Order's "Order for"): In use = error dot +
@@ -275,6 +282,14 @@ double-taps), or an optimistic update. A disabled control shows WHY
   target (a table that becomes in use moves it); with N = 0 the second
   segment is disabled, "No open bills". An order's "Add items" opens New Order for that same bill (a new
   round — sent rounds are never edited) and comes back to it after Send.
+  An **EN | မြန်မာ toggle** (NameLanguageToggle, beside the title)
+  switches the menu side only — menu names, chips, search results (both
+  names always match), the detail sheet and the Current order lines'
+  names and prices ("3,500 ကျပ်", "ထည့်မယ်", "Sweet: Low" localized);
+  staff controls (Order for, the mode toggle, Send to kitchen, notices,
+  errors) stay English. Remembered per device (localStorage
+  "staffMenuLang:v1"); the menu holds placeholders until it's read, so
+  the other language never flashes.
 - Remember the permanent Backoffice sidebar when judging available width.
 - **Backoffice menu card states** (one status rule,
   `lib/menu/menuCardStatus.ts`; stock words from `lib/menu/stockLevel.ts`, shared
@@ -329,10 +344,21 @@ double-taps), or an optimistic update. A disabled control shows WHY
   cart and the switch never shrink; the shop name truncates first. The
   switch shows a globe + the OTHER language's short label ("EN" /
   "မြန်မာ"), the globe alone below 360px (its accessible name stays).
-- **Customer bottom bar** (Menu / Cart / History) is `position: fixed` at
-  the bottom with the safe-area padding (Rule 19); a spacer of the same
-  height ends the page, so the last card scrolls clear of it and a short
-  page fits in 100dvh with the bar showing.
+- **Customer bottom bar** (Menu / Cart / History) is a **floating pill**,
+  mounted ONCE in the storefront layout (`OrderBotBar`) so it stays put
+  between tabs: fixed 12px from the sides (16px from `sm`) and from the
+  bottom + safe area, max 480px centred, paper + 1px divider, radius 999,
+  a soft theme shadow, above the page but below drawers and dialogs.
+  Three items (20px icon + caption, 44px — the bar is 54px): the selected one in primary.main
+  on an alpha(primary.main, 0.12) pill with aria-current="page"; the cart
+  badge (primary, hidden at 0) is part of the link's name ("Cart, 2
+  items"). Shown on /menu, /cart, /history and /history/<id>; hidden on
+  the QR scan / continue screens, ShopUnavailable and the outcome screens
+  (`lib/storefront/bottomBarVisibility`). Pages keep
+  `BOTTOM_BAR_CLEARANCE` (`lib/storefront/bottomBarLayout`) free at the
+  bottom — never their own numbers; a page's own bottom action (/cart's
+  Send, History's total, the receipt's Order more) sits 8px ABOVE the
+  bar, both visible.
 - **Language card** (first visit on a device, NEXT_LOCALE not set yet;
   /menu, /cart, /history only, never the QR scan routes): a compact
   floating card at the bottom over the dimmed page — 12–16px from the
@@ -371,6 +397,28 @@ double-taps), or an optimistic update. A disabled control shows WHY
   own add-on section under the customer theme, EN | မြန်မာ toggle,
   dotted names = no Myanmar name yet: a sticky right column from `lg`,
   after the Options card below `lg`.
+- **Menu detail** (customer and staff New Order): from `sm` a
+  **two-column dialog**, centred, sized from MUI's dialog box (never
+  100vw): desktop (md+) min(880px, 100% − 64px) with columns 360px |
+  1fr; tablet (sm–md) min(720px, 100% − 32px) with 280px | 1fr; height
+  min 480px, max min(640px, 90dvh), both columns stretched; radius × 2.
+  The close button (round, 40px on a 44px tap area, paper + divider
+  edge) sits on the dialog's top-right corner; the right column's first
+  block keeps clear of it. LEFT (background.default, never scrolls) —
+  the photo in a 4:3 box (letter tile centred when none), then name
+  (h5), description, price, "Your choice: …" (8px apart, 24px padding;
+  extra height is plain space below); RIGHT (24px padding, no divider
+  above the first group — only between groups and above the note) —
+  add-on groups (title + "Choose 1" / "Choose any",
+  a Required → ✓ Done / Optional chip) with the options as tiles (2
+  columns once the column is ≥ 420px, one control per tile, selected =
+  2px primary edge without a size change), the note, and a pinned
+  footer: stepper · total (price tone) · the Add button with its usual
+  label. The **phone sheet keeps its layout**. On both, while a required
+  group is unanswered the Add button is disabled AND a warning-text
+  line above it names them — "Please choose: Size, Spicy level"
+  (role="status"); tapping it scrolls to (and focuses) the first one.
+  The line keeps its space, so the button never jumps.
 - **Dialog vs page:** a **dialog** for short tasks — about 1–3 fields,
   confirmations, and quick creates that must not lose the form behind
   them (e.g. "New category" from the menu form). A **page** for long
@@ -385,6 +433,15 @@ pb: "calc(12px + env(safe-area-inset-bottom, 0px))"
 ```
 
 Sticky/fixed top elements use `env(safe-area-inset-top, 0px)`.
+
+Customer pages use `viewport-fit=cover` (the storefront layout's
+`viewport`) — without it iOS reports every inset as 0 and bottom
+elements end up under the home indicator; the body's side padding takes
+the landscape notch (customer theme CssBaseline).
+
+The customer bottom bar floats at `calc(12px + env(safe-area-inset-bottom,
+0px))`; pages under it reserve `BOTTOM_BAR_CLEARANCE` (bar + offset +
+8px + safe area) instead of their own safe-area padding.
 
 ## 20. Perceived performance
 

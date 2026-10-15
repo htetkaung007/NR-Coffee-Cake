@@ -7,7 +7,8 @@ import { Box, useTheme } from "@mui/material";
 import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import OrderTopBar from "./OrderTopBar";
 import OrderPlaceHeader from "./OrderPlaceHeader";
-import OrderBotBar from "./OrderBotBar";
+import { useBottomBarPage } from "./OrderBotBar";
+import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
 import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 
 import {
@@ -81,6 +82,12 @@ export default function TableOrderClient({
   const errorMessage = useErrorMessage();
   const pageBackground = getOrderPageBackground(useTheme());
   const [draftItems, setDraftItems] = useState(initialDraftItems);
+  // The bottom bar's cart badge: the same count as the top bar's.
+  useBottomBarPage({
+    cartCount: sumQuantities(draftItems),
+    locationId,
+    tableId,
+  });
   // How many other people have picks at this table (the server's labels
   // — a count only, never tokens), for the place header's details.
   const otherContributors = new Set(
@@ -163,6 +170,8 @@ export default function TableOrderClient({
         minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
+        // The floating bottom bar's room — the last card scrolls clear.
+        pb: BOTTOM_BAR_CLEARANCE,
         backgroundColor: pageBackground.color,
         backgroundImage: pageBackground.image,
         backgroundAttachment: "fixed",
@@ -200,7 +209,6 @@ export default function TableOrderClient({
           onAddToCart={handleAddToCart}
         />
       </Box>
-      <OrderBotBar locationId={locationId} tableId={tableId} />
     </Box>
   );
 }

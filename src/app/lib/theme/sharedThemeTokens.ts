@@ -44,12 +44,17 @@ declare module "@mui/material/styles" {
      *  background.paper AND background.default. Only the Bo theme
      *  defines it. */
     errorText?: string;
+    /** The warning role as TEXT (the menu detail's "Please choose: …"
+     *  and its "Required" chip): a shade of warning with ≥ 4.5:1 against
+     *  background.paper AND background.default. Both themes define it. */
+    warningText?: string;
   }
   interface PaletteOptions {
     inputBorder?: string;
     decor?: DecorPalette;
     successText?: string;
     errorText?: string;
+    warningText?: string;
   }
 }
 

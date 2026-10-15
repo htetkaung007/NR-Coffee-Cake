@@ -16,6 +16,8 @@ interface NoteFieldProps {
   value: string;
   onChange: (next: string) => void;
   variant: MenuDetailVariant;
+  /** The hairline above it — off when nothing comes before it. */
+  showDivider?: boolean;
 }
 
 /** "Special instructions" — a per-item note, capped at
@@ -25,11 +27,12 @@ export default function NoteField({
   value,
   onChange,
   variant,
+  showDivider = true,
 }: NoteFieldProps) {
   const labels = useOrderUiLabels().menuDetail;
   return (
     <Box>
-      <Divider sx={{ mb: 1.5 }} />
+      {showDivider && <Divider sx={{ mb: 1.5 }} />}
       <TextField
         label={labels.noteLabel}
         multiline

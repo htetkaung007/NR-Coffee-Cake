@@ -25,7 +25,7 @@ export function getOdTheme(mode: PaletteMode) {
     palette: {
       mode,
       primary: {
-        main: isLight ? "#C75A3C" : "#E8825E", // Terracotta — main action color
+        main: isLight ? "#2D1B10" : "#2D1B10", // Terracotta — main action color
         dark: isLight ? "#A9432F" : "#D97652", // Hover
         contrastText: isLight ? "#FFF9ED" : "#2D1B10",
       },
@@ -47,6 +47,14 @@ export function getOdTheme(mode: PaletteMode) {
         primary: textPrimary,
       },
       divider: isLight ? "#E6DCCF" : "#3A2F27",
+      // Status words as TEXT (the menu detail's "Please choose: …", its
+      // Required / Done chips): warning.main and success.main are too
+      // light on paper (3.2:1, 2.5:1). Light: a deep amber 6.0:1 / 5.6:1
+      // and a deep emerald 5.5:1 / 5.2:1 on paper / page; dark: the
+      // roles' own main shades (MUI dark warning #ffa726 8.5:1+,
+      // success 6.8:1+).
+      warningText: isLight ? "#A14A00" : "#ffa726",
+      successText: isLight ? "#047857" : "#10B981",
       // Form-field border (see sharedThemeTokens' Palette.inputBorder) — a
       // warm espresso tint rather than the terracotta primary, which reads
       // as an error/alert color on an idle field. ≥ 3:1 on paper and on
@@ -70,9 +78,18 @@ export function getOdTheme(mode: PaletteMode) {
   return createTheme(theme, {
     components: {
       MuiCssBaseline: {
-        styleOverrides: myanmarTypographyStyles(
-          theme.typography as unknown as Record<string, unknown>,
-        ),
+        styleOverrides: {
+          ...myanmarTypographyStyles(
+            theme.typography as unknown as Record<string, unknown>,
+          ),
+          // The customer pages draw edge to edge (viewport-fit=cover, set
+          // in the storefront layout, so env(safe-area-inset-*) is real
+          // on iPhones): in landscape, keep the content out of the notch.
+          body: {
+            paddingLeft: "env(safe-area-inset-left, 0px)",
+            paddingRight: "env(safe-area-inset-right, 0px)",
+          },
+        },
       },
     },
   });

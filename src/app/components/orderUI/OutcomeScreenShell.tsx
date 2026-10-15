@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Avatar, Box, Stack } from "@mui/material";
 import BackCircleButton from "./BackCircleButton";
+import { HideBottomBar } from "./OrderBotBar";
 
 /**
  * The shared frame of a round's outcome screens (OrderConfirmedScreen,
@@ -45,6 +46,8 @@ export default function OutcomeScreenShell({
         onClick={onBack}
         sx={{ position: "absolute", top: 16, left: 16 }}
       />
+      {/* Its own buttons lead on — no bottom bar over them. */}
+      <HideBottomBar />
       {beforeContent}
       <Stack sx={{ width: "100%", maxWidth: 400, alignItems: "center" }}>
         <Avatar

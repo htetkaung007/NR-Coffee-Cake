@@ -99,7 +99,8 @@
     "label": "Order navigation",
     "menu": "Menu",
     "cart": "Cart",
-    "history": "History"
+    "history": "History",
+    "cartWithCount": "Cart, {count, plural, one {# item} other {# items}}"
   },
   "shop": {
     "unavailableTitle": "The shop is unavailable now",
@@ -200,7 +201,13 @@
     "noteLabel": "Special instructions (optional)",
     "noteWords": "{count}/{max} words",
     "couldNotLoad": "This item couldn't be loaded.",
-    "justSoldOut": "This item just sold out."
+    "justSoldOut": "This item just sold out.",
+    "chooseOne": "Choose 1",
+    "chooseAny": "Choose any",
+    "optional": "Optional",
+    "done": "✓ Done",
+    "pleaseChoose": "Please choose: {groups}",
+    "yourChoice": "Your choice: {choices}"
   },
   "lineNotice": {
     "priceUpdated": "Price updated:",

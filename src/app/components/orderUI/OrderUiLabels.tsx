@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { useLocale, useMessages } from "next-intl";
 import { formatAmount, formatMoneyDelta } from "@/app/lib/orderFormat";
-import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
+import { orderUiLabels } from "@/app/lib/i18n/customerLabels";
 
 /**
  * The words of the order components shared with the Backoffice's New
@@ -29,6 +29,16 @@ export interface OrderUiLabels {
     increase: string;
     onlyLeft: (count: number) => string;
     required: string;
+    /** An add-on group's hint: required → pick one; optional → any. */
+    chooseOne: string;
+    chooseAny: string;
+    optional: string;
+    /** A required group once it's answered. */
+    done: string;
+    /** Above a disabled Add: "Please choose: Size, Spicy level". */
+    pleaseChoose: (groups: string) => string;
+    /** The picks so far: "Your choice: Hot · Large". */
+    yourChoice: (choices: string) => string;
     free: string;
     noteLabel: string;
     noteWords: (count: number, max: number) => string;
@@ -62,6 +72,12 @@ const ENGLISH: OrderUiLabels = {
     increase: "Increase quantity",
     onlyLeft: (count) => `Only ${count} left`,
     required: "Required",
+    chooseOne: "Choose 1",
+    chooseAny: "Choose any",
+    optional: "Optional",
+    done: "✓ Done",
+    pleaseChoose: (groups) => `Please choose: ${groups}`,
+    yourChoice: (choices) => `Your choice: ${choices}`,
     free: "Free",
     noteLabel: "Special instructions (optional)",
     noteWords: (count, max) => `${count}/${max} words`,
@@ -104,44 +120,11 @@ export function OrderUiLabelsProvider({
 }
 
 /** The storefront's provider: the same words from messages/*.json, in
- *  the customer's language. */
+ *  the customer's language (lib/i18n/customerLabels — the one mapping,
+ *  shared with the Backoffice's မြန်မာ views). */
 export function CustomerOrderUiLabels({ children }: { children: ReactNode }) {
-  const tDetail = useTranslations("menuDetail");
-  const tNotice = useTranslations("lineNotice");
-  const tCommon = useTranslations("common");
   const locale = useLocale();
-  const { price, priceDelta } = useCustomerPrice();
-  const labels: OrderUiLabels = {
-    locale,
-    price,
-    priceDelta,
-    menuDetail: {
-      addToCart: tDetail("addToCart"),
-      saveChanges: tDetail("saveChanges"),
-      quantity: tDetail("quantity"),
-      decrease: tDetail("decrease"),
-      increase: tDetail("increase"),
-      onlyLeft: (count) => tDetail("onlyLeft", { count }),
-      required: tDetail("required"),
-      free: tDetail("free"),
-      noteLabel: tDetail("noteLabel"),
-      noteWords: (count, max) => tDetail("noteWords", { count, max }),
-      couldNotLoad: tDetail("couldNotLoad"),
-      justSoldOut: tDetail("justSoldOut"),
-      close: tCommon("close"),
-    },
-    lineNotice: {
-      priceUpdated: tNotice("priceUpdated"),
-      priceEach: (price) => tNotice("priceEach", { price }),
-      changeTo: (quantity) => tNotice("changeTo", { quantity }),
-      onlyLeft: (count) => tNotice("onlyLeft", { count }),
-      soldOut: tNotice("soldOut"),
-      unavailable: tNotice("unavailable"),
-      addonUnavailable: tNotice("addonUnavailable"),
-      invalid: tNotice("invalid"),
-      remove: tCommon("remove"),
-      edit: tCommon("edit"),
-    },
-  };
+  const messages = useMessages();
+  const labels = useMemo(() => orderUiLabels(locale, messages), [locale, messages]);
   return <OrderUiLabelsProvider value={labels}>{children}</OrderUiLabelsProvider>;
 }

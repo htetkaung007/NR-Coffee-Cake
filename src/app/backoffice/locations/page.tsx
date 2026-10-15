@@ -51,8 +51,8 @@ export default async function LocationsPage() {
             // ≥180px cards as fit (auto-fill keeps a few cards at that
             // size on a wide screen instead of stretching them).
             gridTemplateColumns: {
-              xs: "repeat(2, 1fr)",
-              sm: "repeat(auto-fill, minmax(180px, 1fr))",
+              xs: "repeat(1, 1fr)",
+              sm: "repeat(auto-fill, minmax(250px, 1fr))",
             },
             gap: { xs: 1.5, sm: 2, md: 2.5 },
           }}

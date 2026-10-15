@@ -7,7 +7,8 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Box, Divider, Stack, Typography } from "@mui/material";
 
-import { cartLinesTotal } from "@/app/lib/order/orderTotals";
+import { cartLinesTotal, sumQuantities } from "@/app/lib/order/orderTotals";
+import { useBottomBarPage } from "./OrderBotBar";
 import { toLineAddons } from "@/app/lib/order/roundLine";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 import ApprovalWaitingPanel from "./ApprovalWaitingPanel";
@@ -95,6 +96,11 @@ export default function TableCartPageClient({
   const errorMessage = useErrorMessage();
   const tCommon = useTranslations("common");
   const [draftItems, setDraftItems] = useState(initialDraftItems);
+  useBottomBarPage({
+    cartCount: sumQuantities(draftItems),
+    locationId,
+    tableId,
+  });
   const [activeRound, setActiveRound] = useState(initialActiveRound);
   // Has the customer already moved on from this round's "Order confirmed"
   // screen (tapped "Order more" / added to the next order)? null = not
