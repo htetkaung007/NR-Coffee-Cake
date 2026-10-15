@@ -302,6 +302,29 @@ double-taps), or an optimistic update. A disabled control shows WHY
   overflow: on a phone narrower than it, the browser zooms the whole page
   out (cut-off search, cart off-screen, a page taller than the screen).
   Heights use `dvh`, never `vh`.
+- **Customer category row** (MenuBrowser): MUI `Tabs`
+  variant="scrollable" (touch-scrolls; arrows from `sm` only when it
+  overflows; the selected tab scrolls into view) with the indicator
+  hidden, each Tab styled as a bordered pill — body2 600, never wraps,
+  16px side padding, a 36px pill (its ::before) in a 44px tap area,
+  radius 999, 8px gap (`.MuiTabs-list` — MUI v9 has no
+  `.MuiTabs-flexContainer`). Unselected: paper + 1px `inputBorder`
+  (≥ 3:1 on the page) + text.primary; selected: the customer
+  `primary.main` fill + contrastText, same 1px border (no jump). The row
+  lines up with the search field above (same padding). role="tab",
+  aria-selected and the arrow keys come from Tabs.
+- **"Scanned ✓" note** (Counter menu after a QR scan): shows, then after
+  ~4s fades out (opacity, ease-out) and only then leaves the layout (no
+  height animation); × closes it; reduced motion just removes it. The
+  `scanned` URL marker is dropped, so a refresh never shows it again.
+- **Add-ons panel** (Backoffice): an EN | မြန်မာ toggle next to Edit
+  switches the shop data names only (group + options); labels stay
+  English. Myanmar view: a name with no Myanmar name shows the English
+  one with a dotted warning underline (`components/LocalizedName`,
+  shared with the add-on form's preview) + "Dotted names have no Myanmar
+  name yet." မြန်မာ also shows the customer's money words — "1,000 ကျပ်",
+  "အခမဲ့" (`lib/i18n/customerWords`, from messages/my.json); EN keeps
+  "MMK" / "Free".
 - **Customer top bar:** [shop icon + name][language switch][cart] — the
   cart and the switch never shrink; the shop name truncates first. The
   switch shows a globe + the OTHER language's short label ("EN" /
@@ -337,6 +360,17 @@ double-taps), or an optimistic update. A disabled control shows WHY
   never pushes the search bar down); it closes on the chevron, a tap
   outside, Escape or a scroll; the chevron turns 180° (160ms ease-out).
   Only subtitle2 / body2 / caption on it.
+- **Add-on group form** (the add-on group page and the menu form's
+  "Connect Add-On Group" dialog share `components/addonForm/`): every
+  name field carries a language tag in its start adornment ("EN" /
+  "မြန်မာ" / "Price" — a tinted block, never a restyled input) and its
+  own aria-label; the Options card shows "N of M have a Myanmar name".
+  Options are stacked blocks below `md`, one grid row [EN | မြန်မာ |
+  Extra price | ×] under column headers from `md`. The page (not the
+  dialog) has a live, inert "Customer sees" preview — the customer's
+  own add-on section under the customer theme, EN | မြန်မာ toggle,
+  dotted names = no Myanmar name yet: a sticky right column from `lg`,
+  after the Options card below `lg`.
 - **Dialog vs page:** a **dialog** for short tasks — about 1–3 fields,
   confirmations, and quick creates that must not lose the form behind
   them (e.g. "New category" from the menu form). A **page** for long
@@ -430,6 +464,15 @@ toggling an add-on). Printing never blocks or changes payment.
 - Order detail: a timeline of rounds (pending first, then newest), no price
   column on round cards; money lives only in the Bill (accepted rounds only;
   pending rounds shown as "Waiting approval +X").
+- **Add-on lines read "Group: Option"** everywhere a line is shown —
+  "Temperature: Hot · Sweet: Low · Toppings: Pearl, Jelly" (one helper,
+  `lib/order/addonLabel` formatAddonSelections): Backoffice round cards,
+  bills and print (English), staff New Order, and the customer cart,
+  table draft and History (both names localized). A bill's per-add-on
+  row reads "+ Sweet: Low".
+- **Customer menu detail:** each add-on group's title is subtitle1 / 600
+  (bigger than its body2 option rows), chip on the right, 16px above a
+  group and 8px below its title.
 - Identical items in the same cart are shown as one line with a quantity;
   lines with different notes or prices stay separate.
 - **While a round waits for approval** the customer can "Change order"

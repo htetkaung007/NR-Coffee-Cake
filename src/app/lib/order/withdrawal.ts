@@ -74,7 +74,15 @@ export interface RoundLineSource {
   note: string | null;
   contributorToken: string | null;
   menu: { name: string; assetUrl: string | null };
-  OrdersAddons: { addonId: number; unitPrice: number; addon: { name: string } }[];
+  OrdersAddons: {
+    addonId: number;
+    unitPrice: number;
+    addon: {
+      name: string;
+      nameMy?: string | null;
+      addonCategory?: { name: string; nameMy?: string | null } | null;
+    };
+  }[];
 }
 
 /** Counter "Change order": the round's lines as browser-cart lines (the
@@ -96,6 +104,16 @@ export function toCounterHandBack(
       addons: line.OrdersAddons.map((link) => ({
         id: link.addonId,
         name: link.addon.name,
+        // Back in the cart it still reads "Sweet: Low" (and in Myanmar).
+        ...(link.addon.nameMy ? { nameMy: link.addon.nameMy } : {}),
+        ...(link.addon.addonCategory
+          ? {
+              groupName: link.addon.addonCategory.name,
+              ...(link.addon.addonCategory.nameMy
+                ? { groupNameMy: link.addon.addonCategory.nameMy }
+                : {}),
+            }
+          : {}),
         unitPrice: link.unitPrice,
       })),
       imageUrl: line.menu.assetUrl,

@@ -15,7 +15,9 @@ export interface ReceiptLine {
   id: number;
   menuName: string;
   imageUrl: string | null;
-  addonNames: string[];
+  /** Its add-ons by group, in the customer's language — "Sweet: Low"
+   *  (lib/order/addonLabel); "" when none. */
+  addonsText: string;
   note: string | null;
   /** What's still on the order (staff-voided units left out). */
   quantity: number;
@@ -92,9 +94,7 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
           {line.menuName}
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          {line.addonNames.length > 0
-            ? line.addonNames.join(", ")
-            : tReceipt("noAddons")}
+          {line.addonsText !== "" ? line.addonsText : tReceipt("noAddons")}
         </Typography>
         {line.note && (
           <Stack

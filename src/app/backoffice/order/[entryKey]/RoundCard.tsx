@@ -49,8 +49,9 @@ export interface RoundLine {
   voids: RoundLineVoid[];
   menuName: string;
   imageUrl: string | null;
-  /** Every add-on on the line, in the order picked. */
-  addonNames: string[];
+  /** The line's add-ons by group — "Sweet: Low · Ice: Low"
+   *  (lib/order/addonLabel); "" when none. */
+  addonsText: string;
   note: string | null;
 }
 
@@ -151,13 +152,13 @@ function LineRow({
           {line.menuName}
           {!isFullyVoided && voided > 0 && ` (${voided} voided)`}
         </Typography>
-        {line.addonNames.length > 0 && (
+        {line.addonsText !== "" && (
           <Typography
             variant="body2"
             color="text.secondary"
             sx={{ overflowWrap: "anywhere" }}
           >
-            {line.addonNames.map((name) => `+ ${name}`).join(" · ")}
+            + {line.addonsText}
           </Typography>
         )}
         {line.note && (

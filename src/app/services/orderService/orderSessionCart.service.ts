@@ -2,6 +2,7 @@ import { ValidationError } from "@/app/lib/errors";
 import { findAddonSelectionProblem } from "@/app/lib/cart/addonSelection";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
+import { LINE_ADDONS_WITH_GROUP } from "./orderLineQuery";
 
 type Tx = Prisma.TransactionClient;
 
@@ -24,7 +25,7 @@ export class OrderSessionCartService {
       // Returned to the client by Server Actions: never the token (it's
       // the key to editing a Table draft — see lib/order/contributors.ts).
       omit: { contributorToken: true },
-      include: { OrdersAddons: { include: { addon: true } } },
+      include: { OrdersAddons: LINE_ADDONS_WITH_GROUP },
     });
   }
 

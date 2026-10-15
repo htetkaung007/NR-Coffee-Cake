@@ -485,7 +485,10 @@ export class OrderHistoryService {
       menu: { select: { name: true } },
       OrdersAddons: {
         include: {
-          addon: { select: { name: true } },
+          // With its group — "Sweet: Low" on the bill and reprint.
+          addon: {
+            select: { name: true, addonCategory: { select: { name: true } } },
+          },
         },
       },
       // Voids with who / when / note — staff screens only.

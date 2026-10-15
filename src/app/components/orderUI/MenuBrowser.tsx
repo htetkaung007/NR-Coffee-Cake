@@ -1,7 +1,14 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Box, InputAdornment, Tab, Tabs, TextField } from "@mui/material";
+import {
+  Box,
+  InputAdornment,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 import MenuDetailDialog from "./MenuDetailDialog";
@@ -184,13 +191,14 @@ export default function MenuBrowser({
           }}
         />
 
-        {/* Category tabs — always scrollable so a narrow viewport (mobile,
-           or the desktop layout pinched down to its own max-width) can
-           swipe/scroll through tabs that don't fit, regardless of how
-           many categories there are. With few enough categories to
-           already fit, "scrollable" renders identically to a plain row —
-           MUI only shows the scroll affordance/buttons once content
-           actually overflows. */}
+        {/* Category pills — MUI's scrollable Tabs: touch-scrolls on
+           phones, arrows from sm up (only when the row overflows), and
+           keeps role="tab" / aria-selected / arrow keys. Each Tab is the
+           44px tap area; its ::before draws the 36px pill (unselected:
+           paper + 1px inputBorder, ≥ 3:1 on the page; selected: primary
+           fill, same 1px border so nothing jumps). The row sits in the
+           same padding as the search field above. MUI v9's list class is
+           .MuiTabs-list (v5's .MuiTabs-flexContainer no longer exists). */}
         <Tabs
           value={activeCategory}
           onChange={(_, value) => {
@@ -203,18 +211,66 @@ export default function MenuBrowser({
           }}
           variant="scrollable"
           scrollButtons="auto"
-          allowScrollButtonsMobile
-          sx={{ minHeight: 36 }}
+          allowScrollButtonsMobile={false}
+          slotProps={{ indicator: { sx: { display: "none" } } }}
+          sx={{
+            minHeight: 44,
+            "& .MuiTabs-list": { gap: 1 },
+            "& .MuiTabs-scrollButtons.Mui-disabled": { opacity: 0.3 },
+          }}
         >
           {categories.map((category) => (
             <Tab
               key={category.key}
               value={category.key}
-              label={category.label}
+              disableRipple
+              label={
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
+                >
+                  {category.label}
+                </Typography>
+              }
               ref={(el) => {
                 tabRefs.current[category.key] = el;
               }}
-              sx={{ minHeight: 36 }}
+              sx={(theme) => ({
+                minHeight: 44,
+                minWidth: "auto",
+                maxWidth: "none",
+                px: 2,
+                py: 0,
+                textTransform: "none",
+                color: "text.primary",
+                // The focus ring sits just outside the pill.
+                overflow: "visible",
+                // Its own stacking context, so the pill (z -1) paints
+                // behind the label but in front of the bar's background.
+                isolation: "isolate",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: theme.spacing(0.5, 0),
+                  zIndex: -1,
+                  borderRadius: 999,
+                  border: "1px solid",
+                  borderColor: theme.palette.inputBorder,
+                  bgcolor: "background.paper",
+                  transition:
+                    "background-color 150ms ease, border-color 150ms ease",
+                },
+                "&.Mui-selected": { color: "primary.contrastText" },
+                "&.Mui-selected::before": {
+                  bgcolor: "primary.main",
+                  borderColor: "primary.main",
+                },
+                "&.Mui-focusVisible::before": {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
+              })}
             />
           ))}
         </Tabs>

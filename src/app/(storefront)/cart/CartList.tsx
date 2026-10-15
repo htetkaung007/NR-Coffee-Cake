@@ -22,6 +22,10 @@ import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLineTotal, type LineAddon } from "@/app/lib/order/orderTotals";
 import type { ContributorLabel } from "@/app/lib/order/contributors";
 import type { RemovedByStaff } from "@/app/lib/order/roundLine";
+import {
+  formatAddonSelections,
+  localizeAddonSelections,
+} from "@/app/lib/order/addonLabel";
 
 export interface CartLine {
   id: number;
@@ -188,7 +192,8 @@ export function CartLineRow({
           </Typography>
           {line.addons.length > 0 && (
             <Typography variant="body2" sx={mutedTextSx}>
-              + {line.addons.map((addon) => localizedText(locale, addon.name, addon.nameMy)).join(", ")}
+              +{" "}
+              {formatAddonSelections(localizeAddonSelections(locale, line.addons))}
             </Typography>
           )}
           {line.note && (

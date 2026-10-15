@@ -1,4 +1,5 @@
 import { mergeLinesForDisplay } from "./orderLineMerge";
+import { formatAddonSelections } from "./addonLabel";
 import { effectiveQuantity } from "./voids";
 
 /** An Order row with what its price depends on — see orderLineTotal.
@@ -57,6 +58,10 @@ export interface LineAddon {
   /** Its Myanmar name, for customer screens (null/absent: the English
    *  name shows — lib/i18n/localizedText). Never part of the price. */
   nameMy?: string | null;
+  /** Its add-on group's names, for "Sweet: Low" (lib/order/addonLabel);
+   *  absent → the option name alone. Read live, never a snapshot. */
+  groupName?: string | null;
+  groupNameMy?: string | null;
   unitPrice: number;
 }
 
@@ -98,7 +103,7 @@ interface BillLine {
   OrdersAddons: {
     addonId: number;
     unitPrice: number;
-    addon: { name: string };
+    addon: { name: string; addonCategory?: { name: string } | null };
   }[];
   voids: readonly { quantity: number }[];
 }
@@ -119,7 +124,11 @@ export interface BreakdownSource {
   name: string;
   quantity: number;
   unitPrice: number;
-  addons: readonly { name: string; unitPrice: number }[];
+  addons: readonly {
+    name: string;
+    groupName?: string | null;
+    unitPrice: number;
+  }[];
 }
 
 /** A line itemised for a bill: "Latte ×2 4,000" then "+ Extra shot ×2
@@ -135,7 +144,8 @@ export function lineBreakdown(line: BreakdownSource): BreakdownRow[] {
     },
     ...line.addons.map((addon) => ({
       kind: "addon" as const,
-      name: addon.name,
+      // "Sweet: Low" — the group tells apart options that share a name.
+      name: formatAddonSelections([addon]),
       quantity: line.quantity,
       amount: lineTotal(addon.unitPrice, [], line.quantity),
     })),
@@ -209,6 +219,7 @@ export function buildEntryBill<Time>(rounds: BillSourceRound<Time>[]) {
               unitPrice: line.unitPrice,
               addons: line.OrdersAddons.map((link) => ({
                 name: link.addon.name,
+                groupName: link.addon.addonCategory?.name ?? null,
                 unitPrice: link.unitPrice,
               })),
             }),

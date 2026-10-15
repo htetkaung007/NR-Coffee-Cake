@@ -89,6 +89,20 @@ export function useOrderUiLabels(): OrderUiLabels {
   return useContext(OrderUiLabelsContext);
 }
 
+/** Provides a given set of words — the Backoffice's "Customer sees"
+ *  preview (the customer's words for a chosen language). */
+export function OrderUiLabelsProvider({
+  value,
+  children,
+}: {
+  value: OrderUiLabels;
+  children: ReactNode;
+}) {
+  return (
+    <OrderUiLabelsContext.Provider value={value}>{children}</OrderUiLabelsContext.Provider>
+  );
+}
+
 /** The storefront's provider: the same words from messages/*.json, in
  *  the customer's language. */
 export function CustomerOrderUiLabels({ children }: { children: ReactNode }) {
@@ -129,7 +143,5 @@ export function CustomerOrderUiLabels({ children }: { children: ReactNode }) {
       edit: tCommon("edit"),
     },
   };
-  return (
-    <OrderUiLabelsContext.Provider value={labels}>{children}</OrderUiLabelsContext.Provider>
-  );
+  return <OrderUiLabelsProvider value={labels}>{children}</OrderUiLabelsProvider>;
 }

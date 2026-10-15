@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Alert,
@@ -10,6 +11,8 @@ import {
   IconButton,
   Stack,
   Switch,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -18,13 +21,24 @@ import { addonGroupAvailability } from "@/app/lib/cart/addonSelection";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { OWNER_ONLY_MESSAGE } from "@/app/lib/access/rolePolicy";
 import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
+import type { AppLocale } from "@/app/lib/i18n/locale";
+import { customerWords } from "@/app/lib/i18n/customerWords";
+import LocalizedName, { hasNoMyanmarName } from "@/app/components/LocalizedName";
 import RequiredChip from "./RequiredChip";
 
 export interface AddonGroup {
   id: number;
   name: string;
+  /** Its Myanmar name for customers (null = none). */
+  nameMy: string | null;
   isRequired: boolean;
-  addons: { id: number; name: string; price: number; isAvailable: boolean }[];
+  addons: {
+    id: number;
+    name: string;
+    nameMy: string | null;
+    price: number;
+    isAvailable: boolean;
+  }[];
   /** This company's live menus using the group. */
   menus: { id: number; name: string }[];
 }
@@ -69,18 +83,59 @@ export default function AddonGroupPanel({
 }: AddonGroupPanelProps) {
   const { isBlocked } = addonGroupAvailability(group.isRequired, group.addons);
   const menuNames = group.menus.map((menu) => menu.name);
+  // Which language the shop data names (group + options) show in — the
+  // labels stay English. Resets per group (the panel is keyed by it).
+  const [nameLocale, setNameLocale] = useState<AppLocale>("en");
+  // မြန်မာ also shows the customer's money words ("1,000 ကျပ်",
+  // "အခမဲ့"); EN keeps the Backoffice's "MMK" / "Free".
+  const myanmarWords = useMemo(
+    () => (nameLocale === "my" ? customerWords("my") : null),
+    [nameLocale],
+  );
+  const hasUntranslated =
+    nameLocale === "my" &&
+    (hasNoMyanmarName(group.nameMy) ||
+      group.addons.some((addon) => hasNoMyanmarName(addon.nameMy)));
 
   return (
     <Box sx={{ p: 2, overflowY: "auto" }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+      {/* Narrow (bottom sheet at 320px): the controls wrap under the
+          title instead of squeezing it. */}
+      <Stack
+        direction="row"
+        useFlexGap
+        sx={{ alignItems: "flex-start", flexWrap: "wrap", gap: 1 }}
+      >
+        <Box sx={{ flex: "1 1 160px", minWidth: 0 }}>
           <Typography variant="h6" component="h2" sx={{ overflowWrap: "anywhere" }}>
-            {group.name}
+            <LocalizedName
+              locale={nameLocale}
+              en={group.name}
+              my={group.nameMy}
+              markUntranslated
+            />
           </Typography>
           <Box sx={{ mt: 0.5 }}>
             <RequiredChip isRequired={group.isRequired} />
           </Box>
         </Box>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={nameLocale}
+          onChange={(_, next: AppLocale | null) => {
+            if (next) setNameLocale(next);
+          }}
+          aria-label="Show names in"
+          sx={{ flexShrink: 0 }}
+        >
+          <ToggleButton value="en" sx={{ minWidth: 44, minHeight: 44 }}>
+            EN
+          </ToggleButton>
+          <ToggleButton value="my" lang="my" sx={{ minWidth: 44, minHeight: 44 }}>
+            မြန်မာ
+          </ToggleButton>
+        </ToggleButtonGroup>
         {isOwner && (
           <Button
             component={Link}
@@ -173,7 +228,12 @@ export default function AddonGroupPanel({
                   color={addon.isAvailable ? "text.primary" : "text.secondary"}
                   sx={{ overflowWrap: "anywhere" }}
                 >
-                  {addon.name}
+                  <LocalizedName
+                    locale={nameLocale}
+                    en={addon.name}
+                    my={addon.nameMy}
+                    markUntranslated
+                  />
                 </Typography>
                 {!addon.isAvailable && (
                   <Typography variant="caption" color="text.secondary" component="p">
@@ -185,9 +245,17 @@ export default function AddonGroupPanel({
               <Typography
                 variant="body2"
                 color={addon.price === 0 ? "text.secondary" : "text.primary"}
-                sx={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
+                lang={nameLocale === "my" ? "my" : undefined}
+                sx={{
+                  flexShrink: 0,
+                  fontVariantNumeric: "tabular-nums",
+                  whiteSpace: "nowrap",
+                }}
               >
-                {addon.price === 0 ? "Free" : formatAmount(addon.price)}
+                {addon.price === 0
+                  ? (myanmarWords?.free ?? "Free")
+                  : (myanmarWords?.price(addon.price) ??
+                    formatAmount(addon.price))}
               </Typography>
               <Switch
                 checked={addon.isAvailable}
@@ -224,6 +292,17 @@ export default function AddonGroupPanel({
             />
           ))}
         </Stack>
+      )}
+
+      {hasUntranslated && (
+        <Typography
+          variant="caption"
+          component="p"
+          color="text.secondary"
+          sx={{ mt: 2 }}
+        >
+          Dotted names have no Myanmar name yet.
+        </Typography>
       )}
     </Box>
   );

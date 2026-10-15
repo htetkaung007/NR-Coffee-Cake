@@ -404,7 +404,16 @@ independently of the app config). Everything else still goes through
   `lib/theme/myanmarTypography.ts` (`MYANMAR_FONT_SCALE`, minimum
   line-heights 1.6 / 1.8) applied to `:lang(my)` text through odTheme's
   CssBaseline. Never set Myanmar sizes in components.
-- The Backoffice stays English (root `<html lang="en">`).
+- The Backoffice stays English (root `<html lang="en">`) — **decided: no
+  Backoffice translation.** Its only Myanmar is shop data the owner
+  typed (e.g. the Add-ons panel's EN | မြန်မာ names toggle).
+- **Add-on names on order lines are read LIVE** from Addon /
+  AddonCategories (`LINE_ADDONS_WITH_GROUP` in orderLineQuery — the
+  group's name and nameMy only), not snapshotted: renaming a group or
+  option changes how old orders show it. Prices stay the snapshots.
+  Lines show them through `lib/order/addonLabel` ("Sweet: Low"); stored
+  browser / staff carts keep the group name from when the line was added
+  (older ones without it show the option name alone).
 - Components shared with the Backoffice whose words customers see —
   MenuCard (a `labels` prop), the menu detail dialog/sheet and
   CartLineNotice (the `OrderUiLabels` context) — default to English; the

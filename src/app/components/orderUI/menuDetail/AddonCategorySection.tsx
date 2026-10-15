@@ -15,7 +15,7 @@ import {
 import { SHEET_TEXT } from "./sheetText";
 import type { Addon, AddonCategory, MenuDetailVariant } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
-import { localizedText } from "@/app/lib/i18n/localizedText";
+import LocalizedName from "@/app/components/LocalizedName";
 
 /** Phone addon row: name + price on the left, the radio / checkbox at the
  *  right edge, a hairline between rows. */
@@ -47,6 +47,9 @@ interface AddonCategorySectionProps {
   variant: MenuDetailVariant;
   onSelectRequired: (addonId: number) => void;
   onToggleOptional: (addonId: number) => void;
+  /** The Backoffice's "Customer sees" preview only: in Myanmar, a name
+   *  with no Myanmar twin gets a dotted warning underline. */
+  markUntranslated?: boolean;
 }
 
 /** One addon group: its title (with a "Required" chip when it is), then
@@ -57,6 +60,7 @@ export default function AddonCategorySection({
   variant,
   onSelectRequired,
   onToggleOptional,
+  markUntranslated = false,
 }: AddonCategorySectionProps) {
   const labelsAll = useOrderUiLabels();
   const labels = labelsAll.menuDetail;
@@ -66,17 +70,30 @@ export default function AddonCategorySection({
 
   return (
     <Box>
-      <Divider sx={{ mb: 1.5 }} />
+      {/* 16px above the group's title, 8px below it. */}
+      <Divider sx={{ mb: 2 }} />
       <Stack
         direction="row"
+        spacing={1}
         sx={{
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 0.5,
+          mb: 1,
         }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {localizedText(labelsAll.locale, category.name, category.nameMy)}
+        {/* Larger than the option rows (body2), so each group reads as
+            its own question; long names wrap (Myanmar too) instead of
+            pushing the chip off a 320px screen. */}
+        <Typography
+          variant="subtitle1"
+          component="h3"
+          sx={{ fontWeight: 600, minWidth: 0, overflowWrap: "anywhere" }}
+        >
+          <ShopName
+            en={category.name}
+            my={category.nameMy}
+            mark={markUntranslated}
+          />
         </Typography>
         {category.isRequired && (
           <Chip
@@ -85,6 +102,7 @@ export default function AddonCategorySection({
             color="error"
             variant="outlined"
             sx={{
+              flexShrink: 0,
               height: 20,
               fontSize: isSheet ? "0.65rem" : "0.7rem",
               fontWeight: 600,
@@ -105,7 +123,13 @@ export default function AddonCategorySection({
               value={addon.id}
               disabled={!addon.isAvailable}
               control={<Radio size="small" />}
-              label={<AddonLabel addon={addon} variant={variant} />}
+              label={
+                <AddonLabel
+                  addon={addon}
+                  variant={variant}
+                  markUntranslated={markUntranslated}
+                />
+              }
               labelPlacement={labelPlacement}
               sx={rowSx}
             />
@@ -124,7 +148,13 @@ export default function AddonCategorySection({
                   onChange={() => onToggleOptional(addon.id)}
                 />
               }
-              label={<AddonLabel addon={addon} variant={variant} />}
+              label={
+                <AddonLabel
+                  addon={addon}
+                  variant={variant}
+                  markUntranslated={markUntranslated}
+                />
+              }
               labelPlacement={labelPlacement}
               sx={rowSx}
             />
@@ -135,14 +165,33 @@ export default function AddonCategorySection({
   );
 }
 
+/** A group / option name in the customer's language (with the
+ *  preview's untranslated marker when asked). */
+function ShopName({
+  en,
+  my,
+  mark,
+}: {
+  en: string;
+  my: string | null | undefined;
+  mark: boolean;
+}) {
+  const { locale } = useOrderUiLabels();
+  return (
+    <LocalizedName locale={locale} en={en} my={my} markUntranslated={mark} />
+  );
+}
+
 function AddonLabel({
   addon,
   variant,
+  markUntranslated,
 }: {
   addon: Addon;
   variant: MenuDetailVariant;
+  markUntranslated: boolean;
 }) {
-  const { locale, menuDetail: labels, priceDelta } = useOrderUiLabels();
+  const { menuDetail: labels, priceDelta } = useOrderUiLabels();
   return (
     <Stack
       direction="row"
@@ -152,7 +201,9 @@ function AddonLabel({
         alignItems: "center",
       }}
     >
-      <span>{localizedText(locale, addon.name, addon.nameMy)}</span>
+      <span>
+        <ShopName en={addon.name} my={addon.nameMy} mark={markUntranslated} />
+      </span>
       <Typography
         variant="body2"
         sx={{

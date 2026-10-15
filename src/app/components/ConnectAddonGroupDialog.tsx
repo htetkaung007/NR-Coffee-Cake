@@ -13,16 +13,16 @@ import {
   IconButton,
   InputAdornment,
   Stack,
-  Switch,
   TextField,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import { createAddonGroupAction } from "../backoffice/addons/action";
 import { emptyOptionRow, useOptionRows } from "../lib/hooks/useOptionRows";
+import GroupNameFields from "./addonForm/GroupNameFields";
+import OptionRowsEditor from "./addonForm/OptionRowsEditor";
 
 export interface AddonGroupOption {
   id: number;
@@ -245,128 +245,21 @@ export default function ConnectAddonGroupDialog({
           Or Create Custom Add-On Option
         </Typography>
 
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 0.5,
-          }}
-        >
-          <Typography variant="caption" color="text.secondary">
-            Group Title
-          </Typography>
-          <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-            <Typography variant="caption" color="text.secondary">
-              Required
-            </Typography>
-            <Switch
-              size="small"
-              checked={isRequired}
-              onChange={(event) => setIsRequired(event.target.checked)}
-              slotProps={{
-                input: { "aria-label": "Make this group required" },
-              }}
-            />
-          </Stack>
-        </Stack>
-        <TextField
-          placeholder="Group Name (e.g., Dipping Sauces)"
-          fullWidth
-          value={groupName}
-          onChange={(event) => setGroupName(event.target.value)}
-          sx={{
-            mb: 1.5,
-          }}
-        />
-        <TextField
-          label="Myanmar name (optional)"
-          fullWidth
-          value={groupNameMy}
-          onChange={(event) => setGroupNameMy(event.target.value)}
-          helperText="Shown to customers who choose Myanmar. Empty → the English name is shown."
-          slotProps={{ htmlInput: { maxLength: 50, lang: "my" } }}
-          sx={{ mb: 2 }}
-        />
-
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 1.5,
-          }}
-        >
-          <Typography variant="caption" color="text.secondary">
-            Add-on Options & Pricing
-          </Typography>
-          <Button
-            size="small"
-            onClick={addOption}
-            startIcon={<AddIcon sx={{ fontSize: "1rem !important" }} />}
-            sx={{ color: "primary.main", fontWeight: 700 }}
-          >
-            Add Option
-          </Button>
-        </Stack>
-
-        <Stack spacing={1.5}>
-          {options.map((row, index) => (
-            <Stack key={index} spacing={1}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <TextField
-                  placeholder="Option Name (e.g. Extra Sauce)"
-                  size="small"
-                  fullWidth
-                  value={row.name}
-                  onChange={(event) =>
-                    updateOption(index, "name", event.target.value)
-                  }
-                  sx={{
-                    flex: 2,
-                  }}
-                />
-                <TextField
-                  placeholder="Price (Blank = Free)"
-                  size="small"
-                  value={row.price}
-                  onChange={(event) => {
-                    const digitsOnly = event.target.value.replace(
-                      /[^0-9]/g,
-                      "",
-                    );
-                    updateOption(index, "price", digitsOnly);
-                  }}
-                  slotProps={{
-                    htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
-                  }}
-                  sx={{
-                    flex: 1,
-                    minWidth: 120,
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => removeOption(index)}
-                  disabled={options.length === 1}
-                  aria-label="Remove option"
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-              <TextField
-                label="Myanmar name (optional)"
-                size="small"
-                value={row.nameMy}
-                onChange={(event) =>
-                  updateOption(index, "nameMy", event.target.value)
-                }
-                slotProps={{ htmlInput: { maxLength: 120, lang: "my" } }}
-                // Lines up under the option name, clear of the ✕.
-                sx={{ mr: 5 }}
-              />
-            </Stack>
-          ))}
+        <Stack spacing={3}>
+          <GroupNameFields
+            groupName={groupName}
+            onGroupNameChange={setGroupName}
+            groupNameMy={groupNameMy}
+            onGroupNameMyChange={setGroupNameMy}
+            isRequired={isRequired}
+            onRequiredChange={setIsRequired}
+          />
+          <OptionRowsEditor
+            options={options}
+            updateOption={updateOption}
+            addOption={addOption}
+            removeOption={removeOption}
+          />
         </Stack>
       </DialogContent>
 

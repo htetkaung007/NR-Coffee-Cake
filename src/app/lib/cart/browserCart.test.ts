@@ -328,6 +328,16 @@ describe("parseCart", () => {
     expect(parseCart(JSON.stringify(stored), LOCATION)).toEqual(stored);
   });
 
+  it("reads back an add-on's group names (a stored cart without them still reads, above)", () => {
+    const stored = storedCart();
+    stored.lines[0].display.addons[0] = {
+      ...stored.lines[0].display.addons[0],
+      groupName: "Extras",
+      groupNameMy: "အပို",
+    };
+    expect(parseCart(JSON.stringify(stored), LOCATION)).toEqual(stored);
+  });
+
   it("returns an empty cart when nothing is stored", () => {
     expect(parseCart(null, LOCATION)).toEqual(emptyCart(LOCATION));
   });
@@ -359,8 +369,10 @@ describe("toBrowserCartLine", () => {
     price: 2000,
     imageUrl: "/latte.jpg",
     addonCategories: [
-      { addons: [{ id: SIZE_LARGE_ID, name: "Large", price: 800 }] },
+      { name: "Size", addons: [{ id: SIZE_LARGE_ID, name: "Large", price: 800 }] },
       {
+        name: "Extras",
+        nameMy: "အပို",
         addons: [
           { id: EXTRA_SHOT, name: "Extra shot", price: 500 },
           { id: OAT_MILK, name: "Oat milk", price: 700 },
@@ -388,11 +400,17 @@ describe("toBrowserCartLine", () => {
     });
   });
 
-  it("shows each picked add-on's name and price, in the order picked", () => {
+  it("shows each picked add-on's name, group and price, in the order picked", () => {
     const built = toBrowserCartLine(detail, 1, [OAT_MILK, SIZE_LARGE_ID], "");
     expect(built.display.addons).toEqual([
-      { id: OAT_MILK, name: "Oat milk", unitPrice: 700 },
-      { id: SIZE_LARGE_ID, name: "Large", unitPrice: 800 },
+      {
+        id: OAT_MILK,
+        name: "Oat milk",
+        groupName: "Extras",
+        groupNameMy: "အပို",
+        unitPrice: 700,
+      },
+      { id: SIZE_LARGE_ID, name: "Large", groupName: "Size", unitPrice: 800 },
     ]);
   });
 

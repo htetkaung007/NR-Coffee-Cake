@@ -34,7 +34,11 @@ export function removedByStaff(
 interface LineAddonSource {
   addonId: number;
   unitPrice: number;
-  addon: { name: string; nameMy?: string | null };
+  addon: {
+    name: string;
+    nameMy?: string | null;
+    addonCategory?: { name: string; nameMy?: string | null } | null;
+  };
 }
 
 /** A line's addon links as the client-side LineAddon shape — the
@@ -47,6 +51,8 @@ export function toLineAddons(links: readonly LineAddonSource[]): LineAddon[] {
     id: link.addonId,
     name: link.addon.name,
     nameMy: link.addon.nameMy ?? null,
+    groupName: link.addon.addonCategory?.name ?? null,
+    groupNameMy: link.addon.addonCategory?.nameMy ?? null,
     unitPrice: link.unitPrice,
   }));
 }

@@ -15,7 +15,17 @@ interface BrowserCartLineDisplay {
    *  show — lib/i18n/localizedText). Display only, like the rest. */
   nameMy?: string | null;
   unitPrice: number;
-  addons: { id: number; name: string; nameMy?: string | null; unitPrice: number }[];
+  /** Each add-on with its group's name, stored when the line is added
+   *  ("Sweet: Low" — lib/order/addonLabel); absent on older stored
+   *  carts, which then show the option name alone. */
+  addons: {
+    id: number;
+    name: string;
+    nameMy?: string | null;
+    groupName?: string | null;
+    groupNameMy?: string | null;
+    unitPrice: number;
+  }[];
   imageUrl: string | null;
 }
 
@@ -335,6 +345,8 @@ export function toBrowserCartLine(
     price: number;
     imageUrl: string | null;
     addonCategories: {
+      name: string;
+      nameMy?: string | null;
       addons: { id: number; name: string; nameMy?: string | null; price: number }[];
     }[];
   },
@@ -343,22 +355,24 @@ export function toBrowserCartLine(
   note: string,
 ): BrowserCartLine {
   const offered = new Map(
-    detail.addonCategories
-      .flatMap((category) => category.addons)
-      .map((addon) => [addon.id, addon]),
+    detail.addonCategories.flatMap((category) =>
+      category.addons.map((addon) => [addon.id, { addon, category }] as const),
+    ),
   );
   const addons = [...new Set(addonIds)].flatMap((id) => {
-    const addon = offered.get(id);
-    return addon
-      ? [
-          {
-            id,
-            name: addon.name,
-            ...(addon.nameMy ? { nameMy: addon.nameMy } : {}),
-            unitPrice: addon.price,
-          },
-        ]
-      : [];
+    const found = offered.get(id);
+    if (!found) return [];
+    const { addon, category } = found;
+    return [
+      {
+        id,
+        name: addon.name,
+        ...(addon.nameMy ? { nameMy: addon.nameMy } : {}),
+        groupName: category.name,
+        ...(category.nameMy ? { groupNameMy: category.nameMy } : {}),
+        unitPrice: addon.price,
+      },
+    ];
   });
   return {
     menuId: detail.id,
@@ -397,6 +411,9 @@ export const storedLineSchema = z.object({
         id: idSchema,
         name: z.string(),
         nameMy: z.string().nullish(),
+        // Optional: absent on lines stored before group names were kept.
+        groupName: z.string().nullish(),
+        groupNameMy: z.string().nullish(),
         unitPrice: money,
       }),
     ),

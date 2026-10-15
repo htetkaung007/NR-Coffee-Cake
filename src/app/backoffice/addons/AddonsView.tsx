@@ -177,6 +177,7 @@ export default function AddonsView({
 
   const panel = (group: AddonGroup, onClose?: () => void) => (
     <AddonGroupPanel
+      key={group.id}
       group={group}
       isOwner={isOwner}
       canToggleAvailability={canToggleAvailability}

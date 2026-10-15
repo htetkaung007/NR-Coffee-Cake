@@ -2,28 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  Alert,
-  Box,
-  Button,
-  IconButton,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
+import { Alert, Box, Button, Stack } from "@mui/material";
 import { createAddonGroupAction, updateAddonGroupAction } from "../action";
 import { SuccessSnackbar } from "@/app/components/FormCard";
 import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import MenuMultiSelect, { MenuOption } from "../MenuMultiSelect";
 import { emptyOptionRow, useOptionRows } from "@/app/lib/hooks/useOptionRows";
+import { topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
+import GroupNameFields from "@/app/components/addonForm/GroupNameFields";
+import OptionRowsEditor from "@/app/components/addonForm/OptionRowsEditor";
+import AddonGroupPreview from "./AddonGroupPreview";
 
-/** Under the Myanmar name fields. */
-const MYANMAR_HELPER =
-  "Shown to customers who choose Myanmar. Empty → the English name is shown.";
+/** One form section's card. */
+const cardSx = {
+  border: "1px solid",
+  borderColor: "divider",
+  borderRadius: 3,
+  p: { xs: 2, sm: 3 },
+} as const;
 
 interface NewAddonInitialData {
   id: number;
@@ -94,33 +91,41 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
     );
   }
 
+  const preview = (
+    <AddonGroupPreview
+      groupName={groupName}
+      groupNameMy={groupNameMy}
+      isRequired={isRequired}
+      options={options}
+    />
+  );
+
   return (
     <>
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{
-          maxWidth: 560,
-          mx: "auto",
-          p: { xs: 2, sm: 3, md: 4 },
-        }}
-      >
+      {/* Full width, so the back link sits at the page's left corner (as
+          on the menu form), and both columns start level below it. */}
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pt: { xs: 2, sm: 3, md: 4 } }}>
         <PageHeader
-          title={
-            isEditMode
-              ? "Edit Custom Add-On Option"
-              : "Or Create Custom Add-On Option"
-          }
+          title={isEditMode ? "Edit add-on group" : "New add-on group"}
           backHref="/backoffice/addons"
           backLabel="Back to add-ons"
         />
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          gap: 3,
+          // The page's top padding is above PageHeader.
+          px: { xs: 2, sm: 3, md: 4 },
+          pb: { xs: 2, sm: 3, md: 4 },
+        }}
+      >
         <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 3,
-            p: { xs: 2, sm: 3 },
-          }}
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ flex: "1 1 auto", minWidth: 0, maxWidth: 560 }}
         >
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -128,171 +133,78 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
             </Alert>
           )}
 
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 1,
-            }}
-          >
-            <Typography variant="body2">Group Title</Typography>
-            <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-              <Typography variant="caption" color="text.secondary">
-                Required
-              </Typography>
-              <Switch
-                size="small"
-                checked={isRequired}
-                onChange={(event) => setIsRequired(event.target.checked)}
-                slotProps={{
-                  input: { "aria-label": "Make this group required" },
-                }}
+          <Stack spacing={2}>
+            <Box sx={cardSx}>
+              <GroupNameFields
+                groupName={groupName}
+                onGroupNameChange={setGroupName}
+                groupNameMy={groupNameMy}
+                onGroupNameMyChange={setGroupNameMy}
+                isRequired={isRequired}
+                onRequiredChange={setIsRequired}
               />
-            </Stack>
-          </Stack>
-          <TextField
-            placeholder="Group Name (e.g., Dipping Sauces)"
-            required
-            fullWidth
-            value={groupName}
-            onChange={(event) => setGroupName(event.target.value)}
-          />
-          <TextField
-            label="Myanmar name (optional)"
-            fullWidth
-            value={groupNameMy}
-            onChange={(event) => setGroupNameMy(event.target.value)}
-            helperText={MYANMAR_HELPER}
-            slotProps={{ htmlInput: { maxLength: 50, lang: "my" } }}
-            sx={{ mt: 1.5 }}
-          />
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 0.5, mb: 3 }}
-          >
-            {isRequired
-              ? "Customers must choose one option from this group before adding the item to cart."
-              : "Optional — customers can skip this group."}
-          </Typography>
+            </Box>
 
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 1.5,
-            }}
-          >
-            <Typography variant="body2">Add-on Options & Pricing</Typography>
-            <Button
-              size="small"
-              onClick={addOption}
-              startIcon={<AddIcon sx={{ fontSize: "1rem !important" }} />}
-              sx={{ color: "primary.main", fontWeight: 700 }}
-            >
-              Add Option
-            </Button>
-          </Stack>
+            <Box sx={cardSx}>
+              <OptionRowsEditor
+                options={options}
+                updateOption={updateOption}
+                addOption={addOption}
+                removeOption={removeOption}
+              />
+            </Box>
 
-          <Stack spacing={1.5} sx={{ mb: 3 }}>
-            {options.map((row, index) => (
-              <Stack key={index} spacing={1}>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{ alignItems: "center" }}
+            {/* Below lg the preview follows the Options card. */}
+            <Box sx={{ display: { xs: "block", lg: "none" } }}>{preview}</Box>
+
+            <Box sx={cardSx}>
+              <MenuMultiSelect
+                menus={menus}
+                selectedMenuIds={selectedMenuIds}
+                onChange={setSelectedMenuIds}
+              />
+
+              <Stack
+                direction="row"
+                spacing={1.5}
+                sx={{ justifyContent: "flex-end", mt: 3 }}
+              >
+                <Button
+                  component={Link}
+                  href="/backoffice/addons"
+                  variant="outlined"
+                  color="inherit"
+                  sx={{ borderRadius: 2.5, px: 3 }}
                 >
-                  <TextField
-                    placeholder="Option Name (e.g. Extra Sauce)"
-                    fullWidth
-                    value={row.name}
-                    onChange={(event) =>
-                      updateOption(index, "name", event.target.value)
-                    }
-                    sx={{
-                      flex: 2,
-                    }}
-                  />
-                  <TextField
-                    placeholder="Price (Blank = Free)"
-                    value={row.price}
-                    onChange={(event) => {
-                      // Keep only digits — avoids native type="number" quirks
-                      // (blocked keys, scroll-wheel changes, mobile keypad
-                      // differences) while still guaranteeing a clean integer.
-                      const digitsOnly = event.target.value.replace(
-                        /[^0-9]/g,
-                        "",
-                      );
-                      updateOption(index, "price", digitsOnly);
-                    }}
-                    slotProps={{
-                      htmlInput: { inputMode: "numeric", pattern: "[0-9]*" },
-                    }}
-                    sx={{
-                      flex: 1,
-                      minWidth: 140,
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => removeOption(index)}
-                    disabled={options.length === 1}
-                    aria-label="Remove option"
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
-                <TextField
-                  label="Myanmar name (optional)"
-                  size="small"
-                  value={row.nameMy}
-                  onChange={(event) =>
-                    updateOption(index, "nameMy", event.target.value)
-                  }
-                  slotProps={{ htmlInput: { maxLength: 120, lang: "my" } }}
-                  // Lines up under the option name, clear of the ✕.
-                  sx={{ mr: 5 }}
-                />
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isPending || !groupName.trim()}
+                  sx={{ borderRadius: 2.5, px: 3 }}
+                >
+                  {isPending
+                    ? "Saving..."
+                    : isEditMode
+                      ? "Update Add-on"
+                      : "Save Add-on"}
+                </Button>
               </Stack>
-            ))}
+            </Box>
           </Stack>
+        </Box>
 
-          <MenuMultiSelect
-            menus={menus}
-            selectedMenuIds={selectedMenuIds}
-            onChange={setSelectedMenuIds}
-          />
-
-          <Stack
-            direction="row"
-            spacing={1.5}
-            sx={{ justifyContent: "flex-end", mt: 3 }}
-          >
-            <Button
-              component={Link}
-              href="/backoffice/addons"
-              variant="outlined"
-              color="inherit"
-              sx={{ borderRadius: 2.5, px: 3 }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isPending || !groupName.trim()}
-              sx={{ borderRadius: 2.5, px: 3 }}
-            >
-              {isPending
-                ? "Saving..."
-                : isEditMode
-                  ? "Update Add-on"
-                  : "Save Add-on"}
-            </Button>
-          </Stack>
+        {/* lg and up: beside the form, sticky under the top bar. */}
+        <Box
+          sx={(theme) => ({
+            display: { xs: "none", lg: "block" },
+            flex: { lg: "0 0 360px", xl: "0 0 400px" },
+            position: "sticky",
+            top: `calc(${topBarHeight(theme)}px + ${theme.spacing(2)})`,
+          })}
+        >
+          {preview}
         </Box>
       </Box>
 

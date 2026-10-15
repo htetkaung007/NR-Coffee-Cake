@@ -42,11 +42,18 @@ export class AddonService {
       select: {
         id: true,
         name: true,
+        nameMy: true,
         isRequired: true,
         addons: {
           where: { isArchived: false },
           orderBy: { id: "asc" },
-          select: { id: true, name: true, price: true, isAvailable: true },
+          select: {
+            id: true,
+            name: true,
+            nameMy: true,
+            price: true,
+            isAvailable: true,
+          },
         },
         menuAddonCategory: {
           where: {

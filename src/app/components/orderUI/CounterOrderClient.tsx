@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Box, Snackbar, useTheme } from "@mui/material";
+import { Box, Snackbar, useTheme } from "@mui/material";
 
 import { useTranslations } from "next-intl";
 import OrderTopBar from "./OrderTopBar";
 import OrderPlaceHeader from "./OrderPlaceHeader";
 import OrderBotBar from "./OrderBotBar";
+import ScannedNotice from "./ScannedNotice";
 import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 import type { MenuDetail } from "./menuDetail/types";
 
@@ -46,6 +47,7 @@ export default function CounterOrderClient({
 }: CounterOrderClientProps) {
   const router = useRouter();
   const tMenu = useTranslations("menu");
+  const tCommon = useTranslations("common");
   const pageBackground = getOrderPageBackground(useTheme());
 
   // The cart lives in this browser (see useBrowserCart) — adding never
@@ -156,9 +158,10 @@ export default function CounterOrderClient({
         />
 
         {justScanned && (
-          <Alert severity="success" role="status" sx={{ mb: 2 }}>
-            {tMenu("scanned")}
-          </Alert>
+          <ScannedNotice
+            message={tMenu("scanned")}
+            closeLabel={tCommon("close")}
+          />
         )}
 
         <MenuBrowser

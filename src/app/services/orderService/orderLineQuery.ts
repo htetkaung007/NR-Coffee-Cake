@@ -31,9 +31,20 @@ const STAFF_VOID_SELECT = {
  *  the query adds CUSTOMER_LINE_OMIT — ACTIVE_ORDER_LINES does. A raw
  *  row must never reach the client: map it first (lib/order/roundLine,
  *  labelContributors strips the token). */
+/** Each add-on with its group's names — "Sweet: Low" on every line
+ *  (lib/order/addonLabel). Only those two columns of the group. Read
+ *  live: renaming a group changes how old orders show it. */
+export const LINE_ADDONS_WITH_GROUP = {
+  include: {
+    addon: {
+      include: { addonCategory: { select: { name: true, nameMy: true } } },
+    },
+  },
+} satisfies Prisma.Order$OrdersAddonsArgs;
+
 export const ORDER_LINE_INCLUDE = {
   menu: true,
-  OrdersAddons: { include: { addon: true } },
+  OrdersAddons: LINE_ADDONS_WITH_GROUP,
   voids: { select: VOID_SELECT, orderBy: { id: "asc" } },
 } satisfies Prisma.OrderInclude;
 

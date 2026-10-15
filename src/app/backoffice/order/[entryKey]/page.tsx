@@ -4,6 +4,7 @@ import { approvalDeadline } from "@/app/lib/approval/approvalDeadline";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { buildEntryBillFromSessions } from "@/app/lib/order/orderTotals";
 import { mergeLinesForDisplay } from "@/app/lib/order/orderLineMerge";
+import { formatAddonSelections } from "@/app/lib/order/addonLabel";
 import {
   effectiveItemCount,
   effectiveQuantity,
@@ -95,7 +96,12 @@ export default async function OrderDetailPage({
       })),
       menuName: order.menu.name,
       imageUrl: order.menu.assetUrl || null,
-      addonNames: order.OrdersAddons.map((link) => link.addon.name),
+      addonsText: formatAddonSelections(
+        order.OrdersAddons.map((link) => ({
+          name: link.addon.name,
+          groupName: link.addon.addonCategory.name,
+        })),
+      ),
       note: order.note,
     })),
   }));

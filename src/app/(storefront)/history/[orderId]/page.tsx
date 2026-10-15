@@ -18,7 +18,15 @@ import {
   groupByContributor,
   type ContributorLabel,
 } from "@/app/lib/order/contributors";
-import { removedByStaff, toLabelledCartLine } from "@/app/lib/order/roundLine";
+import {
+  removedByStaff,
+  toLabelledCartLine,
+  toLineAddons,
+} from "@/app/lib/order/roundLine";
+import {
+  formatAddonSelections,
+  localizeAddonSelections,
+} from "@/app/lib/order/addonLabel";
 import { effectiveQuantity } from "@/app/lib/order/voids";
 import { customerRoundStatus } from "@/app/lib/order/cancelReason";
 import OrderReceipt, {
@@ -123,8 +131,8 @@ export default async function OrderReceiptPage({
     id: order.id,
     menuName: localizedText(locale, order.menu.name, order.menu.nameMy),
     imageUrl: order.menu.assetUrl,
-    addonNames: order.OrdersAddons.map((link) =>
-      localizedText(locale, link.addon.name, link.addon.nameMy),
+    addonsText: formatAddonSelections(
+      localizeAddonSelections(locale, toLineAddons(order.OrdersAddons)),
     ),
     note: order.note,
     // Staff-voided units left out; the receipt shows them struck through
@@ -147,8 +155,8 @@ export default async function OrderReceiptPage({
             id: line.id,
             menuName: localizedText(locale, line.menuName, line.menuNameMy),
             imageUrl: line.imageUrl ?? null,
-            addonNames: line.addons.map((addon) =>
-              localizedText(locale, addon.name, addon.nameMy),
+            addonsText: formatAddonSelections(
+              localizeAddonSelections(locale, line.addons),
             ),
             note: line.note ?? null,
             quantity: line.quantity,
