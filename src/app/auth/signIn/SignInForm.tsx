@@ -6,7 +6,6 @@ import { FormEvent, useState } from "react";
 import {
   Box,
   Button,
-  TextField,
   Typography,
   Divider,
   Alert,
@@ -20,6 +19,7 @@ import {
   SIGNUP_CLOSED_ERROR,
   SIGNUP_CLOSED_MESSAGE,
 } from "@/app/lib/access/signUp";
+import AuthCredentialFields from "../AuthCredentialFields";
 
 export default function SignInForm({
   isSignUpOpen,
@@ -137,25 +137,11 @@ export default function SignInForm({
         onSubmit={handleCredentialsSubmit}
         sx={{ width: "100%" }}
       >
-        <TextField
-          fullWidth
-          label="Email Address"
-          type="email"
-          variant="outlined"
-          margin="normal"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <TextField
-          fullWidth
-          label="Password"
-          type="password"
-          variant="outlined"
-          margin="normal"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+        <AuthCredentialFields
+          email={email}
+          onEmailChange={setEmail}
+          password={password}
+          onPasswordChange={setPassword}
         />
 
         {error && (

@@ -25,7 +25,9 @@ export function bottomBarTab(pathname: string): BottomBarTab | null {
 }
 
 /** Shown on /menu, /cart, /history and /history/<orderId> — unless the
- *  page is showing a full-screen state of its own. */
+ *  page is showing a full-screen state of its own (HideBottomBar — the
+ *  receipt, /history/<orderId>, always does: it has its own Back and
+ *  Order more). */
 export function isBottomBarVisible(
   pathname: string,
   state: BottomBarScreenState,

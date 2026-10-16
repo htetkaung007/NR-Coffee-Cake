@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import {
   Alert,
   Box,
@@ -22,8 +22,8 @@ import BillLineRows from "@/app/components/BillLineRows";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import BillTotal from "../BillTotal";
 import { moneySx } from "../orderTypography";
-import type { AppLocale } from "@/app/lib/i18n/locale";
-import { customerWords } from "@/app/lib/i18n/customerWords";
+import { langAttr, type AppLocale } from "@/app/lib/i18n/locale";
+import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { localizeAddonSelections } from "@/app/lib/order/addonLabel";
 import { formatAmount } from "@/app/lib/orderFormat";
@@ -127,7 +127,7 @@ function OrderLine({
         >
           {/* Itemised like every bill: the item, then each add-on with
              what it adds — the same rows as the order detail's bill. */}
-          <Box lang={words.language === "my" ? "my" : undefined}>
+          <Box lang={langAttr(words.language)}>
             <BillLineRows
               rows={lineBreakdown({
                 name: localizedText(words.language, line.menuName, line.menuNameMy),
@@ -262,13 +262,10 @@ export default function StaffOrderPanel({
   language,
 }: StaffOrderPanelProps) {
   const reasonId = useId();
-  const words = useMemo<LineWords>(
-    () => ({
-      language,
-      formatMoney: language === "my" ? customerWords("my").price : formatAmount,
-    }),
-    [language],
-  );
+  const words: LineWords = {
+    language,
+    formatMoney: myanmarWordsOrNull(language)?.price ?? formatAmount,
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>

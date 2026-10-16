@@ -70,7 +70,7 @@ this file exists before creating a new one — a duplicate
 
 **`lib/` is grouped by domain folders** (`approval/`, `order/`, `cart/`,
 `storefront/`, `menu/`, `report/`, `access/`, `location/`, plus `hooks/`,
-`qr/`, `schemas/`, `storage/`, `theme/`); app-wide helpers (`actionHelper`,
+`http/`, `qr/`, `schemas/`, `storage/`, `theme/`); app-wide helpers (`actionHelper`,
 `actionResult`, `errors`, `orderFormat`, `shopDay`, `isPlainLeftClick`,
 `backofficeNav`) stay at the root. **No barrel (`index.ts`) files in
 `lib/`** — it mixes server-only modules (`access/roleGuard`,
@@ -255,7 +255,8 @@ to our own variables/functions, not established library idioms.
   8px-grid padding, a darker border on hover (gated with
   hoverCapableMedia), a 2px primary.main focus ring on the notched
   outline, error.main on error, a faint alpha(text.primary) fill when
-  disabled, text.secondary placeholders. `palette.inputBorder` is a
+  disabled, text.secondary placeholders, and text ≥ 16px on phones
+  (`lib/theme/inputFontSize.ts` — no iOS focus zoom). `palette.inputBorder` is a
   custom palette key (module augmentation in sharedThemeTokens.ts) that
   BOTH getBoTheme and getOdTheme define, tuned to ≥ 3:1 against
   background.paper and background.default in both modes. A TextField
@@ -292,10 +293,36 @@ never process.env.X directly in a Service or component; add new env
 vars to the Config interface and object there first.
 
 Two exceptions read `process.env` directly, outside that object:
-`process.env.NODE_ENV` checks (e.g. cookie `secure` flags), and
+`process.env.NODE_ENV` checks (e.g. Prisma's query logging), and
 `src/app/utils/prisma.ts` (the Prisma client bootstrap runs before/
 independently of the app config). Everything else still goes through
 `utils/config`.
+
+- **Stored image URLs are re-based on the way out.** Menu.assetUrl and
+  Table.qrcodeImageUrl hold the full URL from upload time
+  (`${MINIO_ENDPOINT}/${bucket}/${key}`), so an address change (localhost
+  → LAN IP, a new IP) would break old images. Every place a stored URL
+  leaves the server for display calls `resolveAssetUrl`
+  (`lib/storage/assetUrl.ts`: the key after `/${bucket}/` on the CURRENT
+  endpoint; anything else unchanged) — never repeat that logic, never
+  rewrite the DB for it. Today: MenuService's list and detail reads,
+  MenuCategoryService.getCategoryMenus, `roundLine.toCartLine` (every
+  customer cart / draft / history line), `withdrawal.toCounterHandBack`,
+  the History receipt, the Backoffice order detail and the two tables
+  pages. `S3CompatibleStorageService.delete` finds the key the same way
+  (`assetKeyFromUrl`), so old images can still be deleted. It reads
+  server config, so it stays out of client bundles — the client-safe
+  `toLineAddons` lives in `lib/order/lineAddons.ts` for that reason.
+- **Cookies are `secure` only when the REQUEST is https**
+  (`lib/http/secureCookie.ts`: the request URL's protocol or
+  `x-forwarded-proto`; `isSecureRequest(request)` in Route Handlers,
+  `await isSecureServerRequest()` in Server Actions) — never decided by
+  NODE_ENV. The shop LAN is plain http (`npm start` there is still
+  "production"), a tunnel is https; a `secure` cookie on http is dropped
+  and the language / QR scans silently stop working. Every cookie
+  options helper takes `secure` (`counterSessionCookieOptions`,
+  `contributorTokenCookieOptions`, `localeCookieOptions`). NextAuth's own
+  cookies follow NEXTAUTH_URL's scheme — left to NextAuth.
 
 ## 13. Known project gaps / TODOs
 
@@ -361,6 +388,12 @@ independently of the app config). Everything else still goes through
   codes keep the in-shop (LAN) address, never the online hostname.**
 - Location.publicMenuCode is unused (left from the dropped /m/<code>
   page) and will be dropped in a later migration.
+- **`/` is the customers' landing page** (`(storefront)/page.tsx`): the
+  shop name and a "View menu" link for each location a visitor without a
+  QR may see (`lib/storefront/landingLocations` — the same `menuAccess`
+  rule: not archived AND online menu on), plus the scan-to-order hint.
+  Only id + name of those locations reach the browser. It never links to
+  or mentions the Backoffice — staff open /backoffice directly.
 
 ## 13c. Customer languages (Myanmar / English)
 
@@ -400,10 +433,12 @@ independently of the app config). Everything else still goes through
   page); shared components (MenuCard, menu detail, line notices) take it
   through their labels. The Backoffice, /print, Reports and CSV keep
   `formatAmount` — "MMK".
-- **Myanmar typography** is tuned in ONE place, the customer theme:
+- **Myanmar typography** is tuned in ONE place:
   `lib/theme/myanmarTypography.ts` (`MYANMAR_FONT_SCALE`, minimum
-  line-heights 1.6 / 1.8) applied to `:lang(my)` text through odTheme's
-  CssBaseline. Never set Myanmar sizes in components.
+  line-heights 1.6 / 1.8) applied to `:lang(my)` text through BOTH
+  themes' CssBaseline (odTheme and theme.ts — the Backoffice's Myanmar
+  views match the customer's). Myanmar parts carry lang="my" (langAttr).
+  Never set Myanmar sizes in components.
 - The Backoffice stays English (root `<html lang="en">`) — **decided: no
   Backoffice translation.** Its only Myanmar is shop data the owner
   typed (e.g. the Add-ons panel's EN | မြန်မာ names toggle).

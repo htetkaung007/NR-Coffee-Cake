@@ -8,6 +8,7 @@ import {
   LOCALE_COOKIE,
   localeCookieOptions,
 } from "@/app/lib/i18n/locale";
+import { isSecureServerRequest } from "@/app/lib/http/secureCookie";
 
 const setLocaleSchema = z.object({ locale: z.enum(LOCALES) });
 
@@ -19,7 +20,11 @@ export async function setLocaleAction(locale: string) {
   const result = validateWith(setLocaleSchema, { locale });
   if (result.isOk()) {
     const store = await cookies();
-    store.set(LOCALE_COOKIE, result.value.locale, localeCookieOptions);
+    store.set(
+      LOCALE_COOKIE,
+      result.value.locale,
+      localeCookieOptions(await isSecureServerRequest()),
+    );
   }
   return toActionResult(result);
 }

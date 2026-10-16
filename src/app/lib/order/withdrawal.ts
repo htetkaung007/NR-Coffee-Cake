@@ -1,4 +1,5 @@
 import type { BrowserCartLine } from "../cart/browserCart";
+import { resolveAssetUrl } from "../storage/assetUrl";
 
 /**
  * Customers withdrawing their own round — "Cancel order" / "Change order"
@@ -116,7 +117,7 @@ export function toCounterHandBack(
           : {}),
         unitPrice: link.unitPrice,
       })),
-      imageUrl: line.menu.assetUrl,
+      imageUrl: resolveAssetUrl(line.menu.assetUrl),
     },
   }));
 }

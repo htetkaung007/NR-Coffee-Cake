@@ -201,9 +201,11 @@ export default function OrderTargetPicker({
     })),
     counterBillRootIds: occupancy.counterBills.map((bill) => bill.billRootId),
   });
+
   const listedTables = seatTables.filter((table) =>
     options.tableIds.includes(table.id),
   );
+  
   const listedBills = occupancy.counterBills.filter((bill) =>
     options.counterBillRootIds.includes(bill.billRootId),
   );

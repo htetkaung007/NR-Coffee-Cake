@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { formatRejectReasonCounts } from "@/app/lib/order/rejectReason";
@@ -45,6 +46,40 @@ export function FigureCell({
   );
 }
 
+/** A Reports figures card (CancelledCard, VoidedCard): its heading, the
+ *  FigureCells side by side with hairlines between, and an optional line
+ *  under them. */
+export function FigureCard({
+  title,
+  after,
+  children,
+}: {
+  title: string;
+  /** Under the figures (e.g. the customer-cancelled count). */
+  after?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 } }}>
+      <Typography
+        variant="body1"
+        component="h2"
+        sx={{ ...sectionHeadingSx, mb: 1 }}
+      >
+        {title}
+      </Typography>
+      <Stack
+        direction="row"
+        divider={<Divider orientation="vertical" flexItem />}
+        sx={{ mx: { xs: -1, sm: -2 } }}
+      >
+        {children}
+      </Stack>
+      {after}
+    </Card>
+  );
+}
+
 /** Rejected · Timed out · Not charged — the shop's misses (REJECTED /
  *  EXPIRED rounds, priced from their snapshots), over the whole period.
  *  Orders customers cancelled themselves while they waited are counted
@@ -57,19 +92,17 @@ export default function CancelledCard({
   cancelled: ReportOverview["current"]["cancelled"];
 }) {
   return (
-    <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 } }}>
-      <Typography
-        variant="body1"
-        component="h2"
-        sx={{ ...sectionHeadingSx, mb: 1 }}
-      >
-        Cancelled orders
-      </Typography>
-      <Stack
-        direction="row"
-        divider={<Divider orientation="vertical" flexItem />}
-        sx={{ mx: { xs: -1, sm: -2 } }}
-      >
+    <FigureCard
+      title="Cancelled orders"
+      after={
+        cancelled.withdrawn > 0 && (
+          // Not the shop's miss — counted apart, never in the figures above.
+          <Typography variant="caption" component="p" color="text.secondary" sx={{ mt: 1 }}>
+            Also cancelled by customers before approval: {cancelled.withdrawn}
+          </Typography>
+        )
+      }
+    >
         <FigureCell
           label="Rejected"
           value={String(cancelled.rejected)}
@@ -77,13 +110,6 @@ export default function CancelledCard({
         />
         <FigureCell label="Timed out" value={String(cancelled.timedOut)} />
         <FigureCell label="Not charged" value={formatAmount(cancelled.notCharged)} />
-      </Stack>
-      {cancelled.withdrawn > 0 && (
-        // Not the shop's miss — counted apart, never in the figures above.
-        <Typography variant="caption" component="p" color="text.secondary" sx={{ mt: 1 }}>
-          Also cancelled by customers before approval: {cancelled.withdrawn}
-        </Typography>
-      )}
-    </Card>
+    </FigureCard>
   );
 }

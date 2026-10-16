@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { config } from "../../utils/config";
 import type { FileStorageService } from "./FileStorageService";
+import { assetKeyFromUrl } from "./assetUrl";
 
 /**
  * Works against MinIO today (local, offline-capable) and, unchanged,
@@ -67,10 +68,13 @@ export class S3CompatibleStorageService implements FileStorageService {
    * object with a timestamp — there's no way to reconstruct the exact
    * key from menuId alone. The caller looks up the menu's current
    * assetUrl first and passes it here before overwriting/clearing it.
+   * The key is found by `/${bucket}/` (lib/storage/assetUrl), not by the
+   * current address, so an image stored before the address changed
+   * (localhost → LAN IP) is still deleted.
    */
   async delete(assetUrl: string) {
-    if (!assetUrl.startsWith(this.publicBaseUrl)) return; // not one of ours
-    const key = assetUrl.slice(this.publicBaseUrl.length + 1);
+    const key = assetKeyFromUrl(assetUrl, this.bucket);
+    if (key === null) return; // not one of ours
 
     await this.client.send(
       new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),

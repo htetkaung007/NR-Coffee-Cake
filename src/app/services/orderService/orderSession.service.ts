@@ -1,4 +1,9 @@
-import { NotFoundError, ValidationError } from "@/app/lib/errors";
+import { AppError, NotFoundError, ValidationError } from "@/app/lib/errors";
+import {
+  withdrawBlock,
+  WITHDRAW_BLOCK_CODES,
+  WITHDRAW_BLOCK_MESSAGES,
+} from "@/app/lib/order/withdrawal";
 import { prisma } from "@/app/utils/prisma";
 import { Prisma } from "../../../../prisma/generated/browser";
 import type { RejectDetails } from "@/app/lib/order/rejectReason";
@@ -131,6 +136,19 @@ export class OrderSessionService {
         order.quantity,
       );
     }
+  }
+
+  /** A customer's Cancel / Change order lost the race (the counter
+   *  decided, or it expired, between the check and cancelSession): throws
+   *  the reason as it stands now — the Counter's and the Table's withdraw
+   *  share this. */
+  static async throwWithdrawRefused(sessionId: number): Promise<never> {
+    const now = await prisma.orderSession.findUniqueOrThrow({
+      where: { id: sessionId },
+      select: { status: true, isCounter: true, approvalExpiresAt: true },
+    });
+    const reason = withdrawBlock(now, new Date()) ?? "cancelled";
+    throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], WITHDRAW_BLOCK_CODES[reason]);
   }
 
   /** The one place a session is written CANCELLED — every cancel path

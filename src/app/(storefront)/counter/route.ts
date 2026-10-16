@@ -4,6 +4,7 @@ import {
   COUNTER_SESSION_COOKIE,
   counterSessionCookieOptions,
 } from "@/app/lib/storefront/orderSessionCookie";
+import { isSecureRequest } from "@/app/lib/http/secureCookie";
 
 /**
  * Design doc "Step 1: QR Scan & URL Validation". A GET here is the
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
   response.cookies.set(
     COUNTER_SESSION_COOKIE,
     result.session.token,
-    counterSessionCookieOptions,
+    counterSessionCookieOptions(isSecureRequest(request)),
   );
   return response;
 }

@@ -5,6 +5,7 @@ import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { buildEntryBillFromSessions } from "@/app/lib/order/orderTotals";
 import { mergeLinesForDisplay } from "@/app/lib/order/orderLineMerge";
 import { formatAddonSelections } from "@/app/lib/order/addonLabel";
+import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
 import {
   effectiveItemCount,
   effectiveQuantity,
@@ -95,7 +96,7 @@ export default async function OrderDetailPage({
         by: voidedByLabel(entry),
       })),
       menuName: order.menu.name,
-      imageUrl: order.menu.assetUrl || null,
+      imageUrl: resolveAssetUrl(order.menu.assetUrl || null),
       addonsText: formatAddonSelections(
         order.OrdersAddons.map((link) => ({
           name: link.addon.name,

@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 
 import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import OrderTopBar from "./OrderTopBar";
 import OrderPlaceHeader from "./OrderPlaceHeader";
 import { useBottomBarPage } from "./OrderBotBar";
-import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
+import MenuPageFrame from "./MenuPageFrame";
 import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 
 import {
@@ -17,15 +17,12 @@ import {
 } from "@/app/(storefront)/table/action";
 import { DraftLine } from "@/app/(storefront)/cart/CartList";
 import { applyAddedLine, sumQuantities } from "@/app/lib/order/orderTotals";
-import { toLineAddons } from "@/app/lib/order/roundLine";
+import { toLineAddons } from "@/app/lib/order/lineAddons";
 import { useRefreshOnVisible } from "@/app/lib/hooks/useRefreshOnVisible";
 import { usePolling } from "@/app/lib/hooks/usePolling";
 import { dismissConfirmedRound } from "@/app/lib/hooks/useRoundDismissed";
 import { POLL_INTERVAL_MS } from "@/app/lib/hooks/usePollOrderStatus";
-import {
-  getOrderPageBackground,
-  ORDER_PAGE_MIN_WIDTH,
-} from "@/app/lib/theme/orderPageBackground";
+import { getOrderPageBackground } from "@/app/lib/theme/orderPageBackground";
 
 interface TableOrderClientProps {
   tableId: number;
@@ -164,51 +161,33 @@ export default function TableOrderClient({
   }
 
   return (
-    <Box
-      sx={{
-        minWidth: ORDER_PAGE_MIN_WIDTH,
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        // The floating bottom bar's room — the last card scrolls clear.
-        pb: BOTTOM_BAR_CLEARANCE,
-        backgroundColor: pageBackground.color,
-        backgroundImage: pageBackground.image,
-        backgroundAttachment: "fixed",
-      }}
+    <MenuPageFrame
+      background={pageBackground}
+      topBar={
+        <OrderTopBar
+          shopName={shopName}
+          cartItemCount={sumQuantities(draftItems)}
+          awaitingApproval={isAwaitingApproval}
+          onCartClick={() =>
+            router.push(`/cart?locationId=${locationId}&tableId=${tableId}`)
+          }
+        />
+      }
     >
-      <OrderTopBar
-        shopName={shopName}
-        cartItemCount={sumQuantities(draftItems)}
-        awaitingApproval={isAwaitingApproval}
-        onCartClick={() =>
-          router.push(`/cart?locationId=${locationId}&tableId=${tableId}`)
-        }
+      <OrderPlaceHeader
+        place={{ kind: "table", tableName, othersCount: otherContributors }}
       />
-      <Box
-        sx={{
-          flex: 1,
-          width: "100%",
-          p: { xs: 2, sm: 3 },
-          maxWidth: 1200,
-          mx: "auto",
-        }}
-      >
-        <OrderPlaceHeader
-          place={{ kind: "table", tableName, othersCount: otherContributors }}
-        />
 
-        <MenuBrowser
-          menus={menus}
-          categories={categories}
-          locationId={locationId}
-          canOrder
-          backgroundColor={pageBackground.color}
-          backgroundImage={pageBackground.image}
-          backgroundAttachment="fixed"
-          onAddToCart={handleAddToCart}
-        />
-      </Box>
-    </Box>
+      <MenuBrowser
+        menus={menus}
+        categories={categories}
+        locationId={locationId}
+        canOrder
+        backgroundColor={pageBackground.color}
+        backgroundImage={pageBackground.image}
+        backgroundAttachment="fixed"
+        onAddToCart={handleAddToCart}
+      />
+    </MenuPageFrame>
   );
 }

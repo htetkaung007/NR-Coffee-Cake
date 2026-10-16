@@ -7,7 +7,6 @@ import {
   TableSessionService,
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
-import { getContributorToken } from "@/app/lib/storefront/contributorToken";
 import {
   toCartLine,
   toDraftLine,
@@ -19,7 +18,7 @@ import CartPageClient from "@/app/components/orderUI/CartPageClient";
 import TableCartPageClient from "@/app/components/orderUI/TableCartPageClient";
 import { CartButtonStatus } from "@/app/components/orderUI/CartButton";
 import ShopUnavailable from "@/app/components/orderUI/ShopUnavailable";
-import { parseIdParam } from "@/app/lib/storefront/menuAccess";
+import { readTableSessionPlace } from "@/app/lib/storefront/tableSessionAccess";
 import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
 
 // Same reasoning as /menu — see that page's dynamic export comment.
@@ -52,78 +51,65 @@ export default async function CartPage({
     scanned?: string;
   }>;
 }) {
-  const {
-    locationId: locationIdParam,
-    tableId: tableIdParam,
-    scanned,
-  } = await searchParams;
-  // Untrusted URL ids (Zod) — looked up, never used as they come.
-  const urlLocationId = parseIdParam(locationIdParam);
-  const tableId = parseIdParam(tableIdParam);
+  const { scanned, ...ids } = await searchParams;
+  // Untrusted URL ids, and this browser's Table QR session there if any
+  // (lib/storefront/tableSessionAccess).
+  const { urlLocationId, table } = await readTableSessionPlace(ids);
 
-  if (tableId && urlLocationId) {
-    const contributorToken = await getContributorToken(tableId);
-    // A current token for THIS table, at this location (see /menu).
-    const isTableSession =
-      contributorToken !== null &&
-      (await TableDraftService.hasCurrentTokenAtLocation(urlLocationId, {
-        [tableId]: contributorToken,
-      }));
-    if (contributorToken && isTableSession) {
-      const locationId = urlLocationId;
-      // Scanned in — unless the location is gone or closed.
-      if ((await checkMenuAccess(locationId)) === "unavailable") {
-        return <ShopUnavailable />;
-      }
-      const [
-        draftItems,
-        activeRound,
-        shopName,
-        shortages,
-        rejectedRound,
-        labels,
-        tableName,
-      ] = await Promise.all([
-        TableDraftService.getDraftItemsForTable(tableId),
-        TableSessionService.getActiveRoundWithOrdersForTable(tableId),
-        LocationService.getShopNameForLocation(locationId),
-        TableDraftService.getShortagesForTable(tableId, locationId),
-        TableSessionService.getRejectedRoundForTable(tableId),
-        // Who's who as labels — the tokens stay on the server.
-        TableDraftService.getContributorLabels(tableId, contributorToken),
-        TableSessionService.getTableName(tableId, locationId),
-      ]);
-
-      return (
-        <TableCartPageClient
-          tableId={tableId}
-          tableName={tableName}
-          locationId={locationId}
-          shopName={shopName}
-          initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}
-          initialActiveRound={
-            activeRound
-              ? {
-                  id: activeRound.id,
-                  orderNumber: activeRound.orderNumber,
-                  status: activeRound.status,
-                  total: orderLinesTotal(activeRound.orders),
-                  // The soft countdown — never auto-cancels for a Table
-                  // round (see approvalDeadline).
-                  approval: approvalTiming(activeRound, new Date()),
-                }
-              : null
-          }
-          initialRoundItems={
-            activeRound?.orders.map((order) =>
-              toLabelledCartLine(order, labels),
-            ) ?? []
-          }
-          initialShortages={shortages}
-          initialRejectedRound={rejectedRound}
-        />
-      );
+  if (table) {
+    const { tableId, locationId, contributorToken } = table;
+    // Scanned in — unless the location is gone or closed.
+    if ((await checkMenuAccess(locationId)) === "unavailable") {
+      return <ShopUnavailable />;
     }
+    const [
+      draftItems,
+      activeRound,
+      shopName,
+      shortages,
+      rejectedRound,
+      labels,
+      tableName,
+    ] = await Promise.all([
+      TableDraftService.getDraftItemsForTable(tableId),
+      TableSessionService.getActiveRoundWithOrdersForTable(tableId),
+      LocationService.getShopNameForLocation(locationId),
+      TableDraftService.getShortagesForTable(tableId, locationId),
+      TableSessionService.getRejectedRoundForTable(tableId),
+      // Who's who as labels — the tokens stay on the server.
+      TableDraftService.getContributorLabels(tableId, contributorToken),
+      TableSessionService.getTableName(tableId, locationId),
+    ]);
+
+    return (
+      <TableCartPageClient
+        tableId={tableId}
+        tableName={tableName}
+        locationId={locationId}
+        shopName={shopName}
+        initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}
+        initialActiveRound={
+          activeRound
+            ? {
+                id: activeRound.id,
+                orderNumber: activeRound.orderNumber,
+                status: activeRound.status,
+                total: orderLinesTotal(activeRound.orders),
+                // The soft countdown — never auto-cancels for a Table
+                // round (see approvalDeadline).
+                approval: approvalTiming(activeRound, new Date()),
+              }
+            : null
+        }
+        initialRoundItems={
+          activeRound?.orders.map((order) =>
+            toLabelledCartLine(order, labels),
+          ) ?? []
+        }
+        initialShortages={shortages}
+        initialRejectedRound={rejectedRound}
+      />
+    );
   }
 
   const cookieStore = await cookies();
@@ -139,7 +125,10 @@ export default async function CartPage({
 
   // The browser cart shows menu names and prices: the menu-access rule
   // applies (online menu off + no QR session here → unavailable).
-  if (locationId === null || (await checkMenuAccess(locationId)) === "unavailable") {
+  if (
+    locationId === null ||
+    (await checkMenuAccess(locationId)) === "unavailable"
+  ) {
     return <ShopUnavailable />;
   }
 

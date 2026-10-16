@@ -11,6 +11,7 @@ import {
   COUNTER_SESSION_COOKIE,
   counterSessionCookieOptions,
 } from "@/app/lib/storefront/orderSessionCookie";
+import { isSecureServerRequest } from "@/app/lib/http/secureCookie";
 import { toCartLine } from "@/app/lib/order/roundLine";
 import { orderLinesTotal } from "@/app/lib/order/orderTotals";
 import { approvalTiming } from "@/app/lib/approval/approvalTiming";
@@ -72,7 +73,11 @@ export async function pollOrderStatusAction() {
     // round, so the existing terminal handling for it is unchanged.
     const root = await CounterSessionService.getOpenBillRoot(session);
     if (root) {
-      store.set(cookieName, root.token, counterSessionCookieOptions);
+      store.set(
+        cookieName,
+        root.token,
+        counterSessionCookieOptions(await isSecureServerRequest()),
+      );
     } else {
       store.set(cookieName, "", { maxAge: 0 });
     }
@@ -116,7 +121,11 @@ async function withdrawOwnRound(mode: "cancel" | "change") {
   }
   const result = await CounterSessionService.withdrawByToken(token, mode);
   if (result.nextToken) {
-    store.set(COUNTER_SESSION_COOKIE, result.nextToken, counterSessionCookieOptions);
+    store.set(
+      COUNTER_SESSION_COOKIE,
+      result.nextToken,
+      counterSessionCookieOptions(await isSecureServerRequest()),
+    );
   } else {
     store.set(COUNTER_SESSION_COOKIE, "", { maxAge: 0 });
   }

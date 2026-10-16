@@ -1,5 +1,6 @@
 import { alpha, createTheme, type PaletteMode } from "@mui/material/styles";
 import { sharedThemeOptions } from "./sharedThemeTokens";
+import { myanmarTypographyStyles } from "./myanmarTypography";
 
 /**
  * Backoffice (Bo) theme — the design file's color palette lives here only,
@@ -19,7 +20,7 @@ export function getBoTheme(mode: PaletteMode) {
     ? "rgba(0, 0, 0, 0.6)"
     : "rgba(255, 255, 255, 0.7)";
 
-  return createTheme({
+  const theme = createTheme({
     palette: {
       mode,
       primary: {
@@ -115,5 +116,19 @@ export function getBoTheme(mode: PaletteMode) {
       inputBorder: alpha(primaryMain, 0.6),
     },
     ...sharedThemeOptions,
+  });
+
+  // Myanmar text (staff New Order's မြန်မာ view, the Add-ons panel's
+  // names, the add-on form's Myanmar parts): the same `:lang(my)` rules
+  // as the customer theme, from this theme's own variants — English
+  // Backoffice text never matches them.
+  return createTheme(theme, {
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: myanmarTypographyStyles(
+          theme.typography as unknown as Record<string, unknown>,
+        ),
+      },
+    },
   });
 }

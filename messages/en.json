@@ -7,7 +7,6 @@
     "nothingToUpdate": "Nothing to update.",
     "close": "Close",
     "tryAgain": "Try again",
-    "subtotal": "Subtotal",
     "total": "Total",
     "items": "Items",
     "qty": "Qty {quantity}",
@@ -110,6 +109,8 @@
   "approval": {
     "counterTitle": "Waiting for the counter to confirm",
     "tableTitle": "Waiting for our staff to confirm",
+    "counterShort": "Waiting for the counter",
+    "tableShort": "Waiting for our staff",
     "subtitle": "Usually confirmed within a few minutes.",
     "counterDeadline": "If it isn't confirmed by {time}, it will be cancelled automatically — you won't be charged.",
     "tableDeadline": "Usually confirmed by {time}.",
@@ -266,5 +267,11 @@
     "ROUND_NOT_CONFIRMED": "This order must be confirmed by the counter before you can start a new one.",
     "ROUND_AWAITING_APPROVAL": "Your order is waiting for the counter to confirm. You can add more once it's accepted.",
     "ROUND_CLOSED": "This order can no longer be edited."
+  },
+  "landing": {
+    "menusLabel": "Online menus",
+    "viewMenu": "View menu",
+    "viewMenuAt": "View menu: {name}",
+    "orderHint": "To order, scan the QR code on your table or at the counter."
   }
 }

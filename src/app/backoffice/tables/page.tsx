@@ -3,6 +3,7 @@ import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { TableService } from "@/app/services";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
+import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
 import TableCard from "./TableCard";
 
 export default async function TablesPage() {
@@ -69,7 +70,7 @@ export default async function TablesPage() {
                 table={{
                   id: table.id,
                   name: table.name,
-                  qrcodeImageUrl: table.qrcodeImageUrl,
+                  qrcodeImageUrl: resolveAssetUrl(table.qrcodeImageUrl),
                   isArchived: table.isArchived,
                   isCounter: table.isCounter === true,
                 }}

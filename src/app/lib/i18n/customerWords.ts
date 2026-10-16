@@ -10,15 +10,8 @@ import {
 
 const MESSAGES = { en, my } as const;
 
-/**
- * The customer's own words in `locale`, for Backoffice screens that show
- * what a customer could read (the add-on group form's "Customer sees"
- * preview, the Add-ons panel's and staff New Order's မြန်မာ views) — no
- * next-intl provider there, so the bundled messages/*.json are read
- * through the same builders the storefront uses (lib/i18n/
- * customerLabels); never repeated as literals. Pure, client-safe.
- */
-export function customerWords(locale: AppLocale) {
+/** All of a language's customer words (see customerWords). */
+function buildCustomerWords(locale: AppLocale) {
   const messages = MESSAGES[locale];
   const orderUi = orderUiLabels(locale, messages);
   const { price, priceDelta } = customerPrices(locale, messages);
@@ -36,4 +29,35 @@ export function customerWords(locale: AppLocale) {
     /** The menu detail dialog / sheet's words (OrderUiLabels). */
     orderUi,
   };
+}
+
+type CustomerWords = ReturnType<typeof buildCustomerWords>;
+
+/** Built once per language, on first use — every caller gets the same
+ *  (immutable) object, so nothing needs memoising. */
+const cache = new Map<AppLocale, CustomerWords>();
+
+/**
+ * The customer's own words in `locale`, for Backoffice screens that show
+ * what a customer could read (the add-on group form's "Customer sees"
+ * preview, the Add-ons panel's and staff New Order's မြန်မာ views) — no
+ * next-intl provider there, so the bundled messages/*.json are read
+ * through the same builders the storefront uses (lib/i18n/
+ * customerLabels); never repeated as literals. Pure, client-safe.
+ */
+export function customerWords(locale: AppLocale): CustomerWords {
+  let words = cache.get(locale);
+  if (!words) {
+    words = buildCustomerWords(locale);
+    cache.set(locale, words);
+  }
+  return words;
+}
+
+/** The Myanmar words when `locale` is Myanmar; null for English (or not
+ *  known yet) — where the caller keeps its Backoffice English defaults. */
+export function myanmarWordsOrNull(
+  locale: AppLocale | null,
+): CustomerWords | null {
+  return locale === "my" ? customerWords("my") : null;
 }

@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Snackbar, useTheme } from "@mui/material";
+import { Snackbar, useTheme } from "@mui/material";
 
 import { useTranslations } from "next-intl";
 import OrderTopBar from "./OrderTopBar";
 import OrderPlaceHeader from "./OrderPlaceHeader";
 import { useBottomBarPage } from "./OrderBotBar";
-import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
+import MenuPageFrame from "./MenuPageFrame";
 import ScannedNotice from "./ScannedNotice";
 import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 import type { MenuDetail } from "./menuDetail/types";
@@ -18,7 +18,6 @@ import { useBrowserCart } from "@/app/lib/hooks/useBrowserCart";
 import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import {
   getOrderPageBackground,
-  ORDER_PAGE_MIN_WIDTH,
 } from "@/app/lib/theme/orderPageBackground";
 
 interface CounterOrderClientProps {
@@ -117,71 +116,53 @@ export default function CounterOrderClient({
   // full-page swap here. The cart itself (list + Submit) lives on its
   // own /cart route — see cart/page.tsx.
   return (
-    <Box
-      sx={{
-        minWidth: ORDER_PAGE_MIN_WIDTH,
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        // The floating bottom bar's room — the last card scrolls clear.
-        pb: BOTTOM_BAR_CLEARANCE,
-        backgroundColor: pageBackground.color,
-        backgroundImage: pageBackground.image,
-        backgroundAttachment: "fixed",
-      }}
+    <MenuPageFrame
+      background={pageBackground}
+      topBar={
+        <OrderTopBar
+          shopName={shopName}
+          cartItemCount={browserCart.itemCount}
+          awaitingApproval={isAwaitingApproval}
+          onCartClick={() => {
+            router.push(`/cart?locationId=${locationId}`);
+            router.refresh();
+          }}
+        />
+      }
     >
-      <OrderTopBar
-        shopName={shopName}
-        cartItemCount={browserCart.itemCount}
-        awaitingApproval={isAwaitingApproval}
-        onCartClick={() => {
-          router.push(`/cart?locationId=${locationId}`);
-          router.refresh();
-        }}
-      />
-      <Box
-        sx={{
-          flex: 1,
-          width: "100%",
-          p: { xs: 2, sm: 3 },
-          maxWidth: 1200,
-          mx: "auto",
-        }}
-      >
-        {/* Where am I: the Counter (with the bill's order number — never
+      {/* Where am I: the Counter (with the bill's order number — never
            the internal session id), or the Online menu without a scan. */}
-        <OrderPlaceHeader
-          place={
-            hasSession
-              ? {
-                  kind: "counter",
-                  orderNumber: orderNumber || null,
-                  awaitingApproval: isAwaitingApproval,
-                }
-              : { kind: "online" }
-          }
-        />
+      <OrderPlaceHeader
+        place={
+          hasSession
+            ? {
+                kind: "counter",
+                orderNumber: orderNumber || null,
+                awaitingApproval: isAwaitingApproval,
+              }
+            : { kind: "online" }
+        }
+      />
 
-        {justScanned && (
-          <ScannedNotice
-            message={tMenu("scanned")}
-            closeLabel={tCommon("close")}
-          />
-        )}
-
-        <MenuBrowser
-          menus={menus}
-          categories={categories}
-          locationId={locationId}
-          // The cart lives in this browser, so it can be built before any
-          // scan (Online browsing); sending is what needs the counter QR.
-          canOrder={locationId > 0 && !isAwaitingApproval}
-          backgroundColor={pageBackground.color}
-          backgroundImage={pageBackground.image}
-          backgroundAttachment="fixed"
-          onAddToCart={addToCart}
+      {justScanned && (
+        <ScannedNotice
+          message={tMenu("scanned")}
+          closeLabel={tCommon("close")}
         />
-      </Box>
+      )}
+
+      <MenuBrowser
+        menus={menus}
+        categories={categories}
+        locationId={locationId}
+        // The cart lives in this browser, so it can be built before any
+        // scan (Online browsing); sending is what needs the counter QR.
+        canOrder={locationId > 0 && !isAwaitingApproval}
+        backgroundColor={pageBackground.color}
+        backgroundImage={pageBackground.image}
+        backgroundAttachment="fixed"
+        onAddToCart={addToCart}
+      />
       <Snackbar
         open={addedName !== null}
         autoHideDuration={2000}
@@ -192,6 +173,6 @@ export default function CounterOrderClient({
         sx={{ top: "calc(72px + env(safe-area-inset-top, 0px))" }}
         slotProps={{ content: { role: "status", "aria-live": "polite" } }}
       />
-    </Box>
+    </MenuPageFrame>
   );
 }

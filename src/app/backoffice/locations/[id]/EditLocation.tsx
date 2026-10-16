@@ -24,6 +24,7 @@ import ConfirmDialog from "@/app/components/ConfirmDialog";
 import FormCard from "@/app/components/FormCard";
 import PageHeader from "@/app/components/PageHeader";
 import OnlineMenuSection from "./OnlineMenuSection";
+import DangerZone from "@/app/components/DangerZone";
 
 interface EditLocationProps {
   location: {
@@ -188,24 +189,11 @@ export default function EditLocation({
       {/* Danger zone — permanent delete (lib/location/locationDeletion): only a
           location with no sales history and no managers; right away,
           archived or not. */}
-      <Box
-        component="section"
-        aria-labelledby="danger-zone-title"
-        sx={{
-          border: "1px solid",
-          borderColor: "error.main",
-          borderRadius: 3,
-          p: { xs: 2, sm: 3 },
-        }}
+      <DangerZone
+        title="Danger zone"
+        titleId="danger-zone-title"
+        error={deleteError}
       >
-        {deleteError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {deleteError}
-          </Alert>
-        )}
-        <Typography variant="body2" id="danger-zone-title" sx={{ mb: 0.5 }}>
-          Danger zone
-        </Typography>
         {deletion.allowed ? (
           <>
             <Typography variant="caption" color="text.secondary">
@@ -264,7 +252,7 @@ export default function EditLocation({
             {LOCATION_DELETION_MESSAGES.hasSales}
           </Typography>
         )}
-      </Box>
+      </DangerZone>
 
       <ConfirmDialog
         open={deleteDialogOpen}

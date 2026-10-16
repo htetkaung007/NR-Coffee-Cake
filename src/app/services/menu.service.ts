@@ -12,6 +12,7 @@ import {
   MenuLocationService,
 } from "./menuLocation.service";
 import { firstUnownedId } from "../lib/access/ownership";
+import { resolveAssetUrl } from "../lib/storage/assetUrl";
 
 type Tx = Prisma.TransactionClient;
 
@@ -270,7 +271,7 @@ export class MenuService {
           categoryRefs.length > 0
             ? categoryRefs.map((category) => category.name)
             : ["Uncategorized"],
-        imageUrl: menu.assetUrl || null,
+        imageUrl: resolveAssetUrl(menu.assetUrl || null),
         stockQuantity: stock?.quantity ?? 0,
         isManuallyDisabled: stock?.isManuallyDisabled ?? false,
         // An active DisableLocationMenus row here. The Backoffice list
@@ -312,6 +313,34 @@ export class MenuService {
     return listMenusAtLocation(menus, visibleCategories);
   }
 
+
+  /** A menu's own fields + its stock at one location, as both detail
+   *  reads return them (the customer / staff detail and the edit form):
+   *  no stock row yet → 0 and available. */
+  private static detailFields(
+    menu: {
+      id: number;
+      name: string;
+      nameMy: string | null;
+      price: number;
+      description: string | null;
+      descriptionMy: string | null;
+      assetUrl: string | null;
+    },
+    stock: { quantity: number; isManuallyDisabled: boolean } | null,
+  ) {
+    return {
+      id: menu.id,
+      name: menu.name,
+      nameMy: menu.nameMy,
+      price: menu.price,
+      description: menu.description || "",
+      descriptionMy: menu.descriptionMy,
+      imageUrl: resolveAssetUrl(menu.assetUrl || null),
+      quantity: stock?.quantity ?? 0,
+      isAvailable: !(stock?.isManuallyDisabled ?? false),
+    };
+  }
   /** Customer-facing detail view — full nested addon data (category
    *  name, isRequired, each addon's name/price/isAvailable), unlike
    *  getMenuById below which only returns bare addonCategoryIds (that
@@ -342,15 +371,7 @@ export class MenuService {
     });
 
     return {
-      id: menu.id,
-      name: menu.name,
-      nameMy: menu.nameMy,
-      price: menu.price,
-      description: menu.description || "",
-      descriptionMy: menu.descriptionMy,
-      imageUrl: menu.assetUrl || null,
-      quantity: stock?.quantity ?? 0,
-      isAvailable: !(stock?.isManuallyDisabled ?? false),
+      ...MenuService.detailFields(menu, stock),
       addonCategories: addonCategoryLinks
         .filter((link) => !link.addonCategory.isArchived)
         .map((link) => ({
@@ -416,17 +437,9 @@ export class MenuService {
     });
 
     return {
-      id: menu.id,
-      name: menu.name,
-      nameMy: menu.nameMy,
-      price: menu.price,
-      description: menu.description || "",
-      descriptionMy: menu.descriptionMy,
-      imageUrl: menu.assetUrl || null,
+      ...MenuService.detailFields(menu, stock),
       categoryIds: categoryLinks.map((link) => link.menuCategoryId),
       addonCategoryIds: addonCategoryLinks.map((link) => link.addonCategoryId),
-      quantity: stock?.quantity ?? 0,
-      isAvailable: !(stock?.isManuallyDisabled ?? false),
     };
   }
   static async updateMenu(

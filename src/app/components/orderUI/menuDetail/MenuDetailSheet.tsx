@@ -3,6 +3,7 @@
 import { Box, IconButton, SwipeableDrawer } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useOrderUiLabels } from "../OrderUiLabels";
+import { langAttr } from "@/app/lib/i18n/locale";
 
 /** Phone bottom sheet: full width, capped as a share of the viewport (dvh,
  *  so mobile browser bars don't cut it off) so the header and the sticky
@@ -28,10 +29,12 @@ export default function MenuDetailSheet({
   footer,
   children,
 }: MenuDetailSheetProps) {
-  const labels = useOrderUiLabels().menuDetail;
+  const { locale, menuDetail: labels } = useOrderUiLabels();
   return (
     <SwipeableDrawer
       anchor="bottom"
+      // Portalled to <body>: its own lang (see MenuDetailCenteredDialog).
+      lang={langAttr(locale)}
       open={open}
       onClose={onClose}
       // Required by SwipeableDrawer; the sheet is only ever opened by its

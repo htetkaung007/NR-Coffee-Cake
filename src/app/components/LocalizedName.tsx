@@ -2,11 +2,8 @@
 
 import { Box } from "@mui/material";
 import { localizedText } from "@/app/lib/i18n/localizedText";
+import { hasNoMyanmarName } from "@/app/lib/i18n/myanmarNames";
 
-/** Whether `my` is missing (null or blank) — the English name shows. */
-export function hasNoMyanmarName(my: string | null | undefined): boolean {
-  return (my ?? "").trim() === "";
-}
 
 /**
  * A shop data name (group, option…) in `locale` (localizedText). With

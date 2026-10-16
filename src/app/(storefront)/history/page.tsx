@@ -19,6 +19,7 @@ import { toLabelledCartLine } from "@/app/lib/order/roundLine";
 import { formatAmountParts } from "@/app/lib/orderFormat";
 import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
+import HistoryTotalCard from "@/app/components/orderUI/HistoryTotalCard";
 import BackCircleButton from "@/app/components/orderUI/BackCircleButton";
 import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
 
@@ -90,10 +91,12 @@ export default async function HistoryPage({
       );
       // Display only: payment is still ONE bill for the whole table.
       const myTotal = cartLinesTotal(
-        chargedRounds.flatMap(({ lines }) => lines.filter((line) => line.isMine)),
+        chargedRounds.flatMap(({ lines }) =>
+          lines.filter((line) => line.isMine),
+        ),
       );
       // Every round listed below — the same set markSessionsPaid later
-      // settles as one bill — so the sticky total always equals the sum
+      // settles as one bill — so the total card always equals the sum
       // of the cards above it.
       const tableTotal = chargedRounds.reduce(
         (sum, { round }) => sum + orderLinesTotal(round.orders),
@@ -125,7 +128,10 @@ export default async function HistoryPage({
               spacing={1.5}
               sx={{ alignItems: "center", mb: 2 }}
             >
-              <BackCircleButton href={backHref} ariaLabel={tCommon("backToMenu")} />
+              <BackCircleButton
+                href={backHref}
+                ariaLabel={tCommon("backToMenu")}
+              />
               <Typography variant="h6">{t("title")}</Typography>
             </Stack>
 
@@ -134,84 +140,50 @@ export default async function HistoryPage({
                 {t("emptyTable")}
               </Typography>
             ) : (
-              <Stack spacing={{ xs: 1.5, sm: 2 }}>
-                {labelledRounds.map(({ round, lines }) => (
-                  <OrderHistoryCard
-                    key={round.id}
-                    href={`/history/${round.id}?locationId=${round.locationId}&tableId=${tableId}`}
-                    orderNumber={round.orderNumber}
-                    status={customerRoundStatus(round)}
-                    items={lines.map((line) => ({
-                      quantity: line.quantity,
-                      name: localizedText(locale, line.menuName, line.menuNameMy),
-                      removed: line.removedByStaff?.quantity ?? 0,
-                    }))}
-                    groups={groupByContributor(lines).map((group) => ({
-                      key: group.key,
-                      who: group.who,
-                      items: group.lines.map((line) => ({
+              <>
+                {/* Display only — the table still pays one bill. */}
+                <HistoryTotalCard
+                  label={t("tableTotal")}
+                  detail={`${t("orderCount", { count: rounds.length })} · ${t("yourTotal", { amount: price(myTotal) })}`}
+                  amount={price(tableTotal)}
+                />
+                <Stack spacing={{ xs: 1.5, sm: 2 }}>
+                  {labelledRounds.map(({ round, lines }) => (
+                    <OrderHistoryCard
+                      key={round.id}
+                      href={`/history/${round.id}?locationId=${round.locationId}&tableId=${tableId}`}
+                      orderNumber={round.orderNumber}
+                      status={customerRoundStatus(round)}
+                      items={lines.map((line) => ({
                         quantity: line.quantity,
-                        name: localizedText(locale, line.menuName, line.menuNameMy),
+                        name: localizedText(
+                          locale,
+                          line.menuName,
+                          line.menuNameMy,
+                        ),
                         removed: line.removedByStaff?.quantity ?? 0,
-                      })),
-                      subtotal: group.subtotal,
-                    }))}
-                    total={orderLinesTotal(round.orders)}
-                  />
-                ))}
-              </Stack>
+                      }))}
+                      groups={groupByContributor(lines).map((group) => ({
+                        key: group.key,
+                        who: group.who,
+                        items: group.lines.map((line) => ({
+                          quantity: line.quantity,
+                          name: localizedText(
+                            locale,
+                            line.menuName,
+                            line.menuNameMy,
+                          ),
+                          removed: line.removedByStaff?.quantity ?? 0,
+                        })),
+                        subtotal: group.subtotal,
+                      }))}
+                      total={orderLinesTotal(round.orders)}
+                    />
+                  ))}
+                </Stack>
+              </>
             )}
           </Box>
-
-          {rounds.length > 0 && (
-            <Box
-              sx={{
-                position: "sticky",
-                // Stacked 8px above the floating bottom bar.
-                bottom: BOTTOM_BAR_CLEARANCE,
-                zIndex: 1,
-                bgcolor: "background.paper",
-                borderTop: "1px solid",
-                borderColor: "divider",
-                px: { xs: 2, sm: 3 },
-                pt: 1.5,
-                pb: 1.5,
-              }}
-            >
-              <Stack
-                direction="row"
-                sx={{
-                  maxWidth: 720,
-                  mx: "auto",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Box>
-                  <Typography variant="body1" sx={{ fontWeight: 800 }}>
-                    {t("tableTotal")}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("orderCount", { count: rounds.length })}
-                  </Typography>
-                  {/* Display only — the table still pays one bill. */}
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    component="p"
-                  >
-                    {t("yourTotal", { amount: price(myTotal) })}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
-                >
-                  {price(tableTotal)}
-                </Typography>
-              </Stack>
-            </Box>
-          )}
         </Box>
       );
     }
@@ -248,18 +220,20 @@ export default async function HistoryPage({
 
   const [shopName, bill] = await Promise.all([
     LocationService.getShopNameForLocation(session.locationId),
-    CounterSessionService.getBillForSession(session, { includeWithdrawn: true }),
+    CounterSessionService.getBillForSession(session, {
+      includeWithdrawn: true,
+    }),
   ]);
 
   return (
     <Box
       sx={{
-            minHeight: "100dvh",
-            display: "flex",
-            flexDirection: "column",
-            // The floating bottom bar's room.
-            pb: BOTTOM_BAR_CLEARANCE,
-          }}
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        // The floating bottom bar's room.
+        pb: BOTTOM_BAR_CLEARANCE,
+      }}
     >
       <OrderTopBar shopName={shopName} cartItemCount={0} />
       <Box
@@ -293,67 +267,36 @@ export default async function HistoryPage({
             {t("emptyCounter")}
           </Typography>
         ) : (
-          <Stack spacing={{ xs: 1.5, sm: 2 }}>
-            {bill.rounds.map((round, index) => (
-              <OrderHistoryCard
-                key={round.id}
-                href={`/history/${round.id}?locationId=${round.locationId}`}
-                orderNumber={t("round", { number: index + 1 })}
-                status={customerRoundStatus(round)}
-                items={round.orders.map((order) => ({
-                  // Staff-voided units left out (lib/order/voids).
-                  quantity: effectiveQuantity(order),
-                  name: localizedText(locale, order.menu.name, order.menu.nameMy),
-                  removed: voidedQuantity(order.voids),
-                }))}
-                total={orderLinesTotal(round.orders)}
-              />
-            ))}
-          </Stack>
+          <>
+            <HistoryTotalCard
+              label={bill.billNumber}
+              detail={t("roundCount", { count: bill.rounds.length })}
+              amount={price(bill.combinedTotal)}
+            />
+            <Stack spacing={{ xs: 1.5, sm: 2 }}>
+              {bill.rounds.map((round, index) => (
+                <OrderHistoryCard
+                  key={round.id}
+                  href={`/history/${round.id}?locationId=${round.locationId}`}
+                  orderNumber={t("round", { number: index + 1 })}
+                  status={customerRoundStatus(round)}
+                  items={round.orders.map((order) => ({
+                    // Staff-voided units left out (lib/order/voids).
+                    quantity: effectiveQuantity(order),
+                    name: localizedText(
+                      locale,
+                      order.menu.name,
+                      order.menu.nameMy,
+                    ),
+                    removed: voidedQuantity(order.voids),
+                  }))}
+                  total={orderLinesTotal(round.orders)}
+                />
+              ))}
+            </Stack>
+          </>
         )}
       </Box>
-
-      {bill.rounds.length > 0 && (
-        <Box
-          sx={{
-            position: "sticky",
-            // Stacked 8px above the floating bottom bar.
-            bottom: BOTTOM_BAR_CLEARANCE,
-            zIndex: 1,
-            bgcolor: "background.paper",
-            borderTop: "1px solid",
-            borderColor: "divider",
-            px: { xs: 2, sm: 3 },
-            pt: 1.5,
-            pb: 1.5,
-          }}
-        >
-          <Stack
-            direction="row"
-            sx={{
-              maxWidth: 720,
-              mx: "auto",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Box>
-              <Typography variant="body1" sx={{ fontWeight: 800 }}>
-                {bill.billNumber}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {t("roundCount", { count: bill.rounds.length })}
-              </Typography>
-            </Box>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 800, fontSize: "1.1rem", color: "primary.main" }}
-            >
-              {price(bill.combinedTotal)}
-            </Typography>
-          </Stack>
-        </Box>
-      )}
     </Box>
   );
 }

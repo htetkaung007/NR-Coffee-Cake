@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Alert,
@@ -19,10 +19,11 @@ import { addonGroupAvailability } from "@/app/lib/cart/addonSelection";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { OWNER_ONLY_MESSAGE } from "@/app/lib/access/rolePolicy";
 import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
-import type { AppLocale } from "@/app/lib/i18n/locale";
+import { langAttr, type AppLocale } from "@/app/lib/i18n/locale";
 import NameLanguageToggle from "@/app/components/NameLanguageToggle";
-import { customerWords } from "@/app/lib/i18n/customerWords";
-import LocalizedName, { hasNoMyanmarName } from "@/app/components/LocalizedName";
+import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
+import LocalizedName from "@/app/components/LocalizedName";
+import { hasMissingMyanmarName } from "@/app/lib/i18n/myanmarNames";
 import RequiredChip from "./RequiredChip";
 
 export interface AddonGroup {
@@ -87,42 +88,30 @@ export default function AddonGroupPanel({
   const [nameLocale, setNameLocale] = useState<AppLocale>("en");
   // မြန်မာ also shows the customer's money words ("1,000 ကျပ်",
   // "အခမဲ့"); EN keeps the Backoffice's "MMK" / "Free".
-  const myanmarWords = useMemo(
-    () => (nameLocale === "my" ? customerWords("my") : null),
-    [nameLocale],
-  );
+  const myanmarWords = myanmarWordsOrNull(nameLocale);
   const hasUntranslated =
-    nameLocale === "my" &&
-    (hasNoMyanmarName(group.nameMy) ||
-      group.addons.some((addon) => hasNoMyanmarName(addon.nameMy)));
+    nameLocale === "my" && hasMissingMyanmarName(group, group.addons);
 
   return (
     <Box sx={{ p: 2, overflowY: "auto" }}>
-      {/* Narrow (bottom sheet at 320px): the controls wrap under the
-          title instead of squeezing it. */}
-      <Stack
-        direction="row"
-        useFlexGap
-        sx={{ alignItems: "flex-start", flexWrap: "wrap", gap: 1 }}
-      >
-        <Box sx={{ flex: "1 1 160px", minWidth: 0 }}>
-          <Typography variant="h6" component="h2" sx={{ overflowWrap: "anywhere" }}>
-            <LocalizedName
-              locale={nameLocale}
-              en={group.name}
-              my={group.nameMy}
-              markUntranslated
-            />
-          </Typography>
-          <Box sx={{ mt: 0.5 }}>
-            <RequiredChip isRequired={group.isRequired} />
-          </Box>
-        </Box>
-        <NameLanguageToggle
-          value={nameLocale}
-          onChange={setNameLocale}
-          ariaLabel="Show names in"
-        />
+      {/* Row 1: the title (wraps, takes the free width) + Edit (and the
+          drawer's ×). Row 2: Required / Optional + the names' EN | မြန်မာ
+          under Edit — so the toggle never squeezes the title. Both rows
+          fit the 320px bottom sheet. */}
+      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
+        <Typography
+          variant="h6"
+          component="h2"
+          lang={langAttr(nameLocale)}
+          sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}
+        >
+          <LocalizedName
+            locale={nameLocale}
+            en={group.name}
+            my={group.nameMy}
+            markUntranslated
+          />
+        </Typography>
         {isOwner && (
           <Button
             component={Link}
@@ -143,6 +132,18 @@ export default function AddonGroupPanel({
             <CloseIcon />
           </IconButton>
         )}
+      </Stack>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: "center", justifyContent: "space-between", mt: 1 }}
+      >
+        <RequiredChip isRequired={group.isRequired} />
+        <NameLanguageToggle
+          value={nameLocale}
+          onChange={setNameLocale}
+          ariaLabel="Show names in"
+        />
       </Stack>
 
       {isBlocked && (
@@ -213,6 +214,7 @@ export default function AddonGroupPanel({
                 <Typography
                   variant="body2"
                   color={addon.isAvailable ? "text.primary" : "text.secondary"}
+                  lang={langAttr(nameLocale)}
                   sx={{ overflowWrap: "anywhere" }}
                 >
                   <LocalizedName
@@ -223,7 +225,11 @@ export default function AddonGroupPanel({
                   />
                 </Typography>
                 {!addon.isAvailable && (
-                  <Typography variant="caption" color="text.secondary" component="p">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    component="p"
+                  >
                     Off · customers can&apos;t pick it
                   </Typography>
                 )}
@@ -232,7 +238,7 @@ export default function AddonGroupPanel({
               <Typography
                 variant="body2"
                 color={addon.price === 0 ? "text.secondary" : "text.primary"}
-                lang={nameLocale === "my" ? "my" : undefined}
+                lang={langAttr(nameLocale)}
                 sx={{
                   flexShrink: 0,
                   fontVariantNumeric: "tabular-nums",
@@ -249,7 +255,9 @@ export default function AddonGroupPanel({
                 disabled={
                   !canToggleAvailability || pendingKeys.has(`addon-${addon.id}`)
                 }
-                onChange={(event) => onToggleAddon(addon.id, event.target.checked)}
+                onChange={(event) =>
+                  onToggleAddon(addon.id, event.target.checked)
+                }
                 slotProps={{
                   input: { "aria-label": `${addon.name} available` },
                 }}
@@ -262,10 +270,15 @@ export default function AddonGroupPanel({
       <Divider sx={{ my: 2 }} />
 
       <Typography variant="overline" color="text.secondary" component="h3">
-        Used on {group.menus.length} {group.menus.length === 1 ? "menu" : "menus"}
+        Used on {group.menus.length}{" "}
+        {group.menus.length === 1 ? "menu" : "menus"}
       </Typography>
       {group.menus.length > 0 && (
-        <Stack direction="row" useFlexGap sx={{ flexWrap: "wrap", gap: 1, mt: 0.5 }}>
+        <Stack
+          direction="row"
+          useFlexGap
+          sx={{ flexWrap: "wrap", gap: 1, mt: 0.5 }}
+        >
           {group.menus.map((menu) => (
             <Chip
               key={menu.id}

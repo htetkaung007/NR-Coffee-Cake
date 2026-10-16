@@ -25,9 +25,6 @@ import {
   UpdateDraftItemInput,
   SubmitDraftInput,
 } from "@/app/lib/schemas/customerOrderSchema";
-import { config } from "@/app/utils/config";
-
-const url = config.orderAppUrl;
 
 /** Every draft action below resolves "who is this" from
  *  CONTRIBUTOR_TOKEN_COOKIE + a client-supplied tableId, never trusting a
@@ -105,8 +102,8 @@ export async function addDraftItemAction(
   }).asyncAndThen(safeAddDraftItem);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath(`${url}/menu`);
-    revalidatePath(`${url}/cart`);
+    revalidatePath("/menu");
+    revalidatePath("/cart");
   }
   return actionResult;
 }
@@ -125,8 +122,8 @@ export async function removeDraftItemAction(tableId: number, orderId: number) {
   }).asyncAndThen(safeRemoveDraftItem);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath(`${url}/menu`);
-    revalidatePath(`${url}/cart`);
+    revalidatePath("/menu");
+    revalidatePath("/cart");
   }
   return actionResult;
 }
@@ -165,8 +162,8 @@ export async function updateDraftItemAction(
   }).asyncAndThen(safeUpdateDraftItem);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath(`${url}/menu`);
-    revalidatePath(`${url}/cart`);
+    revalidatePath("/menu");
+    revalidatePath("/cart");
   }
   return actionResult;
 }
@@ -194,8 +191,8 @@ export async function submitDraftAction(tableId: number, locationId: number) {
   }).asyncAndThen(safeSubmitDraft);
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath(`${url}/menu`);
-    revalidatePath(`${url}/cart`);
+    revalidatePath("/menu");
+    revalidatePath("/cart");
   }
   return actionResult;
 }
@@ -295,8 +292,8 @@ async function withdrawTableRound(tableId: number, mode: "cancel" | "change") {
   }).asyncAndThen(safeWithdrawTableRound(mode));
   const actionResult = toActionResult(result);
   if (actionResult.success) {
-    revalidatePath(`${url}/menu`);
-    revalidatePath(`${url}/cart`);
+    revalidatePath("/menu");
+    revalidatePath("/cart");
   }
   return actionResult;
 }

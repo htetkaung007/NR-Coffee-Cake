@@ -1,12 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Box,
-  Card,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Card, Stack, Typography } from "@mui/material";
 import AddonCategorySection from "@/app/components/orderUI/menuDetail/AddonCategorySection";
 import {
   OrderUiLabelsProvider,
@@ -17,18 +12,8 @@ import type { OptionRow } from "@/app/lib/hooks/useOptionRows";
 import type { AppLocale } from "@/app/lib/i18n/locale";
 import NameLanguageToggle from "@/app/components/NameLanguageToggle";
 import { customerWords } from "@/app/lib/i18n/customerWords";
-import { myanmarTypographyStyles } from "@/app/lib/theme/myanmarTypography";
+import { hasMissingMyanmarName } from "@/app/lib/i18n/myanmarNames";
 import { SurfaceThemeScope } from "@/app/lib/theme/ThemeModeProvider";
-
-/** myanmarTypographyStyles' `:lang(my)` rules, nested under the preview
- *  box instead of the whole page. */
-function scopedMyanmarTypography(typography: object) {
-  return Object.fromEntries(
-    Object.entries(
-      myanmarTypographyStyles(typography as Record<string, unknown>),
-    ).map(([selector, rule]) => [`& ${selector}`, rule]),
-  );
-}
 
 /** The customer's own words for this group in `locale` — from
  *  messages/*.json, the same keys (menuDetail.required / .free,
@@ -89,8 +74,7 @@ export default function AddonGroupPreview({
   const isEmpty = name === "" && addons.length === 0;
   const hasUntranslated =
     previewLocale === "my" &&
-    ((name !== "" && groupNameMy.trim() === "") ||
-      addons.some((addon) => addon.nameMy === null));
+    hasMissingMyanmarName({ name, nameMy: groupNameMy }, addons);
 
   return (
     <Card variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}>
@@ -121,11 +105,9 @@ export default function AddonGroupPreview({
                 <Box
                   inert
                   lang={previewLocale}
-                  sx={(theme) => ({
-                    // The customer theme's Myanmar text rules live in its
-                    // CssBaseline, which a scope doesn't mount — apply the
-                    // same rules inside the preview only.
-                    ...scopedMyanmarTypography(theme.typography),
+                  // Myanmar text sizes: the `:lang(my)` rules in the
+                  // Backoffice theme's CssBaseline, as everywhere.
+                  sx={{
                     bgcolor: "background.paper",
                     color: "text.primary",
                     border: "1px solid",
@@ -137,7 +119,7 @@ export default function AddonGroupPreview({
                     // off the card's top edge.
                     "& > div > hr:first-of-type": { display: "none" },
                     pt: 1.5,
-                  })}
+                  }}
                 >
                   <AddonCategorySection
                     category={{

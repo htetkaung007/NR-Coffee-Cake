@@ -155,6 +155,11 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
 - If a variant needs tuning, change it in the theme (`sharedThemeTokens.ts`)
   after checking where it's already used (it's shared by the customer app).
 - At most 3–4 text sizes per screen.
+- **Myanmar text** is drawn a step smaller with taller minimum lines —
+  `lib/theme/myanmarTypography.ts` (`MYANMAR_FONT_SCALE`, the one knob),
+  applied to `:lang(my)` text by BOTH themes' CssBaseline. Myanmar parts
+  carry `lang="my"` (`langAttr`; a portalled dialog on itself); never set
+  Myanmar sizes in a component.
 
 ## 13. Color
 
@@ -235,6 +240,14 @@ double-taps), or an optimistic update. A disabled control shows WHY
 - Right input mode (`inputMode="numeric"`, `type="tel"`).
 - Auto-focus the first field when a form/sheet opens.
 - Search inputs: debounce ~300ms, include a clear (×) button.
+- **Field text is ≥ 16px on phones** (below `sm` and on any touch-only
+  screen — a phone in landscape is wider than `sm`): iOS Safari zooms the
+  whole page when a focused field's text is smaller. Set once in the
+  theme (MuiInputBase / MuiInputLabel, `lib/theme/inputFontSize.ts`) for
+  both themes — the input, textarea, select, placeholder and the resting
+  label; the Myanmar scale never targets fields. Components never set a
+  field's font size. **Never disable pinch zoom** (no `maximum-scale` /
+  `user-scalable` in the viewport) — people must still be able to zoom.
 
 ## 17. Navigation and information architecture
 
@@ -309,6 +322,16 @@ double-taps), or an optimistic update. A disabled control shows WHY
   the QR code at your table or the counter to order." (customer theme,
   `role="status"`, no menu data). The /cart page follows the same rule.
   Ordering always needs the QR, ON or OFF.
+- **Landing page `/`** (customer side, storefront layout — customer
+  theme, language card, EN | မြန်မာ switch top-right): centred, max
+  480px — the shop's initials badge (56px, primary) + name (h5), then
+  one row per location whose online menu is on and that isn't archived
+  (paper, 1px divider, radius × 2; name body1 + a contained "View menu"
+  button → `/menu?locationId=<id>`, its accessible name includes the
+  location), and always the hint "To order, scan the QR code on your
+  table or at the counter." with a scan icon (body2, text.secondary).
+  No location online → only the name and the hint. No bottom bar, no
+  Backoffice / sign-in link.
 - **Customer pages: 320px minimum, never a sideways scroll**
   (`ORDER_PAGE_MIN_WIDTH` = 320). Nothing may be wider than the screen
   at 320 / 360 / 375 / 412 / 600px in either language — text that can't
@@ -352,13 +375,25 @@ double-taps), or an optimistic update. A disabled control shows WHY
   Three items (20px icon + caption, 44px — the bar is 54px): the selected one in primary.main
   on an alpha(primary.main, 0.12) pill with aria-current="page"; the cart
   badge (primary, hidden at 0) is part of the link's name ("Cart, 2
-  items"). Shown on /menu, /cart, /history and /history/<id>; hidden on
-  the QR scan / continue screens, ShopUnavailable and the outcome screens
-  (`lib/storefront/bottomBarVisibility`). Pages keep
-  `BOTTOM_BAR_CLEARANCE` (`lib/storefront/bottomBarLayout`) free at the
+  items"). Shown on /menu, /cart and /history; hidden on the receipt
+  (/history/<id> — it has its own Back and Order more, and the lines need
+  the room), the QR scan / continue screens, ShopUnavailable and the
+  outcome screens
+  (`lib/storefront/bottomBarVisibility`). **While the on-screen keyboard
+  is open** (a text field has focus, confirmed by the visual viewport —
+  `useOnScreenKeyboardOpen`, used only by the bar) it fades out (opacity,
+  150ms ease-out; no taps, out of the tab order once faded) and comes back
+  when the keyboard closes; reduced motion just hides / shows it. Pages
+  keep `BOTTOM_BAR_CLEARANCE` (`lib/storefront/bottomBarLayout`) free at the
   bottom — never their own numbers; a page's own bottom action (/cart's
-  Send, History's total, the receipt's Order more) sits 8px ABOVE the
-  bar, both visible.
+  Send) sits 8px ABOVE the bar, both visible.
+- **History totals are compact.** The list's total (Table: "Table total"
+  · N orders · your part; Counter: the bill number · N rounds) is ONE row
+  card at the top of the list that scrolls with it (`HistoryTotalCard`) —
+  never a fixed block above the bar. The receipt's footer is ONE compact
+  row at the bottom edge (+ safe area): the total on the left, Order more
+  on the right. Receipt lines: name body1 600, add-ons "Group: Option"
+  body2, qty body2, price body1 600.
 - **Language card** (first visit on a device, NEXT_LOCALE not set yet;
   /menu, /cart, /history only, never the QR scan routes): a compact
   floating card at the bottom over the dimmed page — 12–16px from the
@@ -455,6 +490,14 @@ Confirm what's hard to undo (Mark as paid, cancel a submitted order,
 delete a menu item). Don't confirm cheap, reversible actions (quantity +/-,
 toggling an add-on). Printing never blocks or changes payment.
 
+**"New QR code"** (Backoffice table cards — every table and the Counter,
+in the card's ⋯ menu) rotates the table's access key and renders a new
+QR image: use it when a QR is misused or the shop's address / IP
+changes. It asks first — "Make a new QR code for <name>? The old QR —
+printed or photographed — stops working at once. Print and put up the
+new one." [Cancel] [Make new QR] (destructive, focus on Cancel). Open
+bills and table sessions are untouched; only new scans need the new QR.
+
 ## 22. Accessibility basics
 
 - Icon-only buttons need `aria-label`; toggles use `aria-pressed`.
@@ -532,6 +575,16 @@ toggling an add-on). Printing never blocks or changes payment.
   group and 8px below its title.
 - Identical items in the same cart are shown as one line with a quantity;
   lines with different notes or prices stay separate.
+- **The waiting panel is ONE tappable row** (`ApprovalWaitingPanel`, cart
+  and table cart): a status icon (warning text shade) + the short status
+  ("Waiting for the counter" / "Waiting for our staff") + the time left
+  (or "Sent … ago" past a Table round's target) + a chevron. Tapping it
+  opens the full explanation (title, order number, the countdown bar,
+  the deadline, the hint) and Change / Cancel below it; tapping again
+  closes it — aria-expanded / aria-controls, the chevron turns 180°
+  (transform, 160ms ease-out), no height animation. Closed by default,
+  so the ordered lines right under it stay on screen (all of 2–3 lines
+  at 390×844).
 - **While a round waits for approval** the customer can "Change order"
   (it comes back to the cart / the table's draft) or "Cancel order"
   (asks first; Table: for everyone at the table). Once the counter has

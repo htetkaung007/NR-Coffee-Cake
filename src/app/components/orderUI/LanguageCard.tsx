@@ -26,12 +26,16 @@ import { shopInitials } from "@/app/lib/storefront/shopInitials";
 
 /** The pages it may appear on (and their sub-pages, e.g. a History
  *  receipt) — the menu, the cart with its outcome screens, the order
- *  history. Never the QR scan routes (Route Handlers that redirect here
- *  anyway) or anything else. */
+ *  history — plus the landing page `/` itself (exactly; it has no
+ *  sub-pages of its own). Never the QR scan routes (Route Handlers that
+ *  redirect here anyway) or anything else. */
 const SHOWN_ON = ["/menu", "/cart", "/history"];
 
 function isShownOn(pathname: string) {
-  return SHOWN_ON.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  return (
+    pathname === "/" ||
+    SHOWN_ON.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  );
 }
 
 /** Rises into place once: opacity + transform only (DESIGN.md Part 1);

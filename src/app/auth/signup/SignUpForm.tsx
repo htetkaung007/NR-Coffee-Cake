@@ -18,6 +18,7 @@ import AuthCard from "../AuthCard";
 import GoogleIcon from "@mui/icons-material/Google";
 import NextLink from "next/link";
 import { registerAction } from "./action";
+import AuthCredentialFields from "../AuthCredentialFields";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -128,25 +129,11 @@ export function SignUpForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <TextField
-          fullWidth
-          label="Email Address"
-          type="email"
-          variant="outlined"
-          margin="normal"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <TextField
-          fullWidth
-          label="Password"
-          type="password"
-          variant="outlined"
-          margin="normal"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+        <AuthCredentialFields
+          email={email}
+          onEmailChange={setEmail}
+          password={password}
+          onPasswordChange={setPassword}
         />
 
         {errorMessage && (

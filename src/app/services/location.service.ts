@@ -42,6 +42,23 @@ export class LocationService {
     });
   }
 
+  /** The landing page's (`/`) facts — single-shop mode, so the one
+   *  company (the first, as CompanyService.getShopName). Every location,
+   *  archived ones included, with ONLY id, name and the two flags:
+   *  lib/storefront/landingLocations decides which are listed. */
+  static async getLandingLocationFacts() {
+    const company = await prisma.company.findFirst({
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    if (!company) return [];
+    return prisma.location.findMany({
+      where: { companyId: company.id },
+      select: { id: true, name: true, isArchived: true, onlineMenuEnabled: true },
+      orderBy: { id: "asc" },
+    });
+  }
+
   static async getLocationById(locationId: number) {
     return prisma.location.findFirst({ where: { id: locationId } });
   }

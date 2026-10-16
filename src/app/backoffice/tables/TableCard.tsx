@@ -19,6 +19,7 @@ import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutl
 import QrCode2Icon from "@mui/icons-material/QrCode2";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import { rotateAccessKeyAction } from "./action";
+import NewQrCodeMenu from "./NewQrCodeMenu";
 import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
@@ -199,7 +200,7 @@ function QrPreview({
 
 /**
  * A table card: the QR preview on top; then icon + name with the Edit
- * icon button; then Print QR and Save QR as an equal-width pair (stacked
+ * icon button and the ⋯ menu ("New QR code" — NewQrCodeMenu); then Print QR and Save QR as an equal-width pair (stacked
  * only on very narrow phones). The Counter QR gets its own icon and a
  * "Counter" label so it never reads as a table (icon + label, not a
  * status colour — DESIGN.md Rule 13).
@@ -284,6 +285,7 @@ export default function TableCard({ table }: TableCardProps) {
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
+        <NewQrCodeMenu tableId={table.id} tableName={table.name} />
       </Stack>
 
       {/* An equal-width pair; one per row only below 340px. */}

@@ -1,12 +1,14 @@
 /**
- * Myanmar text on customer screens — tuned in ONE place. Burmese glyphs
- * look larger than Latin at the same size, and stacked vowels and medials
- * (ကြို, ပြီ, ကျွန်) need taller lines or they get clipped. So text whose
- * language is Myanmar (`:lang(my)` — the storefront sets lang on its
- * pages) is drawn a little smaller, with a minimum line-height. English
- * sizes, the Backoffice and components are never touched (DESIGN.md
- * §12): the customer theme adds these rules through its CssBaseline
- * (odTheme.ts).
+ * Myanmar text — tuned in ONE place. Burmese glyphs look larger than
+ * Latin at the same size, and stacked vowels and medials (ကြို, ပြီ,
+ * ကျွန်) need taller lines or they get clipped. So text whose language is
+ * Myanmar (`:lang(my)` — the storefront sets lang on its pages; the
+ * Backoffice's Myanmar parts set it with langAttr, and portalled dialogs
+ * on themselves) is drawn a little smaller, with a minimum line-height.
+ * BOTH themes add these rules through their CssBaseline, each from its
+ * own variants (odTheme.ts, theme.ts) — so the staff New Order's မြန်မာ
+ * view matches the customer's Myanmar. English text never matches them,
+ * and components never set Myanmar sizes (DESIGN.md §12).
  */
 
 /** Myanmar text size relative to the theme's own size for each variant.

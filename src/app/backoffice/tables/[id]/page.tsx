@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { TableService } from "@/app/services";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
+import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
 import EditTable from "./EditTable";
 
 export default async function EditTablePage({
@@ -37,7 +38,7 @@ export default async function EditTablePage({
       table={{
         id: table.id,
         name: table.name,
-        qrcodeImageUrl: table.qrcodeImageUrl,
+        qrcodeImageUrl: resolveAssetUrl(table.qrcodeImageUrl),
         isArchived: table.isArchived,
       }}
     />

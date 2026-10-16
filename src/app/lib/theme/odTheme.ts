@@ -10,7 +10,8 @@ import { myanmarTypographyStyles } from "./myanmarTypography";
  *
  * Font / typography / shape are shared with the Bo theme
  * (sharedThemeTokens.ts) — this file holds the palette, plus the
- * customer-only Myanmar text rules (myanmarTypography.ts: size scale and
+ * Myanmar text rules (myanmarTypography.ts — the Backoffice theme adds
+ * the same ones from its own variants: size scale and
  * minimum line-heights for `:lang(my)` text — MYANMAR_FONT_SCALE is the
  * knob).
  */
@@ -73,8 +74,8 @@ export function getOdTheme(mode: PaletteMode) {
     ...sharedThemeOptions,
   });
 
-  // Myanmar text: a little smaller, with taller lines (customer side
-  // only — through this theme's CssBaseline, from its own variants).
+  // Myanmar text: a little smaller, with taller lines (through this
+  // theme's CssBaseline, from its own variants — theme.ts does the same).
   return createTheme(theme, {
     components: {
       MuiCssBaseline: {

@@ -4,12 +4,13 @@ import type {
   LabelledCartLine,
 } from "@/app/(storefront)/cart/CartList";
 import type { ContributorLabel } from "@/app/lib/order/contributors";
-import type { LineAddon } from "@/app/lib/order/orderTotals";
 import {
   effectiveQuantity,
   voidedQuantity,
   type VoidReason,
 } from "@/app/lib/order/voids";
+import { toLineAddons, type LineAddonSource } from "@/app/lib/order/lineAddons";
+import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
 
 /** What a customer may know about items staff removed from their line:
  *  how many and the reason(s) — never the staff's note or who did it
@@ -28,33 +29,6 @@ export function removedByStaff(
   const quantity = voidedQuantity(voids);
   if (quantity === 0) return null;
   return { quantity, reasons: [...new Set(voids.map((entry) => entry.reason))] };
-}
-
-/** An OrdersAddon link as fetched with its addon (for the name). */
-interface LineAddonSource {
-  addonId: number;
-  unitPrice: number;
-  addon: {
-    name: string;
-    nameMy?: string | null;
-    addonCategory?: { name: string; nameMy?: string | null } | null;
-  };
-}
-
-/** A line's addon links as the client-side LineAddon shape — the
- *  link's own price snapshot (OrdersAddon.unitPrice), never
- *  Addon.price, same as the line's own unitPrice. The one place this
- *  mapping lives, so every cart/draft/round line carries prices the
- *  same way. */
-export function toLineAddons(links: readonly LineAddonSource[]): LineAddon[] {
-  return links.map((link) => ({
-    id: link.addonId,
-    name: link.addon.name,
-    nameMy: link.addon.nameMy ?? null,
-    groupName: link.addon.addonCategory?.name ?? null,
-    groupNameMy: link.addon.addonCategory?.nameMy ?? null,
-    unitPrice: link.unitPrice,
-  }));
 }
 
 /** An Order row (fetched with its menu + addon links) as the cart-line
@@ -81,7 +55,8 @@ export function toCartLine(order: {
     // The line's own price snapshot — never Menu.price, which can have
     // moved since this line was added (see Order.unitPrice).
     price: order.unitPrice,
-    imageUrl: order.menu.assetUrl,
+    // Re-based onto the current storage address (lib/storage/assetUrl).
+    imageUrl: resolveAssetUrl(order.menu.assetUrl),
     addons: toLineAddons(order.OrdersAddons),
     note: order.note,
   };

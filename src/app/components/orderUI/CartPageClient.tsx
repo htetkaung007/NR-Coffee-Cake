@@ -48,11 +48,16 @@ import CartList, {
 import CartButton, { CartButtonStatus } from "./CartButton";
 import CartLineNotice from "./CartLineNotice";
 import MenuDetailDialog from "./MenuDetailDialog";
-import BackCircleButton from "./BackCircleButton";
 import OrderConfirmedScreen from "./OrderConfirmedScreen";
 import OrderRejectedScreen from "./OrderRejectedScreen";
 import EmptyCartState from "./EmptyCartState";
-import { AddMoreButton, CartListPanel, CartPageShell } from "./CartPageParts";
+import {
+  AddMoreButton,
+  CartListPanel,
+  CartPageHeader,
+  CartPageShell,
+  CartTotalRow,
+} from "./CartPageParts";
 import CounterQrScannerDialog from "./CounterQrScannerDialog";
 
 interface CartPageClientProps {
@@ -434,21 +439,11 @@ export default function CartPageClient({
   return (
     <>
       <CartPageShell>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{ alignItems: "center", mb: 2 }}
-        >
-          <BackCircleButton ariaLabel={tCommon("backToMenu")} onClick={goBackToMenu} />
-          <Stack>
-            <Typography variant="h6">
-              {session?.billNumber ?? t("yourCart")}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {shopName ?? "Café Maw"}
-            </Typography>
-          </Stack>
-        </Stack>
+        <CartPageHeader
+          title={session?.billNumber ?? t("yourCart")}
+          shopName={shopName}
+          onBack={goBackToMenu}
+        />
 
         {isWaiting && session && (
           <ApprovalWaitingPanel
@@ -587,15 +582,7 @@ export default function CartPageClient({
             </Box>
           ) : (
             <Box sx={{ pt: 1.5 }}>
-              <Divider sx={{ mb: 1.5 }} />
-              <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {tCommon("totalPrice")}
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {price(total)}
-                </Typography>
-              </Stack>
+              <CartTotalRow amount={total} />
               {/* Always takes its line, so the note coming and going
                  never moves the buttons. */}
               <Typography

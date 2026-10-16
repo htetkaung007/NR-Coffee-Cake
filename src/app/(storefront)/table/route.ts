@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TableSessionService } from "@/app/services";
-import { CONTRIBUTOR_TOKEN_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
+import {
+  CONTRIBUTOR_TOKEN_COOKIE,
+  contributorTokenCookieOptions,
+} from "@/app/lib/storefront/orderSessionCookie";
+import { isSecureRequest } from "@/app/lib/http/secureCookie";
 import {
   MAX_TABLES_REMEMBERED,
   parseContributorTokenMap,
@@ -76,12 +80,10 @@ export async function GET(request: NextRequest) {
       };
 
   const response = NextResponse.redirect(menuUrl);
-  response.cookies.set(CONTRIBUTOR_TOKEN_COOKIE, JSON.stringify(nextMap), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  response.cookies.set(
+    CONTRIBUTOR_TOKEN_COOKIE,
+    JSON.stringify(nextMap),
+    contributorTokenCookieOptions(isSecureRequest(request)),
+  );
   return response;
 }

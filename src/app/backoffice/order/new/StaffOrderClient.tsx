@@ -61,7 +61,7 @@ import {
   OrderUiLabelsProvider,
   useOrderUiLabels,
 } from "@/app/components/orderUI/OrderUiLabels";
-import { customerWords } from "@/app/lib/i18n/customerWords";
+import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import { useStaffMenuLanguage } from "@/app/lib/hooks/useStaffMenuLanguage";
 import StaffOrderPanel, {
   type SendCheck,
@@ -104,33 +104,7 @@ interface StaffOrderClientProps {
 const canBeSent = (line: ValidatedCartLine | undefined) =>
   !line || line.status === "ok" || line.status === "priceChanged";
 
-/**
- * POS-style New Order page: the menu on the left; from lg the "Order for"
- * picker and the current order as two cards on the right, always in
- * view. Below lg the picker sits above the menus and the current order
- * opens as a bottom sheet from a bottom bar (on phones AND tablets — the
- * side is where the navigation drawer comes from). The same
- * OrderSidePanel / OrderBottomBar / SidePanelDrawer pieces as the order
- * detail page's bill.
- *
- * The order stays on this device until Send: it's kept in this browser
- * (useStaffCart — per location and user, today's only), so picking a
- * table writes nothing (the customers' phones at that table are never
- * touched) and a refresh doesn't lose it. While it has lines it's checked
- * against the server (useCartValidation → validateStaffCartAction) so
- * "Only 1 left" / "Sold out" / "No longer available" show before
- * sending. "Send to kitchen" sends the whole order once, with a request
- * id kept until it's settled — a retry or a double click can't make two
- * orders. When a send's answer never arrives (a dropped connection, a
- * server error) the order is LOCKED (lib/cart/staffCart
- * isSendUnconfirmed) and the page asks the server whether it went
- * through (getStaffSubmitStatusAction): found → "Order #A020 was already
- * sent", cleared; not found → unlocked, to change or send again.
- *
- * The picker is ONE instance, placed by width (isDesktop). Switching
- * table clears the current order, so with items in it the switch asks
- * first (ConfirmDialog).
- */
+
 export default function StaffOrderClient({
   locationId,
   userId,
@@ -146,13 +120,8 @@ export default function StaffOrderClient({
   // Display only — the stored cart and the order sent never change.
   const [menuLanguage, setMenuLanguage] = useStaffMenuLanguage();
   const englishDetailLabels = useOrderUiLabels();
-  const detailLabels = useMemo(
-    () =>
-      menuLanguage === "my"
-        ? customerWords("my").orderUi
-        : englishDetailLabels,
-    [menuLanguage, englishDetailLabels],
-  );
+  const detailLabels =
+    myanmarWordsOrNull(menuLanguage)?.orderUi ?? englishDetailLabels;
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
   // Tables' In use / Free: re-rendered by the server on the Order List's

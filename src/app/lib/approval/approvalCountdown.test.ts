@@ -86,6 +86,7 @@ describe("waitingCopy", () => {
   it("keeps the Counter copy: auto-cancel line and the counter hint", () => {
     expect(waitingCopy(true)).toEqual({
       title: "counterTitle",
+      short: "counterShort",
       deadline: "counterDeadline",
       hint: "counterHint",
       overdue: null,
@@ -95,6 +96,7 @@ describe("waitingCopy", () => {
   it("gives a Table round a soft target, no hint, and a calm overdue line", () => {
     expect(waitingCopy(false)).toEqual({
       title: "tableTitle",
+      short: "tableShort",
       deadline: "tableDeadline",
       hint: null,
       overdue: "tableOverdue",

@@ -10,6 +10,7 @@ import {
   type Theme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { langAttr } from "@/app/lib/i18n/locale";
 
 /** The start tag's words: which language (or what) the field holds. */
 type FieldTag = "en" | "my" | "price";
@@ -101,7 +102,7 @@ export default function LanguageTaggedField({
         <Typography
           variant="caption"
           component="span"
-          lang={tag === "my" ? "my" : undefined}
+          lang={langAttr(tag)}
           sx={{
             fontWeight: 600,
             color: "text.secondary",

@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Alert,
   Box,
   Button,
   CardMedia,
@@ -18,6 +17,7 @@ import FormCard from "@/app/components/FormCard";
 import PageHeader from "@/app/components/PageHeader";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
+import DangerZone from "@/app/components/DangerZone";
 
 interface EditTableProps {
   table: {
@@ -199,22 +199,7 @@ export default function EditTable({ table }: EditTableProps) {
 
       {/* Delete — immediate hard delete, no archive step. Removes the
           Table row and its QR code image (MinIO) together. */}
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "error.main",
-          borderRadius: 3,
-          p: { xs: 2, sm: 3 },
-        }}
-      >
-        {deleteError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {deleteError}
-          </Alert>
-        )}
-        <Typography variant="body2" sx={{ mb: 0.5 }}>
-          Delete Table
-        </Typography>
+      <DangerZone title="Delete Table" error={deleteError}>
         <Typography variant="caption" color="text.secondary">
           Removes this table and its QR code permanently. This cannot be undone.
         </Typography>
@@ -228,7 +213,7 @@ export default function EditTable({ table }: EditTableProps) {
             Delete Table
           </Button>
         </Box>
-      </Box>
+      </DangerZone>
 
       <ConfirmDialog
         open={deleteDialogOpen}

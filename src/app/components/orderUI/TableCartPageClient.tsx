@@ -1,21 +1,19 @@
 "use client";
 
-import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
 import { useTranslations } from "next-intl";
 import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Box, Divider, Stack, Typography } from "@mui/material";
+import { Alert, Box, Stack, Typography } from "@mui/material";
 
 import { cartLinesTotal, sumQuantities } from "@/app/lib/order/orderTotals";
 import { useBottomBarPage } from "./OrderBotBar";
-import { toLineAddons } from "@/app/lib/order/roundLine";
+import { toLineAddons } from "@/app/lib/order/lineAddons";
 import ActiveRoundBanner, { ActiveRound } from "./ActiveRoundBanner";
 import ApprovalWaitingPanel from "./ApprovalWaitingPanel";
 import DraftList from "./DraftList";
 import CartButton, { CartButtonStatus } from "./CartButton";
 import MenuDetailDialog from "./MenuDetailDialog";
-import BackCircleButton from "./BackCircleButton";
 import OrderConfirmedScreen from "./OrderConfirmedScreen";
 import OrderRejectedScreen from "./OrderRejectedScreen";
 import EmptyCartState from "./EmptyCartState";
@@ -41,7 +39,13 @@ import type {
   LabelledCartLine,
   Shortage,
 } from "@/app/(storefront)/cart/CartList";
-import { AddMoreButton, CartListPanel, CartPageShell } from "./CartPageParts";
+import {
+  AddMoreButton,
+  CartListPanel,
+  CartPageHeader,
+  CartPageShell,
+  CartTotalRow,
+} from "./CartPageParts";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -92,7 +96,6 @@ export default function TableCartPageClient({
 }: TableCartPageClientProps) {
   const router = useRouter();
   const t = useTranslations("cart");
-  const { price } = useCustomerPrice();
   const errorMessage = useErrorMessage();
   const tCommon = useTranslations("common");
   const [draftItems, setDraftItems] = useState(initialDraftItems);
@@ -319,19 +322,11 @@ export default function TableCartPageClient({
   return (
     <>
       <CartPageShell>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{ alignItems: "center", mb: 2 }}
-        >
-          <BackCircleButton ariaLabel={tCommon("backToMenu")} onClick={goBackToMenu} />
-          <Stack>
-            <Typography variant="h6">{t("tableOrder")}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {shopName ?? "Café Maw"}
-            </Typography>
-          </Stack>
-        </Stack>
+        <CartPageHeader
+          title={t("tableOrder")}
+          shopName={shopName}
+          onBack={goBackToMenu}
+        />
 
         {!showingRound && <ActiveRoundBanner activeRound={activeRound} />}
 
@@ -391,18 +386,10 @@ export default function TableCartPageClient({
               )}
             </Box>
             <Box sx={{ pt: 1.5 }}>
-              <Divider sx={{ mb: 1.5 }} />
-              <Stack
-                direction="row"
-                sx={{ justifyContent: "space-between", mb: 1.5 }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {tCommon("totalPrice")}
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  {price(showingRound ? roundTotal : draftTotal)}
-                </Typography>
-              </Stack>
+              <CartTotalRow
+                amount={showingRound ? roundTotal : draftTotal}
+                mb={1.5}
+              />
               <Stack direction="row" spacing={1}>
                 <AddMoreButton onClick={goBackToMenu} />
                 <Box sx={{ flex: 2 }}>

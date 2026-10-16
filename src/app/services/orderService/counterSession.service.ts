@@ -335,12 +335,7 @@ export class CounterSessionService {
     );
     if (!withdrawn) {
       // Lost the race — say what happened instead.
-      const now = await prisma.orderSession.findUniqueOrThrow({
-        where: { id: session.id },
-        select: { status: true, isCounter: true, approvalExpiresAt: true },
-      });
-      const reason = withdrawBlock(now, new Date()) ?? "cancelled";
-      throw new AppError(WITHDRAW_BLOCK_MESSAGES[reason], WITHDRAW_BLOCK_CODES[reason]);
+      await OrderSessionService.throwWithdrawRefused(session.id);
     }
 
     const root = await CounterSessionService.getOpenBillRoot(session);

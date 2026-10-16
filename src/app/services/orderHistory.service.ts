@@ -56,6 +56,44 @@ const cancellationSelect = {
   note: true,
 } as const;
 export class OrderHistoryService {
+  /** A round's live lines with just what its total and item count need
+   *  (orderLinesTotal / effectiveItemCount) — the cancelled list and the
+   *  cancelled-figures summary. */
+  private static readonly pricedOrdersSelect = {
+    where: { isArchived: false },
+    select: {
+      quantity: true,
+      unitPrice: true,
+      OrdersAddons: { select: { unitPrice: true } },
+      voids: LINE_VOID_QUANTITIES,
+    },
+  } as const;
+
+  /** A cancelled round's own fields as the History list and its detail
+   *  both show them (the list adds its count, the detail its lines). */
+  private static cancelledRoundFields(session: {
+    id: number;
+    orderNumber: string;
+    isCounter: boolean;
+    table: { name: string } | null;
+    cancelReason: string | null;
+    cancellation: Parameters<typeof toCancellationDetail>[0];
+    updateTime: Date;
+    createdAt: Date;
+  }) {
+    return {
+      id: session.id,
+      orderNumber: session.orderNumber,
+      title: OrderHistoryService.titleFor(session),
+      isCounter: session.isCounter,
+      // Guaranteed non-null by the callers' cancelReason filter.
+      reason: session.cancelReason as string,
+      cancellation: toCancellationDetail(session.cancellation),
+      cancelledAt: session.updateTime,
+      createdAt: session.createdAt,
+    };
+  }
+
   /** "Table X" / "Counter" — the one place this label is decided, from
    *  a round's own isCounter flag (never table.isCounter — a round's
    *  OWN channel at the time it was placed is what the history page
@@ -323,15 +361,7 @@ export class OrderHistoryService {
       include: {
         table: { select: { name: true } },
         cancellation: { select: cancellationSelect },
-        orders: {
-          where: { isArchived: false },
-          select: {
-            quantity: true,
-            unitPrice: true,
-            OrdersAddons: { select: { unitPrice: true } },
-            voids: LINE_VOID_QUANTITIES,
-          },
-        },
+        orders: OrderHistoryService.pricedOrdersSelect,
       },
     });
 
@@ -339,15 +369,7 @@ export class OrderHistoryService {
     const page = hasMore ? sessions.slice(0, limit) : sessions;
 
     const items = page.map((session) => ({
-      id: session.id,
-      orderNumber: session.orderNumber,
-      title: OrderHistoryService.titleFor(session),
-      isCounter: session.isCounter,
-      // Guaranteed non-null by the cancelReason filter above.
-      reason: session.cancelReason as string,
-      cancellation: toCancellationDetail(session.cancellation),
-      cancelledAt: session.updateTime,
-      createdAt: session.createdAt,
+      ...OrderHistoryService.cancelledRoundFields(session),
       itemCount: effectiveItemCount(session.orders),
       amount: orderLinesTotal(session.orders),
     }));
@@ -439,15 +461,7 @@ export class OrderHistoryService {
       select: {
         cancelReason: true,
         cancellation: { select: { rejectReason: true } },
-        orders: {
-          where: { isArchived: false },
-          select: {
-            quantity: true,
-            unitPrice: true,
-            OrdersAddons: { select: { unitPrice: true } },
-            voids: LINE_VOID_QUANTITIES,
-          },
-        },
+        orders: OrderHistoryService.pricedOrdersSelect,
       },
     });
 
@@ -586,15 +600,7 @@ export class OrderHistoryService {
     ]);
 
     return {
-      id: session.id,
-      orderNumber: session.orderNumber,
-      title: OrderHistoryService.titleFor(session),
-      isCounter: session.isCounter,
-      // Guaranteed non-null by the cancelReason filter above.
-      reason: session.cancelReason as string,
-      cancellation: toCancellationDetail(session.cancellation),
-      cancelledAt: session.updateTime,
-      createdAt: session.createdAt,
+      ...OrderHistoryService.cancelledRoundFields(session),
       amount: orderLinesTotal(session.orders),
       lines: acceptedRounds[0]?.lines ?? [],
     };

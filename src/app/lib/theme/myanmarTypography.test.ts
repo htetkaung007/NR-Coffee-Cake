@@ -28,6 +28,19 @@ describe("myanmarTypographyStyles", () => {
     expect(Object.keys(styles).every((selector) => selector.includes(":lang(my)"))).toBe(true);
   });
 
+  it("never shrinks form fields — their text stays at least 16px on phones (no iOS focus zoom)", () => {
+    const all = myanmarTypographyStyles({
+      ...typography,
+      body1: { fontSize: "0.9rem", lineHeight: 1.75 },
+      subtitle1: { fontSize: "1rem", lineHeight: 1.5 },
+    });
+    expect(
+      Object.keys(all).filter((selector) =>
+        /Input|Select|Autocomplete|TextField|input|textarea/.test(selector),
+      ),
+    ).toEqual([]);
+  });
+
   it("scales each variant's size, at every breakpoint", () => {
     const h6 = styles[".MuiTypography-h6:lang(my)"];
     expect(h6.fontSize).toBe("calc(1.25rem * 0.9)");

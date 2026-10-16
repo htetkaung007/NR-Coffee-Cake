@@ -6,6 +6,7 @@ import {
 } from "@mui/material/styles";
 import { inputLabelClasses } from "@mui/material/InputLabel";
 import { outlinedInputClasses } from "@mui/material/OutlinedInput";
+import { phoneInputFontSize, phoneInputMedia } from "./inputFontSize";
 
 /** MenuCard's decorative colors — the storefront's "watercolor &
  *  scribbles / printed paper" look. Both themes define them: the Od
@@ -316,9 +317,15 @@ export const sharedThemeOptions: ThemeOptions = {
     // Rule 10.
     MuiInputBase: {
       styleOverrides: {
-        root: {
+        // Field text (input, textarea, select, placeholder) is at least
+        // 16px on phones, or iOS Safari zooms the page on focus
+        // (inputFontSize.ts). Components never set field font sizes.
+        root: ({ theme }) => ({
           fontFamily: FONT_BODY,
-        },
+          [phoneInputMedia(BREAKPOINTS.sm)]: {
+            fontSize: phoneInputFontSize(theme.typography.body1.fontSize),
+          },
+        }),
         input: ({ theme }) => ({
           "&::placeholder": {
             color: theme.palette.text.secondary,
@@ -401,9 +408,13 @@ export const sharedThemeOptions: ThemeOptions = {
 
     MuiInputLabel: {
       styleOverrides: {
-        root: {
+        // The resting label matches the field text it sits on (above).
+        root: ({ theme }) => ({
           fontFamily: FONT_BODY,
-        },
+          [phoneInputMedia(BREAKPOINTS.sm)]: {
+            fontSize: phoneInputFontSize(theme.typography.body1.fontSize),
+          },
+        }),
         // Lines the resting label up with the input text above (12px in,
         // 16px / 12px down); the shrunk label keeps MUI's -9px notch
         // offset. Nested so `shrink` wins over the resting transform.

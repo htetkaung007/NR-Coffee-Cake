@@ -28,6 +28,7 @@ import {
   type BottomBarTab,
 } from "@/app/lib/storefront/bottomBarVisibility";
 import { BOTTOM_BAR_OFFSET_PX } from "@/app/lib/storefront/bottomBarLayout";
+import { useOnScreenKeyboardOpen } from "@/app/lib/hooks/useOnScreenKeyboardOpen";
 
 /** What the page on screen tells the bar. */
 interface BottomBarPage {
@@ -119,6 +120,7 @@ const noSubscribe = () => () => {};
  * navigation) for the same reason the cart pages do: a soft navigation
  * was seen to occasionally leave the old page's tree mounted (Router
  * Cache quirk) — the anchors stay real links for middle-click etc.
+ * Hidden while the on-screen keyboard is open (useOnScreenKeyboardOpen).
  */
 export default function OrderBotBar() {
   const t = useTranslations("nav");
@@ -134,6 +136,9 @@ export default function OrderBotBar() {
     () => true,
     () => false,
   );
+  // While the phone's keyboard is up, the bar steps aside (it would sit
+  // on top of the keyboard otherwise) and comes back when it closes.
+  const keyboardOpen = useOnScreenKeyboardOpen();
 
   if (
     !isClient ||
@@ -175,6 +180,17 @@ export default function OrderBotBar() {
         borderColor: "divider",
         borderRadius: 999,
         boxShadow: theme.shadows[3],
+        // Keyboard open: fade out (opacity only, ≤ 150ms, ease-out), no
+        // taps, and — once faded — out of the tab order and the
+        // accessibility tree (visibility). Comes straight back on close.
+        // The pages keep BOTTOM_BAR_CLEARANCE either way: no layout jump.
+        // Reduced motion: the global rule makes it instant.
+        opacity: keyboardOpen ? 0 : 1,
+        pointerEvents: keyboardOpen ? "none" : undefined,
+        visibility: keyboardOpen ? "hidden" : "visible",
+        transition: keyboardOpen
+          ? "opacity 150ms ease-out, visibility 0s linear 150ms"
+          : "opacity 150ms ease-out, visibility 0s linear 0s",
       })}
     >
       <Box

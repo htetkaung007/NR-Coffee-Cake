@@ -22,11 +22,9 @@ import {
   type ValidateCartRawInput,
 } from "@/app/lib/schemas/customerOrderSchema";
 import { CartSubmitService, CartValidationService } from "@/app/services";
-import { config } from "@/app/utils/config";
+import { isSecureServerRequest } from "@/app/lib/http/secureCookie";
 import { AppError } from "@/app/lib/errors";
 import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
-
-const url = config.orderAppUrl;
 
 const safeValidateCart = toSafeResult(async (input: ValidateCartInput) => {
   // The check answers with menu names and prices: the menu-access rule
@@ -75,7 +73,11 @@ const safeSubmitCart = toSafeResult(async (input: SubmitCartInput) => {
 
   const { sessionToken, ...submitted } = result;
   if (sessionToken !== cookieToken) {
-    store.set(COUNTER_SESSION_COOKIE, sessionToken, counterSessionCookieOptions);
+    store.set(
+      COUNTER_SESSION_COOKIE,
+      sessionToken,
+      counterSessionCookieOptions(await isSecureServerRequest()),
+    );
   }
   return submitted;
 });
@@ -90,7 +92,7 @@ export async function submitCartAction(input: SubmitCartRawInput) {
   const actionResult = toActionResult(result);
   if (actionResult.success && actionResult.data.status === "submitted") {
     // The order menu, as the Counter submit has always refreshed.
-    revalidatePath(`${url}/menu`);
+    revalidatePath("/menu");
   }
   return actionResult;
 }

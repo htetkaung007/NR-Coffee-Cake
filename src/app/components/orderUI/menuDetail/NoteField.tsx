@@ -44,8 +44,8 @@ export default function NoteField({
         sx={
           variant === "sheet"
             ? {
-                "& .MuiInputBase-root": { fontSize: SHEET_TEXT.body },
-                "& .MuiInputLabel-root": { fontSize: SHEET_TEXT.body },
+                // The field and its label keep the theme's size (≥ 16px on
+                // phones — no focus zoom); only the helper is compact.
                 "& .MuiFormHelperText-root": { fontSize: SHEET_TEXT.small },
               }
             : undefined

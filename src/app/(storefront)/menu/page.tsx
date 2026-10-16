@@ -7,11 +7,10 @@ import {
   TableSessionService,
 } from "@/app/services";
 import { COUNTER_SESSION_COOKIE } from "@/app/lib/storefront/orderSessionCookie";
-import { getContributorToken } from "@/app/lib/storefront/contributorToken";
 import CounterOrderClient from "@/app/components/orderUI/CounterOrderClient";
 import TableOrderClient from "@/app/components/orderUI/TableOrderClient";
 import { toDraftLine } from "@/app/lib/order/roundLine";
-import { parseIdParam } from "@/app/lib/storefront/menuAccess";
+import { readTableSessionPlace } from "@/app/lib/storefront/tableSessionAccess";
 import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
 import ShopUnavailable from "@/app/components/orderUI/ShopUnavailable";
 
@@ -71,59 +70,46 @@ export default async function MenuPage({
     scanned?: string;
   }>;
 }) {
-  const {
-    locationId: locationIdParam,
-    tableId: tableIdParam,
-    scanned,
-  } = await searchParams;
-  // Untrusted URL ids (Zod) — looked up, never used as they come.
-  const locationId = parseIdParam(locationIdParam);
-  const tableId = parseIdParam(tableIdParam);
+  const { scanned, ...ids } = await searchParams;
+  // Untrusted URL ids, and this browser's Table QR session there if any
+  // (lib/storefront/tableSessionAccess).
+  const { urlLocationId: locationId, table } = await readTableSessionPlace(ids);
 
-  if (tableId && locationId) {
-    const contributorToken = await getContributorToken(tableId);
-    // A current token for THIS table, and the table is at this location
-    // (a token for a table elsewhere doesn't open this location's menu).
-    const isTableSession =
-      contributorToken !== null &&
-      (await TableDraftService.hasCurrentTokenAtLocation(locationId, {
-        [tableId]: contributorToken,
-      }));
-    if (contributorToken && isTableSession) {
-      // Scanned in: the menu works, online menu on or off — unless the
-      // location is gone or closed (lib/storefront/menuAccess).
-      if ((await checkMenuAccess(locationId)) === "unavailable") {
-        return <ShopUnavailable />;
-      }
-      const [menuData, shopName, draftItems, activeRound, labels, tableName] =
-        await Promise.all([
-          MenuService.getMenusForLocation(locationId),
-          LocationService.getShopNameForLocation(locationId),
-          TableDraftService.getDraftItemsForTable(tableId),
-          TableSessionService.getActiveRoundForTable(tableId),
-          // Who's who as labels — the tokens stay on the server.
-          TableDraftService.getContributorLabels(tableId, contributorToken),
-          // For the "where am I" line — the name only.
-          TableSessionService.getTableName(tableId, locationId),
-        ]);
-
-      return (
-        <TableOrderClient
-          tableId={tableId}
-          tableName={tableName ?? ""}
-          locationId={locationId}
-          shopName={shopName}
-          initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}
-          initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
-          activeRoundId={activeRound?.id ?? null}
-          menus={buildMenuOptions(menuData.menus)}
-          categories={menuData.categories.map((category) => ({
-            name: category.name,
-            nameMy: category.nameMy,
-          }))}
-        />
-      );
+  if (table) {
+    const { tableId, locationId, contributorToken } = table;
+    // Scanned in: the menu works, online menu on or off — unless the
+    // location is gone or closed (lib/storefront/menuAccess).
+    if ((await checkMenuAccess(locationId)) === "unavailable") {
+      return <ShopUnavailable />;
     }
+    const [menuData, shopName, draftItems, activeRound, labels, tableName] =
+      await Promise.all([
+        MenuService.getMenusForLocation(locationId),
+        LocationService.getShopNameForLocation(locationId),
+        TableDraftService.getDraftItemsForTable(tableId),
+        TableSessionService.getActiveRoundForTable(tableId),
+        // Who's who as labels — the tokens stay on the server.
+        TableDraftService.getContributorLabels(tableId, contributorToken),
+        // For the "where am I" line — the name only.
+        TableSessionService.getTableName(tableId, locationId),
+      ]);
+
+    return (
+      <TableOrderClient
+        tableId={tableId}
+        tableName={tableName ?? ""}
+        locationId={locationId}
+        shopName={shopName}
+        initialDraftItems={draftItems.map((item) => toDraftLine(item, labels))}
+        initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
+        activeRoundId={activeRound?.id ?? null}
+        menus={buildMenuOptions(menuData.menus)}
+        categories={menuData.categories.map((category) => ({
+          name: category.name,
+          nameMy: category.nameMy,
+        }))}
+      />
+    );
   }
 
   const cookieStore = await cookies();
@@ -166,9 +152,9 @@ export default async function MenuPage({
       justScanned={scanned === "1"}
       menus={buildMenuOptions(menuData.menus)}
       categories={menuData.categories.map((category) => ({
-            name: category.name,
-            nameMy: category.nameMy,
-          }))}
+        name: category.name,
+        nameMy: category.nameMy,
+      }))}
     />
   );
 }

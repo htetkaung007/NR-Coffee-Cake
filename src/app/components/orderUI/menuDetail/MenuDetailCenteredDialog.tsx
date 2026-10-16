@@ -3,6 +3,7 @@
 import { Box, Dialog, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useOrderUiLabels } from "../OrderUiLabels";
+import { langAttr } from "@/app/lib/i18n/locale";
 
 interface MenuDetailCenteredDialogProps {
   open: boolean;
@@ -36,12 +37,16 @@ export default function MenuDetailCenteredDialog({
   footer,
   children,
 }: MenuDetailCenteredDialogProps) {
-  const labels = useOrderUiLabels().menuDetail;
+  const { locale, menuDetail: labels } = useOrderUiLabels();
   const hasAside = aside !== null;
   return (
     <Dialog
       open={open}
       onClose={onClose}
+      // Portalled to <body>, outside any page's lang: say it here, so
+      // Myanmar text gets the `:lang(my)` sizes (staff New Order's မြန်မာ
+      // view; the customer's Myanmar). English adds nothing.
+      lang={langAttr(locale)}
       maxWidth={false}
       slotProps={{
         paper: {

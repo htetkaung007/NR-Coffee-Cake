@@ -10,7 +10,7 @@ import type { ContributorWho } from "@/app/lib/order/contributors";
 import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 
 import BackCircleButton from "./BackCircleButton";
-import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
+import { HideBottomBar } from "./OrderBotBar";
 
 export interface ReceiptLine {
   id: number;
@@ -88,13 +88,14 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
         <Typography
           variant="body1"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
+            overflowWrap: "anywhere",
             textDecoration: isFullyRemoved ? "line-through" : "none",
           }}
         >
           {line.menuName}
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="body2" color="text.secondary">
           {line.addonsText !== "" ? line.addonsText : tReceipt("noAddons")}
         </Typography>
         {line.note && (
@@ -104,10 +105,10 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
             sx={{ alignItems: "flex-start", mt: 0.25 }}
           >
             <StickyNote2OutlinedIcon
-              sx={{ fontSize: 14, mt: "2px", color: "text.secondary" }}
+              sx={{ fontSize: 16, mt: "4px", color: "text.secondary" }}
             />
             <Typography
-              variant="caption"
+              variant="body2"
               color="text.secondary"
               sx={{ fontStyle: "italic", overflowWrap: "anywhere" }}
             >
@@ -116,7 +117,7 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
           </Stack>
         )}
         <Typography
-          variant="caption"
+          variant="body2"
           color="text.secondary"
           sx={{ display: "block", mt: 0.25 }}
         >
@@ -124,7 +125,7 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
         </Typography>
         {removed && (
           <Typography
-            variant="caption"
+            variant="body2"
             color="text.secondary"
             sx={{ display: "block", mt: 0.25 }}
           >
@@ -141,7 +142,7 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
       {!isFullyRemoved && (
         <Typography
           variant="body1"
-          sx={{ fontWeight: 700, color: "primary.main", flexShrink: 0 }}
+          sx={{ fontWeight: 600, color: "primary.main", flexShrink: 0, whiteSpace: "nowrap" }}
         >
           {price(line.total)}
         </Typography>
@@ -173,10 +174,11 @@ export default function OrderReceipt({
         height: "100dvh",
         display: "flex",
         flexDirection: "column",
-        // The total + Order more stack 8px above the floating bottom bar.
-        pb: BOTTOM_BAR_CLEARANCE,
       }}
     >
+      {/* Its own Back and Order more cover the way on — the floating
+         bar would only take the room the lines need. */}
+      <HideBottomBar />
       <Box
         sx={{
           flex: 1,
@@ -235,40 +237,41 @@ export default function OrderReceipt({
         </Stack>
       </Box>
 
+      {/* ONE compact row: the total on the left, Order more on the
+         right (no subtotal — with no service charge it equals the
+         total). At the bottom edge, clear of the home indicator. */}
       <Box
         sx={{
           flexShrink: 0,
           bgcolor: "background.paper",
           borderTop: "1px solid",
           borderColor: "divider",
-          p: { xs: 2, sm: 3 },
+          px: { xs: 2, sm: 3 },
+          pt: 1.5,
+          pb: "calc(12px + env(safe-area-inset-bottom, 0px))",
         }}
       >
-        <Box sx={{ maxWidth: 720, mx: "auto" }}>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", mb: 0.5 }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              {t("subtotal")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {price(total)}
-            </Typography>
-          </Stack>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", mb: 1.5 }}
-          >
-            <Typography variant="body1" sx={{ fontWeight: 800 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ maxWidth: 720, mx: "auto", alignItems: "center" }}
+        >
+          <Box sx={{ flexShrink: 0 }}>
+            <Typography variant="caption" color="text.secondary" component="p">
               {t("total")}
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 800 }}>
+            <Typography
+              variant="subtitle1"
+              component="p"
+              sx={{ whiteSpace: "nowrap" }}
+            >
               {price(total)}
             </Typography>
-          </Stack>
-          {orderMore}
-        </Box>
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0, maxWidth: 280, ml: "auto" }}>
+            {orderMore}
+          </Box>
+        </Stack>
       </Box>
     </Box>
   );

@@ -19,8 +19,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useDebouncedValue } from "@/app/lib/hooks/useDebouncedValue";
 import MenuCard from "@/app/components/MenuCard";
-import type { AppLocale } from "@/app/lib/i18n/locale";
-import { customerWords } from "@/app/lib/i18n/customerWords";
+import { langAttr, type AppLocale } from "@/app/lib/i18n/locale";
+import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
 
@@ -90,10 +90,7 @@ export default function StaffMenuGrid({
 }) {
   // Myanmar: the customer's own words (lib/i18n/customerWords); English:
   // the card's Backoffice defaults ("MMK", the + icon).
-  const myanmar = useMemo(
-    () => (language === "my" ? customerWords("my") : null),
-    [language],
-  );
+  const myanmar = myanmarWordsOrNull(language);
   const theme = useTheme();
   // lg: where the page shows the current order beside the menus.
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
@@ -199,7 +196,7 @@ export default function StaffMenuGrid({
                 <Typography
                   variant="body2"
                   component="span"
-                  lang={language === "my" ? "my" : undefined}
+                  lang={langAttr(language)}
                 >
                   {chip.label}
                 </Typography>
@@ -247,7 +244,7 @@ export default function StaffMenuGrid({
           )}
         </Stack>
       ) : (
-        <Box sx={gridSx} lang={language === "my" ? "my" : undefined}>
+        <Box sx={gridSx} lang={langAttr(language)}>
           {visibleMenus.map((menu) => (
             <MenuCard
               key={menu.id}

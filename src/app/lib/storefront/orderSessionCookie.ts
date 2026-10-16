@@ -9,18 +9,21 @@ export const COUNTER_SESSION_COOKIE = "counter_session_token";
  *  site (the scan Route Handler, startNextRound's cookie move in
  *  pollOrderStatusAction, and submitCartAction's move onto a new
  *  round) used to repeat this object literal; one canonical
- *  copy means they can't drift out of sync (e.g. one write site
- *  missing `secure` in production). No Max-Age here, for the same
- *  reason the comment below gives — only ever spread into a
- *  `store.set(name, value, counterSessionCookieOptions)` call to SET
- *  the cookie, never used to clear one (that's always its own
+ *  copy means they can't drift out of sync. `secure` comes from the
+ *  request (lib/http/secureCookie — https only; the shop LAN is http),
+ *  never from NODE_ENV. No Max-Age here, for the same
+ *  reason the comment below gives — only ever passed to a
+ *  `store.set(name, value, counterSessionCookieOptions(secure))` call to
+ *  SET the cookie, never used to clear one (that's always its own
  *  explicit `{ maxAge: 0 }`). */
-export const counterSessionCookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-};
+export function counterSessionCookieOptions(secure: boolean) {
+  return {
+    httpOnly: true,
+    secure,
+    sameSite: "lax" as const,
+    path: "/",
+  };
+}
 
 // TABLE_SESSION_COOKIE was removed — the per-customer draft redesign
 // (see CONTRIBUTOR_TOKEN_COOKIE below) moved everything Table-QR
@@ -41,6 +44,19 @@ export const counterSessionCookieOptions = {
  *  read/write helpers — this constant is just the shared name so the
  *  scan Route Handler and the draft Server Actions can't drift). */
 export const CONTRIBUTOR_TOKEN_COOKIE = "table_contributor_tokens";
+
+/** Set-Cookie options for CONTRIBUTOR_TOKEN_COOKIE — kept a week; set
+ *  only by the Table scan Route Handler. `secure` from the request, as
+ *  above. */
+export function contributorTokenCookieOptions(secure: boolean) {
+  return {
+    httpOnly: true,
+    secure,
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  };
+}
 
 // No Max-Age is set on this cookie — it's a plain browser-session
 // cookie (cleared when the browser closes). The database is the real

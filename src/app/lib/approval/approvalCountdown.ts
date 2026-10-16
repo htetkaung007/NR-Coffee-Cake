@@ -67,6 +67,8 @@ export function isJustSent(secondsSinceSent: number): boolean {
  *  both. */
 export interface WaitingCopy {
   title: "counterTitle" | "tableTitle";
+  /** The panel's one-row status, when collapsed. */
+  short: "counterShort" | "tableShort";
   /** The line under the bar — takes {time}. */
   deadline: "counterDeadline" | "tableDeadline";
   /** The calm nudge in the last 2 minutes — Counter only; takes {number}. */
@@ -78,6 +80,7 @@ export interface WaitingCopy {
 
 const COUNTER_COPY: WaitingCopy = {
   title: "counterTitle",
+  short: "counterShort",
   deadline: "counterDeadline",
   hint: "counterHint",
   overdue: null,
@@ -85,6 +88,7 @@ const COUNTER_COPY: WaitingCopy = {
 
 const TABLE_COPY: WaitingCopy = {
   title: "tableTitle",
+  short: "tableShort",
   deadline: "tableDeadline",
   hint: null,
   overdue: "tableOverdue",
