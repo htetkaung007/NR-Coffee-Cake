@@ -128,8 +128,10 @@ export default function LanguageCard({
             <Box
               aria-hidden
               sx={{
-                width: 40,
-                height: 40,
+                // Grows with the initials (never a fixed size).
+                minWidth: 40,
+                minHeight: 40,
+                px: 0.5,
                 mb: 1,
                 borderRadius: 1,
                 display: "flex",
@@ -192,8 +194,9 @@ export default function LanguageCard({
                   component="span"
                   aria-hidden
                   sx={(theme) => ({
-                    width: 36,
-                    height: 36,
+                    minWidth: 36,
+                    minHeight: 36,
+                    px: 0.5,
                     flexShrink: 0,
                     borderRadius: 1,
                     display: "flex",

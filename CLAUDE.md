@@ -215,7 +215,10 @@ to our own variables/functions, not established library idioms.
 ## 10. Theming — no hardcoded hex colors, no hardcoded breakpoint objects
 
 - **Two separate themes**: getBoTheme() (Backoffice, theme.ts) and
-  getOdTheme() (Order-app/customer-facing, odTheme.ts). Shared font
+  getOdTheme() (Order-app/customer-facing, odTheme.ts). The customer
+  text sizes are one step bigger — `CUSTOMER_TEXT_PX` in
+  lib/theme/customerTypography.ts (odTheme's second pass, DESIGN.md §12);
+  the Backoffice keeps the shared scale. Shared font
   family, typography scale, and shape live in sharedThemeTokens.ts —
   a font change only ever happens in one place.
 - **Which theme a component should use is decided by audience, not
@@ -313,6 +316,17 @@ independently of the app config). Everything else still goes through
   (`assetKeyFromUrl`), so old images can still be deleted. It reads
   server config, so it stays out of client bundles — the client-safe
   `toLineAddons` lives in `lib/order/lineAddons.ts` for that reason.
+- **Redirects are RELATIVE — never built from request.url.** Under
+  `next start` request.url carries the server's own host (localhost),
+  not the address the phone used (LAN IP, tunnel), so an absolute
+  redirect sent scanned phones to localhost. Route Handlers redirect with
+  `redirectTo(relativePath(...))` (`lib/http/redirect.ts` — a relative
+  Location; cookies set on it work). `src/proxy.ts` is the one exception
+  that passes an absolute URL (Next's proxy layer requires one and sends
+  a same-host redirect as relative itself) — its callbackUrl is a
+  relative path, and the sign-in form only follows an in-app path
+  (`lib/http/appPath`). NEXTAUTH_URL still decides NextAuth's own
+  (Google OAuth) redirects and the QR codes' address.
 - **Cookies are `secure` only when the REQUEST is https**
   (`lib/http/secureCookie.ts`: the request URL's protocol or
   `x-forwarded-proto`; `isSecureRequest(request)` in Route Handlers,
@@ -381,6 +395,16 @@ independently of the app config). Everything else still goes through
   getMenuDetailAction and validateCartAction. URL ids are untrusted —
   parsed with `parseIdParam` (Zod), then looked up. Staff (New Order)
   read details through their own guarded getStaffMenuDetailAction.
+- **One unpaid bill per phone per location** (Table ↔ Counter): a
+  browser with a current Table contributor token for a table at a
+  location is sent back to that table when it scans the Counter QR
+  there, and one whose Counter cookie points to an open (not paid /
+  locked) bill there is sent back to the counter when it scans a Table
+  QR — with a one-time notice (`notice=atTable|atCounter`, words only,
+  dropped after showing). ONE pure rule, `lib/storefront/openOrderPlace`;
+  the QR Route Handlers gather the facts server-side, before any session
+  starts or token is minted. Limitation: per browser (its cookies) —
+  another browser or a cleared cookie is a new customer.
 - **Ordering is always QR-only**, ON or OFF: sending the cart and every
   order action still need the QR session from scanning in the shop.
 - The link Settings shows is `config.publicBaseUrl` (PUBLIC_BASE_URL,

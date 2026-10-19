@@ -203,7 +203,7 @@ export function CartLineRow({
               sx={{ alignItems: "flex-start", mt: 0.25 }}
             >
               <StickyNote2OutlinedIcon
-                sx={[{ fontSize: 14, mt: "3px" }, mutedTextSx]}
+                sx={[{ fontSize: 16, mt: "4px" }, mutedTextSx]}
               />
               <Typography
                 variant="body2"

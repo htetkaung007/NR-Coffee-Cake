@@ -48,18 +48,15 @@ export class CounterSessionService {
   }
 
   /** Counter QR — the printed URL carries a rotating `key`
-   *  (Table.counterAccessKey). This is checked FIRST, before cookie logic
-   *  even runs: a wrong/stale key (old reprint, tampered URL) is
-   *  rejected outright rather than falling through to session
-   *  resolution. Returns "invalid_key" rather than throwing, so the
-   *  Route Handler can fail closed to a generic error/view-only page
-   *  without leaking *why* it failed. */
-  static async resolveCounterQrScan(
-    tableId: number,
-    key: string,
-    cookieToken: string | null,
-  ) {
-    const table = await prisma.table.findFirst({
+   *  (Table.counterAccessKey). The Route Handler checks it FIRST, before
+   *  any cookie logic runs: a wrong/stale key (old reprint, tampered URL)
+   *  is rejected outright rather than falling through to session
+   *  resolution. Null rather than throwing, so the Route Handler can
+   *  fail closed to the view-only menu without leaking *why* it failed.
+   *  The table it returns carries the location the rest of the scan
+   *  works at (never the URL's). */
+  static async findCounterTableByKey(tableId: number, key: string) {
+    return prisma.table.findFirst({
       where: {
         id: tableId,
         counterAccessKey: key,
@@ -67,15 +64,33 @@ export class CounterSessionService {
         isCounter: true,
       },
     });
-    if (!table) {
-      return { status: "invalid_key" as const };
-    }
+  }
 
-    return CounterSessionService.resolveCounterSession(
-      table.locationId,
-      table.id,
-      cookieToken,
-    );
+  /** This cookie's open Counter bill AT THIS location — the session (or,
+   *  when only its "Order More" round ended, the bill's still-open first
+   *  round, getOpenBillRoot), or null: no such session, paid / locked,
+   *  another location, or not a Counter session. "resolve" uses
+   *  getActiveSessionByToken (which cancels an abandoned cart); "peek"
+   *  is its read-only twin. Cart submit and the Table QR scan's
+   *  one-open-bill check (lib/storefront/openOrderPlace) both ask this. */
+  static async findOpenCounterBill(
+    token: string | null,
+    locationId: number,
+    lookup: "resolve" | "peek",
+  ) {
+    if (!token) return null;
+    const active =
+      lookup === "resolve"
+        ? await CounterSessionService.getActiveSessionByToken(token)
+        : await CounterSessionService.peekActiveSessionByToken(token);
+    const session =
+      active ??
+      (await CounterSessionService.getSessionByToken(token).then((ended) =>
+        ended ? CounterSessionService.getOpenBillRoot(ended) : null,
+      ));
+    const isThisShopsCounter =
+      session?.isCounter === true && session.locationId === locationId;
+    return isThisShopsCounter ? session : null;
   }
 
   /** Counter QR (design doc section 4). Session identity is carried by

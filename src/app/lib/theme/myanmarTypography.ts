@@ -13,7 +13,7 @@
 
 /** Myanmar text size relative to the theme's own size for each variant.
  *  THE knob to tune by eye: 1 = the English size, lower = smaller. */
-export const MYANMAR_FONT_SCALE = 0.92;
+export const MYANMAR_FONT_SCALE = 0.96;
 
 /** Smallest line-height for Myanmar headings, subtitles and buttons. */
 const MIN_LINE_HEIGHT_HEADING = 1.6;

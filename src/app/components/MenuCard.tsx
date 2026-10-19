@@ -206,7 +206,9 @@ export default function MenuCard({
               top: 6,
               right: 6,
               zIndex: 2,
-              height: 20,
+              // Grows with its text (never a fixed height).
+              height: "auto",
+              minHeight: 20,
               "& .MuiChip-label": { px: 0.75 },
             }}
           />
@@ -225,7 +227,8 @@ export default function MenuCard({
               bottom: 6,
               left: 6,
               zIndex: 2,
-              height: 20,
+              height: "auto",
+              minHeight: 20,
               bgcolor: "background.paper",
               color: "text.primary",
               "& .MuiChip-label": { px: 0.75 },
@@ -361,9 +364,11 @@ export default function MenuCard({
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
-                height: 32,
+                // Grows with "ထည့်မယ်" (never a fixed height).
+                minHeight: 32,
                 minWidth: 32,
                 px: labels.addText ? 1.25 : 0,
+                py: labels.addText ? 0.25 : 0,
                 borderRadius: 1,
                 color: "primary.contrastText",
                 bgcolor: "primary.main",

@@ -4,7 +4,6 @@ import { IconButton, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
-import { SHEET_TEXT } from "./sheetText";
 import { useOrderUiLabels } from "../OrderUiLabels";
 
 /** Everything a quantity control needs — built once by the dialog and
@@ -63,7 +62,7 @@ export default function QuantityStepper({
         sx={{
           minWidth: isPill ? 28 : 24,
           textAlign: "center",
-          ...(isPill && { fontWeight: 700, fontSize: SHEET_TEXT.body }),
+          ...(isPill && { fontWeight: 700 }),
         }}
       >
         {quantity.value}

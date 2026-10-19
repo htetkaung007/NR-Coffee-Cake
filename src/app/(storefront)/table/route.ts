@@ -1,10 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { TableSessionService } from "@/app/services";
+import { NextRequest } from "next/server";
+import { CounterSessionService, TableSessionService } from "@/app/services";
 import {
   CONTRIBUTOR_TOKEN_COOKIE,
+  COUNTER_SESSION_COOKIE,
   contributorTokenCookieOptions,
 } from "@/app/lib/storefront/orderSessionCookie";
 import { isSecureRequest } from "@/app/lib/http/secureCookie";
+import { redirectTo, relativePath } from "@/app/lib/http/redirect";
+import {
+  openOrderPlace,
+  openPlaceMenuQuery,
+} from "@/app/lib/storefront/openOrderPlace";
 import {
   MAX_TABLES_REMEMBERED,
   parseContributorTokenMap,
@@ -33,27 +39,50 @@ import {
  * COUNTER_SESSION_COOKIE.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams } = request.nextUrl;
   const locationId = Number(searchParams.get("locationId"));
   const tableId = Number(searchParams.get("tableId"));
   const key = searchParams.get("key");
 
-  const menuUrl = new URL("/menu", request.url);
-  if (locationId) menuUrl.searchParams.set("locationId", String(locationId));
+  // Relative redirects only (lib/http/redirect): the phone keeps the
+  // address it scanned (the LAN IP), never the server's own host.
+  const viewOnlyPath = relativePath("/menu", { locationId: locationId || null });
 
   if (!locationId || !tableId || !key) {
-    return NextResponse.redirect(menuUrl);
+    return redirectTo(viewOnlyPath);
   }
 
   const result = await TableSessionService.resolveTableQrScan(tableId, key);
 
   if (result.status === "invalid_key") {
     // Wrong or rotated key — fail closed without revealing why, same
-    // as Counter (see resolveCounterQrScan's comment).
-    return NextResponse.redirect(menuUrl);
+    // as Counter (see CounterSessionService.findCounterTableByKey).
+    return redirectTo(viewOnlyPath);
   }
 
-  menuUrl.searchParams.set("tableId", String(result.table.id));
+  // One unpaid bill per phone at a location: a browser with an open
+  // Counter bill here goes back to the counter instead of joining this
+  // table (lib/storefront/openOrderPlace — before any token is minted).
+  const decision = openOrderPlace({
+    scan: "table",
+    openTableIdHere: null,
+    hasOpenCounterBillHere:
+      (await CounterSessionService.findOpenCounterBill(
+        request.cookies.get(COUNTER_SESSION_COOKIE)?.value ?? null,
+        result.table.locationId,
+        "peek",
+      )) !== null,
+  });
+  if (decision.kind !== "proceed") {
+    return redirectTo(
+      relativePath("/menu", openPlaceMenuQuery(decision, result.table.locationId)),
+    );
+  }
+
+  const menuPath = relativePath("/menu", {
+    locationId,
+    tableId: result.table.id,
+  });
 
   const existingMap = parseContributorTokenMap(
     request.cookies.get(CONTRIBUTOR_TOKEN_COOKIE)?.value,
@@ -79,7 +108,7 @@ export async function GET(request: NextRequest) {
         [tableKey]: mintContributorToken(result.table.contributorEpoch),
       };
 
-  const response = NextResponse.redirect(menuUrl);
+  const response = redirectTo(menuPath);
   response.cookies.set(
     CONTRIBUTOR_TOKEN_COOKIE,
     JSON.stringify(nextMap),

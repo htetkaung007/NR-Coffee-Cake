@@ -3,7 +3,6 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 
 import QuantityStepper, { type QuantityControl } from "./QuantityStepper";
-import { SHEET_TEXT } from "./sheetText";
 import type { MenuDetailVariant } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
 
@@ -75,7 +74,6 @@ export default function MenuDetailFooter({
               borderRadius: 999,
               py: 1.25,
               whiteSpace: "nowrap",
-              fontSize: SHEET_TEXT.body,
             }}
           >
             {submitLabel}

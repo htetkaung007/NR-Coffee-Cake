@@ -13,6 +13,7 @@ import { toDraftLine } from "@/app/lib/order/roundLine";
 import { readTableSessionPlace } from "@/app/lib/storefront/tableSessionAccess";
 import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
 import ShopUnavailable from "@/app/components/orderUI/ShopUnavailable";
+import { parseOpenPlaceNotice } from "@/app/lib/storefront/openOrderPlace";
 
 // Session/cart state can change between one visit and the next (a
 // customer's own submit, or another contributor's draft add) —
@@ -68,9 +69,13 @@ export default async function MenuPage({
     locationId?: string;
     tableId?: string;
     scanned?: string;
+    notice?: string;
   }>;
 }) {
-  const { scanned, ...ids } = await searchParams;
+  const { scanned, notice, ...ids } = await searchParams;
+  // Sent back from a QR scan to the place this phone already has here
+  // (lib/storefront/openOrderPlace) — an untrusted flag, words only.
+  const openPlaceNotice = parseOpenPlaceNotice(notice);
   // Untrusted URL ids, and this browser's Table QR session there if any
   // (lib/storefront/tableSessionAccess).
   const { urlLocationId: locationId, table } = await readTableSessionPlace(ids);
@@ -108,6 +113,7 @@ export default async function MenuPage({
           name: category.name,
           nameMy: category.nameMy,
         }))}
+        openPlaceNotice={openPlaceNotice === "atTable" ? openPlaceNotice : null}
       />
     );
   }
@@ -150,6 +156,10 @@ export default async function MenuPage({
       shopName={shopName}
       initialStatus={session?.status ?? "CART"}
       justScanned={scanned === "1"}
+      // Only with an open bill to point at.
+      openPlaceNotice={
+        openPlaceNotice === "atCounter" && bill ? openPlaceNotice : null
+      }
       menus={buildMenuOptions(menuData.menus)}
       categories={menuData.categories.map((category) => ({
         name: category.name,

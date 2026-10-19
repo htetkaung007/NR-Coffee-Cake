@@ -1,7 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import MenuThumb from "@/app/components/MenuThumb";
 
-import { SHEET_TEXT } from "./sheetText";
 import type { MenuDetail } from "./types";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { useOrderUiLabels } from "../OrderUiLabels";
@@ -11,8 +10,8 @@ interface MenuDetailHeaderProps {
 }
 
 /** The phone sheet's top: a full-width rounded photo, then name / price
- *  (the card's price tone) / description left-aligned, in the compact
- *  sizes. (Tablet / desktop: MenuDetailAside, the dialog's left column.) */
+ *  (the card's price tone) / description left-aligned, in the theme's
+ *  own variants (the same as the dialog). (Tablet / desktop: MenuDetailAside, the dialog's left column.) */
 export default function MenuDetailHeader({ detail }: MenuDetailHeaderProps) {
   // Shop data in the surface's language (English in the Backoffice).
   const { locale, price } = useOrderUiLabels();
@@ -34,20 +33,22 @@ export default function MenuDetailHeader({ detail }: MenuDetailHeaderProps) {
             mb: 1.5,
           }}
         >
-          <MenuThumb name={name} imageUrl={detail.imageUrl} alt={name} />
+          {/* The whole picture — never cropped (fit contain). */}
+          <MenuThumb name={name} imageUrl={detail.imageUrl} alt={name} fit="contain" />
         </Box>
       )}
       <Typography
         variant="h6"
-        sx={{ fontWeight: 700, fontSize: SHEET_TEXT.title }}
+        sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
       >
         {name}
       </Typography>
       <Typography
         variant="subtitle1"
         sx={{
+          // 8px under the name.
+          mt: 1,
           fontWeight: 700,
-          fontSize: SHEET_TEXT.price,
           // The theme's menu price color: the storefront's red, or
           // text.primary under the Backoffice theme (staff New Order).
           color: "decor.price",
@@ -59,7 +60,7 @@ export default function MenuDetailHeader({ detail }: MenuDetailHeaderProps) {
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ mt: 0.5, fontSize: SHEET_TEXT.small, lineHeight: 1.5 }}
+          sx={{ mt: 0.5 }}
         >
           {description}
         </Typography>

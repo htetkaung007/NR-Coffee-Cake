@@ -69,7 +69,7 @@ describe("myanmarTypographyStyles", () => {
     expect(styles[".MuiTypography-h5:lang(my)"]).toBeUndefined();
   });
 
-  it("starts from the 0.92 scale", () => {
-    expect(MYANMAR_FONT_SCALE).toBe(0.92);
+  it("starts from the 0.96 scale", () => {
+    expect(MYANMAR_FONT_SCALE).toBe(0.96);
   });
 });

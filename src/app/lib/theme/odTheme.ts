@@ -1,6 +1,7 @@
 import { alpha, createTheme, type PaletteMode } from "@mui/material/styles";
 import { sharedThemeOptions } from "./sharedThemeTokens";
 import { myanmarTypographyStyles } from "./myanmarTypography";
+import { customerTypographyOverrides } from "./customerTypography";
 
 /**
  * Order-app (Od) theme — customer-facing storefront. Warm terracotta / cream
@@ -9,7 +10,9 @@ import { myanmarTypographyStyles } from "./myanmarTypography";
  * components.
  *
  * Font / typography / shape are shared with the Bo theme
- * (sharedThemeTokens.ts) — this file holds the palette, plus the
+ * (sharedThemeTokens.ts) — this file holds the palette, the customer's
+ * one-step-bigger text sizes (customerTypography.ts — the Backoffice
+ * keeps the shared scale), plus the
  * Myanmar text rules (myanmarTypography.ts — the Backoffice theme adds
  * the same ones from its own variants: size scale and
  * minimum line-heights for `:lang(my)` text — MYANMAR_FONT_SCALE is the
@@ -22,7 +25,7 @@ export function getOdTheme(mode: PaletteMode) {
   // Red — menu prices, out-of-stock, addon prices, cart badge.
   const red = isLight ? "#C62828" : "#EF5350";
 
-  const theme = createTheme({
+  const baseTheme = createTheme({
     palette: {
       mode,
       primary: {
@@ -74,6 +77,14 @@ export function getOdTheme(mode: PaletteMode) {
     ...sharedThemeOptions,
   });
 
+  // Customer text sizes — a second pass over the shared scale, keyed by
+  // the same breakpoint media queries (CLAUDE.md §10).
+  const theme = createTheme(baseTheme, {
+    typography: customerTypographyOverrides(
+      baseTheme.typography as unknown as Record<string, unknown>,
+    ),
+  });
+
   // Myanmar text: a little smaller, with taller lines (through this
   // theme's CssBaseline, from its own variants — theme.ts does the same).
   return createTheme(theme, {
@@ -89,6 +100,23 @@ export function getOdTheme(mode: PaletteMode) {
           body: {
             paddingLeft: "env(safe-area-inset-left, 0px)",
             paddingRight: "env(safe-area-inset-right, 0px)",
+          },
+        },
+      },
+      // Chips grow with their text: MUI's fixed 32 / 24px height becomes
+      // a minimum, the label gets a little room above and below — so the
+      // bigger customer text (and Myanmar's taller lines) never spills
+      // out of a status chip or pill.
+      MuiChip: {
+        styleOverrides: {
+          root: {
+            height: "auto",
+            minHeight: 32,
+            "&.MuiChip-sizeSmall": { minHeight: 24 },
+            "& .MuiChip-label": {
+              paddingTop: theme.spacing(0.25),
+              paddingBottom: theme.spacing(0.25),
+            },
           },
         },
       },

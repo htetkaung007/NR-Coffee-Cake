@@ -10,6 +10,8 @@ import OrderPlaceHeader from "./OrderPlaceHeader";
 import { useBottomBarPage } from "./OrderBotBar";
 import MenuPageFrame from "./MenuPageFrame";
 import ScannedNotice from "./ScannedNotice";
+import OpenPlaceNotice from "./OpenPlaceNotice";
+import type { OpenPlaceNotice as OpenPlaceNoticeFlag } from "@/app/lib/storefront/openOrderPlace";
 import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
 import type { MenuDetail } from "./menuDetail/types";
 
@@ -33,6 +35,9 @@ interface CounterOrderClientProps {
   /** Arrived from scanning the counter QR with an empty cart (see
    *  /counter/continue) — shows a one-time note. */
   justScanned?: boolean;
+  /** Sent back here from a Table QR scan (one unpaid bill per phone per
+   *  location) — shows the one-time note. */
+  openPlaceNotice?: OpenPlaceNoticeFlag | null;
 }
 
 export default function CounterOrderClient({
@@ -44,6 +49,7 @@ export default function CounterOrderClient({
   shopName,
   initialStatus,
   justScanned = false,
+  openPlaceNotice = null,
 }: CounterOrderClientProps) {
   const router = useRouter();
   const tMenu = useTranslations("menu");
@@ -150,6 +156,8 @@ export default function CounterOrderClient({
           closeLabel={tCommon("close")}
         />
       )}
+
+      <OpenPlaceNotice notice={openPlaceNotice} placeName={orderNumber} />
 
       <MenuBrowser
         menus={menus}

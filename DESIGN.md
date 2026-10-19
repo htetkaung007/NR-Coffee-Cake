@@ -155,7 +155,32 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
 - If a variant needs tuning, change it in the theme (`sharedThemeTokens.ts`)
   after checking where it's already used (it's shared by the customer app).
 - At most 3–4 text sizes per screen.
-- **Myanmar text** is drawn a step smaller with taller minimum lines —
+- **Customer text sizes** — ONE place, `lib/theme/customerTypography.ts`
+  (`CUSTOMER_TEXT_PX`, px, tune ±1px there), applied by odTheme's second
+  pass; the Backoffice keeps the shared scale. Phone (xs) sizes; from
+  `sm` / `md` up a variant keeps the shared size when already bigger,
+  else it's raised to the phone size:
+
+  | Variant   | Phone | Wider screens            |
+  |-----------|-------|--------------------------|
+  | caption   | 13px  | 13px                     |
+  | body2     | 15px  | 15px                     |
+  | body1     | 16px  | 16px                     |
+  | subtitle2 | 15px  | 15px                     |
+  | subtitle1 | 16px  | 19.2px from `md`         |
+  | button    | 15px  | 15px                     |
+  | inputs    | ≥ 16px (§16)                     |
+
+  h5 / h6 keep the shared sizes. No customer component sets a font size
+  (the menu detail sheet uses the same variants as the dialog).
+- **Boxes grow with their text.** On customer screens a box that holds
+  text never has a fixed `height` / `width`: chips, the Add square,
+  badges, tiles, pills, buttons and rows use `minHeight` / `minWidth` +
+  theme padding (the customer theme makes MUI Chip's height a minimum
+  too), so a bigger size or Myanmar's taller lines never spill out. Tap
+  targets stay ≥ 44px; images keep their fixed aspect ratios.
+- **Myanmar text** is drawn a little smaller (`MYANMAR_FONT_SCALE` =
+  0.96) with taller minimum lines —
   `lib/theme/myanmarTypography.ts` (`MYANMAR_FONT_SCALE`, the one knob),
   applied to `:lang(my)` text by BOTH themes' CssBaseline. Myanmar parts
   carry `lang="my"` (`langAttr`; a portalled dialog on itself); never set
@@ -439,7 +464,12 @@ double-taps), or an optimistic update. A disabled control shows WHY
   min 480px, max min(640px, 90dvh), both columns stretched; radius × 2.
   The close button (round, 40px on a 44px tap area, paper + divider
   edge) sits on the dialog's top-right corner; the right column's first
-  block keeps clear of it. LEFT (background.default, never scrolls) —
+  block keeps clear of it. **The photo is never cropped** (sheet and
+  dialog): `object-fit: contain` in its fixed box (4:3 in the dialog, the
+  sheet's 160px band) on a faint alpha(text.primary, 0.04) tint
+  (MenuThumb `fit="contain"`); menu cards keep `cover` (equal card
+  heights). The name and the price sit 8–12px apart (sheet 8px, dialog
+  12px). LEFT (background.default, never scrolls) —
   the photo in a 4:3 box (letter tile centred when none), then name
   (h5), description, price, "Your choice: …" (8px apart, 24px padding;
   extra height is plain space below); RIGHT (24px padding, no divider

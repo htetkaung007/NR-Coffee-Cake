@@ -64,17 +64,33 @@ export class TableDraftService {
     locationId: number,
     tokens: Readonly<Record<string, string>>,
   ) {
+    return (
+      (await TableDraftService.findCurrentTokenTableAtLocation(locationId, tokens)) !==
+      null
+    );
+  }
+
+  /** The same check, answering WHICH table: the id of a live table at
+   *  this location this browser holds a current token for (the lowest id
+   *  if several), else null — the Counter QR scan's one-open-bill check
+   *  (lib/storefront/openOrderPlace) sends the browser back there. */
+  static async findCurrentTokenTableAtLocation(
+    locationId: number,
+    tokens: Readonly<Record<string, string>>,
+  ): Promise<number | null> {
     const tableIds = Object.keys(tokens)
       .map(Number)
       .filter((id) => Number.isInteger(id) && id > 0);
-    if (tableIds.length === 0) return false;
+    if (tableIds.length === 0) return null;
     const tables = await prisma.table.findMany({
       where: { id: { in: tableIds }, locationId, isArchived: false },
       select: { id: true, contributorEpoch: true },
+      orderBy: { id: "asc" },
     });
-    return tables.some(
+    const current = tables.find(
       (table) => getTokenEpoch(tokens[String(table.id)]) === table.contributorEpoch,
     );
+    return current?.id ?? null;
   }
 
   /** Ownership isn't checked here (adding is never a conflict the way

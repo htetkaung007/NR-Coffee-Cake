@@ -55,6 +55,8 @@
     "itemUnavailable": "This item is no longer available.",
     "added": "Added {name} to your cart",
     "scanned": "Scanned ✓ — add items to order. Items added in another browser won't show here.",
+    "alreadyAtTable": "You already have an order at {table}. Order there, or pay first to order at the counter.",
+    "alreadyAtCounter": "You already have an order at the counter (#{number}). Order there, or pay first to sit at a table.",
     "outOfStock": "out of stock",
     "onlyLeft": "Only {count} left",
     "seeMore": "See more",

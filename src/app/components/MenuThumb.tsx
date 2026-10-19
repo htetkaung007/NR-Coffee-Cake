@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
-import type { SxProps, Theme } from "@mui/material/styles";
+import { alpha, type SxProps, type Theme } from "@mui/material/styles";
 
 /**
  * A menu's picture, or — when it has no image URL, or the image fails to
@@ -10,6 +10,9 @@ import type { SxProps, Theme } from "@mui/material/styles";
  * browser's broken-image icon. The one implementation behind every menu
  * image (MenuCard, the Backoffice menu cards, round thumbnails). Fills
  * its box; the caller's box reserves the space (aspect ratio / size).
+ * `fit="cover"` (default — cards keep equal heights) crops to the box;
+ * `fit="contain"` (the menu detail) shows the WHOLE picture, never
+ * cropped or zoomed, on a faint tint.
  */
 export default function MenuThumb({
   name,
@@ -17,6 +20,7 @@ export default function MenuThumb({
   alt = "",
   imageClassName,
   imageSx,
+  fit = "cover",
 }: {
   name: string;
   imageUrl: string | null | undefined;
@@ -26,6 +30,7 @@ export default function MenuThumb({
   /** Lets a parent style the <img> on hover (e.g. MenuCard's zoom). */
   imageClassName?: string;
   imageSx?: SxProps<Theme>;
+  fit?: "cover" | "contain";
 }) {
   // The URL that failed — a new URL gets a fresh try.
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -49,7 +54,11 @@ export default function MenuThumb({
           }
         }}
         sx={[
-          { display: "block", width: "100%", height: "100%", objectFit: "cover" },
+          { display: "block", width: "100%", height: "100%", objectFit: fit },
+          fit === "contain" &&
+            ((theme: Theme) => ({
+              bgcolor: alpha(theme.palette.text.primary, 0.04),
+            })),
           ...(Array.isArray(imageSx) ? imageSx : [imageSx]),
         ]}
       />

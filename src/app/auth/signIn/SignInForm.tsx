@@ -20,6 +20,7 @@ import {
   SIGNUP_CLOSED_MESSAGE,
 } from "@/app/lib/access/signUp";
 import AuthCredentialFields from "../AuthCredentialFields";
+import { isAppPath } from "@/app/lib/http/appPath";
 
 export default function SignInForm({
   isSignUpOpen,
@@ -29,7 +30,12 @@ export default function SignInForm({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/backoffice";
+  // Only an in-app path — never a full URL (a crafted link could send
+  // staff to another site after signing in).
+  const requestedCallback = searchParams.get("callbackUrl");
+  const callbackUrl = isAppPath(requestedCallback)
+    ? requestedCallback
+    : "/backoffice";
   // A new Google email while sign-up is closed: NextAuth redirects back
   // here with this error (ensureDefaultSetup) and nothing was created.
   const isSignUpClosedRedirect =

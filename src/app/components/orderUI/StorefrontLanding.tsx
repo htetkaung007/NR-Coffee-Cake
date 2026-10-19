@@ -73,8 +73,10 @@ export default function StorefrontLanding({
             <Box
               aria-hidden
               sx={{
-                width: 56,
-                height: 56,
+                // Grows with the initials (never a fixed size).
+                minWidth: 56,
+                minHeight: 56,
+                px: 1,
                 borderRadius: 2,
                 display: "flex",
                 alignItems: "center",

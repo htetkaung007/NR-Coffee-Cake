@@ -48,11 +48,13 @@ export default function MenuDetailAside({
           overflow: "hidden",
         }}
       >
-        <MenuThumb name={name} imageUrl={detail.imageUrl} alt={name} />
+        {/* The whole picture — never cropped (fit contain). */}
+        <MenuThumb name={name} imageUrl={detail.imageUrl} alt={name} fit="contain" />
       </Box>
 
+      {/* 12px apart — the name, description and price never touch. */}
       <Stack
-        spacing={1}
+        spacing={1.5}
         sx={{ p: 3, flex: "1 1 auto", minHeight: 0, overflow: "hidden" }}
       >
         <Typography

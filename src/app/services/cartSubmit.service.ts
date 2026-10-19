@@ -204,19 +204,7 @@ export class CartSubmitService {
     locationId: number,
     lookup: "resolve" | "peek",
   ) {
-    if (!token) return null;
-    const active =
-      lookup === "resolve"
-        ? await CounterSessionService.getActiveSessionByToken(token)
-        : await CounterSessionService.peekActiveSessionByToken(token);
-    const session =
-      active ??
-      (await CounterSessionService.getSessionByToken(token).then((ended) =>
-        ended ? CounterSessionService.getOpenBillRoot(ended) : null,
-      ));
-    const isThisShopsCounter =
-      session?.isCounter === true && session.locationId === locationId;
-    return isThisShopsCounter ? session : null;
+    return CounterSessionService.findOpenCounterBill(token, locationId, lookup);
   }
 
   /** The newest round of the session's bill. */

@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { alpha, type Theme } from "@mui/material/styles";
 
-import { SHEET_TEXT } from "./sheetText";
 import type { Addon, AddonCategory, MenuDetailVariant } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
 import LocalizedName from "@/app/components/LocalizedName";
@@ -30,7 +29,6 @@ const sheetRowSx = {
   "&:last-of-type": { borderBottom: 0 },
   "& .MuiFormControlLabel-label": {
     flex: 1,
-    fontSize: SHEET_TEXT.body,
     lineHeight: 1.5,
   },
 };
@@ -332,7 +330,6 @@ function AddonLabel({
           flexShrink: 0,
           whiteSpace: "nowrap",
           fontWeight: 600,
-          ...(isSheet && { fontSize: SHEET_TEXT.small }),
           // The menu card's price tone (decor.price: the storefront's
           // red; text.primary under the Backoffice theme). "Free" in the
           // success role's text shade.

@@ -5,7 +5,6 @@ import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
 import AddonCategorySection from "./AddonCategorySection";
 import MenuDetailHeader from "./MenuDetailHeader";
 import NoteField from "./NoteField";
-import { SHEET_TEXT } from "./sheetText";
 import type { AddonCategory, MenuDetail, MenuDetailVariant } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
 
@@ -63,10 +62,7 @@ export default function MenuDetailBody({
 
   if (!detail) {
     return (
-      <Typography
-        color="text.secondary"
-        sx={isSheet ? { fontSize: SHEET_TEXT.body } : undefined}
-      >
+      <Typography color="text.secondary">
         {labels.couldNotLoad}
       </Typography>
     );
@@ -105,7 +101,6 @@ export default function MenuDetailBody({
           <NoteField
             value={note}
             onChange={onNoteChange}
-            variant={variant}
             showDivider={isSheet || categories.length > 0}
           />
         </Box>

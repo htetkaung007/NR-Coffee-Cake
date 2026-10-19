@@ -19,9 +19,12 @@ const FADE_MS = 220;
 export default function ScannedNotice({
   message,
   closeLabel,
+  severity = "success",
 }: {
   message: string;
   closeLabel: string;
+  /** "info" for a pointer rather than a success (OpenPlaceNotice). */
+  severity?: "success" | "info";
 }) {
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [phase, setPhase] = useState<"shown" | "fading" | "gone">("shown");
@@ -42,7 +45,7 @@ export default function ScannedNotice({
 
   return (
     <Alert
-      severity="success"
+      severity={severity}
       role="status"
       onTransitionEnd={(event) => {
         if (event.propertyName === "opacity" && phase === "fading") {

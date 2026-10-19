@@ -8,14 +8,11 @@ import {
   MAX_ORDER_NOTE_WORDS,
 } from "@/app/lib/order/orderNote";
 
-import { SHEET_TEXT } from "./sheetText";
-import type { MenuDetailVariant } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
 
 interface NoteFieldProps {
   value: string;
   onChange: (next: string) => void;
-  variant: MenuDetailVariant;
   /** The hairline above it — off when nothing comes before it. */
   showDivider?: boolean;
 }
@@ -26,7 +23,6 @@ interface NoteFieldProps {
 export default function NoteField({
   value,
   onChange,
-  variant,
   showDivider = true,
 }: NoteFieldProps) {
   const labels = useOrderUiLabels().menuDetail;
@@ -41,15 +37,6 @@ export default function NoteField({
         value={value}
         onChange={(event) => onChange(limitWords(event.target.value))}
         helperText={labels.noteWords(countWords(value), MAX_ORDER_NOTE_WORDS)}
-        sx={
-          variant === "sheet"
-            ? {
-                // The field and its label keep the theme's size (≥ 16px on
-                // phones — no focus zoom); only the helper is compact.
-                "& .MuiFormHelperText-root": { fontSize: SHEET_TEXT.small },
-              }
-            : undefined
-        }
       />
     </Box>
   );

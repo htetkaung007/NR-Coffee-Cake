@@ -7,6 +7,8 @@ import { useTheme } from "@mui/material";
 import { useErrorMessage } from "@/app/lib/hooks/useErrorMessage";
 import OrderTopBar from "./OrderTopBar";
 import OrderPlaceHeader from "./OrderPlaceHeader";
+import OpenPlaceNotice from "./OpenPlaceNotice";
+import type { OpenPlaceNotice as OpenPlaceNoticeFlag } from "@/app/lib/storefront/openOrderPlace";
 import { useBottomBarPage } from "./OrderBotBar";
 import MenuPageFrame from "./MenuPageFrame";
 import MenuBrowser, { type CategoryTab, type MenuOption } from "./MenuBrowser";
@@ -42,6 +44,9 @@ interface TableOrderClientProps {
   /** The category tabs, in the server's order (see
    *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
   categories: CategoryTab[];
+  /** Sent back here from a Counter QR scan (one unpaid bill per phone
+   *  per location) — shows the one-time note. */
+  openPlaceNotice?: OpenPlaceNoticeFlag | null;
 }
 
 /**
@@ -74,6 +79,7 @@ export default function TableOrderClient({
   activeRoundId,
   menus,
   categories,
+  openPlaceNotice = null,
 }: TableOrderClientProps) {
   const router = useRouter();
   const errorMessage = useErrorMessage();
@@ -177,6 +183,8 @@ export default function TableOrderClient({
       <OrderPlaceHeader
         place={{ kind: "table", tableName, othersCount: otherContributors }}
       />
+
+      <OpenPlaceNotice notice={openPlaceNotice} placeName={tableName} />
 
       <MenuBrowser
         menus={menus}
