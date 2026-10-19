@@ -3,10 +3,7 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { useTranslations } from "next-intl";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
-import {
-  ORDER_PAGE_MIN_WIDTH,
-  getOrderPageBackground,
-} from "@/app/lib/theme/orderPageBackground";
+import { getOrderPageBackground } from "@/app/lib/theme/orderPageBackground";
 import { HideBottomBar } from "./OrderBotBar";
 
 /**
@@ -23,7 +20,6 @@ export default function ShopUnavailable() {
     <Box
       component="main"
       sx={{
-        minWidth: ORDER_PAGE_MIN_WIDTH,
         minHeight: "100dvh",
         display: "flex",
         alignItems: "center",

@@ -3,11 +3,11 @@
 import type { ReactNode } from "react";
 import { Box } from "@mui/material";
 import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
-import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 import {
-  ORDER_PAGE_MIN_WIDTH,
-  type getOrderPageBackground,
-} from "@/app/lib/theme/orderPageBackground";
+  touchTabletMedia,
+  touchTabletPortraitMedia,
+} from "@/app/lib/theme/sharedThemeTokens";
+import type { getOrderPageBackground } from "@/app/lib/theme/orderPageBackground";
 
 /**
  * The /menu page's frame, shared by the Counter / Online menu
@@ -30,7 +30,6 @@ export default function MenuPageFrame({
   return (
     <Box
       sx={{
-        minWidth: ORDER_PAGE_MIN_WIDTH,
         minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
@@ -49,6 +48,9 @@ export default function MenuPageFrame({
           // 16px under the top bar on a touch tablet — part of the height
           // budget that keeps two rows of cards in view there.
           [touchTabletMedia]: { pt: 2 },
+          // Portrait touch tablet: 16px sides too (not 24px) — room for
+          // the 3 menu columns on a ~600px-wide tablet.
+          [touchTabletPortraitMedia]: { px: 2 },
           maxWidth: 1200,
           mx: "auto",
         }}

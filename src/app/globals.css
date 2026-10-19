@@ -14,6 +14,14 @@ body {
   scroll-behavior: smooth;
   font-family: var(--font-english), var(--font-myanmar), sans-serif;
 }
+/* THE page minimum width — customer pages and the Backoffice alike, set
+   ONCE here (DESIGN.md §18). Below 375px the whole page keeps its 375px
+   layout and the browser scales it down evenly (owner's decision); the
+   page is exactly 375px wide, so there's never an empty strip. Never add
+   min-widths to components to hide an overflow. */
+body {
+  min-width: 375px;
+}
 button,
 input,
 textarea,

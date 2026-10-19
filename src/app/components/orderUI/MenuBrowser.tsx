@@ -19,6 +19,7 @@ import { localizedText } from "@/app/lib/i18n/localizedText";
 import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
 import MenuCard from "../MenuCard";
 import {
+  touchCardGap,
   touchTabletMedia,
   touchTabletPortraitMedia,
   touchTabletQuery,
@@ -97,18 +98,22 @@ interface MenuBrowserProps {
  *  a gap above it. */
 const TOPBAR_HEIGHT = { xs: 56, sm: 64 };
 
-/** Touch tablets: the grid fits as many columns as its width allows,
- *  each at least this wide (auto-fill + minmax, never a fixed count) —
- *  3 at 800–820px portrait (from a ~732px screen up), 4 at 1180px and 5
- *  at 1280px landscape. Above 210 so 1180px stays at 4. */
+/** LANDSCAPE touch tablets: the grid fits as many columns as its width
+ *  allows, each at least this wide (auto-fill + minmax, never a fixed
+ *  count) — 4 at 1180px, 5 at 1280px. Above 210 so 1180px stays at 4. */
 const TOUCH_CARD_MIN_PX = 212;
-/** …and in PORTRAIT a smaller one, so 3 columns fit even on a tablet whose
- *  browser is narrower than its spec (an "800px" Android tablet at 1.125×
- *  scale is ~710 CSS px: a ~647px grid → 3 × ~205px). Portrait only, so
- *  landscape keeps the counts above (1180px: 4). */
-const TOUCH_PORTRAIT_CARD_MIN_PX = 200;
-/** …with this gap between them (theme spacing: 16px). */
-const TOUCH_CARD_GAP = 2;
+/** PORTRAIT touch tablets: never narrower than this, and at most 3
+ *  columns (portraitColumns below). Widths are CSS px, not the spec
+ *  sheet's: an "800×1280" Android tablet at device pixel ratio ~1.33 is
+ *  ~600px wide — a ~552px grid → 3 × ~173px. 3 columns down to a 482px
+ *  grid (3 × 150 + 2 gaps), 2 below that. */
+const TOUCH_PORTRAIT_CARD_MIN_PX = 150;
+/** Portrait's track: at least TOUCH_PORTRAIT_CARD_MIN_PX, and at least a
+ *  third of the row minus its two gaps — so auto-fill fits 3 columns at
+ *  most, still flexible (fewer only when even 150px doesn't fit). `gap`
+ *  is the grid's gap in px (theme.spacing(touchCardGap)). */
+const portraitColumns = (gap: string) =>
+  `repeat(auto-fill, minmax(max(${TOUCH_PORTRAIT_CARD_MIN_PX}px, calc((100% - 2 * ${gap}) / 3)), 1fr))`;
 
 /**
  * Browsing surface only: search box, category tabs, the MenuCard
@@ -244,8 +249,15 @@ export default function MenuBrowser({
             pt: { xs: 1, sm: 0 },
             pb: { xs: 1, sm: 0 },
             mb: { sm: 2 },
-            // Touch tablet: a fixed share on the left of the one row.
+            // Touch tablet: a share on the left of the one row — 340px in
+            // landscape; in portrait 45% (≥ 200px), so the categories
+            // keep the rest (~296px on a 600px tablet).
             [touchTabletMedia]: { width: 340, flexShrink: 0, mb: 0 },
+            [touchTabletPortraitMedia]: {
+              width: "auto",
+              flex: "0 1 45%",
+              minWidth: 200,
+            },
           }}
         >
           <TextField
@@ -378,17 +390,17 @@ export default function MenuBrowser({
           // 390px phone gets (390 - 40 - 14) / 2 = 168px cards.
           gap: { xs: 1.75, sm: 2, md: 2.5 },
           p: { xs: 0.5, sm: 1, md: 3 },
-          // Touch tablets: as many compact cards (MenuCard compact) as
-          // the width allows, each ≥ TOUCH_CARD_MIN_PX — 1180px landscape:
-          // 4 × ~267px; 1280px: 5 × ~214px; 800px portrait: 3 × ~235px.
+          // Touch tablets: compact cards (MenuCard compact). Landscape:
+          // as many as fit, each ≥ TOUCH_CARD_MIN_PX — 1180px: 4 ×
+          // ~267px; 1280px: 5 × ~214px. Portrait: at most 3, each ≥
+          // 150px — 600px: 3 × ~173px; 820px: 3 × ~247px.
           [touchTabletMedia]: {
             gridTemplateColumns: `repeat(auto-fill, minmax(${TOUCH_CARD_MIN_PX}px, 1fr))`,
-            gap: TOUCH_CARD_GAP,
+            gap: touchCardGap,
             p: 1,
           },
-          // Portrait: 3 smaller columns from a ~710px screen up.
           [touchTabletPortraitMedia]: {
-            gridTemplateColumns: `repeat(auto-fill, minmax(${TOUCH_PORTRAIT_CARD_MIN_PX}px, 1fr))`,
+            gridTemplateColumns: portraitColumns(theme.spacing(touchCardGap)),
           },
           // Cards fill their cell height (see MenuCard) so every card
           // in a row lines up.

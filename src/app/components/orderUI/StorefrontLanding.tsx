@@ -4,10 +4,7 @@ import Link from "next/link";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { useTranslations } from "next-intl";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
-import {
-  ORDER_PAGE_MIN_WIDTH,
-  getOrderPageBackground,
-} from "@/app/lib/theme/orderPageBackground";
+import { getOrderPageBackground } from "@/app/lib/theme/orderPageBackground";
 import { shopInitials } from "@/app/lib/storefront/shopInitials";
 import LanguageSwitch from "./LanguageSwitch";
 
@@ -34,7 +31,6 @@ export default function StorefrontLanding({
     <Box
       component="main"
       sx={{
-        minWidth: ORDER_PAGE_MIN_WIDTH,
         minHeight: "100dvh",
         px: 2,
         pt: "calc(8px + env(safe-area-inset-top, 0px))",

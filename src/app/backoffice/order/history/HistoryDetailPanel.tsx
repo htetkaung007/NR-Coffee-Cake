@@ -32,7 +32,7 @@ export default function HistoryDetailPanel({
           flexShrink: 0,
           position: "sticky",
           top,
-          maxHeight: `calc(100vh - ${top}px)`,
+          maxHeight: `calc(100dvh - ${top}px)`,
           overflow: "hidden",
           bgcolor: "background.paper",
           border: 1,

@@ -80,7 +80,10 @@ export default async function BackOfficeLayout({ children }: Props) {
             role={role}
           >
             <NewOrderBanner />
-            <Box sx={{ display: "flex", minHeight: "calc(100vh - 64px)" }}>
+            {/* No min-height here: BackofficeShell (100dvh) owns the
+                page height — a second one double-counted the top bar and
+                <main>'s padding, so every page scrolled. */}
+            <Box sx={{ display: "flex" }}>
               <Box
                 sx={{
                   // The page surface — cards/panels on it use

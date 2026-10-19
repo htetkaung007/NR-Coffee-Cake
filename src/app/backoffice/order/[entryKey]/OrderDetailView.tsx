@@ -142,7 +142,7 @@ export default function OrderDetailView({
     // when there are only a couple of rounds.
     <Stack
       sx={{
-        minHeight: { xs: "calc(100vh - 64px)", md: "calc(100vh - 112px)" },
+        minHeight: { xs: "calc(100dvh - 64px)", md: "calc(100dvh - 112px)" },
       }}
     >
       <Box sx={{ flexGrow: 1, p: { xs: 1, sm: 2, md: 0 } }}>

@@ -7,6 +7,7 @@ import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 
 import type { ShownCancelReason } from "@/app/lib/order/roundOutcome";
 import OutcomeScreenShell from "./OutcomeScreenShell";
+import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
 
 /** The heading's message: the counter's decision, or a customer's own
  *  cancel. (What happened is cancelReason.<REASON>.) */
@@ -68,14 +69,7 @@ export default function OrderRejectedScreen({
         <Box
           role="status"
           aria-live="polite"
-          sx={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            overflow: "hidden",
-            clip: "rect(0 0 0 0)",
-            whiteSpace: "nowrap",
-          }}
+          sx={visuallyHiddenSx}
         >
           {announcement}
         </Box>

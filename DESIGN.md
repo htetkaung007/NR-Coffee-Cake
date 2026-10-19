@@ -292,8 +292,12 @@ double-taps), or an optimistic update. A disabled control shows WHY
 
 ## 18. Responsive layout — mobile-first
 
-- Build for **320px** first, then add breakpoints. Test at 320px before
-  calling a screen done.
+- **The page minimum is 375px**, set ONCE on `<body>` (`globals.css`,
+  shared by the customer pages and the Backoffice). Build for 375px
+  first, then add breakpoints; test at 375px before calling a screen
+  done. Narrower phones (320–360px) get the 375px page scaled down evenly
+  — a slight uniform zoom-out (owner's decision); the page is exactly
+  375px wide, so there's never an empty strip.
 - Breakpoints: `sm` 600 · `md` 900 · `lg` 1200 (theme defaults — don't
   change them app-wide; use `theme.breakpoints.up(n)` locally if needed).
 - **Touch tablets are a device, not a width.** Tablet and laptop widths
@@ -316,9 +320,13 @@ double-taps), or an optimistic update. A disabled control shows WHY
   tablets:** compact cards, MIN 212px (`TOUCH_CARD_MIN_PX`) with 16px
   gaps / 8px grid padding — 4 at 1180px and 5 at 1280px landscape (MIN
   stays above 210 so 1180 keeps 4); in PORTRAIT (`touchTabletPortraitMedia`)
-  MIN 200px (`TOUCH_PORTRAIT_CARD_MIN_PX`) — 3 columns from a ~710px
-  browser up (an "800px" Android tablet at 1.125× scale is ~710 CSS px:
-  3 × ~205px), 3 × ~234px at 800px, 3 × ~241px at 820px — and
+  at most 3 columns, each ≥ 150px (`TOUCH_PORTRAIT_CARD_MIN_PX`; the
+  track is `max(150px, (100% − 2 gaps) / 3)`), still auto-fill — 2 only
+  below a 482px grid — with 16px page sides instead of 24px. Widths are
+  CSS px, never the spec sheet's: an "800×1280" Android tablet at device
+  pixel ratio ~1.33 is ~600px wide → 3 × ~173px; 640px → ~187px; 768px →
+  ~229px; 820px → ~247px. On the narrowest, the Myanmar "ထည့်မယ်" square
+  wraps under the price (by design; the price never wraps). And
   tighter spacing above the grid (page top 16px, OrderPlaceHeader's gap
   8px, the filter row's bottom margin 8px): two full rows above the
   bottom bar on load at 1180×740 and 1280×670, with the place chip
@@ -326,7 +334,8 @@ double-taps), or an optimistic update. A disabled control shows WHY
   search full width, the category row under it, and ONLY the search is
   sticky (the row scrolls away with the menu); laptops / desktops (≥ `sm`)
   — the same two rows, sticky together; touch tablets — ONE sticky row
-  (search 340px on the left, the scrollable tabs fill the rest). Picking
+  (search on the left — 340px in landscape, 45% (≥ 200px) in portrait —
+  the scrollable tabs fill the rest). Picking
   a category while scrolled down brings the grid's top back just under
   the pinned part.
 - **Menu card:** ONE layout on phones — image (1.45/1) → name (1 line)
@@ -384,6 +393,16 @@ double-taps), or an optimistic update. A disabled control shows WHY
   page's first line is 16px on phones and touch tablets
   (`backofficePageTopTouch`, BackofficeShell — StickyPageHeader mirrors
   it), 16px / 24px (sm+) on laptops. A page's own padding adds to it.
+- **Backoffice page height — ONE owner:** BackofficeShell's root is
+  `minHeight: 100dvh`; the layout's page wrapper and pages add no
+  min-height of their own (a second one double-counted the top bar and `<main>`'s padding, so
+  every page scrolled). Heights tied to the screen use `dvh`, never `vh`
+  (on phones / tablets `vh` counts the browser's hideable toolbar). No
+  Backoffice page may be wider than its 375px minimum / the screen at any
+  width (375–1400px,
+  touch and non-touch, sidebar full and rail) — check a change with an
+  overflow sweep (`scrollWidth − clientWidth` = 0, and nothing's right
+  edge past the viewport).
 - **Backoffice sidebar on touch tablets** (`lib/backofficeSidebar`): a
   toggle at the LEFT of the top bar (Menu / MenuOpen icon, 44px,
   "Collapse sidebar" / "Expand sidebar", aria-expanded) collapses it to a
@@ -440,14 +459,15 @@ double-taps), or an optimistic update. A disabled control shows WHY
   table or at the counter." with a scan icon (body2, text.secondary).
   No location online → only the name and the hint. No bottom bar, no
   Backoffice / sign-in link.
-- **Customer pages: 320px minimum, never a sideways scroll**
-  (`ORDER_PAGE_MIN_WIDTH` = 320). Nothing may be wider than the screen
-  at 320 / 360 / 375 / 412 / 600px in either language — text that can't
-  wrap gets `noWrap` + ellipsis (with `minWidth: 0` on its flex parent)
-  or `overflowWrap: "anywhere"`. Never raise a min-width to hide an
-  overflow: on a phone narrower than it, the browser zooms the whole page
-  out (cut-off search, cart off-screen, a page taller than the screen).
-  Heights use `dvh`, never `vh`.
+- **Customer pages: never a sideways scroll** above the 375px page
+  minimum (the `<body>` rule above — no page wrapper or component has a
+  min-width of its own). Nothing may be wider than the page at 375 / 412
+  / 600px in either language — text that can't wrap gets `noWrap` +
+  ellipsis (with `minWidth: 0` on its flex parent) or `overflowWrap:
+  "anywhere"`. Never give a component a min-width to hide an overflow:
+  ONE element sticking out makes the browser zoom out unevenly (cut-off
+  search, cart off-screen, an empty strip on the right). Heights use
+  `dvh`, never `vh`.
 - **Customer category row** (MenuBrowser): MUI `Tabs`
   variant="scrollable" (touch-scrolls; arrows from `sm` only when it
   overflows; the selected tab scrolls into view) with the indicator
@@ -531,7 +551,7 @@ double-taps), or an optimistic update. A disabled control shows WHY
   role="radiogroup" / "radio" + aria-checked, each label with its own
   lang. Tapping a row applies it and closes; ×, Escape or a tap outside
   keeps Myanmar — either way it never asks again. Footer: globe +
-  "နောက်မှ ပြောင်းလို့ရပါတယ် · Change anytime". Fits 320×568 without
+  "နောက်မှ ပြောင်းလို့ရပါတယ် · Change anytime". Fits 375×667 without
   scrolling; fades in with translateY(8px → 0), 220ms ease-out.
 - **/menu starts with OrderPlaceHeader — a compact chip**, one ~48px row
   (ONE button): [32px icon tile][place, subtitle2 bold][short helper,
@@ -634,6 +654,12 @@ bills and table sessions are untouched; only new scans need the new QR.
   `<div>`s.
 - Decorative elements (timeline lines, overlays, affordance icons) get
   `aria-hidden`.
+- **Visually hidden text** (screen readers only — live status regions,
+  a label hidden on a narrow card) always uses the shared
+  `visuallyHiddenSx` (`lib/theme/sharedThemeTokens.ts`), never a
+  hand-written copy: in MUI `sx`, `width: 1` / `height: 1` mean 100%, not
+  1px — a "1×1" hidden box became as wide as the screen and made phones
+  and tablets zoom the whole Backoffice page out.
 - Meaningful images get real `alt` text (item name).
 - Counts shown as badges are included in the accessible name
   ("Orders, 2 need approval").
@@ -735,7 +761,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 - [ ] Money not in red; state never color-only
 - [ ] Loading, empty, and error states designed; controls stay visible when empty
 - [ ] Feedback within ~100ms; disabled controls say why
-- [ ] Tested at 320px and at each breakpoint in use
+- [ ] Tested at 375px (the page minimum) and at each breakpoint in use
 - [ ] Fixed bottom/top elements respect safe-area insets
 - [ ] Images reserve space; long lists follow Rule 23
 - [ ] Destructive actions confirmed; trivial ones not
@@ -744,9 +770,9 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-19: touch tablets (#97–#97e) — `touchTabletMedia`
+*Last synced 2026-10-19: one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
-200px in portrait,
+max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit
 in its footer, bigger text on touch), the 16px page top on touch;
 flexible auto-fill grids with one MIN per grid, compact cards (MenuCard

@@ -17,6 +17,7 @@ import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import {
   hoverCapableMedia,
   touchTabletMedia,
+  visuallyHiddenSx,
 } from "@/app/lib/theme/sharedThemeTokens";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { menuCardStatus } from "@/app/lib/menu/menuCardStatus";
@@ -65,19 +66,6 @@ const STOCK_CHIP_SX = {
   inStock: { bgcolor: "background.paper", color: "text.primary" },
   low: { bgcolor: "warning.main", color: "warning.contrastText" },
   soldOut: { bgcolor: "error.dark", color: "error.contrastText" },
-} as const;
-
-/** Visually hidden but still read by screen readers. */
-const SCREEN_READER_ONLY = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  m: -0.125,
-  p: 0,
-  overflow: "hidden",
-  clip: "rect(0 0 0 0)",
-  whiteSpace: "nowrap",
-  border: 0,
 } as const;
 
 /** The footer label hides (screen readers keep it) when the card itself
@@ -378,7 +366,7 @@ export default function MenuGridCard({
                   <Typography
                     variant="body2"
                     component="span"
-                    sx={{ [NARROW_CARD]: SCREEN_READER_ONLY }}
+                    sx={{ [NARROW_CARD]: visuallyHiddenSx }}
                   >
                     {isSwitchedOn ? "Available" : "Unavailable"}
                   </Typography>

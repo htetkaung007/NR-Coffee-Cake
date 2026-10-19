@@ -55,6 +55,7 @@ import SortableCategoryRow, {
 } from "./SortableCategoryRow";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import CategoryTabsPreview from "./CategoryTabsPreview";
+import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
 
 interface MenuCategoryOrderViewProps {
   /** Visible at the selected location, in the company order. */
@@ -373,7 +374,7 @@ export default function MenuCategoryOrderView({
             )}
 
             {/* ↑ / ↓ and Sort A → Z results, read out politely. */}
-            <Box role="status" aria-live="polite" sx={visuallyHidden}>
+            <Box role="status" aria-live="polite" sx={visuallyHiddenSx}>
               {statusMessage}
             </Box>
 
@@ -528,16 +529,3 @@ export default function MenuCategoryOrderView({
     </>
   );
 }
-
-/** Screen-reader-only text (the live status region). */
-const visuallyHidden = {
-  position: "absolute",
-  width: "1px",
-  height: "1px",
-  padding: 0,
-  margin: "-1px",
-  overflow: "hidden",
-  clip: "rect(0 0 0 0)",
-  whiteSpace: "nowrap",
-  border: 0,
-} as const;

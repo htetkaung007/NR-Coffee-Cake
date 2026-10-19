@@ -53,7 +53,7 @@ export default function OrderSidePanel({
           position: "sticky",
           top,
           [fullHeight ? "height" : "maxHeight"]:
-            `calc(100vh - ${top} - ${theme.spacing(2)})`,
+            `calc(100dvh - ${top} - ${theme.spacing(2)})`,
         };
       }}
     >

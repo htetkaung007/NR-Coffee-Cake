@@ -239,7 +239,7 @@ export default function AddonsView({
             borderColor: "divider",
             borderRadius: 2.5,
             bgcolor: "background.paper",
-            maxHeight: `calc(100vh - ${topBarHeight(theme) + 32}px)`,
+            maxHeight: `calc(100dvh - ${topBarHeight(theme) + 32}px)`,
             overflowY: "auto",
           })}
         >

@@ -32,7 +32,11 @@ export function BackofficeShell({
     <Box
       sx={{
         display: "flex",
-        minHeight: "100vh",
+        // THE one height owner of every Backoffice page: at least the
+        // screen (dvh — never vh, which on phones / tablets counts the
+        // browser's hideable toolbar). Nothing inside adds a min-height of
+        // its own, so a short page never scrolls.
+        minHeight: "100dvh",
         bgcolor: "background.default",
       }}
     >
@@ -65,7 +69,6 @@ export function BackofficeShell({
           // Phones: the one horizontal gutter (12px) for every Backoffice
           // page — the content wrapper in backoffice/layout.tsx adds none.
           px: { xs: 1.5, sm: 3 },
-          /* width: { sm: `calc(100% - ${SIDEBAR_WIDTH}px)` }, */
         }}
       >
         <Toolbar />
