@@ -92,7 +92,8 @@ export function useBottomBarPage({
 }
 
 /** Rendered by a full-screen state with its own way on (ShopUnavailable,
- *  the outcome screens): no bar while it's on screen. */
+ *  the receipt): no bar while it's on screen. The order outcome screens
+ *  keep it. */
 export function HideBottomBar() {
   const { setHiddenCount } = useBottomBarContext();
   useLayoutEffect(() => {
@@ -129,7 +130,7 @@ export default function OrderBotBar() {
   const searchParams = useSearchParams();
   const { page, hiddenCount } = useBottomBarContext();
   // Not in the server HTML: a page that hides the bar (ShopUnavailable,
-  // an outcome screen) says so only once it runs, and the bar must not
+  // the receipt) says so only once it runs, and the bar must not
   // flash there first. It's fixed, so appearing moves nothing.
   const isClient = useSyncExternalStore(
     noSubscribe,

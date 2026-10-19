@@ -8,7 +8,9 @@ import {
   Tabs,
   TextField,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 
 import MenuDetailDialog from "./MenuDetailDialog";
@@ -16,6 +18,11 @@ import { useLocale, useMessages, useTranslations } from "next-intl";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
 import MenuCard from "../MenuCard";
+import {
+  touchTabletMedia,
+  touchTabletPortraitMedia,
+  touchTabletQuery,
+} from "@/app/lib/theme/sharedThemeTokens";
 import { menuCardLabels } from "@/app/lib/i18n/customerLabels";
 import type { MenuDetail } from "./menuDetail/types";
 
@@ -90,6 +97,19 @@ interface MenuBrowserProps {
  *  a gap above it. */
 const TOPBAR_HEIGHT = { xs: 56, sm: 64 };
 
+/** Touch tablets: the grid fits as many columns as its width allows,
+ *  each at least this wide (auto-fill + minmax, never a fixed count) —
+ *  3 at 800–820px portrait (from a ~732px screen up), 4 at 1180px and 5
+ *  at 1280px landscape. Above 210 so 1180px stays at 4. */
+const TOUCH_CARD_MIN_PX = 212;
+/** …and in PORTRAIT a smaller one, so 3 columns fit even on a tablet whose
+ *  browser is narrower than its spec (an "800px" Android tablet at 1.125×
+ *  scale is ~710 CSS px: a ~647px grid → 3 × ~205px). Portrait only, so
+ *  landscape keeps the counts above (1180px: 4). */
+const TOUCH_PORTRAIT_CARD_MIN_PX = 200;
+/** …with this gap between them (theme spacing: 16px). */
+const TOUCH_CARD_GAP = 2;
+
 /**
  * Browsing surface only: search box, category tabs, the MenuCard
  * grid, and the detail dialog a card click opens. Cart contents and
@@ -141,6 +161,33 @@ export default function MenuBrowser({
   // to be tapped while only partly visible.
   const tabRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // What's pinned under the top bar: on phones the search alone, from
+  // sm the whole search + categories block (one row on a touch tablet).
+  // Phones and touch tablets: picking a category while scrolled down
+  // brings the grid's top back just under it (never when the grid top is
+  // already in view). Laptops / desktops keep the original behaviour.
+  const theme = useTheme();
+  const isWholeBlockPinned = useMediaQuery(theme.breakpoints.up("sm"));
+  const isTouchTablet = useMediaQuery(touchTabletQuery);
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const filterRowRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  function bringGridUnderPinnedBar() {
+    if (isWholeBlockPinned && !isTouchTablet) return;
+    const pinned = (isWholeBlockPinned ? filterRowRef : searchRef).current;
+    const grid = gridRef.current;
+    if (!pinned || !grid) return;
+    const overlap =
+      pinned.getBoundingClientRect().bottom - grid.getBoundingClientRect().top;
+    if (overlap > 0) {
+      window.scrollBy({
+        top: -overlap,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    }
+  }
+
   const visibleMenus = useMemo(
     () =>
       menus.filter(
@@ -155,37 +202,69 @@ export default function MenuBrowser({
 
   return (
     <>
-      {/* Sticky search bar + category tabs — stay pinned together as
-         the customer scrolls down the grid, per the design mock. */}
+      {/* Search + category tabs. Phones (below sm): ONLY the search is
+         sticky (its own box below); the tabs sit under it in normal flow
+         and scroll away with the menu. From sm the whole block is sticky
+         — search full width with the tabs under it (laptops, desktops),
+         or ONE row on a touch tablet (touchTabletMedia), so 4 columns
+         keep two rows of cards in view. One set of controls either way:
+         on phones this wrapper is display "contents" (no box of its
+         own), so the search's sticky box spans the whole page. */}
       <Box
+        ref={filterRowRef}
         sx={{
-          position: "sticky",
+          display: { xs: "contents", sm: "block" },
+          position: { sm: "sticky" },
           top: TOPBAR_HEIGHT,
-          zIndex: 3,
-          bgcolor: backgroundColor,
-          backgroundImage,
-          backgroundAttachment,
-          pt: 1,
-          mb: 3,
+          zIndex: { sm: 3 },
+          bgcolor: { sm: backgroundColor },
+          backgroundImage: { sm: backgroundImage },
+          backgroundAttachment: { sm: backgroundAttachment },
+          pt: { sm: 1 },
+          mb: { sm: 3 },
+          [touchTabletMedia]: {
+            display: "flex",
+            alignItems: "center",
+            columnGap: 2,
+            // 8px (the grid's own 8px padding follows) — the height
+            // budget for two rows of cards.
+            mb: 1,
+          },
         }}
       >
-        <TextField
-          fullWidth
-          size="small"
-          placeholder={t("searchPlaceholder")}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ mb: 2 }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            },
+        <Box
+          ref={searchRef}
+          sx={{
+            position: { xs: "sticky", sm: "static" },
+            top: TOPBAR_HEIGHT,
+            zIndex: { xs: 3, sm: "auto" },
+            bgcolor: { xs: backgroundColor, sm: "transparent" },
+            backgroundImage: { xs: backgroundImage, sm: "none" },
+            backgroundAttachment: { xs: backgroundAttachment },
+            pt: { xs: 1, sm: 0 },
+            pb: { xs: 1, sm: 0 },
+            mb: { sm: 2 },
+            // Touch tablet: a fixed share on the left of the one row.
+            [touchTabletMedia]: { width: 340, flexShrink: 0, mb: 0 },
           }}
-        />
+        >
+          <TextField
+            fullWidth
+            size="small"
+            placeholder={t("searchPlaceholder")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Box>
 
         {/* Category pills — MUI's scrollable Tabs: touch-scrolls on
            phones, arrows from sm up (only when the row overflows), and
@@ -198,6 +277,7 @@ export default function MenuBrowser({
         <Tabs
           value={activeCategory}
           onChange={(_, value) => {
+            bringGridUnderPinnedBar();
             setActiveCategory(value);
             tabRefs.current[value]?.scrollIntoView({
               behavior: "smooth",
@@ -211,6 +291,11 @@ export default function MenuBrowser({
           slotProps={{ indicator: { sx: { display: "none" } } }}
           sx={{
             minHeight: 44,
+            // Phones: 16px under the field (its 8px + this 8px), 24px
+            // above the grid. Touch tablet: fills the rest of the row.
+            mt: { xs: 1, sm: 0 },
+            mb: { xs: 3, sm: 0 },
+            [touchTabletMedia]: { flex: 1, minWidth: 0 },
             "& .MuiTabs-list": { gap: 1 },
             "& .MuiTabs-scrollButtons.Mui-disabled": { opacity: 0.3 },
           }}
@@ -273,6 +358,7 @@ export default function MenuBrowser({
       </Box>
 
       <Box
+        ref={gridRef}
         sx={{
           // No min width of its own: the grid fits whatever the page's
           // content column is (288px at a 320px screen).
@@ -292,6 +378,18 @@ export default function MenuBrowser({
           // 390px phone gets (390 - 40 - 14) / 2 = 168px cards.
           gap: { xs: 1.75, sm: 2, md: 2.5 },
           p: { xs: 0.5, sm: 1, md: 3 },
+          // Touch tablets: as many compact cards (MenuCard compact) as
+          // the width allows, each ≥ TOUCH_CARD_MIN_PX — 1180px landscape:
+          // 4 × ~267px; 1280px: 5 × ~214px; 800px portrait: 3 × ~235px.
+          [touchTabletMedia]: {
+            gridTemplateColumns: `repeat(auto-fill, minmax(${TOUCH_CARD_MIN_PX}px, 1fr))`,
+            gap: TOUCH_CARD_GAP,
+            p: 1,
+          },
+          // Portrait: 3 smaller columns from a ~710px screen up.
+          [touchTabletPortraitMedia]: {
+            gridTemplateColumns: `repeat(auto-fill, minmax(${TOUCH_PORTRAIT_CARD_MIN_PX}px, 1fr))`,
+          },
           // Cards fill their cell height (see MenuCard) so every card
           // in a row lines up.
           alignItems: "stretch",
@@ -312,6 +410,7 @@ export default function MenuBrowser({
               isAvailable: menu.isAvailable,
             }}
             onAddToCart={() => setDetailMenuId(menu.id)}
+            compact
             labels={cardLabels}
           />
         ))}

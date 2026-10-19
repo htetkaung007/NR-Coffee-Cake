@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Box, Toolbar } from "@mui/material";
 import { BackofficeTopBar } from "./BackofficeTopBar";
 import { BackofficeSideBar } from "./BackofficeSideBar";
-import { backofficePageTop } from "../lib/theme/sharedThemeTokens";
+import {
+  backofficePageTop,
+  backofficePageTopTouch,
+  touchScreenMedia,
+} from "../lib/theme/sharedThemeTokens";
 import type { NavRole } from "../lib/backofficeNav";
 import type { TopBarLocation } from "./OnlineMenuStatus";
 
@@ -55,6 +59,8 @@ export function BackofficeShell({
           // The one top gap below the top bar for every page (pages and
           // the layout add none of their own).
           pt: backofficePageTop,
+          // Touch screens: 16px, so the title sits close under the bar.
+          [touchScreenMedia]: { pt: backofficePageTopTouch },
           pb: 3,
           // Phones: the one horizontal gutter (12px) for every Backoffice
           // page — the content wrapper in backoffice/layout.tsx adds none.

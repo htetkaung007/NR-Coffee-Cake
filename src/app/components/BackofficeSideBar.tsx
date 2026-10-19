@@ -12,6 +12,7 @@ import {
   ListItemIcon,
   ListItemText,
   Box,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { alpha, type Theme } from "@mui/material/styles";
@@ -31,8 +32,15 @@ import type { AccessRule } from "@/app/lib/access/permissions";
 import { useAccessCheck } from "./StaffAccessProvider";
 import { markSeen, useSeenFlag } from "@/app/lib/hooks/useSeenFlag";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
+import {
+  SIDEBAR_RAIL_WIDTH,
+  SIDEBAR_WIDTH,
+  whenSidebarRail,
+} from "@/app/lib/backofficeSidebar";
+import { useBackofficeSidebar } from "@/app/lib/hooks/useBackofficeSidebar";
 
-const SIDEBAR_WIDTH = 260;
+/** The sidebar's id — the top bar's collapse toggle controls it. */
+export const SIDEBAR_ID = "backoffice-sidebar";
 
 type NavItem = {
   label: string;
@@ -156,6 +164,7 @@ function NavBadge({
         px: 1,
         borderRadius: 999,
         flexShrink: 0,
+        ...whenSidebarRail({ display: "none" }),
         ...(isActive
           ? {
               bgcolor: alpha(theme.palette.primary.contrastText, 0.2),
@@ -172,14 +181,37 @@ function NavBadge({
   );
 }
 
+/** The rail's item names on hover / focus. Off the rail there's no
+ *  Tooltip at all, so the full sidebar is exactly as it always was. */
+function RailTooltip({
+  show,
+  title,
+  children,
+}: {
+  show: boolean;
+  title: string;
+  children: React.ReactElement;
+}) {
+  if (!show) return children;
+  return (
+    <Tooltip title={title} placement="right">
+      {children}
+    </Tooltip>
+  );
+}
+
 function NavSectionList({
   section,
   activeHref,
   onNavigate,
+  isRail,
 }: {
   section: NavSection;
   activeHref: string | null;
   onNavigate?: () => void;
+  /** The collapsed icon rail (touch tablets): icons only, each named by
+   *  its label (aria-label + Tooltip). */
+  isRail: boolean;
 }) {
   const captionId = useId();
 
@@ -196,6 +228,8 @@ function NavSectionList({
           color: "text.secondary",
           textTransform: "uppercase",
           letterSpacing: "0.08em",
+          // Rail: no headings (the list keeps it as its name).
+          ...whenSidebarRail({ display: "none" }),
         }}
       >
         {section.title}
@@ -209,11 +243,13 @@ function NavSectionList({
           const isActive = href === activeHref;
           return (
             <ListItem key={href} disablePadding>
+              <RailTooltip show={isRail} title={label}>
               <ListItemButton
                 component={Link}
                 href={href}
                 selected={isActive}
                 aria-current={isActive ? "page" : undefined}
+                aria-label={isRail ? label : undefined}
                 onClick={(event) => {
                   // ⌘/Ctrl-click opens a new tab — keep the drawer open.
                   if (onNavigate && isPlainLeftClick(event)) onNavigate();
@@ -240,6 +276,9 @@ function NavSectionList({
                     "&:hover": { bgcolor: "action.hover" },
                     "&.Mui-selected:hover": { bgcolor: "primary.dark" },
                   },
+                  // Rail: the icon alone, centred (the selected one keeps
+                  // its fill).
+                  ...whenSidebarRail({ justifyContent: "center", px: 0 }),
                 })}
               >
                 <ListItemIcon
@@ -247,13 +286,18 @@ function NavSectionList({
                     minWidth: 40,
                     color: "inherit",
                     transition: itemTransition(theme),
+                    ...whenSidebarRail({ minWidth: 0 }),
                   })}
                 >
                   <Icon />
                 </ListItemIcon>
-                <ListItemText primary={label} />
+                <ListItemText
+                  primary={label}
+                  sx={whenSidebarRail({ display: "none" })}
+                />
                 {badge && <NavBadge badge={badge} isActive={isActive} />}
               </ListItemButton>
+              </RailTooltip>
             </ListItem>
           );
         })}
@@ -262,7 +306,13 @@ function NavSectionList({
   );
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({
+  onNavigate,
+  isRail = false,
+}: {
+  onNavigate?: () => void;
+  isRail?: boolean;
+}) {
   const pathname = usePathname();
   // Display only: items the user can't open are hidden — their pages
   // check again on the server.
@@ -304,6 +354,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             section={section}
             activeHref={activeHref}
             onNavigate={onNavigate}
+            isRail={isRail}
           />
         ))}
       </Box>
@@ -320,10 +371,19 @@ export function BackofficeSideBar({
   mobileOpen,
   onClose,
 }: BackofficeSideBarProps) {
+  // Touch tablets can collapse it to an icon rail (lib/backofficeSidebar):
+  // the widths below switch by CSS (no animation — the content's layout
+  // just follows), this flag only adds the rail's names and tooltips.
+  const { isRail } = useBackofficeSidebar();
   return (
     <Box
       component="nav"
-      sx={{ width: { sm: SIDEBAR_WIDTH }, flexShrink: { sm: 0 } }}
+      id={SIDEBAR_ID}
+      sx={{
+        width: { sm: SIDEBAR_WIDTH },
+        flexShrink: { sm: 0 },
+        ...whenSidebarRail({ width: SIDEBAR_RAIL_WIDTH }),
+      }}
     >
       <Drawer
         variant="temporary"
@@ -356,9 +416,12 @@ export function BackofficeSideBar({
             borderRight: 1,
             borderColor: "divider",
           },
+          ...whenSidebarRail({
+            "& .MuiDrawer-paper": { width: SIDEBAR_RAIL_WIDTH },
+          }),
         }}
       >
-        <SidebarContent />
+        <SidebarContent isRail={isRail} />
       </Drawer>
     </Box>
   );

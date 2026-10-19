@@ -14,6 +14,7 @@ import {
 import { alpha, keyframes, useTheme } from "@mui/material/styles";
 import { cartLinesTotal, sumQuantities } from "@/app/lib/order/orderTotals";
 import { countLabel, formatAmount } from "@/app/lib/orderFormat";
+import { touchTabletLandscapeMedia } from "@/app/lib/theme/sharedThemeTokens";
 import {
   quantityThatFits,
   toBrowserCartLine,
@@ -581,9 +582,26 @@ export default function StaffOrderClient({
   );
 
   // ONE picker, placed by width: its own card above Current order from
-  // lg, above the search and menus below lg.
+  // lg, above the search and menus below lg. Above the menus on a
+  // LANDSCAPE touch tablet the mode toggle (its natural width) and
+  // "Order for" (the rest) share one row; everywhere else they stack.
+  const isPickerRow = !isDesktop;
   const picker = (
     <>
+      <Box
+        sx={
+          isPickerRow
+            ? {
+                [touchTabletLandscapeMedia]: {
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 2,
+                },
+              }
+            : undefined
+        }
+      >
+      <Box sx={isPickerRow ? { [touchTabletLandscapeMedia]: { flexShrink: 0 } } : undefined}>
       <SegmentedTabs
         ariaLabel="Order for"
         value={mode}
@@ -598,7 +616,16 @@ export default function StaffOrderClient({
             describedBy: openCount === 0 ? noOpenBillsId : undefined,
           },
         ]}
-        sx={{ width: "100%", mb: openCount === 0 ? 0.5 : 1.5 }}
+        sx={{
+          width: "100%",
+          mb: openCount === 0 ? 0.5 : 1.5,
+          ...(isPickerRow && {
+            [touchTabletLandscapeMedia]: {
+              width: "auto",
+              mb: openCount === 0 ? 0.5 : 0,
+            },
+          }),
+        }}
       />
       {openCount === 0 && (
         <Typography
@@ -610,6 +637,14 @@ export default function StaffOrderClient({
           No open bills
         </Typography>
       )}
+      </Box>
+      <Box
+        sx={
+          isPickerRow
+            ? { [touchTabletLandscapeMedia]: { flex: 1, minWidth: 0 } }
+            : undefined
+        }
+      >
       <OrderTargetPicker
         tables={tables}
         occupancy={occupancy}
@@ -620,6 +655,8 @@ export default function StaffOrderClient({
         prompt={tablePrompt}
         pickerRef={pickerRef}
       />
+      </Box>
+      </Box>
       {linkNotice && (
         <Alert
           severity="info"
@@ -681,10 +718,12 @@ export default function StaffOrderClient({
         </OrderSidePanel>
       </Stack>
 
+      {/* Pinned to the screen's bottom edge however few menus there are. */}
       <OrderBottomBar
         hideFrom="lg"
         actionLabel="View order"
         onAction={() => setIsOrderOpen(true)}
+        pinned
       >
         {/* "Table 3 · 2 items · 8,997 MMK" — wraps rather than truncates
            (money is never cut off). Re-mounted per add to replay the

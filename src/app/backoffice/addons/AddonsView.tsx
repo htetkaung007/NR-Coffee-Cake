@@ -111,9 +111,9 @@ function GroupCard({
 
 /**
  * The Add-ons page: groups on the left, the selected group's quick
- * settings (AddonGroupPanel) beside them from md — sticky — or in the
- * drawer / bottom sheet below md. The selection lives in the URL
- * (?group=<id>); closing the drawer clears it. Switches update at once
+ * settings (AddonGroupPanel) beside them from md — sticky — or in a
+ * bottom sheet below md. The selection lives in the URL (?group=<id>);
+ * closing the sheet clears it. Switches update at once
  * (optimistic), pause while their request runs, and roll back with the
  * error if it fails.
  */
@@ -175,6 +175,8 @@ export default function AddonsView({
     router.replace(PAGE_HREF, { scroll: false });
   }
 
+  // ONE panel for both places; in the sheet it gets its × and puts Edit in
+  // a footer, away from the ×.
   const panel = (group: AddonGroup, onClose?: () => void) => (
     <AddonGroupPanel
       key={group.id}
@@ -183,6 +185,7 @@ export default function AddonsView({
       canToggleAvailability={canToggleAvailability}
       pendingKeys={pendingKeys}
       onClose={onClose}
+      inSheet={onClose !== undefined}
       onToggleAddon={(addonId, isAvailable) => {
         const name =
           group.addons.find((addon) => addon.id === addonId)?.name ?? "Option";
@@ -250,11 +253,14 @@ export default function AddonsView({
         </Box>
       </Box>
 
-      {/* Below md: the same panel in the drawer / bottom sheet. */}
+      {/* Below md: the same panel in a bottom sheet — phones and tablets
+          alike (centred, 640px cap from sm), dragged down to close. */}
       <SidePanelDrawer
         open={!isWide && selected !== null}
         onClose={closeDrawer}
         label={selected ? selected.name : "Add-on group"}
+        placement="sheet"
+        swipeToClose
       >
         {selected && panel(selected, closeDrawer)}
       </SidePanelDrawer>

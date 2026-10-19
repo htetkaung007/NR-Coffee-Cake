@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
+import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -25,7 +26,12 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import { signOut, useSession } from "next-auth/react";
 import { clearStaffCarts } from "@/app/lib/hooks/useStaffCart";
 import { useThemeMode } from "../lib/theme/ThemeModeProvider";
-import { hoverCapableMedia } from "../lib/theme/sharedThemeTokens";
+import {
+  hoverCapableMedia,
+  touchTabletMedia,
+} from "../lib/theme/sharedThemeTokens";
+import { useBackofficeSidebar } from "../lib/hooks/useBackofficeSidebar";
+import { SIDEBAR_ID } from "./BackofficeSideBar";
 import OnlineMenuStatus, { type TopBarLocation } from "./OnlineMenuStatus";
 
 const LOCATIONS_HREF = "/backoffice/locations";
@@ -230,6 +236,7 @@ export function BackofficeTopBar({
   canChangeLocation,
 }: BackofficeTopBarProps) {
   const locationName = location?.name ?? null;
+  const sidebar = useBackofficeSidebar();
 
   return (
     <AppBar
@@ -255,6 +262,24 @@ export function BackofficeTopBar({
             minWidth: 0,
           }}
         >
+          {/* Touch tablets only: collapses the sidebar to its icon rail
+              and back (lib/backofficeSidebar). Laptops never show it. */}
+          <IconButton
+            edge="start"
+            onClick={sidebar.toggle}
+            aria-label={sidebar.isRail ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!sidebar.isRail}
+            aria-controls={SIDEBAR_ID}
+            sx={{
+              display: "none",
+              width: 44,
+              height: 44,
+              color: "text.primary",
+              [touchTabletMedia]: { display: "inline-flex" },
+            }}
+          >
+            {sidebar.isRail ? <MenuIcon /> : <MenuOpenIcon />}
+          </IconButton>
           {/* Phones only: opens / closes the side bar. */}
           <IconButton
             edge="start"

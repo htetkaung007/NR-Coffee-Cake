@@ -188,6 +188,7 @@
     "roundCount": "အကြိမ် {count} ကြိမ်",
     "round": "အကြိမ် {number}",
     "yourTotal": "သင့် စုစုပေါင်း: {amount}",
+    "totalAmount": "စုစုပေါင်း ကျသင့်ငွေ",
     "itemCount": "ပစ္စည်း {count} ခု",
     "removedCount": "{count} ခု ဝန်ထမ်းမှ ဖယ်ထားသည်",
     "more": "+{count} ခု ထပ်ရှိ"

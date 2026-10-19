@@ -3,15 +3,17 @@
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Avatar, Box, Stack } from "@mui/material";
+import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
 import BackCircleButton from "./BackCircleButton";
-import { HideBottomBar } from "./OrderBotBar";
 
 /**
  * The shared frame of a round's outcome screens (OrderConfirmedScreen,
  * OrderRejectedScreen): a full-height centred page, the back arrow
  * (to the menu) top-left, then a 400px column led by a large round icon
  * in the outcome's colour role. Each screen supplies its own texts and
- * buttons as children. Od theme colours only.
+ * buttons as children. Od theme colours only. The floating bottom bar
+ * stays on these screens; the page keeps BOTTOM_BAR_CLEARANCE free at the
+ * bottom, so the column (and its buttons) is centred above the bar.
  */
 export default function OutcomeScreenShell({
   onBack,
@@ -38,6 +40,7 @@ export default function OutcomeScreenShell({
         justifyContent: "center",
         bgcolor: "background.default",
         p: 3,
+        pb: BOTTOM_BAR_CLEARANCE,
         position: "relative",
       }}
     >
@@ -46,8 +49,6 @@ export default function OutcomeScreenShell({
         onClick={onBack}
         sx={{ position: "absolute", top: 16, left: 16 }}
       />
-      {/* Its own buttons lead on — no bottom bar over them. */}
-      <HideBottomBar />
       {beforeContent}
       <Stack sx={{ width: "100%", maxWidth: 400, alignItems: "center" }}>
         <Avatar

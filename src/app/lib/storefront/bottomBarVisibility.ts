@@ -8,8 +8,9 @@ export type BottomBarTab = "menu" | "cart" | "history";
 
 /** What the page on screen says about the bar. */
 export interface BottomBarScreenState {
-  /** A full-screen state that has its own way on (ShopUnavailable, an
-   *  order confirmed / rejected outcome screen) is showing. */
+  /** A full-screen state that has its own way on (ShopUnavailable, the
+   *  receipt) is showing. The order confirmed / rejected outcome screens
+   *  keep the bar — they're on /cart and leave room for it. */
   hiddenByScreen: boolean;
 }
 

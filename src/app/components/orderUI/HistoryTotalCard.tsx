@@ -1,53 +1,105 @@
 import { Box, Typography } from "@mui/material";
 
 /**
- * The history list's total as ONE compact row at the top of the list —
- * it scrolls with the cards, so the bottom of the screen stays free for
- * them. Left: what it is ("Table total" / the bill number) and a short
- * detail line; right: the amount (never wraps). Plain markup, so the
- * server page renders it directly.
+ * The history list's total — ONE card at the END of the list, after the
+ * last order card. It scrolls with the cards (never fixed); the page
+ * keeps BOTTOM_BAR_CLEARANCE, so it never ends under the bottom bar.
+ * Row 1: what it is (the bill number / "Table total") · the count; on a
+ * table, the customer's own part under it; then "Total amount" with the
+ * amount on the right in the customer price tone (palette.decor.price,
+ * DESIGN.md §13), never wrapping. Plain markup, so the server page
+ * renders it directly.
  */
 export default function HistoryTotalCard({
   label,
-  detail,
+  count,
+  yourPart,
+  totalLabel,
   amount,
 }: {
+  /** The bill number ("#A034") or the "Table total" words. */
   label: string;
-  /** e.g. "3 orders · Your items: 4,500 Kyats". */
-  detail: string;
+  /** "3 rounds" / "2 orders". */
+  count: string;
+  /** Table only — "Your total so far: 4,500 Kyats". */
+  yourPart?: string;
+  /** "Total amount" in the customer's language. */
+  totalLabel: string;
   /** Already formatted in the customer's language. */
   amount: string;
 }) {
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 2,
+        mt: { xs: 1.5, sm: 2 },
         px: 2,
         py: 1.5,
-        mb: { xs: 1.5, sm: 2 },
         bgcolor: "background.paper",
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
       }}
     >
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="body1" sx={{ fontWeight: 700 }} noWrap>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "baseline",
+          columnGap: 1,
+          minWidth: 0,
+        }}
+      >
+        <Typography
+          variant="body1"
+          component="p"
+          sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
+        >
           {label}
         </Typography>
-        <Typography variant="caption" color="text.secondary" component="p">
-          {detail}
+        <Typography variant="body2" color="text.secondary" aria-hidden>
+          ·
+        </Typography>
+        <Typography variant="body2" color="text.secondary" component="p">
+          {count}
         </Typography>
       </Box>
-      <Typography
-        variant="subtitle1"
-        component="p"
-        sx={{ flexShrink: 0, whiteSpace: "nowrap", color: "primary.main" }}
+      {yourPart && (
+        <Typography variant="caption" color="text.secondary" component="p">
+          {yourPart}
+        </Typography>
+      )}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 2,
+          mt: 1,
+          pt: 1,
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
       >
-        {amount}
-      </Typography>
+        <Typography
+          variant="body2"
+          component="p"
+          sx={{ minWidth: 0, overflowWrap: "anywhere" }}
+        >
+          {totalLabel}
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          component="p"
+          sx={{
+            flexShrink: 0,
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            color: "decor.price",
+          }}
+        >
+          {amount}
+        </Typography>
+      </Box>
     </Box>
   );
 }

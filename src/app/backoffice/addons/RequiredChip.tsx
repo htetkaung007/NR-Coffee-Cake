@@ -8,15 +8,23 @@ import { Chip, Typography } from "@mui/material";
  * error/status colour — this is a category, not a state (DESIGN.md
  * Rule 13). The word is always there, so it's never colour alone.
  */
-export default function RequiredChip({ isRequired }: { isRequired: boolean }) {
+export default function RequiredChip({
+  isRequired,
+  large = false,
+}: {
+  isRequired: boolean;
+  /** Touch screens' group panel: the medium chip with body2 words (one
+   *  step up from caption). */
+  large?: boolean;
+}) {
   return (
     <Chip
-      size="small"
+      size={large ? "medium" : "small"}
       color={isRequired ? "primary" : "default"}
       variant={isRequired ? "filled" : "outlined"}
       sx={isRequired ? undefined : { color: "text.secondary" }}
       label={
-        <Typography variant="caption" component="span">
+        <Typography variant={large ? "body2" : "caption"} component="span">
           {isRequired ? "Required" : "Optional"}
         </Typography>
       }

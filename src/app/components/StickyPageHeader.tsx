@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { Box } from "@mui/material";
 import {
   backofficePageTop,
+  backofficePageTopTouch,
   topBarHeight,
+  touchScreenMedia,
 } from "@/app/lib/theme/sharedThemeTokens";
 
 const negated = (spacing: typeof backofficePageTop) => ({
@@ -32,23 +34,7 @@ export default function StickyPageHeader({
   placement?: "top" | "below-title";
 }) {
   const ref = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const header = ref.current;
-    if (!header) return;
-    const root = document.documentElement;
-    const update = () => {
-      const top = parseFloat(getComputedStyle(header).top) || 0;
-      root.style.scrollPaddingTop = `${top + header.offsetHeight}px`;
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(header);
-    return () => {
-      observer.disconnect();
-      root.style.scrollPaddingTop = "";
-    };
-  }, []);
+  useStickyScrollPadding([ref]);
 
   return (
     <Box
@@ -63,7 +49,16 @@ export default function StickyPageHeader({
         borderBottom: 1,
         borderColor: "divider",
         ...(placement === "top"
-          ? { mt: negated(backofficePageTop), pt: backofficePageTop, pb: 1.5 }
+          ? {
+              mt: negated(backofficePageTop),
+              pt: backofficePageTop,
+              pb: 1.5,
+              // The shell's smaller touch-screen gap, the same way.
+              [touchScreenMedia]: {
+                mt: -backofficePageTopTouch,
+                pt: backofficePageTopTouch,
+              },
+            }
           : { py: 1 }),
         // xs: none of its own — BackofficeShell's gutter already applies.
         px: { xs: 0, sm: 2, md: 3 },
@@ -72,4 +67,42 @@ export default function StickyPageHeader({
       {children}
     </Box>
   );
+}
+
+/** Keeps the page's scroll padding equal to what's pinned under the app
+ *  bar, so keyboard focus and in-page jumps never land behind it. Of
+ *  `candidates`, the first whose computed position is sticky right now
+ *  counts (a header can pin a different box per breakpoint — Reports
+ *  pins only its period row on phones); re-measured whenever one of them
+ *  resizes, which a breakpoint change does too. */
+export function useStickyScrollPadding(
+  candidates: RefObject<HTMLElement | null>[],
+) {
+  useEffect(() => {
+    const elements = candidates
+      .map((candidate) => candidate.current)
+      .filter((element): element is HTMLElement => element !== null);
+    if (elements.length === 0) return;
+    const root = document.documentElement;
+    const update = () => {
+      const pinned = elements.find(
+        (element) => getComputedStyle(element).position === "sticky",
+      );
+      if (!pinned) {
+        root.style.scrollPaddingTop = "";
+        return;
+      }
+      const top = parseFloat(getComputedStyle(pinned).top) || 0;
+      root.style.scrollPaddingTop = `${top + pinned.offsetHeight}px`;
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    elements.forEach((element) => observer.observe(element));
+    return () => {
+      observer.disconnect();
+      root.style.scrollPaddingTop = "";
+    };
+    // The refs are stable objects; their elements are read once mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

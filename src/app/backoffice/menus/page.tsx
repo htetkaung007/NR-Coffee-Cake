@@ -2,6 +2,7 @@ import { LocationService, MenuService, PermissionService } from "@/app/services"
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { ASK_OWNER_HINTS, hasPermission } from "@/app/lib/access/permissions";
 import { Box, Button, Stack, Typography } from "@mui/material";
+import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
 import MenuGrid from "./MenuGrid";
@@ -29,7 +30,9 @@ export default async function MenusPage() {
 
   return (
     // The same page padding and header spacing as the Tables page.
-    <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+    // Touch tablets: 16px on top and a 16px header gap, so more of the
+    // grid fits the screen.
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, [touchTabletMedia]: { pt: 2 } }}>
       {/* Title first, then which location the switches act on (they
           are per location). Create Menu sits beside it from lg; below
           lg it's the floating "+". */}
@@ -40,6 +43,7 @@ export default async function MenusPage() {
           justifyContent: "space-between",
           gap: 2,
           mb: 3,
+          [touchTabletMedia]: { mb: 2 },
         }}
       >
         <Box sx={{ minWidth: 0 }}>

@@ -23,6 +23,7 @@ import { langAttr, type AppLocale } from "@/app/lib/i18n/locale";
 import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
+import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 /** What MenuCard needs, plus what the grid filters and adds by. */
 export interface StaffMenu {
@@ -54,6 +55,12 @@ export interface StaffCategory {
 
 const ALL = "all" as const;
 
+/** Touch tablets: as many compact cards as the menu side's width allows,
+ *  each at least this wide (auto-fill + minmax, never a fixed count), so
+ *  the columns follow the sidebar (expanded / rail) and the order panel —
+ *  e.g. 1180px landscape: 4 (5 with the rail); 800px portrait: 2 (3). */
+const TOUCH_CARD_MIN_PX = 176;
+
 /** The grid's columns — the cards and their placeholders alike. */
 const gridSx = {
   display: "grid",
@@ -65,7 +72,51 @@ const gridSx = {
   },
   gap: 1.5,
   alignItems: "stretch",
+  // Touch tablets: compact cards (MenuCard compact), ≥ TOUCH_CARD_MIN_PX
+  // each, with the same 12px gap.
+  [touchTabletMedia]: {
+    gridTemplateColumns: `repeat(auto-fill, minmax(${TOUCH_CARD_MIN_PX}px, 1fr))`,
+  },
 } as const;
+
+/** A loading card. Laptops / phones: the card-shaped block as always.
+ *  Touch tablets: the compact card's proportions (the 16:9 photo, the
+ *  name line and the 32px price row in 4px padding), so nothing jumps
+ *  once the language is read. One of the two is display none, so each
+ *  placeholder takes ONE grid cell. */
+function CardSkeleton() {
+  return (
+    <>
+      <Skeleton
+        variant="rounded"
+        sx={{
+          height: "auto",
+          aspectRatio: "0.95",
+          [touchTabletMedia]: { display: "none" },
+        }}
+      />
+      <Box
+        sx={{
+          display: "none",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 3,
+          p: 0.5,
+          [touchTabletMedia]: { display: "block" },
+        }}
+      >
+        <Skeleton
+          variant="rounded"
+          sx={{ height: "auto", aspectRatio: "16 / 9", borderRadius: 2 }}
+        />
+        <Box sx={{ px: 1, py: 0.5 }}>
+          <Skeleton variant="rounded" sx={{ width: "70%", height: 20 }} />
+          <Skeleton variant="rounded" sx={{ width: "50%", height: 32 }} />
+        </Box>
+      </Box>
+    </>
+  );
+}
 
 /**
  * The New Order page's left side: search, category chips ("All" first,
@@ -210,11 +261,7 @@ export default function StaffMenuGrid({
       {language === null ? (
         <Box aria-hidden sx={gridSx}>
           {Array.from({ length: 8 }, (_, placeholder) => (
-            <Skeleton
-              key={placeholder}
-              variant="rounded"
-              sx={{ height: "auto", aspectRatio: "0.95" }}
-            />
+            <CardSkeleton key={placeholder} />
           ))}
         </Box>
       ) : visibleMenus.length === 0 ? (
@@ -262,6 +309,8 @@ export default function StaffMenuGrid({
                 isAvailable: menu.isAvailable,
               }}
               showDescription={false}
+              // Touch tablets: the 16:9 photo, so 4 columns fit.
+              compact
               // မြန်မာ: "3,500 ကျပ်" and the "ထည့်မယ်" Add, as customers
               // see it; EN: the card's own defaults.
               labels={myanmar?.cardLabels}

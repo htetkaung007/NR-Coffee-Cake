@@ -219,7 +219,8 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
   **price tone**, `palette.decor.price` (the customer theme's red) —
   the menu card, and in the menu detail the item price, each option's
   "+500 Kyats" and the footer total ("Free" uses the success text
-  shade). The same parts under the Backoffice theme (staff New Order)
+  shade), and the History list's "Total amount" (HistoryTotalCard).
+  The same parts under the Backoffice theme (staff New Order)
   get `decor.price` = text.primary, so staff money stays neutral.
 - Contrast: body text ≥ 4.5:1; large text and UI borders/icons ≥ 3:1.
 - Never convey state by color alone — pair it with an icon, label, or text.
@@ -295,9 +296,40 @@ double-taps), or an optimistic update. A disabled control shows WHY
   calling a screen done.
 - Breakpoints: `sm` 600 · `md` 900 · `lg` 1200 (theme defaults — don't
   change them app-wide; use `theme.breakpoints.up(n)` locally if needed).
+- **Touch tablets are a device, not a width.** Tablet and laptop widths
+  overlap (iPad Air landscape 1180px, laptops 1280–1440px), so every
+  tablet-only layout goes through ONE query, `touchTabletMedia`
+  (`sharedThemeTokens.ts`, next to `hoverCapableMedia`): a touch-only
+  screen ≥ `sm` wide (hover: none, pointer: coarse) — tablets in either
+  orientation, and a phone held sideways. Laptops (touch laptops with a
+  touchpad / mouse too) and desktops never match and keep the layouts
+  below at every width — exactly as before the tablet work; phones in
+  portrait are below `sm`. Never a width breakpoint for "tablet".
+  `touchTabletPortraitMedia` / `touchTabletLandscapeMedia` add the
+  orientation (no ad-hoc orientation queries). **Touch-tablet grids are
+  flexible, never a fixed column count:** `repeat(auto-fill,
+  minmax(MIN, 1fr))` with ONE named MIN (and gap) per grid, so the
+  columns follow the space actually available — the orientation, the
+  sidebar (full or rail) and New Order's side panel.
 - **Customer menu grid:** 2 columns <600 · 3 at ≥600 · 4 at ≥900 (max 4),
-  grid capped at ~1400px and centered, equal-height rows.
-- **Menu card:** ONE layout at every width — image (1.45/1) → name (1 line)
+  grid capped at ~1400px and centered, equal-height rows. **Touch
+  tablets:** compact cards, MIN 212px (`TOUCH_CARD_MIN_PX`) with 16px
+  gaps / 8px grid padding — 4 at 1180px and 5 at 1280px landscape (MIN
+  stays above 210 so 1180 keeps 4); in PORTRAIT (`touchTabletPortraitMedia`)
+  MIN 200px (`TOUCH_PORTRAIT_CARD_MIN_PX`) — 3 columns from a ~710px
+  browser up (an "800px" Android tablet at 1.125× scale is ~710 CSS px:
+  3 × ~205px), 3 × ~234px at 800px, 3 × ~241px at 820px — and
+  tighter spacing above the grid (page top 16px, OrderPlaceHeader's gap
+  8px, the filter row's bottom margin 8px): two full rows above the
+  bottom bar on load at 1180×740 and 1280×670, with the place chip
+  showing. **Search + categories:** phones —
+  search full width, the category row under it, and ONLY the search is
+  sticky (the row scrolls away with the menu); laptops / desktops (≥ `sm`)
+  — the same two rows, sticky together; touch tablets — ONE sticky row
+  (search 340px on the left, the scrollable tabs fill the rest). Picking
+  a category while scrolled down brings the grid's top back just under
+  the pinned part.
+- **Menu card:** ONE layout on phones — image (1.45/1) → name (1 line)
   → description (1 line, ellipsis) + "See more" (never truncated) → price +
   the Add affordance: a ROUNDED SQUARE (32px tall, min 32px wide, theme
   radius, primary fill, contrastText, no shadow) — the + icon in English
@@ -306,19 +338,33 @@ double-taps), or an optimistic update. A disabled control shows WHY
   button). Price + Add wrap: when they don't fit, the Add square moves
   under the price. **Prices never wrap** (whiteSpace nowrap). Customer
   prices read "4,500 Kyats" / "4,500 ကျပ်"; staff screens keep "MMK".
+  **Compact on touch tablets** (MenuCard's `compact` prop — the customer
+  menu and staff New Order pass it; MenuForm's preview never; it changes
+  nothing outside `touchTabletMedia`): the photo is 16:9, the description
+  + "See more" row is not rendered (display none; the detail shows the
+  description) and the name / price padding is 4px (price row 32px).
+  Everything else — one-line name, unwrapped price, Add square wrapping
+  under it, whole-card button — stays the same.
 - **Master-detail (Backoffice order detail, History):** side panel at `lg`
   and up; below `lg`, a bottom bar (total + action) that opens a right
   Drawer on tablets and a bottom sheet / full-screen Dialog on phones.
 - **New Order:** "Order for" picker above the menus below `lg` (its own
   card above Current order from `lg`); Current order is a bottom sheet
-  below `lg` on all sizes (centred, max ~640px from `sm`); switching
+  below `lg` on all sizes (centred, max ~640px from `sm`), opened from
+  the bottom bar ("<target> · N items" + View order) — PINNED to the
+  screen's bottom edge whatever the content height (OrderBottomBar
+  `pinned`: position fixed, from the sidebar's (or rail's) edge at `sm`; an in-flow
+  spacer of its height keeps the last cards clear; under the sheet it
+  opens and dialogs); switching
   table with items asks first; the order stays on this device until
   Send. A "New order | Add to open bill (N)" toggle sits above "Order
   for": New order lists "Counter · New takeaway" and the FREE tables;
   Add to open bill lists the open counter bills and the tables IN USE
   (open rounds or a customer draft). The toggle follows the selected
   target (a table that becomes in use moves it); with N = 0 the second
-  segment is disabled, "No open bills". An order's "Add items" opens New Order for that same bill (a new
+  segment is disabled, "No open bills". On a LANDSCAPE touch tablet
+  below `lg` the toggle (its natural width) and "Order for" (the rest)
+  share ONE row; portrait tablets, phones and laptops stack them. An order's "Add items" opens New Order for that same bill (a new
   round — sent rounds are never edited) and comes back to it after Send.
   An **EN | မြန်မာ toggle** (NameLanguageToggle, beside the title)
   switches the menu side only — menu names, chips, search results (both
@@ -327,8 +373,45 @@ double-taps), or an optimistic update. A disabled control shows WHY
   staff controls (Order for, the mode toggle, Send to kitchen, notices,
   errors) stay English. Remembered per device (localStorage
   "staffMenuLang:v1"); the menu holds placeholders until it's read, so
-  the other language never flashes.
+  the other language never flashes (shaped like the card).
+  Menu grid: 2 columns on phones, from `sm` as many 150–200px cards as
+  fit (laptops / desktops). Touch tablets: compact cards, MIN 176px, 12px
+  gaps — 4 at 1180px landscape with the full sidebar (5 with the rail),
+  2 at 800–820px portrait (3 with the rail), 2–3 at 1280px beside the
+  400px panel; the price is never cut.
 - Remember the permanent Backoffice sidebar when judging available width.
+- **Backoffice page top on touch screens:** `<main>`'s gap above a
+  page's first line is 16px on phones and touch tablets
+  (`backofficePageTopTouch`, BackofficeShell — StickyPageHeader mirrors
+  it), 16px / 24px (sm+) on laptops. A page's own padding adds to it.
+- **Backoffice sidebar on touch tablets** (`lib/backofficeSidebar`): a
+  toggle at the LEFT of the top bar (Menu / MenuOpen icon, 44px,
+  "Collapse sidebar" / "Expand sidebar", aria-expanded) collapses it to a
+  72px icon rail — icons only (the selected one keeps its fill), each
+  named by its label (aria-label + a Tooltip on the right), no section
+  headings or badges — and back to the full 260px. The width switches
+  plainly (no animation); the content's left edge and New Order's pinned
+  bar follow, and the flexible grids reflow. Default until tapped: the
+  rail in portrait, the full sidebar in landscape (pure CSS, so the
+  first paint is right); then the choice is remembered per device
+  (localStorage "boSidebar:v1", copied onto `<body data-bo-sidebar>` by
+  an inline script before the first paint — never a flash). Laptops: no
+  toggle, the sidebar as always; phones: the temporary drawer.
+- **Reports header on phones:** Export (the download icon below `md`,
+  "Export" from `md`, accessible name "Export", ≥ 44px) sits at the right
+  end of the "Reports" title's row at every width (OrdersPageHeader's
+  `inlineActions`; the Orders pages keep theirs). Below `sm` only the
+  period navigator's row is sticky — Week | Month and Overview | Items sit
+  above it and scroll away with the title; from `sm` the three are ONE
+  sticky row. One set of controls (no copies), all links.
+- **Backoffice Menus grid:** 2 columns on phones, from `sm` as many
+  ≥ 220px columns as fit, the 16:10 photo capped at 140px from `md`
+  (laptops / desktops). Touch tablets: MIN 170px with 16px gaps (the
+  cards never touch) — 4 at 1180–1280px landscape with the full sidebar
+  (5 with the rail), 2 in portrait even with the full sidebar (3 with
+  the rail on an 800px screen); the photo capped at
+  112px, page top / header gap 16px / 16px. On those cards the price
+  wraps under the name when the name would get < 80px.
 - **Backoffice menu card states** (one status rule,
   `lib/menu/menuCardStatus.ts`; stock words from `lib/menu/stockLevel.ts`, shared
   with the customer card's "low" threshold):
@@ -380,7 +463,18 @@ double-taps), or an optimistic update. A disabled control shows WHY
   ~4s fades out (opacity, ease-out) and only then leaves the layout (no
   height animation); × closes it; reduced motion just removes it. The
   `scanned` URL marker is dropped, so a refresh never shows it again.
-- **Add-ons panel** (Backoffice): an EN | မြန်မာ toggle next to Edit
+- **Add-ons panel** (Backoffice): beside the group list from `md`
+  (sticky); below `md` — phones AND tablets — a bottom sheet
+  (SidePanelDrawer `placement="sheet"`, centred, 640px cap from `sm`)
+  that can be dragged down to close (`swipeToClose`: only once its
+  scrolling content is at the top) and keeps Edit away from the ×: a
+  full-width outlined Edit in a footer that stays in view while the
+  options scroll (the inline panel keeps Edit in its header). On touch
+  screens (phones, touch tablets — `touchScreenMedia`; never laptops)
+  the panel's text is one variant step bigger — title h6 → h5, names /
+  prices / descriptions body2 → body1, section labels and chips →
+  body2 (medium chips) — so Myanmar names scale with it.
+  An EN | မြန်မာ toggle (under the title, beside Required / Optional)
   switches the shop data names only (group + options); labels stay
   English. Myanmar view: a name with no Myanmar name shows the English
   one with a dotted warning underline (`components/LocalizedName`,
@@ -402,9 +496,10 @@ double-taps), or an optimistic update. A disabled control shows WHY
   badge (primary, hidden at 0) is part of the link's name ("Cart, 2
   items"). Shown on /menu, /cart and /history; hidden on the receipt
   (/history/<id> — it has its own Back and Order more, and the lines need
-  the room), the QR scan / continue screens, ShopUnavailable and the
-  outcome screens
-  (`lib/storefront/bottomBarVisibility`). **While the on-screen keyboard
+  the room), the QR scan / continue screens and ShopUnavailable
+  (`lib/storefront/bottomBarVisibility`). The order outcome screens
+  (confirmed / rejected, on /cart) KEEP the bar: OutcomeScreenShell keeps
+  `BOTTOM_BAR_CLEARANCE` free, so its two buttons sit above it. **While the on-screen keyboard
   is open** (a text field has focus, confirmed by the visual viewport —
   `useOnScreenKeyboardOpen`, used only by the bar) it fades out (opacity,
   150ms ease-out; no taps, out of the tab order once faded) and comes back
@@ -412,10 +507,14 @@ double-taps), or an optimistic update. A disabled control shows WHY
   keep `BOTTOM_BAR_CLEARANCE` (`lib/storefront/bottomBarLayout`) free at the
   bottom — never their own numbers; a page's own bottom action (/cart's
   Send) sits 8px ABOVE the bar, both visible.
-- **History totals are compact.** The list's total (Table: "Table total"
-  · N orders · your part; Counter: the bill number · N rounds) is ONE row
-  card at the top of the list that scrolls with it (`HistoryTotalCard`) —
-  never a fixed block above the bar. The receipt's footer is ONE compact
+- **History totals are compact.** The list's total is ONE card at the
+  END of the list, after the last order (`HistoryTotalCard`), scrolling
+  with it — never a fixed block above the bar. Row 1: Counter — the bill
+  number (body1 700) · "3 rounds"; Table — "Table total" · "N orders",
+  then the customer's own part (caption, text.secondary). Row 2 (above a
+  1px divider): "Total amount" / "စုစုပေါင်း ကျသင့်ငွေ" on the left, the
+  amount on the right in the price tone (`decor.price`, subtitle1 700,
+  never wraps). The receipt's footer is ONE compact
   row at the bottom edge (+ safe area): the total on the left, Order more
   on the right. Receipt lines: name body1 600, add-ons "Group: Option"
   body2, qty body2, price body1 600.
@@ -645,7 +744,20 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-09-26: small-control transition exception, shared
+*Last synced 2026-10-19: touch tablets (#97–#97e) — `touchTabletMedia`
+(+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
+200px in portrait,
+Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit
+in its footer, bigger text on touch), the 16px page top on touch;
+flexible auto-fill grids with one MIN per grid, compact cards (MenuCard
+`compact`) and one filter row on touch tablets only, laptops / desktops
+exactly as before; the collapsible sidebar rail on touch tablets;
+New Order's one-row picker on landscape tablets;
+only the search sticky on phones; New Order's bottom bar pinned to the
+screen's edge below lg; the bottom bar on the outcome screens, the History total at the end in the price tone, and the
+phone Reports header (Export beside the title, only the period row
+sticky).
+Earlier (2026-09-26): small-control transition exception, shared
 `hoverCapableMedia`, global reduced-motion block, 8px spacing fix, explicit
 Backoffice palette + derived tints, money-not-red rule, whole-card and
 no-nesting rules, one-layout menu card and 2/3/4 grid, master-detail

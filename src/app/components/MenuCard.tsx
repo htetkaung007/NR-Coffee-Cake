@@ -9,7 +9,10 @@ import {
   useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import {
+  hoverCapableMedia,
+  touchTabletMedia,
+} from "@/app/lib/theme/sharedThemeTokens";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { stockBadge } from "@/app/lib/menu/stockLevel";
 import MenuThumb from "./MenuThumb";
@@ -64,6 +67,14 @@ interface MenuCardProps {
    *  Order page turns it off for a denser grid; the price + "+" row
    *  stays either way. */
   showDescription?: boolean;
+  /** COMPACT on touch tablets (touchTabletMedia) only, so 4 columns
+   *  show two rows there: a 16:9 photo (instead of 1.45:1), no
+   *  description + "See more" row (display none — the detail still shows
+   *  it) and tighter padding around the name and price. Phones, laptops
+   *  and desktops always get the normal card, and so does MenuForm's
+   *  live preview (never passes it). The customer grid and staff New
+   *  Order pass it. */
+  compact?: boolean;
   /** Translated words (customer side); English when left out. */
   labels?: MenuCardLabels;
 }
@@ -116,7 +127,9 @@ function WatercolorScribbleOverlay() {
  * The menu card — ONE compact layout at every width, top to bottom:
  * image (1.45:1, space always reserved; a first-letter tile when there's
  * no image or it fails to load) → name (one line) → description + "See
- * more" on one line → price with a round "+" on the right. Used by the
+ * more" on one line → price with a round "+" on the right. With
+ * `compact`, touch tablets (only) get a denser one: 16:9 image, no
+ * description row. Used by the
  * customer order grid and the staff New Order page (the whole card is
  * ONE button — onAddToCart) and by the backoffice's new-menu live
  * preview (no onAddToCart — a static, non-interactive card). Its colors
@@ -132,9 +145,13 @@ export default function MenuCard({
   item,
   onAddToCart,
   showDescription = true,
+  compact = false,
   labels = ENGLISH_LABELS,
 }: MenuCardProps) {
   const { palette } = useTheme();
+  // The compact card's overrides, applied on touch tablets only.
+  const onTouchTablet = (styles: Record<string, unknown>) =>
+    compact ? { [touchTabletMedia]: styles } : {};
   const isAvailable = item.stockQuantity > 0 && item.isAvailable;
   // Only worth saying "Only 3 left" about something that can still be
   // ordered — a switched-off or sold-out item already reads "out of stock".
@@ -151,7 +168,8 @@ export default function MenuCard({
     <>
       {/* Photo + watercolor overlay fade together when out of stock; the
          status chips are siblings, so they stay fully visible. The
-         1.45:1 box reserves the image's space before it loads. */}
+         1.45:1 box (16:9 when compact) reserves the image's space before
+         it loads. */}
       <Box
         component="span"
         sx={{
@@ -162,6 +180,7 @@ export default function MenuCard({
           aspectRatio: "1.45 / 1",
           bgcolor: "grey.100",
           flexShrink: 0,
+          ...onTouchTablet({ aspectRatio: "16 / 9" }),
         }}
       >
         <Box
@@ -251,6 +270,7 @@ export default function MenuCard({
           pb: 1,
           // Name, description, price and "+" fade together.
           opacity: isAvailable ? 1 : OUT_OF_STOCK_OPACITY,
+          ...onTouchTablet({ pt: 0.5, pb: 0.5 }),
         }}
       >
         <Typography
@@ -273,7 +293,13 @@ export default function MenuCard({
         {showDescription && (
           <Box
             component="span"
-            sx={{ display: "flex", alignItems: "baseline", columnGap: 0.5 }}
+            sx={{
+              display: "flex",
+              alignItems: "baseline",
+              columnGap: 0.5,
+              // Out of the layout when compact (text only, not focusable).
+              ...onTouchTablet({ display: "none" }),
+            }}
           >
             <Typography
               component="span"
@@ -327,9 +353,10 @@ export default function MenuCard({
             gap: 1,
             mt: "auto",
             pt: 0.5,
-            // 4px padding + the 32px square: same height whether or not
-            // the Add square is shown.
+            // 4px padding (none when compact) + the 32px square: same
+            // height whether or not the Add square is shown.
             minHeight: 36,
+            ...onTouchTablet({ pt: 0, minHeight: 32 }),
           }}
         >
           <Typography

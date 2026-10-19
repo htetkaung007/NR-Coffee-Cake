@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Box } from "@mui/material";
 import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
+import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 import {
   ORDER_PAGE_MIN_WIDTH,
   type getOrderPageBackground,
@@ -45,6 +46,9 @@ export default function MenuPageFrame({
           flex: 1,
           width: "100%",
           p: { xs: 2, sm: 3 },
+          // 16px under the top bar on a touch tablet — part of the height
+          // budget that keeps two rows of cards in view there.
+          [touchTabletMedia]: { pt: 2 },
           maxWidth: 1200,
           mx: "auto",
         }}

@@ -12,6 +12,7 @@ import {
   Stack,
   Switch,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -24,6 +25,7 @@ import NameLanguageToggle from "@/app/components/NameLanguageToggle";
 import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import LocalizedName from "@/app/components/LocalizedName";
 import { hasMissingMyanmarName } from "@/app/lib/i18n/myanmarNames";
+import { touchScreenQuery } from "@/app/lib/theme/sharedThemeTokens";
 import RequiredChip from "./RequiredChip";
 
 export interface AddonGroup {
@@ -57,7 +59,20 @@ interface AddonGroupPanelProps {
   onToggleRequired: (isRequired: boolean) => void;
   /** In the drawer: its close (×). */
   onClose?: () => void;
+  /** In the bottom sheet (below md): Edit moves from beside the × to a
+   *  full-width button in a footer that stays in view while the panel
+   *  scrolls. The inline panel (md+) keeps it in the header. */
+  inSheet?: boolean;
 }
+
+/** The panel's text variants. Touch screens (phones, touch tablets — not
+ *  laptops) get each one step bigger: theme variants, never font sizes,
+ *  so the Myanmar :lang(my) rules (which target the variant) scale the
+ *  bigger size too. */
+const TEXT = {
+  pointer: { title: "h6", body: "body2", small: "caption", section: "overline" },
+  touch: { title: "h5", body: "body1", small: "body2", section: "body2" },
+} as const;
 
 /** "Latte, Mocha and Flat white" — menu names in a sentence. */
 function listNames(names: readonly string[]) {
@@ -67,7 +82,7 @@ function listNames(names: readonly string[]) {
 
 /**
  * One add-on group's quick settings — the same panel beside the list
- * (md and up) and in the drawer / bottom sheet below md: turn each option
+ * (md and up) and in the bottom sheet below md (`inSheet`): turn each option
  * on or off (e.g. out of oat milk), and Required on or off (owner only).
  * Names, prices and options are changed on the Edit page. An off option
  * stays listed (the customer app shows it disabled, it doesn't hide it).
@@ -80,7 +95,14 @@ export default function AddonGroupPanel({
   onToggleAddon,
   onToggleRequired,
   onClose,
+  inSheet = false,
 }: AddonGroupPanelProps) {
+  const isTouch = useMediaQuery(touchScreenQuery);
+  const text = isTouch ? TEXT.touch : TEXT.pointer;
+  // A section label keeps its small-caps look in the bigger variant.
+  const sectionSx = isTouch
+    ? { textTransform: "uppercase", letterSpacing: "0.08em" }
+    : undefined;
   const { isBlocked } = addonGroupAvailability(group.isRequired, group.addons);
   const menuNames = group.menus.map((menu) => menu.name);
   // Which language the shop data names (group + options) show in — the
@@ -92,15 +114,28 @@ export default function AddonGroupPanel({
   const hasUntranslated =
     nameLocale === "my" && hasMissingMyanmarName(group, group.addons);
 
-  return (
-    <Box sx={{ p: 2, overflowY: "auto" }}>
-      {/* Row 1: the title (wraps, takes the free width) + Edit (and the
-          drawer's ×). Row 2: Required / Optional + the names' EN | မြန်မာ
-          under Edit — so the toggle never squeezes the title. Both rows
-          fit the 320px bottom sheet. */}
+  const editButton = isOwner && (
+    <Button
+      component={Link}
+      href={`/backoffice/addons/${group.id}`}
+      variant="outlined"
+      startIcon={<EditOutlinedIcon />}
+      fullWidth={inSheet}
+      sx={{ minHeight: 44, flexShrink: 0 }}
+    >
+      Edit
+    </Button>
+  );
+
+  const body = (
+    <>
+      {/* Row 1: the title (wraps, takes the free width) + Edit (inline
+          panel) or the sheet's × (its Edit is in the footer). Row 2:
+          Required / Optional + the names' EN | မြန်မာ — so the toggle
+          never squeezes the title. Both rows fit the 320px bottom sheet. */}
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
         <Typography
-          variant="h6"
+          variant={text.title}
           component="h2"
           lang={langAttr(nameLocale)}
           sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}
@@ -112,17 +147,7 @@ export default function AddonGroupPanel({
             markUntranslated
           />
         </Typography>
-        {isOwner && (
-          <Button
-            component={Link}
-            href={`/backoffice/addons/${group.id}`}
-            variant="outlined"
-            startIcon={<EditOutlinedIcon />}
-            sx={{ minHeight: 44, flexShrink: 0 }}
-          >
-            Edit
-          </Button>
-        )}
+        {!inSheet && editButton}
         {onClose && (
           <IconButton
             aria-label="Close"
@@ -138,7 +163,7 @@ export default function AddonGroupPanel({
         spacing={1}
         sx={{ alignItems: "center", justifyContent: "space-between", mt: 1 }}
       >
-        <RequiredChip isRequired={group.isRequired} />
+        <RequiredChip isRequired={group.isRequired} large={isTouch} />
         <NameLanguageToggle
           value={nameLocale}
           onChange={setNameLocale}
@@ -164,7 +189,7 @@ export default function AddonGroupPanel({
           <Typography variant="body1" id={`required-${group.id}-label`}>
             Required
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant={text.body} color="text.secondary">
             {!isOwner
               ? OWNER_ONLY_MESSAGE
               : group.isRequired
@@ -184,16 +209,21 @@ export default function AddonGroupPanel({
 
       <Divider sx={{ my: 2 }} />
 
-      <Typography variant="overline" color="text.secondary" component="h3">
+      <Typography
+        variant={text.section}
+        color="text.secondary"
+        component="h3"
+        sx={sectionSx}
+      >
         Options
       </Typography>
       {!canToggleAvailability && group.addons.length > 0 && (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant={text.body} color="text.secondary">
           {ASK_OWNER_HINTS.ADDON_AVAILABILITY}
         </Typography>
       )}
       {group.addons.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant={text.body} color="text.secondary">
           No options yet — add some on the Edit page.
         </Typography>
       ) : (
@@ -212,7 +242,7 @@ export default function AddonGroupPanel({
             >
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
-                  variant="body2"
+                  variant={text.body}
                   color={addon.isAvailable ? "text.primary" : "text.secondary"}
                   lang={langAttr(nameLocale)}
                   sx={{ overflowWrap: "anywhere" }}
@@ -226,7 +256,7 @@ export default function AddonGroupPanel({
                 </Typography>
                 {!addon.isAvailable && (
                   <Typography
-                    variant="caption"
+                    variant={text.small}
                     color="text.secondary"
                     component="p"
                   >
@@ -236,7 +266,7 @@ export default function AddonGroupPanel({
               </Box>
               {/* Money stays neutral (never red — DESIGN.md Rule 13). */}
               <Typography
-                variant="body2"
+                variant={text.body}
                 color={addon.price === 0 ? "text.secondary" : "text.primary"}
                 lang={langAttr(nameLocale)}
                 sx={{
@@ -269,7 +299,12 @@ export default function AddonGroupPanel({
 
       <Divider sx={{ my: 2 }} />
 
-      <Typography variant="overline" color="text.secondary" component="h3">
+      <Typography
+        variant={text.section}
+        color="text.secondary"
+        component="h3"
+        sx={sectionSx}
+      >
         Used on {group.menus.length}{" "}
         {group.menus.length === 1 ? "menu" : "menus"}
       </Typography>
@@ -282,10 +317,11 @@ export default function AddonGroupPanel({
           {group.menus.map((menu) => (
             <Chip
               key={menu.id}
-              size="small"
+              // Touch: the medium chip, so the bigger label fits.
+              size={isTouch ? "medium" : "small"}
               variant="outlined"
               label={
-                <Typography variant="caption" component="span">
+                <Typography variant={text.small} component="span">
                   {menu.name}
                 </Typography>
               }
@@ -296,13 +332,48 @@ export default function AddonGroupPanel({
 
       {hasUntranslated && (
         <Typography
-          variant="caption"
+          variant={text.small}
           component="p"
           color="text.secondary"
           sx={{ mt: 2 }}
         >
           Dotted names have no Myanmar name yet.
         </Typography>
+      )}
+    </>
+  );
+
+  if (!inSheet) {
+    return <Box sx={{ p: 2, overflowY: "auto" }}>{body}</Box>;
+  }
+  // The sheet: the body scrolls (a drag down closes the sheet only once
+  // it's at the top — SidePanelDrawer swipeToClose); the Edit footer
+  // stays in view above the safe area (the sheet's own bottom padding).
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: "1 1 auto",
+        minHeight: 0,
+      }}
+    >
+      <Box sx={{ p: 2, overflowY: "auto", flex: "1 1 auto", minHeight: 0 }}>
+        {body}
+      </Box>
+      {editButton && (
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: 2,
+            pt: 1.5,
+            pb: 2,
+            borderTop: 1,
+            borderColor: "divider",
+          }}
+        >
+          {editButton}
+        </Box>
       )}
     </Box>
   );

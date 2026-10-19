@@ -16,6 +16,7 @@ import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useTranslations } from "next-intl";
 import { orderPlaceTitle, type OrderPlace } from "@/app/lib/storefront/orderPlace";
+import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 const ICONS = {
   table: TableRestaurantOutlinedIcon,
@@ -84,7 +85,9 @@ export default function OrderPlaceHeader({ place }: { place: OrderPlace }) {
         : t("onlineHelper");
 
   return (
-    <Box sx={{ mb: 2 }}>
+    // 8px on a touch tablet (the sticky search row adds its own 8px on
+    // top), so it keeps two rows of menu cards in view.
+    <Box sx={{ mb: 2, [touchTabletMedia]: { mb: 1 } }}>
       <ButtonBase
         onClick={toggle}
         aria-expanded={open}

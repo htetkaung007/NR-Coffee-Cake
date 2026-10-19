@@ -80,6 +80,27 @@ const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
 // after a tap.
 export const hoverCapableMedia = "@media (hover: hover) and (pointer: fine)";
 
+// A TOUCH TABLET: a touch-only screen at least `sm` (600px) wide — tablets
+// in either orientation (and a phone held sideways). Laptops — touch
+// laptops with a touchpad / mouse too — and desktops don't match (their
+// primary pointer is fine and can hover); phones in portrait are below
+// 600. Tablet and laptop widths overlap (an iPad Air is 1180px wide, a
+// laptop 1280–1440px), so tablet-only layouts (4 menu columns, compact
+// cards) go through this query — never through a width breakpoint.
+// A TOUCH SCREEN of any width — phones and touch tablets (the same
+// pointer test as touchTabletMedia, without its width). Laptops and
+// desktops never match. For touch-only sizing (e.g. bigger panel text).
+export const touchScreenQuery = "(hover: none) and (pointer: coarse)";
+export const touchScreenMedia = `@media ${touchScreenQuery}`;
+export const touchTabletQuery = `(min-width: ${BREAKPOINTS.sm}px) and ${touchScreenQuery}`;
+export const touchTabletMedia = `@media ${touchTabletQuery}`;
+// The same touch tablet, held one way or the other — the Backoffice
+// sidebar's default (a rail in portrait) and New Order's one-row picker
+// (landscape). Use these, never an ad-hoc orientation query.
+export const touchTabletPortraitQuery = `${touchTabletQuery} and (orientation: portrait)`;
+export const touchTabletPortraitMedia = `@media ${touchTabletPortraitQuery}`;
+export const touchTabletLandscapeMedia = `@media ${touchTabletQuery} and (orientation: landscape)`;
+
 /** Text only a screen reader gets — a spoken equivalent of something shown
  *  as a symbol or a chart (DESIGN.md Rule 22). Still takes part in layout
  *  as a 1px box, so it never causes a scroll. */
@@ -115,6 +136,9 @@ export function topBarHeight(theme: Theme) {
  *  header that is a page's first block (StickyPageHeader) pulls itself up
  *  by the same amount and pads it back, so it keeps that gap when stuck. */
 export const backofficePageTop = { xs: 2, sm: 3 } as const;
+/** …and on touch screens (phones, touch tablets), so the page title sits
+ *  close under the top bar: 16px at every width. */
+export const backofficePageTopTouch = 2;
 
 const FONT_BODY = "var(--font-english), var(--font-myanmar), sans-serif";
 

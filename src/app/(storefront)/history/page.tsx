@@ -141,12 +141,6 @@ export default async function HistoryPage({
               </Typography>
             ) : (
               <>
-                {/* Display only — the table still pays one bill. */}
-                <HistoryTotalCard
-                  label={t("tableTotal")}
-                  detail={`${t("orderCount", { count: rounds.length })} · ${t("yourTotal", { amount: price(myTotal) })}`}
-                  amount={price(tableTotal)}
-                />
                 <Stack spacing={{ xs: 1.5, sm: 2 }}>
                   {labelledRounds.map(({ round, lines }) => (
                     <OrderHistoryCard
@@ -181,6 +175,15 @@ export default async function HistoryPage({
                     />
                   ))}
                 </Stack>
+                {/* At the end of the list. Display only — the table
+                   still pays one bill. */}
+                <HistoryTotalCard
+                  label={t("tableTotal")}
+                  count={t("orderCount", { count: rounds.length })}
+                  yourPart={t("yourTotal", { amount: price(myTotal) })}
+                  totalLabel={t("totalAmount")}
+                  amount={price(tableTotal)}
+                />
               </>
             )}
           </Box>
@@ -268,11 +271,6 @@ export default async function HistoryPage({
           </Typography>
         ) : (
           <>
-            <HistoryTotalCard
-              label={bill.billNumber}
-              detail={t("roundCount", { count: bill.rounds.length })}
-              amount={price(bill.combinedTotal)}
-            />
             <Stack spacing={{ xs: 1.5, sm: 2 }}>
               {bill.rounds.map((round, index) => (
                 <OrderHistoryCard
@@ -294,6 +292,13 @@ export default async function HistoryPage({
                 />
               ))}
             </Stack>
+            {/* At the end of the list. */}
+            <HistoryTotalCard
+              label={bill.billNumber}
+              count={t("roundCount", { count: bill.rounds.length })}
+              totalLabel={t("totalAmount")}
+              amount={price(bill.combinedTotal)}
+            />
           </>
         )}
       </Box>

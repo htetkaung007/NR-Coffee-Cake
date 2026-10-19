@@ -14,7 +14,10 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
-import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import {
+  hoverCapableMedia,
+  touchTabletMedia,
+} from "@/app/lib/theme/sharedThemeTokens";
 import { formatAmount } from "@/app/lib/orderFormat";
 import { menuCardStatus } from "@/app/lib/menu/menuCardStatus";
 import { stockBadge } from "@/app/lib/menu/stockLevel";
@@ -156,6 +159,8 @@ export default function MenuGridCard({
           aspectRatio: "16 / 10",
           maxHeight: { md: 140 },
           bgcolor: "background.default",
+          // Touch tablets: lower, so more of the grid fits the screen.
+          [touchTabletMedia]: { maxHeight: 112 },
         }}
       >
         {/* The photo, or a first-letter tile when there's none or it
@@ -273,7 +278,8 @@ export default function MenuGridCard({
         }}
       >
         {/* Phones: price on its own line under the name. From sm: name
-            left, price right. */}
+            left, price right — on a touch tablet's narrower card the
+            price wraps under the name when the name would get < 80px. */}
         <Box
           sx={{
             display: "flex",
@@ -281,6 +287,7 @@ export default function MenuGridCard({
             alignItems: { xs: "flex-start", sm: "baseline" },
             justifyContent: "space-between",
             columnGap: 1,
+            [touchTabletMedia]: { flexWrap: "wrap" },
           }}
         >
           <Typography
@@ -290,6 +297,7 @@ export default function MenuGridCard({
               flex: { sm: 1 },
               minWidth: 0,
               maxWidth: "100%",
+              [touchTabletMedia]: { flex: "1 1 80px" },
               lineHeight: 1.3,
               color: "text.primary",
               // At most 2 lines, never broken inside a word.
@@ -343,7 +351,9 @@ export default function MenuGridCard({
           </Typography>
         )}
 
-        <Box sx={{ flexGrow: 1 }} />
+        {/* Touch tablets: no spacer (its flex gap is height they need);
+            the footer's mt auto keeps the rows lined up instead. */}
+        <Box sx={{ flexGrow: 1, [touchTabletMedia]: { display: "none" } }} />
 
         {/* Footer — one row: the switch (+ label) left, Edit right. */}
         <Box
@@ -354,6 +364,9 @@ export default function MenuGridCard({
             flexWrap: "nowrap",
             gap: 0.5,
             minWidth: 0,
+            // Touch tablets: Edit wraps onto its own line only if a card
+            // is ever too narrow for the switch + Edit.
+            [touchTabletMedia]: { mt: "auto", flexWrap: "wrap" },
           }}
         >
           {/* On/off at the selected location only. The span keeps the
@@ -402,6 +415,7 @@ export default function MenuGridCard({
                   height: 44,
                   flexShrink: 0,
                   color: "text.primary",
+                  [touchTabletMedia]: { ml: "auto" },
                   [hoverCapableMedia]: {
                     "&:hover": { bgcolor: "action.hover" },
                   },

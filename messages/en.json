@@ -188,6 +188,7 @@
     "roundCount": "{count, plural, one {# round} other {# rounds}}",
     "round": "Round {number}",
     "yourTotal": "Your total so far: {amount}",
+    "totalAmount": "Total amount",
     "itemCount": "{count, plural, one {# item} other {# items}}",
     "removedCount": "{count} removed by staff",
     "more": "+{count} more"

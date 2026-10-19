@@ -11,6 +11,7 @@ import { Box } from "@mui/material";
 import { SurfaceThemeProvider } from "../lib/theme/ThemeModeProvider";
 import { OrderAlertsProvider } from "./OrderAlertsProvider";
 import NewOrderBanner from "./NewOrderBanner";
+import { SIDEBAR_PREFERENCE_SCRIPT } from "../lib/backofficeSidebar";
 
 interface Props {
   children?: React.ReactNode;
@@ -65,6 +66,9 @@ export default async function BackOfficeLayout({ children }: Props) {
 
   return (
     <SurfaceThemeProvider surface="bo">
+      {/* Before anything paints: a touch tablet's remembered sidebar
+          choice (collapsed / expanded) onto <body> — lib/backofficeSidebar. */}
+      <script dangerouslySetInnerHTML={{ __html: SIDEBAR_PREFERENCE_SCRIPT }} />
       {/* Wraps the whole shell (not just the page) so it stays mounted
           across Backoffice navigation and the top/side bars can read it. */}
       <OrderAlertsProvider>

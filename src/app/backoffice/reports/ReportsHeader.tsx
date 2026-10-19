@@ -1,8 +1,10 @@
 "use client";
 
-import { Box, Stack } from "@mui/material";
+import { useRef } from "react";
+import { Box } from "@mui/material";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
-import StickyPageHeader from "@/app/components/StickyPageHeader";
+import { useStickyScrollPadding } from "@/app/components/StickyPageHeader";
+import { topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
 import type { ReportPeriod } from "@/app/lib/report/reportPeriod";
 import {
   printableReportHref,
@@ -29,12 +31,17 @@ const controlSx = {
   flex: { xs: "1 1 auto", sm: "0 0 auto" },
 } as const;
 
-/** The title (the Orders pages' own header component, retitled), which
- *  scrolls away, then ONE sticky row of controls — Week | Month,
- *  Overview | Items and the period navigator, wrapping on phones — so
- *  the pinned area stays short. All of them links, so the view state
- *  lives in the URL and Back works (DESIGN.md Rule 17). The chart and
- *  cards scroll away underneath (Rule 23). */
+/** The title (the Orders pages' own header component, retitled) with
+ *  Export at the right end of its row at every width, which scrolls
+ *  away; then the controls — Week | Month, Overview | Items and the
+ *  period navigator. From sm they're ONE sticky row. Below sm only the
+ *  period navigator's row is sticky; the two switches sit above it and
+ *  scroll away with the title, so the pinned area stays short on a
+ *  phone. ONE set of controls either way (below sm the wrappers are
+ *  display "contents", so the navigator's sticky box spans the page).
+ *  All of them links, so the view state lives in the URL and Back works
+ *  (DESIGN.md Rule 17). The chart and cards scroll away underneath
+ *  (Rule 23). */
 export default function ReportsHeader({
   params,
   period,
@@ -44,6 +51,10 @@ export default function ReportsHeader({
 }: ReportsHeaderProps) {
   const withParams = (changes: Partial<ReportParams>) =>
     reportHref({ ...params, ...changes });
+  // Whichever is sticky at this width sets the page's scroll padding.
+  const rowRef = useRef<HTMLElement | null>(null);
+  const navigatorRef = useRef<HTMLDivElement | null>(null);
+  useStickyScrollPadding([rowRef, navigatorRef]);
 
   return (
     <>
@@ -51,6 +62,7 @@ export default function ReportsHeader({
         <OrdersPageHeader
           title="Reports"
           showSectionNav={false}
+          inlineActions
           // The printable report for the period on screen right now.
           actions={
             <ReportExportMenu
@@ -73,11 +85,35 @@ export default function ReportsHeader({
         />
       </Box>
 
-      <StickyPageHeader placement="below-title">
-        <Stack
-          direction="row"
-          useFlexGap
-          sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}
+      {/* sm+: THE sticky row (StickyPageHeader's "below-title" look).
+          Below sm: no box of its own. */}
+      <Box
+        ref={rowRef}
+        component="header"
+        sx={(theme) => ({
+          display: { xs: "contents", sm: "flex" },
+          position: { sm: "sticky" },
+          top: topBarHeight(theme),
+          zIndex: 2,
+          bgcolor: "background.default",
+          borderBottom: { sm: 1 },
+          borderColor: "divider",
+          py: { sm: 1 },
+          px: { sm: 2, md: 3 },
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1,
+        })}
+      >
+        {/* The two switches: their own wrapping row below sm (in flow),
+            plain items of the sticky row from sm. */}
+        <Box
+          sx={{
+            display: { xs: "flex", sm: "contents" },
+            flexWrap: "wrap",
+            gap: 1,
+            pt: 1,
+          }}
         >
           <SegmentedTabs
             ariaLabel="Report period"
@@ -107,24 +143,34 @@ export default function ReportsHeader({
               { value: "items", label: "Items", href: withParams({ tab: "items" }) },
             ]}
           />
-          <Box
-            sx={{
-              ml: { sm: "auto" },
-              flex: { xs: "1 1 auto", sm: "0 0 auto" },
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <PeriodNavigator
-              params={params}
-              period={period}
-              today={today}
-              shopTimezone={shopTimezone}
-              onNavigate={onNavigate}
-            />
-          </Box>
-        </Stack>
-      </StickyPageHeader>
+        </Box>
+        {/* Below sm: the ONE pinned row (page surface + bottom divider,
+            like the sticky header). From sm: the row's right end. */}
+        <Box
+          ref={navigatorRef}
+          sx={(theme) => ({
+            position: { xs: "sticky", sm: "static" },
+            top: topBarHeight(theme),
+            zIndex: 2,
+            bgcolor: { xs: "background.default", sm: "transparent" },
+            borderBottom: { xs: 1, sm: 0 },
+            borderColor: "divider",
+            py: { xs: 1, sm: 0 },
+            ml: { sm: "auto" },
+            flex: { xs: "1 1 auto", sm: "0 0 auto" },
+            display: "flex",
+            justifyContent: "center",
+          })}
+        >
+          <PeriodNavigator
+            params={params}
+            period={period}
+            today={today}
+            shopTimezone={shopTimezone}
+            onNavigate={onNavigate}
+          />
+        </Box>
+      </Box>
     </>
   );
 }
