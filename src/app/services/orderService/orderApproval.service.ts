@@ -23,7 +23,7 @@ export class OrderApprovalService {
       scope,
     );
     if (session.status !== "PENDING_APPROVAL") {
-      throw new ValidationError("This order is not awaiting approval.");
+      throw new ValidationError("This order is not awaiting approval.", "NOT_AWAITING_APPROVAL");
     }
 
     return prisma.orderSession.update({
@@ -48,7 +48,7 @@ export class OrderApprovalService {
       scope,
     );
     if (session.status !== "PENDING_APPROVAL") {
-      throw new ValidationError("This order is not awaiting approval.");
+      throw new ValidationError("This order is not awaiting approval.", "NOT_AWAITING_APPROVAL");
     }
 
     return prisma.$transaction(async (tx: Tx) => {
@@ -61,7 +61,7 @@ export class OrderApprovalService {
       // Lost a race with Accept or the timeout between the check above
       // and this write — same answer the check itself would give now.
       if (!rejected) {
-        throw new ValidationError("This order is not awaiting approval.");
+        throw new ValidationError("This order is not awaiting approval.", "NOT_AWAITING_APPROVAL");
       }
       return tx.orderSession.findUniqueOrThrow({ where: { id: sessionId } });
     });

@@ -24,21 +24,21 @@ describe("menuFormProblems", () => {
 
   it("needs a name that isn't only spaces", () => {
     expect(menuFormProblems({ ...valid, name: "   " })).toEqual([
-      { field: "name", message: MENU_NAME_REQUIRED_MESSAGE },
+      { field: "name", code: "nameRequired", message: MENU_NAME_REQUIRED_MESSAGE },
     ]);
   });
 
   it("needs a price above zero (an empty price counts as zero)", () => {
     for (const price of ["", "0", "-5"]) {
       expect(menuFormProblems({ ...valid, price })).toEqual([
-        { field: "price", message: MENU_PRICE_POSITIVE_MESSAGE },
+        { field: "price", code: "pricePositive", message: MENU_PRICE_POSITIVE_MESSAGE },
       ]);
     }
   });
 
   it("needs a whole-number price", () => {
     expect(menuFormProblems({ ...valid, price: "12.5" })).toEqual([
-      { field: "price", message: MENU_PRICE_WHOLE_MESSAGE },
+      { field: "price", code: "priceWhole", message: MENU_PRICE_WHOLE_MESSAGE },
     ]);
   });
 
@@ -48,13 +48,13 @@ describe("menuFormProblems", () => {
 
   it("needs at least one category", () => {
     expect(menuFormProblems({ ...valid, categoryIds: [] })).toEqual([
-      { field: "categories", message: MENU_CATEGORY_REQUIRED_MESSAGE },
+      { field: "categories", code: "categoryRequired", message: MENU_CATEGORY_REQUIRED_MESSAGE },
     ]);
   });
 
   it("needs a location when the form shows the location checklist", () => {
     expect(menuFormProblems({ ...valid, shownLocationIds: [] })).toEqual([
-      { field: "locations", message: NO_LOCATION_MESSAGE },
+      { field: "locations", code: "locationRequired", message: NO_LOCATION_MESSAGE },
     ]);
   });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -42,8 +43,20 @@ import { useBackofficeSidebar } from "@/app/lib/hooks/useBackofficeSidebar";
 /** The sidebar's id — the top bar's collapse toggle controls it. */
 export const SIDEBAR_ID = "backoffice-sidebar";
 
+/** A sidebar word — bo.nav.<key> in messages/*.json. */
+type NavWord =
+  | "orders"
+  | "newOrder"
+  | "tables"
+  | "menus"
+  | "menuCategories"
+  | "addons"
+  | "reports"
+  | "locations"
+  | "settings";
+
 type NavItem = {
-  label: string;
+  label: NavWord;
   href: string;
   icon: SvgIconComponent;
   /** Who sees the item (the same rule its page checks on the server):
@@ -51,30 +64,33 @@ type NavItem = {
   access: AccessRule;
   /** A pill after the label, hidden for good once the item's page has
    *  been opened in this browser (remembered under `seenKey`). */
-  badge?: { text: string; seenKey: string };
+  badge?: { seenKey: string };
 };
 
-type NavSection = { title: string; items: readonly NavItem[] };
+type NavSection = {
+  title: "sectionService" | "sectionMenu" | "sectionBusiness";
+  items: readonly NavItem[];
+};
 
 // The one list both the desktop sidebar and the phone drawer render.
 const navSections: readonly NavSection[] = [
   {
-    title: "Service",
+    title: "sectionService",
     items: [
       {
-        label: "Orders",
+        label: "orders",
         href: "/backoffice/order",
         icon: ReceiptLongOutlinedIcon,
         access: "staff",
       },
       {
-        label: "New order",
+        label: "newOrder",
         href: "/backoffice/order/new",
         icon: AddShoppingCartOutlinedIcon,
         access: "staff",
       },
       {
-        label: "Tables",
+        label: "tables",
         href: "/backoffice/tables",
         icon: TableRestaurantOutlinedIcon,
         access: "TABLES_MANAGE",
@@ -82,22 +98,22 @@ const navSections: readonly NavSection[] = [
     ],
   },
   {
-    title: "Menu",
+    title: "sectionMenu",
     items: [
       {
-        label: "Menus",
+        label: "menus",
         href: "/backoffice/menus",
         icon: RestaurantOutlinedIcon,
         access: "staff",
       },
       {
-        label: "Menu categories",
+        label: "menuCategories",
         href: "/backoffice/menu_categories",
         icon: GridViewOutlinedIcon,
         access: "owner",
       },
       {
-        label: "Add-ons",
+        label: "addons",
         href: "/backoffice/addons",
         icon: AddCircleOutlineOutlinedIcon,
         access: "staff",
@@ -105,23 +121,23 @@ const navSections: readonly NavSection[] = [
     ],
   },
   {
-    title: "Business",
+    title: "sectionBusiness",
     items: [
       {
-        label: "Reports",
+        label: "reports",
         href: "/backoffice/reports",
         icon: BarChartOutlinedIcon,
         access: "REPORTS_VIEW",
-        badge: { text: "New", seenKey: "backoffice:seen:reports" },
+        badge: { seenKey: "backoffice:seen:reports" },
       },
       {
-        label: "Locations",
+        label: "locations",
         href: "/backoffice/locations",
         icon: LocationOnOutlinedIcon,
         access: "owner",
       },
       {
-        label: "Settings",
+        label: "settings",
         href: "/backoffice/setting",
         icon: TuneOutlinedIcon,
         access: "owner",
@@ -147,6 +163,7 @@ function NavBadge({
   badge: NonNullable<NavItem["badge"]>;
   isActive: boolean;
 }) {
+  const t = useTranslations("bo.nav");
   const seen = useSeenFlag(badge.seenKey);
 
   // Opening the item's page is what retires its badge.
@@ -176,7 +193,7 @@ function NavBadge({
             }),
       })}
     >
-      {badge.text}
+      {t("badgeNew")}
     </Typography>
   );
 }
@@ -213,6 +230,7 @@ function NavSectionList({
    *  its label (aria-label + Tooltip). */
   isRail: boolean;
 }) {
+  const t = useTranslations("bo.nav");
   const captionId = useId();
 
   return (
@@ -232,15 +250,16 @@ function NavSectionList({
           ...whenSidebarRail({ display: "none" }),
         }}
       >
-        {section.title}
+        {t(section.title)}
       </Typography>
       <List
         disablePadding
         aria-labelledby={captionId}
         sx={{ display: "flex", flexDirection: "column", gap: 1 }}
       >
-        {section.items.map(({ label, href, icon: Icon, badge }) => {
+        {section.items.map(({ label: labelKey, href, icon: Icon, badge }) => {
           const isActive = href === activeHref;
+          const label = t(labelKey);
           return (
             <ListItem key={href} disablePadding>
               <RailTooltip show={isRail} title={label}>

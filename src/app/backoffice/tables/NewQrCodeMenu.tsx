@@ -15,7 +15,9 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import QrCode2Icon from "@mui/icons-material/QrCode2";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { useTranslations } from "next-intl";
 import { rotateAccessKeyAction } from "./action";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 
 /**
  * The table card's ⋯ menu — today one action, "New QR code", on every
@@ -33,6 +35,9 @@ export default function NewQrCodeMenu({
   tableId: number;
   tableName: string;
 }) {
+  const t = useTranslations("bo.tables");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
   const menuId = useId();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -50,15 +55,15 @@ export default function NewQrCodeMenu({
     startTransition(async () => {
       const result = await rotateAccessKeyAction(tableId);
       if (result.success) setConfirmOpen(false);
-      else setError(result.error.message);
+      else setError(errorText(result.error));
     });
   }
 
   return (
     <>
-      <Tooltip title="More">
+      <Tooltip title={tCommon("more")}>
         <IconButton
-          aria-label={`More for ${tableName}`}
+          aria-label={t("moreFor", { name: tableName })}
           aria-haspopup="menu"
           aria-controls={anchor ? menuId : undefined}
           aria-expanded={anchor ? true : undefined}
@@ -86,16 +91,15 @@ export default function NewQrCodeMenu({
           <ListItemIcon>
             <QrCode2Icon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>New QR code</ListItemText>
+          <ListItemText>{t("newQr")}</ListItemText>
         </MenuItem>
       </Menu>
       <ConfirmDialog
         open={confirmOpen}
-        title={`Make a new QR code for ${tableName}?`}
+        title={t("newQrTitle", { name: tableName })}
         message={
           <>
-            The old QR — printed or photographed — stops working at once.
-            Print and put up the new one.
+            {t("newQrMessage")}
             {error && (
               <Box component="span" sx={{ display: "block", mt: 1 }}>
                 <Typography
@@ -110,8 +114,9 @@ export default function NewQrCodeMenu({
             )}
           </>
         }
-        confirmLabel="Make new QR"
-        pendingLabel="Making…"
+        confirmLabel={t("newQrConfirm")}
+        pendingLabel={t("making")}
+        cancelLabel={tCommon("cancel")}
         destructive
         pending={isPending}
         onConfirm={makeNewQr}

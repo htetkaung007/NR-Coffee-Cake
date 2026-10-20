@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { AppService } from "@/app/services";
 import { SignUpClosedNotice } from "./SignUpClosedNotice";
+import { getTranslations } from "next-intl/server";
 import { SignUpForm } from "./SignUpForm";
 
 // Reads the database (is sign-up still open?) on every request — never
@@ -13,13 +14,14 @@ export default async function SignUpPage() {
   // created by the owner in Settings. Display only — registerAction
   // enforces it on its own (AppService.createDefaultSetup).
   const isSignUpOpen = await AppService.isSignUpOpen();
+  const t = await getTranslations("bo.auth");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-cream px-4 py-10">
       {isSignUpOpen ? (
         <Suspense
           fallback={
-            <div className="text-sm text-brand-coffee-light">Loading...</div>
+            <div className="text-sm text-brand-coffee-light">{t("loading")}</div>
           }
         >
           <SignUpForm />

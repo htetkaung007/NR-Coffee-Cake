@@ -20,7 +20,10 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { updateMenuCategoryAction } from "./action";
-import { NO_MENUS_TEXT, type CategoryMenu } from "@/app/lib/menu/categoryMenus";
+import { useLocale, useTranslations } from "next-intl";
+import type { CategoryMenu } from "@/app/lib/menu/categoryMenus";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import MenuThumb from "@/app/components/MenuThumb";
 import MenuStatusChip from "@/app/components/MenuStatusChip";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
@@ -44,10 +47,6 @@ interface EditMenuCategoryDialogProps {
 
 /** More menus than this → a search field above the list. */
 const SEARCH_FROM = 9;
-const ONLY_CATEGORY_TEXT =
-  "Only category — add another category on the menu's Edit page before removing it here.";
-const HIDDEN_AFTER_SAVE_TEXT =
-  "Customers at this location won't see it after saving.";
 
 /** One menu in the dialog's list: thumbnail, name, status, and ✕ to
  *  stage its removal (+ to undo). A staged row dims and strikes through
@@ -63,12 +62,15 @@ function CategoryMenuRow({
   isStaged: boolean;
   onToggle: () => void;
 }) {
+  const t = useTranslations("bo.categories");
+  const locale = useLocale();
+  const name = localizedText(locale, menu.name, menu.nameMy);
   const isOnlyCategory = menu.otherCategoryCount === 0;
   const hintId = `category-menu-${menu.id}-hint`;
   const hint = isOnlyCategory
-    ? ONLY_CATEGORY_TEXT
+    ? t("onlyCategory")
     : isStaged && menu.otherVisibleCategoryCount === 0
-      ? HIDDEN_AFTER_SAVE_TEXT
+      ? t("hiddenAfterSave")
       : null;
 
   return (
@@ -99,26 +101,26 @@ function CategoryMenuRow({
               bgcolor: "background.default",
             }}
           >
-            <MenuThumb name={menu.name} imageUrl={menu.imageUrl} />
+            <MenuThumb name={name} imageUrl={menu.imageUrl} />
           </Box>
           <Typography
             variant="body2"
             noWrap
-            title={menu.name}
+            title={name}
             sx={{
               flex: 1,
               minWidth: 0,
               textDecoration: isStaged ? "line-through" : "none",
             }}
           >
-            {menu.name}
+            {name}
           </Typography>
           <MenuStatusChip status={menu.status} />
         </Stack>
         {isStaged ? (
           <IconButton
             onClick={onToggle}
-            aria-label={`Keep ${menu.name} in ${categoryName}`}
+            aria-label={t("keepIn", { name, category: categoryName })}
             sx={{ width: 44, height: 44, flexShrink: 0 }}
           >
             <AddIcon fontSize="small" />
@@ -127,7 +129,7 @@ function CategoryMenuRow({
           <IconButton
             onClick={onToggle}
             disabled={isOnlyCategory}
-            aria-label={`Remove ${menu.name} from ${categoryName}`}
+            aria-label={t("removeFrom", { name, category: categoryName })}
             aria-describedby={hint ? hintId : undefined}
             sx={{ width: 44, height: 44, flexShrink: 0 }}
           >
@@ -171,6 +173,10 @@ export default function EditMenuCategoryDialog({
   onClose,
   onSaved,
 }: EditMenuCategoryDialogProps) {
+  const t = useTranslations("bo.categories");
+  const tCommon = useTranslations("bo.common");
+  const locale = useLocale();
+  const errorText = useStaffErrorMessage();
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
   const [name, setName] = useState(category?.name ?? "");
@@ -207,8 +213,11 @@ export default function EditMenuCategoryDialog({
       stagedIds.size > 0);
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const shownMenus = normalizedQuery
-    ? menus.filter((menu) =>
-        menu.name.toLocaleLowerCase().includes(normalizedQuery),
+    ? // Both names match, whatever the language shown.
+      menus.filter(
+        (menu) =>
+          menu.name.toLocaleLowerCase().includes(normalizedQuery) ||
+          (menu.nameMy ?? "").toLocaleLowerCase().includes(normalizedQuery),
       )
     : menus;
 
@@ -241,7 +250,7 @@ export default function EditMenuCategoryDialog({
     setIsSaving(false);
 
     if (!result.success) {
-      setError(result.error.message);
+      setError(errorText(result.error));
       return;
     }
 
@@ -267,10 +276,10 @@ export default function EditMenuCategoryDialog({
             justifyContent: "space-between",
           }}
         >
-          Edit Menu Category
+          {t("editTitle")}
           <IconButton
             onClick={requestClose}
-            aria-label="Close"
+            aria-label={tCommon("close")}
             sx={{ width: 44, height: 44 }}
           >
             <CloseIcon fontSize="small" />
@@ -299,18 +308,18 @@ export default function EditMenuCategoryDialog({
             id="category-menus-title"
             sx={{ mt: 3, mb: 1 }}
           >
-            Menus in this category ({menus.length})
+            {t("menusIn", { count: menus.length })}
           </Typography>
 
           {menus.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
-              {NO_MENUS_TEXT}
+              {t("noMenus")}
             </Typography>
           ) : (
             <>
               {menus.length >= SEARCH_FROM && (
                 <TextField
-                  label="Search menus"
+                  label={t("searchMenus")}
                   size="small"
                   fullWidth
                   value={query}
@@ -321,7 +330,7 @@ export default function EditMenuCategoryDialog({
                       endAdornment: query ? (
                         <InputAdornment position="end">
                           <IconButton
-                            aria-label="Clear search"
+                            aria-label={t("clearSearch")}
                             onClick={() => setQuery("")}
                             edge="end"
                           >
@@ -339,7 +348,7 @@ export default function EditMenuCategoryDialog({
                   color="text.secondary"
                   sx={{ py: 1 }}
                 >
-                  No menus match
+                  {t("noMatch")}
                 </Typography>
               ) : (
                 <Box
@@ -357,7 +366,9 @@ export default function EditMenuCategoryDialog({
                     <CategoryMenuRow
                       key={menu.id}
                       menu={menu}
-                      categoryName={category?.name ?? ""}
+                      categoryName={
+                        category ? localizedText(locale, category.name, category.nameMy) : ""
+                      }
                       isStaged={stagedIds.has(menu.id)}
                       onToggle={() => toggleStaged(menu.id)}
                     />
@@ -366,9 +377,7 @@ export default function EditMenuCategoryDialog({
               )}
               {stagedIds.size > 0 && (
                 <Typography variant="body2" sx={{ mt: 1 }} role="status">
-                  {stagedIds.size === 1
-                    ? "1 menu will be removed when you save."
-                    : `${stagedIds.size} menus will be removed when you save.`}
+                  {t("willRemove", { count: stagedIds.size })}
                 </Typography>
               )}
             </>
@@ -385,24 +394,24 @@ export default function EditMenuCategoryDialog({
           }}
         >
           <Button variant="outlined" color="inherit" onClick={requestClose}>
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             variant="contained"
             onClick={handleSave}
             disabled={isSaving || !name.trim()}
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? tCommon("saving") : tCommon("saveChanges")}
           </Button>
         </Stack>
       </Dialog>
 
       <ConfirmDialog
         open={isConfirmingDiscard}
-        title="Discard changes?"
-        message="Your edits to this category, including any menus marked for removal, won't be saved."
-        confirmLabel="Discard"
-        cancelLabel="Keep editing"
+        title={t("discardTitle")}
+        message={t("discardMessage")}
+        confirmLabel={t("discard")}
+        cancelLabel={t("keepEditing")}
         destructive
         onConfirm={() => {
           setIsConfirmingDiscard(false);

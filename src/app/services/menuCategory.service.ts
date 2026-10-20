@@ -119,7 +119,7 @@ export class MenuCategoryService {
       select: {
         menuId: true,
         menuCategoryId: true,
-        menu: { select: { name: true, assetUrl: true } },
+        menu: { select: { name: true, nameMy: true, assetUrl: true } },
       },
     });
     const menuIds = [...new Set(links.map((link) => link.menuId))];
@@ -167,7 +167,9 @@ export class MenuCategoryService {
       },
     });
     if (existing) {
-      throw new ValidationError(`"${name}" already exists as a category.`);
+      throw new ValidationError(`"${name}" already exists as a category.`, "CATEGORY_NAME_TAKEN", {
+        name,
+      });
     }
 
     return prisma.$transaction(async (tx: Tx) => {
@@ -233,6 +235,8 @@ export class MenuCategoryService {
     if (nameTaken) {
       throw new ValidationError(
         `"${input.name}" already exists as a category.`,
+        "CATEGORY_NAME_TAKEN",
+        { name: input.name },
       );
     }
 
@@ -307,12 +311,15 @@ export class MenuCategoryService {
     if (plan.invalidIds.length > 0) {
       throw new ValidationError(
         "Some menus are no longer in this category. Refresh and try again.",
+        "CATEGORY_MENUS_CHANGED",
       );
     }
     if (plan.orphanedMenuIds.length > 0) {
       const name = links.find((link) => link.menuId === plan.orphanedMenuIds[0])!
         .menu.name;
-      throw new ValidationError(`${name} must stay in at least one category.`);
+      throw new ValidationError(`${name} must stay in at least one category.`, "MENU_NEEDS_CATEGORY", {
+        name,
+      });
     }
 
     await tx.menuMenuCategory.deleteMany({
@@ -353,6 +360,7 @@ export class MenuCategoryService {
       if (!isExactMatch) {
         throw new ValidationError(
           "The category list changed while you were reordering. Refresh and try again.",
+          "CATEGORY_LIST_CHANGED",
         );
       }
 

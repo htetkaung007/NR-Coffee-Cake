@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Box, Typography } from "@mui/material";
 import { LocationService, ManagerService } from "@/app/services";
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
@@ -13,7 +14,6 @@ export default async function EditLocationPage({
   const locationId = Number(id);
 
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: "Please sign in to manage locations.",
     access: "owner",
   });
   if (!scope) return fallback;
@@ -23,7 +23,9 @@ export default async function EditLocationPage({
   if (!location || location.companyId !== scope.companyId) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">Location not found.</Typography>
+        <Typography color="text.secondary">
+          {(await getTranslations("bo.locations"))("notFound")}
+        </Typography>
       </Box>
     );
   }

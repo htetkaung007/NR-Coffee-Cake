@@ -28,7 +28,10 @@ export class OnlineMenuService {
       input.companyId,
     );
     if (input.enabled && location.isArchived) {
-      throw new ValidationError("Closed locations can't show an online menu");
+      throw new ValidationError(
+        "Closed locations can't show an online menu",
+        "LOCATION_CLOSED",
+      );
     }
     return prisma.location.update({
       where: { id: location.id },

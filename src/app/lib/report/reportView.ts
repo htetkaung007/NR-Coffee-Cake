@@ -1,15 +1,13 @@
 import { TOP_PAIRS } from "./addonPairing";
-import { countLabel, formatAmount } from "../orderFormat";
 import {
   elapsedDays,
   isCurrentPeriod,
-  MONTH_NAMES,
   nextPeriod,
-  periodLabel,
   previousPeriod,
   type ReportPeriod,
   type ReportPeriodKind,
 } from "./reportPeriod";
+import type { ReportWords } from "./reportWords";
 import { isShopDay } from "../shopDay";
 
 /** The Backoffice Reports page's view state, kept in the URL
@@ -51,11 +49,6 @@ export function reportHref(params: ReportParams): string {
   return list === "slow" ? `${base}&list=slow` : base;
 }
 
-/** What every report's figures are — under the Reports page and on the
- *  printable report alike. */
-export const REPORT_FOOTNOTE =
-  "Café sales · paid bills only · internet voucher sales not included";
-
 /** The printable report (print / Save as PDF) for the period around
  *  `day` — outside the Backoffice, under the (print) route group. */
 export function printableReportHref(params: {
@@ -77,9 +70,8 @@ export function reportExportHref(params: {
 
 /** "Monthly report — October 2026" / "Weekly report — Sep 28 – Oct 4,
  *  2026" — the printable report's title. */
-export function printableReportTitle(period: ReportPeriod): string {
-  const kind = period.kind === "month" ? "Monthly" : "Weekly";
-  return `${kind} report — ${periodLabel(period)}`;
+export function printableReportTitle(period: ReportPeriod, words: ReportWords): string {
+  return words.reportTitle(period.kind, words.period(period));
 }
 
 /** The days the period navigator's arrows lead to: any day of the period
@@ -113,11 +105,12 @@ export interface DeltaText {
   spoken: string;
 }
 
-/** A change on the previous period, as text. null — no previous data —
- *  is "—". */
+/** A change on the previous period, as text (in `words`' language).
+ *  null — no previous data — is "—". */
 export function formatDelta(
   percent: number | null,
   kind: ReportPeriodKind,
+  words: ReportWords,
 ): DeltaText {
   if (percent === null) {
     return {
@@ -125,35 +118,20 @@ export function formatDelta(
       arrow: "—",
       amount: "",
       label: "—",
-      spoken: "No comparison available",
+      spoken: words.noComparison,
     };
   }
-  const comparison = kind === "week" ? "vs last week" : "vs last month";
+  const comparison = words.comparison(kind);
   const amount = `${Number(Math.abs(percent).toFixed(1))}%`;
-  if (percent > 0) {
-    return {
-      direction: "up",
-      arrow: "▲",
-      amount,
-      label: `▲ ${amount} ${comparison}`,
-      spoken: `Up ${amount} ${comparison}`,
-    };
-  }
-  if (percent < 0) {
-    return {
-      direction: "down",
-      arrow: "▼",
-      amount,
-      label: `▼ ${amount} ${comparison}`,
-      spoken: `Down ${amount} ${comparison}`,
-    };
-  }
+  const direction = percent > 0 ? "up" : percent < 0 ? "down" : "flat";
+  const arrow = direction === "up" ? "▲" : direction === "down" ? "▼" : "▬";
+  const shown = direction === "flat" ? "0%" : amount;
   return {
-    direction: "flat",
-    arrow: "▬",
-    amount: "0%",
-    label: `▬ 0% ${comparison}`,
-    spoken: `No change ${comparison}`,
+    direction,
+    arrow,
+    amount: shown,
+    label: words.deltaLabel(arrow, shown, comparison),
+    spoken: words.spoken(direction, shown, comparison),
   };
 }
 
@@ -192,40 +170,22 @@ export function axisLabelIndexes(
   return kind === "week" ? everyDay : everyDay.filter((index) => index % 5 === 0);
 }
 
-/** "Mon 28 Sep" — English names whatever the device's language. */
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-export function formatReportDay(day: string): string {
-  const [, month, dayOfMonth] = day.split("-").map(Number);
-  const weekday = WEEKDAYS[new Date(`${day}T00:00:00Z`).getUTCDay()];
-  return `${weekday} ${dayOfMonth} ${MONTH_NAMES[month - 1].slice(0, 3)}`;
-}
-
-/** What a bar says to a screen reader and in its tooltip:
- *  "Mon 28 Sep: 142,000 MMK, 12 bills" (", today" for today's). */
-export function barLabel(
-  entry: { day: string; sales: number; bills: number },
-  isToday: boolean,
-): string {
-  const bills = countLabel(entry.bills, "bill", "bills");
-  const text = `${formatReportDay(entry.day)}: ${formatAmount(entry.sales)}, ${bills}`;
-  return isToday ? `${text}, today` : text;
-}
-
 /** "Week in progress · 4 of 7 days" for the current period, null for a
  *  finished one. */
 export function progressCaption(
   period: ReportPeriod,
   today: string,
+  words: ReportWords,
 ): string | null {
   if (!isCurrentPeriod(period, today)) return null;
-  const name = period.kind === "week" ? "Week" : "Month";
-  return `${name} in progress · ${elapsedDays(period, today)} of ${period.days.length} days`;
+  return words.progress(period.kind, elapsedDays(period, today), period.days.length);
 }
 
 export interface ReportItem {
   menuId: number;
   name: string;
+  /** The shop's Myanmar name (Myanmar staff screens); null = none. */
+  nameMy?: string | null;
   categoryIds: number[];
   quantity: number;
   itemSales: number;
@@ -237,6 +197,7 @@ export interface ReportItem {
 export interface ReportSlowItem {
   menuId: number;
   name: string;
+  nameMy?: string | null;
   categoryIds: number[];
   quantity: number;
 }
@@ -287,7 +248,13 @@ export function buildItemList(input: {
 
   return source
     .filter((row) => categoryId === null || row.categoryIds.includes(categoryId))
-    .filter((row) => term === "" || row.name.toLowerCase().includes(term))
+    // Both names match, whatever the language shown (as the menu search).
+    .filter(
+      (row) =>
+        term === "" ||
+        row.name.toLowerCase().includes(term) ||
+        (row.nameMy ?? "").toLowerCase().includes(term),
+    )
     .sort(
       (a, b) =>
         direction * (measure(a) - measure(b)) ||
@@ -302,16 +269,30 @@ export function buildItemList(input: {
 export interface PairingMenu {
   menuId: number;
   name: string;
+  nameMy?: string | null;
   /** Units of the menu sold in the pairing month. */
   units: number;
   status: "ok" | "notEnough";
-  pairs: { addonId: number; name: string; units: number; rate: number }[];
+  pairs: {
+    addonId: number;
+    name: string;
+    nameMy?: string | null;
+    units: number;
+    rate: number;
+  }[];
 }
 
 export interface PairingAddon {
   addonId: number;
   name: string;
-  menus: { menuId: number; name: string; units: number; rate: number }[];
+  nameMy?: string | null;
+  menus: {
+    menuId: number;
+    name: string;
+    nameMy?: string | null;
+    units: number;
+    rate: number;
+  }[];
 }
 
 /** One line of a pairing panel: "Extra shot · 62% · n = 94 units". */
@@ -319,6 +300,7 @@ export interface PairingRow {
   /** The add-on's id in a menu's panel, the menu's id in an add-on's. */
   id: number;
   name: string;
+  nameMy?: string | null;
   /** Whole percent of the MENU's units that had the add-on. */
   rate: number;
   /** How many units of the menu this rate is out of (the "n"). */
@@ -341,6 +323,7 @@ export function menuPairingView(
     rows: menu.pairs.map((pair) => ({
       id: pair.addonId,
       name: pair.name,
+      nameMy: pair.nameMy,
       rate: pair.rate,
       menuUnits: menu.units,
       pairUnits: pair.units,
@@ -362,6 +345,7 @@ export function addonPairingView(
   return addon.menus.slice(0, TOP_PAIRS).map((entry) => ({
     id: entry.menuId,
     name: entry.name,
+    nameMy: entry.nameMy,
     rate: entry.rate,
     menuUnits: unitsOf.get(entry.menuId) ?? entry.units,
     pairUnits: entry.units,
@@ -374,8 +358,8 @@ export function addonPairingView(
 export function pairingMonthCaption(
   period: ReportPeriod,
   today: string,
+  words: ReportWords,
 ): string | null {
   if (!isCurrentPeriod(period, today)) return null;
-  const month = Number(period.startDay.slice(5, 7));
-  return `${MONTH_NAMES[month - 1]} in progress`;
+  return words.monthInProgress(Number(period.startDay.slice(5, 7)));
 }

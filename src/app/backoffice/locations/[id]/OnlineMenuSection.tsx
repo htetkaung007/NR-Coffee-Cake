@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import { useEffect, useId, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Box, Button, Switch, Typography } from "@mui/material";
@@ -35,6 +37,8 @@ export default function OnlineMenuSection({
   const router = useRouter();
   // Follows the server's value (so a switch from the top bar's status
   // chip shows here too), showing the new state at once while it saves.
+  const t = useTranslations("bo.locations");
+  const errorText = useStaffErrorMessage();
   const [enabled, setOptimisticEnabled] = useOptimistic(savedEnabled);
   const [error, setError] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
@@ -60,7 +64,7 @@ export default function OnlineMenuSection({
       setOptimisticEnabled(next);
       const result = await setOnlineMenuAction(locationId, next);
       if (!result.success) {
-        setError(result.error.message);
+        setError(errorText(result.error));
         return;
       }
       router.refresh();
@@ -105,7 +109,7 @@ export default function OnlineMenuSection({
       >
         <Box>
           <Typography variant="body2" id={titleId}>
-            Online menu
+            {t("onlineMenu")}
           </Typography>
           <Typography
             variant="caption"
@@ -113,15 +117,11 @@ export default function OnlineMenuSection({
             id={helperId}
             component="p"
           >
-            On: anyone with the menu link can see the menu. Off: only
-            customers who scanned the QR in the shop can. Ordering always
-            needs the QR.
+            {t("onlineMenuHelper")}
           </Typography>
           {isArchived && (
             <Typography variant="caption" color="text.secondary" component="p">
-              {enabled
-                ? "Not shown while this location is closed."
-                : "Reopen this location to show its menu online."}
+              {enabled ? t("notShownClosed") : t("reopenToShow")}
             </Typography>
           )}
         </Box>
@@ -143,7 +143,7 @@ export default function OnlineMenuSection({
           <Typography
             variant="body2"
             sx={{ overflowWrap: "anywhere", mb: 1 }}
-            aria-label="Menu link"
+            aria-label={t("menuLink")}
           >
             {link}
           </Typography>
@@ -154,7 +154,7 @@ export default function OnlineMenuSection({
               component="p"
               sx={{ mb: 1 }}
             >
-              Works only inside the shop until an online address is set up
+              {t("shopOnly")}
             </Typography>
           )}
           <Button
@@ -163,7 +163,7 @@ export default function OnlineMenuSection({
             onClick={() => void handleCopy()}
             sx={{ minHeight: 44 }}
           >
-            {copyState === "copied" ? "Copied" : "Copy"}
+            {copyState === "copied" ? t("copied") : t("copy")}
           </Button>
           {copyState === "failed" && (
             <Typography
@@ -173,7 +173,7 @@ export default function OnlineMenuSection({
               role="status"
               sx={{ mt: 1 }}
             >
-              Couldn&apos;t copy here — select the link above and copy it.
+              {t("copyFailed")}
             </Typography>
           )}
         </Box>

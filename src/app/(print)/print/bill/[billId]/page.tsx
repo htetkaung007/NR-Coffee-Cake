@@ -5,7 +5,9 @@ import {
 } from "@/app/services";
 import { NotFoundError } from "@/app/lib/errors";
 import { toShopDay } from "@/app/lib/shopDay";
+import { getTranslations } from "next-intl/server";
 import ReceiptLayout from "../../ReceiptLayout";
+import { VOUCHER_MESSAGES } from "../../voucherMessages";
 import { PrintMessage, getPrintContext } from "../../../printContext";
 
 /** A paid bill's receipt, reprinted from Order History — the same
@@ -26,7 +28,8 @@ export default async function PrintPaidBillPage({
   if (context.fallback) return context.fallback;
   const { companyId, locationId } = context;
 
-  const notFound = <PrintMessage>This bill was not found.</PrintMessage>;
+  const t = await getTranslations("bo.print");
+  const notFound = <PrintMessage>{t("notFound")}</PrintMessage>;
   if (!/^\d+$/.test(billIdParam)) return notFound;
 
   let bill: Awaited<ReturnType<typeof OrderHistoryService.getPaidBillDetail>>;
@@ -55,7 +58,8 @@ export default async function PrintPaidBillPage({
   return (
     <ReceiptLayout
       backHref={`/backoffice/order/history?${historyParams.toString()}`}
-      backLabel="Back to history"
+      backLabel="backToHistory"
+      voucherMessages={VOUCHER_MESSAGES}
       shopName={shopName}
       locationName={location?.name ?? null}
       title={bill.title}

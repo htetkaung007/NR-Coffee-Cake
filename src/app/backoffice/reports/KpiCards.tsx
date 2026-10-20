@@ -1,7 +1,8 @@
 "use client";
 
 import { Box, Card, Typography } from "@mui/material";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import type { ReportOverview } from "./action";
 import ReportDelta from "./ReportDelta";
 import { moneyToneSx, type MoneyTone } from "../order/orderTypography";
@@ -12,6 +13,8 @@ import { moneyToneSx, type MoneyTone } from "../order/orderTypography";
  *  never red, DESIGN.md Rule 13), as four cards: two across on phones,
  *  four from md. */
 export default function KpiCards({ overview }: { overview: ReportOverview }) {
+  const t = useTranslations("bo.reports");
+  const money = useStaffMoney();
   const { summary, cancelled } = overview.current;
   const { deltas, period } = overview;
 
@@ -23,25 +26,25 @@ export default function KpiCards({ overview }: { overview: ReportOverview }) {
     tone: MoneyTone;
   }[] = [
     {
-      label: "Sales",
-      value: formatAmount(summary.sales),
+      label: t("sales"),
+      value: money.amount(summary.sales),
       delta: deltas.sales,
       tone: "income",
     },
     {
-      label: "Bills",
+      label: t("billsLabel"),
       value: String(summary.bills),
       delta: deltas.bills,
       tone: "neutral",
     },
     {
-      label: "Avg. bill",
-      value: formatAmount(summary.avgBill),
+      label: t("avgBill"),
+      value: money.amount(summary.avgBill),
       delta: deltas.avgBill,
       tone: "income",
     },
     {
-      label: "Cancelled",
+      label: t("cancelled"),
       value: String(cancelled.count),
       delta: deltas.cancelled,
       tone: "neutral",

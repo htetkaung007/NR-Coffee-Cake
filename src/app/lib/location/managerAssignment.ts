@@ -18,6 +18,12 @@ export function managerAssignmentBlock(input: {
   return null;
 }
 
+/** Each block's stable error code (bo.errors — the staff's words). */
+export const MANAGER_ASSIGNMENT_CODES: Record<ManagerAssignmentBlock, string> = {
+  closedLocation: "LOCATION_CLOSED",
+  alreadyThere: "MANAGER_ALREADY_THERE",
+};
+
 /** The owner-facing explanation for each block. */
 export const MANAGER_ASSIGNMENT_MESSAGES: Record<ManagerAssignmentBlock, string> = {
   closedLocation:

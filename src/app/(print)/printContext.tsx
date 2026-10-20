@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Box, Typography } from "@mui/material";
 import { LocationService } from "@/app/services";
 import { getSessionContext } from "@/app/lib/access/session";
@@ -29,9 +30,7 @@ export async function getPrintContext(): Promise<
   if (!selectedLocation) {
     return {
       fallback: (
-        <PrintMessage>
-          No location selected. Please choose a location first.
-        </PrintMessage>
+        <PrintMessage>{(await getTranslations("bo.access"))("noLocation")}</PrintMessage>
       ),
     };
   }

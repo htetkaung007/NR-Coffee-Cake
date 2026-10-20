@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import CenteredPage from "@/app/components/CenteredPage";
 import type { ReactNode } from "react";
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
 import { CompanyService, LocationService, ManagerService } from "@/app/services";
@@ -47,7 +49,6 @@ export default async function SettingsPage({
 }) {
   const { manager } = await searchParams;
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: "Please sign in to view settings.",
     access: "owner",
   });
   if (!scope) return fallback;
@@ -58,26 +59,27 @@ export default async function SettingsPage({
     CompanyService.getName(companyId),
     ManagerService.listManagers(companyId),
   ]);
+  const t = await getTranslations("bo.settings");
   const selectedManagerId =
     manager && /^\d+$/.test(manager) ? Number(manager) : null;
 
   return (
-    <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, pb: 3 }}>
+    <CenteredPage>
       <Box sx={{ pb: 2 }}>
-        <OrdersPageHeader title="Settings" showSectionNav={false} />
+        <OrdersPageHeader title={t("title")} showSectionNav={false} />
       </Box>
-      <Stack spacing={2} sx={{ maxWidth: 720 }}>
+      <Stack spacing={2}>
         <SettingsSection
           id="settings-company"
-          title="Company"
-          description="Your business's name across the Backoffice."
+          title={t("company")}
+          description={t("companyHint")}
         >
           <CompanyNameForm initialName={companyName} />
         </SettingsSection>
         <SettingsSection
           id="settings-managers"
-          title="Managers"
-          description="Managers work at their assigned location. Choose what each one can do."
+          title={t("managers")}
+          description={t("managersHint")}
         >
           <ManagersSection
             managers={managers}
@@ -86,11 +88,11 @@ export default async function SettingsPage({
           />
           <Divider sx={{ my: 3 }} />
           <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
-            Add a manager
+            {t("addManagerTitle")}
           </Typography>
           <AddManagerForm locations={locations} />
         </SettingsSection>
       </Stack>
-    </Box>
+    </CenteredPage>
   );
 }

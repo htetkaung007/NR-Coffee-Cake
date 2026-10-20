@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import { useTranslations } from "next-intl";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -22,6 +23,8 @@ export default function MenuImageUploader({
   onRemove,
   onError,
 }: MenuImageUploaderProps) {
+  const t = useTranslations("bo.menuForm");
+  const tCommon = useTranslations("bo.common");
   const inputRef = useRef<HTMLInputElement>(null);
   const imagePreviewRef = useRef<HTMLDivElement>(null);
   const [showImageActions, setShowImageActions] = useState(false);
@@ -46,7 +49,7 @@ export default function MenuImageUploader({
 
   function handleFile(file: File) {
     if (!IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_BYTES) {
-      onError("Choose a PNG, JPEG, or WEBP image no larger than 5MB.");
+      onError(t("imageInvalid"));
       return;
     }
 
@@ -68,7 +71,7 @@ export default function MenuImageUploader({
   return (
     <Box>
       <Typography variant="body2" sx={{ mb: 1 }}>
-        Item Image / Photo Upload
+        {t("image")}
       </Typography>
       <Box
         sx={{
@@ -95,7 +98,7 @@ export default function MenuImageUploader({
             <Box
               component="img"
               src={imagePreviewUrl}
-              alt="Selected menu item"
+              alt={t("imageAlt")}
               sx={{
                 width: "100%",
                 height: "100%",
@@ -139,7 +142,7 @@ export default function MenuImageUploader({
                       },
                     }}
                   >
-                    Replace
+                    {tCommon("replace")}
                   </Button>
 
                   <Button
@@ -157,7 +160,7 @@ export default function MenuImageUploader({
                       },
                     }}
                   >
-                    Remove
+                    {tCommon("remove")}
                   </Button>
                 </Box>
               </Stack>
@@ -182,10 +185,10 @@ export default function MenuImageUploader({
               sx={{ fontSize: { xs: 28, sm: 32 } }}
             />
             <Typography variant="body2" sx={{ textAlign: "center" }}>
-              Drag & drop photo here, or browse
+              {t("imageDrop")}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Supports PNG, JPG, WEBP up to 5MB
+              {t("imageFormats")}
             </Typography>
           </Box>
         )}

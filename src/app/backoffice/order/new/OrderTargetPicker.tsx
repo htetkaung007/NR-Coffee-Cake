@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, type ReactNode, type Ref } from "react";
+import { useTranslations } from "next-intl";
 import { Box, ListSubheader, MenuItem, TextField, Typography } from "@mui/material";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
@@ -14,7 +15,7 @@ import {
   targetKey,
   type OrderTarget,
 } from "@/app/lib/order/orderTarget";
-import { countLabel, formatAmount } from "@/app/lib/orderFormat";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { optionsForMode, type TargetMode } from "@/app/lib/order/targetMode";
 
 export interface StaffTable {
@@ -30,6 +31,14 @@ export interface PickerOccupancy {
   counterBills: readonly CounterBillOccupancy[];
 }
 
+/** The words targetName needs, in the staff's language. */
+interface TargetWords {
+  /** "Counter". */
+  counter: string;
+  /** "Counter #A012". */
+  counterBill: (title: string) => string;
+}
+
 /** The short name an order summary uses: "Counter" (a new takeaway),
  *  "Counter #A012" (a round on that bill), or the table's name — "Table
  *  3 · 2 items", "Current order — Counter", "Switch to Table 3?". */
@@ -37,13 +46,14 @@ export function targetName(
   target: OrderTarget,
   tables: readonly StaffTable[],
   counterBills: readonly CounterBillOccupancy[],
+  words: TargetWords,
 ): string | null {
   switch (target.kind) {
     case "counterNew":
-      return "Counter";
+      return words.counter;
     case "counterBill": {
       const bill = counterBills.find((b) => b.billRootId === target.billRootId);
-      return bill ? `Counter ${bill.title}` : null;
+      return bill ? words.counterBill(bill.title) : null;
     }
     case "table":
       return tables.find((table) => table.id === target.tableId)?.name ?? null;
@@ -57,16 +67,31 @@ const byName = (a: StaffTable, b: StaffTable) =>
 /** What an open bill or In use table adds after its status: "2 orders ·
  *  16,498 MMK · waiting approval", or — only a customer's unsent draft —
  *  "a customer is ordering". Money stays text, never coloured. */
-function openDetail(entry: {
-  openOrderCount: number;
-  unpaidTotal: number;
-  hasPendingApproval: boolean;
-}) {
-  if (entry.openOrderCount === 0) return "a customer is ordering";
-  const parts = [countLabel(entry.openOrderCount, "order", "orders")];
-  if (entry.unpaidTotal > 0) parts.push(formatAmount(entry.unpaidTotal));
-  if (entry.hasPendingApproval) parts.push("waiting approval");
-  return parts.join(" · ");
+function useOpenDetail() {
+  const t = useTranslations("bo.newOrder");
+  const tCommon = useTranslations("bo.common");
+  const money = useStaffMoney();
+  return (entry: {
+    openOrderCount: number;
+    unpaidTotal: number;
+    hasPendingApproval: boolean;
+  }) => {
+    if (entry.openOrderCount === 0) return t("customerOrdering");
+    const parts = [tCommon("orderCount", { count: entry.openOrderCount })];
+    if (entry.unpaidTotal > 0) parts.push(money.amount(entry.unpaidTotal));
+    if (entry.hasPendingApproval) parts.push(t("waitingApproval"));
+    return parts.join(" · ");
+  };
+}
+
+/** targetName's words, in the staff's language. */
+export function useTargetWords(): TargetWords {
+  const t = useTranslations("bo.newOrder");
+  const tCommon = useTranslations("bo.common");
+  return {
+    counter: tCommon("counter"),
+    counterBill: (title) => t("counterBill", { title }),
+  };
 }
 
 /** A table's occupancy: a 10px dot and the word, both in the status
@@ -76,6 +101,7 @@ function openDetail(entry: {
  *  Only the dot and the word are coloured — never colour alone
  *  (DESIGN.md Rule 13). */
 function OccupancyMark({ status }: { status: "inUse" | "free" }) {
+  const t = useTranslations("bo.newOrder");
   const isInUse = status === "inUse";
   return (
     <Box
@@ -100,7 +126,7 @@ function OccupancyMark({ status }: { status: "inUse" | "free" }) {
           color: isInUse ? theme.palette.errorText : theme.palette.successText,
         })}
       >
-        {isInUse ? "In use" : "Free"}
+        {isInUse ? t("inUse") : t("free")}
       </Typography>
     </Box>
   );
@@ -188,6 +214,11 @@ export default function OrderTargetPicker({
   /** The field's root — the page scrolls it into view and focuses it. */
   pickerRef?: Ref<HTMLDivElement>;
 }) {
+  const t = useTranslations("bo.newOrder");
+  const tCommon = useTranslations("bo.common");
+  const money = useStaffMoney();
+  const openDetail = useOpenDetail();
+  const words = useTargetWords();
   const helperId = useId();
   const tableOccupancy = new Map(
     occupancy.tables.map((entry) => [entry.tableId, entry]),
@@ -211,7 +242,7 @@ export default function OrderTargetPicker({
   );
 
   const name = target
-    ? targetName(target, tables, occupancy.counterBills)
+    ? targetName(target, tables, occupancy.counterBills, words)
     : null;
   // An existing bill: an open Counter bill, or an In use table's tab.
   const existing =
@@ -222,20 +253,18 @@ export default function OrderTargetPicker({
         ? tableOccupancy.get(target.tableId)
         : undefined;
   const helperText = prompt
-    ? "Choose a table or Counter first"
+    ? t("chooseFirst")
     : existing && name
-      ? `Adds a new order to ${name}'s bill${
-          existing.unpaidTotal > 0
-            ? ` (${formatAmount(existing.unpaidTotal)} so far)`
-            : ""
-        }`
+      ? existing.unpaidTotal > 0
+        ? t("addsToBillSoFar", { name, amount: money.amount(existing.unpaidTotal) })
+        : t("addsToBill", { name })
       : undefined;
 
   return (
     <TextField
       select
       fullWidth
-      label="Order for"
+      label={t("orderFor")}
       value={target ? targetKey(target) : ""}
       ref={pickerRef}
       onChange={(event) => {
@@ -253,8 +282,8 @@ export default function OrderTargetPicker({
           renderValue: (value) => {
             const chosen = parseTargetKey(String(value));
             if (!chosen) return "";
-            if (chosen.kind === "counterNew") return "Counter · New takeaway";
-            return targetName(chosen, tables, occupancy.counterBills) ?? "";
+            if (chosen.kind === "counterNew") return t("counterNew");
+            return targetName(chosen, tables, occupancy.counterBills, words) ?? "";
           },
         },
       }}
@@ -263,12 +292,12 @@ export default function OrderTargetPicker({
         <MenuItem value="counter-new" sx={{ minHeight: 44 }}>
           <OptionRow
             icon={<StorefrontOutlinedIcon fontSize="small" />}
-            name="Counter"
-            detail="New takeaway"
+            name={tCommon("counter")}
+            detail={t("newTakeaway")}
           />
         </MenuItem>
       )}
-      {listedBills.length > 0 && <ListSubheader>Counter bills</ListSubheader>}
+      {listedBills.length > 0 && <ListSubheader>{t("counterBills")}</ListSubheader>}
       {listedBills.map((bill) => (
         // No occupancy colour on a bill — its receipt icon says what it is.
         <MenuItem
@@ -278,13 +307,13 @@ export default function OrderTargetPicker({
         >
           <OptionRow
             icon={<ReceiptLongOutlinedIcon fontSize="small" />}
-            name={`Counter ${bill.title}`}
+            name={words.counterBill(bill.title)}
             detail={openDetail(bill)}
           />
         </MenuItem>
       ))}
       {(mode === "new" || listedTables.length > 0) && (
-        <ListSubheader>Tables</ListSubheader>
+        <ListSubheader>{t("tables")}</ListSubheader>
       )}
       {listedTables.map((table) => {
         const entry = tableOccupancy.get(table.id);
@@ -306,7 +335,7 @@ export default function OrderTargetPicker({
       })}
       {mode === "new" && listedTables.length === 0 && (
         <MenuItem disabled sx={{ minHeight: 44 }}>
-          All tables are in use
+          {t("allTablesInUse")}
         </MenuItem>
       )}
     </TextField>

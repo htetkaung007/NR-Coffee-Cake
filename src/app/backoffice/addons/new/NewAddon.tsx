@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Alert, Box, Button, Stack } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { createAddonGroupAction, updateAddonGroupAction } from "../action";
 import { SuccessSnackbar } from "@/app/components/FormCard";
 import PageHeader from "@/app/components/PageHeader";
@@ -37,6 +38,8 @@ interface NewAddonProps {
 }
 
 export default function NewAddon({ menus, initialData }: NewAddonProps) {
+  const t = useTranslations("bo.addonForm");
+  const tCommon = useTranslations("bo.common");
   const { error, setError, isPending, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const isEditMode = Boolean(initialData);
@@ -106,9 +109,9 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
           on the menu form), and both columns start level below it. */}
       <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pt: { xs: 2, sm: 3, md: 4 } }}>
         <PageHeader
-          title={isEditMode ? "Edit add-on group" : "New add-on group"}
+          title={isEditMode ? t("editTitle") : t("newTitle")}
           backHref="/backoffice/addons"
-          backLabel="Back to add-ons"
+          backLabel={t("backToAddons")}
         />
       </Box>
       <Box
@@ -176,7 +179,7 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
                   color="inherit"
                   sx={{ borderRadius: 2.5, px: 3 }}
                 >
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -185,10 +188,10 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
                   sx={{ borderRadius: 2.5, px: 3 }}
                 >
                   {isPending
-                    ? "Saving..."
+                    ? tCommon("saving")
                     : isEditMode
-                      ? "Update Add-on"
-                      : "Save Add-on"}
+                      ? t("update")
+                      : t("save")}
                 </Button>
               </Stack>
             </Box>
@@ -212,9 +215,7 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
         open={showSuccess}
         onClose={closeSuccess}
         message={
-          isEditMode
-            ? "Add-on group updated successfully!"
-            : "Add-on group created successfully!"
+          isEditMode ? t("updated") : t("created")
         }
       />
     </>

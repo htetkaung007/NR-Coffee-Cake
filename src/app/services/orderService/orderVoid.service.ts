@@ -70,7 +70,8 @@ export class OrderVoidService {
         data: { updateTime: new Date() },
       });
       if (locked.count === 0) {
-        throw new ValidationError(await OrderVoidService.whyNotVoidable(tx, round.id));
+        const why = await OrderVoidService.whyNotVoidable(tx, round.id);
+        throw new ValidationError(why.message, why.code);
       }
 
       const rows = await tx.order.findMany({
@@ -87,16 +88,19 @@ export class OrderVoidService {
         },
       });
       if (!isSingleLine(rows)) {
-        throw new ValidationError("Void one line of one order at a time.");
+        throw new ValidationError("Void one line of one order at a time.", "VOID_ONE_LINE");
       }
       const plan = planVoid(rows, input.quantity);
       if (!plan) {
         const left = rows.reduce((sum, row) => sum + effectiveQuantity(row), 0);
-        throw new ValidationError(
-          left === 0
-            ? "Every item on this line is already voided."
-            : `Only ${left} left to void on this line.`,
-        );
+        throw left === 0
+          ? new ValidationError(
+              "Every item on this line is already voided.",
+              "VOID_NONE_LEFT",
+            )
+          : new ValidationError(`Only ${left} left to void on this line.`, "VOID_ONLY_LEFT", {
+              count: left,
+            });
       }
 
       // Chain lookup: the guard checked the user exists this request; if
@@ -179,24 +183,28 @@ export class OrderVoidService {
 
     const roundIds = new Set(allowed.map((row) => row.orderSession!.id));
     if (roundIds.size !== 1) {
-      throw new ValidationError("Void one line of one order at a time.");
+      throw new ValidationError("Void one line of one order at a time.", "VOID_ONE_LINE");
     }
     return allowed[0].orderSession!;
   }
 
   /** The plain reason a round can't be voided from (read after the lock
-   *  found nothing to lock). */
+   *  found nothing to lock), with its stable code (bo.errors). */
   private static async whyNotVoidable(tx: Tx, sessionId: number) {
     const round = await tx.orderSession.findUnique({
       where: { id: sessionId },
       select: { status: true, billId: true },
     });
     if (round?.status === "PENDING_APPROVAL") {
-      return "Accept or reject this order first — only accepted orders can have items voided.";
+      return {
+        message:
+          "Accept or reject this order first — only accepted orders can have items voided.",
+        code: "VOID_NOT_ACCEPTED",
+      };
     }
     if (round?.status === "PAID" || round?.billId) {
-      return "This order has already been paid.";
+      return { message: "This order has already been paid.", code: "ALREADY_PAID" };
     }
-    return "This order can no longer be changed.";
+    return { message: "This order can no longer be changed.", code: "ROUND_CLOSED" };
   }
 }

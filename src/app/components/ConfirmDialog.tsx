@@ -43,8 +43,9 @@ export default function ConfirmDialog({
   pending?: boolean;
   /** Shown on the confirm button while pending (default: confirmLabel). */
   pendingLabel?: string;
-  /** e.g. { text: location.name, label: "Location name" }. */
-  requireTypedText?: { text: string; label: string };
+  /** e.g. { text: location.name, label: "Location name" }; `helper`
+   *  replaces the English "Type: …" line (staff screens pass theirs). */
+  requireTypedText?: { text: string; label: string; helper?: string };
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -87,7 +88,7 @@ export default function ConfirmDialog({
               fullWidth
               value={typed}
               onChange={(event) => setTyped(event.target.value)}
-              helperText={`Type: ${requireTypedText.text}`}
+              helperText={requireTypedText.helper ?? `Type: ${requireTypedText.text}`}
             />
           )}
         </DialogContent>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useTransition } from "react";
 import { Card, Box, Typography, Chip, Button } from "@mui/material";
@@ -31,6 +32,8 @@ export default function LocationCard({
   isSelected,
   canSwitch,
 }: LocationCardProps) {
+  const t = useTranslations("bo.locations");
+  const tCommon = useTranslations("bo.common");
   const [isPending, startTransition] = useTransition();
 
   function handleSwitch() {
@@ -72,7 +75,7 @@ export default function LocationCard({
           <Chip
             label={
               <Typography variant="caption" component="span">
-                Archived
+                {tCommon("archived")}
               </Typography>
             }
             size="small"
@@ -84,11 +87,13 @@ export default function LocationCard({
       {/* What a visitor who hasn't scanned gets: On only while it's
          switched on AND the location is open (lib/storefront/menuAccess). */}
       <Typography variant="caption" color="text.secondary">
-        Online menu:{" "}
-        {menuAccess({ ...location, locationExists: true, hasQrSession: false }) ===
-        "menu"
-          ? "On"
-          : "Off"}
+        {t("onlineMenuStatus", {
+          state:
+            menuAccess({ ...location, locationExists: true, hasQrSession: false }) ===
+            "menu"
+              ? t("on")
+              : t("off"),
+        })}
       </Typography>
 
       {isSelected && !location.isArchived && (
@@ -101,7 +106,7 @@ export default function LocationCard({
           }}
         >
           <TaskAltIcon sx={{ fontSize: 16 }} />
-          <Typography variant="caption">Currently selected</Typography>
+          <Typography variant="caption">{t("currentlySelected")}</Typography>
         </Box>
       )}
 
@@ -113,7 +118,7 @@ export default function LocationCard({
           onClick={handleSwitch}
           sx={{ alignSelf: "flex-start", fontSize: "0.75rem", px: 0, minHeight: 44 }}
         >
-          {isPending ? "Switching..." : "Switch to this location"}
+          {isPending ? t("switching") : t("switchTo")}
         </Button>
       )}
 
@@ -125,7 +130,7 @@ export default function LocationCard({
         startIcon={<EditIcon sx={{ fontSize: 14 }} />}
         sx={{ alignSelf: "flex-start", fontSize: "0.75rem", minHeight: 44 }}
       >
-        Edit
+        {t("edit")}
       </Button>
     </Card>
   );

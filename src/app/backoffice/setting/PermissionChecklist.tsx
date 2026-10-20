@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Checkbox, FormControlLabel, Stack, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 import {
   GRANTABLE_PERMISSIONS,
   type PermissionGroup,
@@ -16,8 +17,8 @@ function entriesIn(group: PermissionGroup) {
 
 /**
  * The grantable permissions as checkboxes, one fieldset (with its legend)
- * per catalog group, each box labelled with the catalog's label and
- * description — the ONE checklist both the access editor and the "add a
+ * per catalog group, each box labelled with its label and description
+ * (bo.permissions.<KEY> — the catalog's keys, the staff's language) — the ONE checklist both the access editor and the "add a
  * manager" form use. The whole row (box + words) is the click target,
  * at least 44px tall.
  */
@@ -30,6 +31,7 @@ export default function PermissionChecklist({
   onChange: (next: PermissionKey[]) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations("bo.permissions");
   function toggle(key: PermissionKey, checked: boolean) {
     onChange(
       checked
@@ -53,7 +55,7 @@ export default function PermissionChecklist({
             color="text.secondary"
             sx={{ p: 0 }}
           >
-            {group}
+            {t(`groups.${group}`)}
           </Typography>
           <Stack spacing={0.5}>
             {entriesIn(group).map((entry) => (
@@ -71,13 +73,13 @@ export default function PermissionChecklist({
                 }
                 label={
                   <Box sx={{ py: 1 }}>
-                    <Typography variant="body1">{entry.label}</Typography>
+                    <Typography variant="body1">{t(`${entry.key}.label`)}</Typography>
                     <Typography
                       id={`permission-${entry.key}-hint`}
                       variant="body2"
                       color="text.secondary"
                     >
-                      {entry.description}
+                      {t(`${entry.key}.description`)}
                     </Typography>
                   </Box>
                 }

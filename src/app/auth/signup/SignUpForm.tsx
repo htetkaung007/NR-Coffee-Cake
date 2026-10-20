@@ -16,6 +16,8 @@ import {
 import AuthCard from "../AuthCard";
 import GoogleIcon from "@mui/icons-material/Google";
 import NextLink from "next/link";
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import { registerAction } from "./action";
 import AuthCredentialFields from "../AuthCredentialFields";
 import { authButtonSx } from "../authButtonSx";
@@ -23,6 +25,8 @@ import AuthHeading from "../AuthHeading";
 import AuthSubmitButton from "../AuthSubmitButton";
 
 export function SignUpForm() {
+  const t = useTranslations("bo.auth");
+  const errorText = useStaffErrorMessage();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,7 +42,7 @@ export function SignUpForm() {
     const result = await registerAction({ name, email, password });
 
     if (!result.success) {
-      setErrorMessage(result.error.message);
+      setErrorMessage(errorText(result.error));
       setIsSaving(false);
       return;
     }
@@ -56,9 +60,7 @@ export function SignUpForm() {
     if (signInResult?.error) {
       // Rare: registered, but the automatic sign-in failed — send them to
       // the sign-in page rather than into the Backoffice.
-      setErrorMessage(
-        "Account created, but automatic sign-in failed. Please sign in.",
-      );
+      setErrorMessage(t("autoSignInFailed"));
       router.push("/auth/signIn");
       return;
     }
@@ -71,16 +73,16 @@ export function SignUpForm() {
       await signIn("google", { callbackUrl: "/backoffice" });
     } catch (error) {
       console.error("[SignUpForm] Google sign-up failed:", error);
-      setErrorMessage("An error occurred with Google Sign Up.");
+      setErrorMessage(t("googleSignUpError"));
     }
   };
 
   return (
     <AuthCard>
       <AuthHeading
-        eyebrow="Start Your Journey"
-        title="Create Account"
-        intro="Join us today and experience the best cafe management system."
+        eyebrow={t("startJourney")}
+        title={t("createAccount")}
+        intro={t("signUpIntro")}
       />
 
       {/* Google Sign Up Button */}
@@ -92,12 +94,12 @@ export function SignUpForm() {
         size="large"
         sx={{ ...authButtonSx, mb: 3 }}
       >
-        Sign Up with Google
+        {t("signUpGoogle")}
       </Button>
 
       <Divider sx={{ width: "100%", mb: 3 }}>
         <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-          OR WITH EMAIL
+          {t("orEmail")}
         </Typography>
       </Divider>
 
@@ -105,7 +107,7 @@ export function SignUpForm() {
       <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
         <TextField
           fullWidth
-          label="Full Name"
+          label={t("fullName")}
           variant="outlined"
           margin="normal"
           required
@@ -125,19 +127,19 @@ export function SignUpForm() {
           </Alert>
         )}
 
-        <AuthSubmitButton isBusy={isSaving}>Sign Up</AuthSubmitButton>
+        <AuthSubmitButton isBusy={isSaving}>{t("signUp")}</AuthSubmitButton>
 
         {/* Footer Link */}
         <Box sx={{ mt: 3, textAlign: "center" }}>
           <Typography variant="body2" color="text.secondary">
-            Already have an account?{" "}
+            {t("haveAccount")}{" "}
             <Link
               component={NextLink}
               href="/auth/signIn"
               variant="body2"
               sx={{ fontWeight: "bold", textDecoration: "none" }}
             >
-              Sign In
+              {t("signIn")}
             </Link>
           </Typography>
         </Box>

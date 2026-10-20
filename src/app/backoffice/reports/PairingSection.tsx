@@ -3,7 +3,9 @@
 import { Box, Card, IconButton, Skeleton, Stack, Typography } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { periodLabel, type ReportPeriod } from "@/app/lib/report/reportPeriod";
+import { useTranslations } from "next-intl";
+import type { ReportPeriod } from "@/app/lib/report/reportPeriod";
+import { useReportWords } from "./useReportWords";
 import { navigationDays, pairingMonthCaption } from "@/app/lib/report/reportView";
 import { ErrorRetry } from "./ReportStates";
 import type { PairingState } from "./usePairing";
@@ -33,8 +35,10 @@ export default function PairingSection({
   onRetry,
   onChangeDay,
 }: PairingSectionProps) {
+  const t = useTranslations("bo.reports");
+  const words = useReportWords();
   const { prevDay, nextDay } = navigationDays(period, today);
-  const caption = pairingMonthCaption(period, today);
+  const caption = pairingMonthCaption(period, today, words);
 
   return (
     <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 } }}>
@@ -49,10 +53,10 @@ export default function PairingSection({
       >
         <Box>
           <Typography variant="body1" component="h2" sx={sectionHeadingSx}>
-            Add-on pairing
+            {t("pairingTitle")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Pairing is calculated per calendar month
+            {t("pairingHint")}
           </Typography>
           {caption && (
             <Typography variant="body2" color="text.secondary">
@@ -64,11 +68,11 @@ export default function PairingSection({
         <Stack
           direction="row"
           role="group"
-          aria-label="Pairing month"
+          aria-label={t("pairingMonth")}
           sx={{ alignItems: "center", alignSelf: { xs: "center", sm: "auto" } }}
         >
           <IconButton
-            aria-label="Previous month"
+            aria-label={t("previousMonth")}
             onClick={() => onChangeDay(prevDay)}
             sx={{ width: 44, height: 44 }}
           >
@@ -79,10 +83,10 @@ export default function PairingSection({
             aria-live="polite"
             sx={{ minWidth: 148, textAlign: "center" }}
           >
-            {periodLabel(period)}
+            {words.period(period)}
           </Typography>
           <IconButton
-            aria-label="Next month"
+            aria-label={t("nextMonth")}
             disabled={nextDay === null}
             onClick={() => nextDay && onChangeDay(nextDay)}
             sx={{ width: 44, height: 44 }}
@@ -100,7 +104,7 @@ export default function PairingSection({
       )}
       {state.status === "ok" && state.data.menus.length === 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          No pairing data yet for this month
+          {t("noPairing")}
         </Typography>
       )}
     </Card>

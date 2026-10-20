@@ -5,7 +5,8 @@ import type { RejectReason } from "@/app/lib/order/rejectReason";
 import { Box, Typography } from "@mui/material";
 import RoundCard, { type Round, type RoundLine } from "./RoundCard";
 import type { VoidRequest } from "./VoidItemDialog";
-import { formatClockTime } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useClockTime } from "@/app/lib/hooks/useStaffWords";
 
 // Geometry of the decorative rail: a 2px line centred 11px from the
 // left, 12px dots centred on it, cards starting at spacing(4) = 32px.
@@ -79,10 +80,12 @@ export default function RoundTimeline({
     request: VoidRequest,
   ) => Promise<ActionResult<unknown>>;
 }) {
+  const t = useTranslations("bo.detail");
+  const clockTime = useClockTime();
   return (
     <Box
       component="ol"
-      aria-label="Orders"
+      aria-label={t("timelineLabel")}
       sx={{ position: "relative", listStyle: "none", m: 0, p: 0 }}
     >
       <Box
@@ -137,12 +140,8 @@ export default function RoundTimeline({
           color="text.secondary"
           hollow
         />
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          suppressHydrationWarning
-        >
-          {isTableGroup ? "Seated" : "Started"} · {formatClockTime(startedAt)}
+        <Typography variant="body2" color="text.secondary">
+          {t(isTableGroup ? "seated" : "started", { time: clockTime(startedAt) })}
         </Typography>
       </Box>
     </Box>

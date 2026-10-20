@@ -141,6 +141,7 @@ export class TableService {
       if (alreadyHasCounter) {
         throw new ValidationError(
           "This location already has a Counter QR code.",
+          "COUNTER_EXISTS",
         );
       }
     }
@@ -171,7 +172,10 @@ export class TableService {
   ) {
     const table = await TableService.getTableById(tableId, scope);
     if (table.isCounter) {
-      throw new ValidationError("The Counter QR code's name can't be changed.");
+      throw new ValidationError(
+        "The Counter QR code's name can't be changed.",
+        "COUNTER_NAME_FIXED",
+      );
     }
 
     return prisma.table.update({
@@ -242,7 +246,7 @@ export class TableService {
     if (!table.counterAccessKey) {
       throw new AppError(
         "This table has no access key to build a QR code from.",
-        "VALIDATION",
+        "NO_ACCESS_KEY",
       );
     }
 

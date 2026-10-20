@@ -1,16 +1,16 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Stack, Typography, useMediaQuery } from "@mui/material";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useTheme } from "@mui/material/styles";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
-import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
 import { useCan } from "@/app/components/StaffAccessProvider";
 import type { RejectReason } from "@/app/lib/order/rejectReason";
 import { canPrintBill, type EntryBill } from "@/app/lib/order/orderTotals";
-import { formatAmount, formatMoneyDelta } from "@/app/lib/orderFormat";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import {
   acceptCounterSessionAction,
   markEntryPaidAction,
@@ -56,6 +56,8 @@ export default function OrderDetailView({
   bill,
   sessionIds,
 }: OrderDetailViewProps) {
+  const t = useTranslations("bo.detail");
+  const money = useStaffMoney();
   const router = useRouter();
   const theme = useTheme();
   const isWide = useMediaQuery(theme.breakpoints.up("lg"));
@@ -116,11 +118,15 @@ export default function OrderDetailView({
 
   const pendingNumbers = bill.pendingRounds.map((round) => round.orderNumber);
   // Display only — markEntryPaidAction checks the permission itself.
+  const tPermissions = useTranslations("bo.permissions");
   const canTakePayment = useCan("ORDERS_MARK_PAID");
   const payBlockedReason = !canTakePayment
-    ? ASK_OWNER_HINTS.ORDERS_MARK_PAID
+    ? tPermissions("askOwner.ORDERS_MARK_PAID")
     : pendingNumbers.length > 0
-      ? `Accept or reject ${pendingNumbers.length === 1 ? "order" : "orders"} ${pendingNumbers.join(", ")} first`
+      ? t("payBlocked", {
+          count: pendingNumbers.length,
+          numbers: pendingNumbers.join(", "),
+        })
       : null;
 
   function renderBill(onClose?: () => void) {
@@ -172,7 +178,7 @@ export default function OrderDetailView({
               onVoid={canVoid ? voidLine : undefined}
             />
           </Box>
-          <OrderSidePanel label="Bill" showFrom="lg" width={360}>
+          <OrderSidePanel label={t("bill")} showFrom="lg" width={360}>
             {renderBill()}
           </OrderSidePanel>
         </Stack>
@@ -180,14 +186,14 @@ export default function OrderDetailView({
 
       <OrderBottomBar
         hideFrom="lg"
-        actionLabel="View bill"
+        actionLabel={t("viewBill")}
         onAction={() => setIsBillOpen(true)}
       >
         <Typography variant="body2" color="text.secondary">
-          Total to pay
+          {t("totalToPay")}
         </Typography>
         <Typography component="p" variant="h5">
-          {formatAmount(bill.total)}
+          {money.amount(bill.total)}
         </Typography>
         {bill.pendingAmount > 0 && (
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -197,14 +203,14 @@ export default function OrderDetailView({
               sx={{ color: "warning.main" }}
             />
             <Typography variant="body2" color="text.secondary">
-              {formatMoneyDelta(bill.pendingAmount)} waiting approval
+              {t("waitingApprovalAmount", { amount: money.delta(bill.pendingAmount) })}
             </Typography>
           </Stack>
         )}
       </OrderBottomBar>
 
       <SidePanelDrawer
-        label="Bill"
+        label={t("bill")}
         // Never over the side panel if the window widens while it's open.
         open={isBillOpen && !isWide}
         onClose={() => setIsBillOpen(false)}

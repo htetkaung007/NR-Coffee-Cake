@@ -1,6 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 
 /**
  * The total row at the foot of every bill panel — the order detail's
@@ -11,16 +11,18 @@ import { formatAmount } from "@/app/lib/orderFormat";
 export default function BillTotal({
   label,
   amount,
-  formatMoney = formatAmount,
+  formatMoney,
   sx,
 }: {
   label: string;
   amount: number;
-  /** How the amount reads — "8,997 MMK" (default). */
+  /** How the amount reads — default: the staff's money words, "8,997
+   *  MMK" / "8,997 ကျပ်" (useStaffMoney). */
   formatMoney?: (amount: number) => string;
   /** Layout only (e.g. the gap to the button below). */
   sx?: SxProps<Theme>;
 }) {
+  const money = useStaffMoney();
   return (
     <Stack
       direction="row"
@@ -32,7 +34,7 @@ export default function BillTotal({
     >
       <Typography variant="body1">{label}</Typography>
       <Typography component="p" variant="h5">
-        {formatMoney(amount)}
+        {(formatMoney ?? money.amount)(amount)}
       </Typography>
     </Stack>
   );

@@ -3,10 +3,10 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Typography } from "@mui/material";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { useTranslations } from "next-intl";
+import StaffDateProvider from "@/app/components/StaffDateProvider";
 import { periodFor } from "@/app/lib/report/reportPeriod";
-import { REPORT_FOOTNOTE, type ReportParams } from "@/app/lib/report/reportView";
+import type { ReportParams } from "@/app/lib/report/reportView";
 import type { ReportOverview } from "./action";
 import ItemsTab from "./ItemsTab";
 import OverviewTab from "./OverviewTab";
@@ -40,6 +40,7 @@ export default function ReportsView({
   overview,
   overviewError,
 }: ReportsViewProps) {
+  const t = useTranslations("bo.reports");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -58,7 +59,7 @@ export default function ReportsView({
   }
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <StaffDateProvider>
       <Box>
         <ReportsHeader
           params={params}
@@ -80,7 +81,7 @@ export default function ReportsView({
         >
           {overview === null ? (
             <ErrorRetry
-              message={overviewError ?? "Couldn't load the report."}
+              message={overviewError ?? t("loadErrorShort")}
               onRetry={retryOverview}
             />
           ) : params.tab === "overview" ? (
@@ -109,10 +110,10 @@ export default function ReportsView({
             color="text.secondary"
             sx={{ mt: 3 }}
           >
-            {REPORT_FOOTNOTE}.
+            {t("footnoteLine", { footnote: t("footnote") })}
           </Typography>
         </Box>
       </Box>
-    </LocalizationProvider>
+    </StaffDateProvider>
   );
 }

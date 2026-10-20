@@ -233,7 +233,7 @@ export class StaffOrderService {
       !root.isArchived &&
       root.billId === null &&
       (await StaffOrderService.hasOpenRound(prisma, root.id));
-    if (!isOpen) throw new ValidationError(BILL_CLOSED_MESSAGE);
+    if (!isOpen) throw new ValidationError(BILL_CLOSED_MESSAGE, "BILL_CLOSED");
     return { id: root.id, locationId: root.locationId, tableId: root.tableId };
   }
 
@@ -248,7 +248,7 @@ export class StaffOrderService {
     });
     const isOpen =
       locked.count > 0 && (await StaffOrderService.hasOpenRound(tx, billRootId));
-    if (!isOpen) throw new ValidationError(BILL_CLOSED_MESSAGE);
+    if (!isOpen) throw new ValidationError(BILL_CLOSED_MESSAGE, "BILL_CLOSED");
   }
 
   /** Does the bill (its root and every round joined to it) still have a

@@ -2,7 +2,7 @@ import { LocationService, ReportService } from "@/app/services";
 import { buildItemList, reportHref } from "@/app/lib/report/reportView";
 import { reportPeriodInputSchema } from "@/app/lib/schemas/reportSchema";
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
-import { formatShopDateTime } from "@/app/lib/shopDay";
+import { getFormatter, getTranslations } from "next-intl/server";
 import ReportSheet from "./ReportSheet";
 import { PrintMessage } from "../../printContext";
 
@@ -25,7 +25,6 @@ export default async function PrintReportPage({
   const raw = await searchParams;
 
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: "Please sign in to view reports.",
     access: "REPORTS_VIEW",
   });
   if (!scope) return fallback;
@@ -37,7 +36,7 @@ export default async function PrintReportPage({
   );
   if (!selectedLocation) {
     return (
-      <PrintMessage>No location selected. Please choose a location first.</PrintMessage>
+      <PrintMessage>{(await getTranslations("bo.access"))("noLocation")}</PrintMessage>
     );
   }
 
@@ -46,7 +45,9 @@ export default async function PrintReportPage({
     anchorDay: raw.day,
   });
   if (!parsed.success) {
-    return <PrintMessage>This report link isn&apos;t valid.</PrintMessage>;
+    return (
+      <PrintMessage>{(await getTranslations("bo.reports"))("invalidLink")}</PrintMessage>
+    );
   }
   const { kind, anchorDay } = parsed.data;
 
@@ -74,7 +75,12 @@ export default async function PrintReportPage({
   return (
     <ReportSheet
       locationName={location?.name ?? ""}
-      generatedAt={formatShopDateTime(new Date())}
+      // Shop time, in the staff's language (next-intl), digits 0–9.
+      generatedAt={(await getFormatter()).dateTime(new Date(), {
+        dateStyle: "medium",
+        timeStyle: "short",
+        numberingSystem: "latn",
+      })}
       overview={overview}
       bestSellers={bestSellers}
       topAddons={items.addons.slice(0, TOP_ADDONS)}

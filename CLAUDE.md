@@ -431,11 +431,17 @@ independently of the app config). Everything else still goes through
   Only id + name of those locations reach the browser. It never links to
   or mentions the Backoffice — staff open /backoffice directly.
 
-## 13c. Customer languages (Myanmar / English)
+## 13c. Languages (Myanmar / English) — customers AND staff
 
 - **next-intl, WITHOUT i18n routing**: no /[locale] segment, nothing in
-  the URL, QR links or `src/proxy.ts`. The request config is
-  `src/i18n/request.ts` (plugin in next.config.ts).
+  the URL or QR links. The request config is `src/i18n/request.ts`
+  (plugin in next.config.ts). Two languages live side by side, each in
+  its own cookie (`lib/i18n/backofficeLocale.ts`): the **staff surface**
+  (/backoffice, /print, /auth) reads `BO_LOCALE`, every other page reads
+  `NEXT_LOCALE`. request.ts can't see the pathname, so `src/proxy.ts`
+  (matcher /backoffice, /print, /auth) sets the request header
+  `x-app-surface: staff` (always overwriting a client's copy) and
+  request.ts picks the cookie from it.
 - The language is the **`NEXT_LOCALE` cookie** ("my" | "en", default
   "my" — `lib/i18n/locale.ts`), read on the SERVER so the first render
   is already right. Never localStorage. It's set only by
@@ -446,12 +452,24 @@ independently of the app config). Everything else still goes through
   namespaced by screen. Keys are type-safe (`src/types/next-intl.d.ts`
   registers en.json) — a wrong key fails tsc; `lib/i18n/messages.test.ts`
   checks both files have the same keys and placeholders.
-- The provider (NextIntlClientProvider) lives ONLY in the (storefront)
-  layout. A component shared with the Backoffice (e.g. MenuCard) takes
+- Providers: the (storefront) layout's ships the customer namespaces
+  only (`customerClientMessages`, everything but `bo`);
+  `components/StaffIntlProvider` (Backoffice, (print) and auth layouts)
+  ships only `bo.*` (`staffClientMessages`), wraps the page in
+  `lang={locale}` and sets `<html lang>` (`components/HtmlLang`). A
+  component shared by BOTH surfaces (e.g. MenuCard, ConfirmDialog) takes
   its words as props with English defaults — never useTranslations.
 - Glossary (Unicode Burmese, never Zawgyi): order → အော်ဒါ · counter →
   ကောင်တာ · table → စားပွဲ · cart → ခြင်းတောင်း · send order → အော်ဒါ
-  တင်မည် · add → ထည့်မည် · menu → မီနူး · the price unit stays "MMK".
+  တင်မည် · add → ထည့်မည် · menu → မီနူး · the price unit stays "MMK"
+  (customers: "Kyats" / "ကျပ်"). Backoffice (owner-approved): Orders →
+  အော်ဒါများ · New order → အော်ဒါအသစ် · Tables → စားပွဲများ · Menus →
+  မီနူးများ · Menu categories → မီနူးအမျိုးအစား · Add-ons → ထပ်ဖြည့်စရာ ·
+  Reports → အစီရင်ခံစာ · Locations → ဆိုင်ခွဲများ · Settings → ဆက်တင် ·
+  Dark mode → အမှောင်မုဒ် · Sign out → ထွက်မည် · owner → ဆိုင်ပိုင်ရှင် ·
+  manager → မန်နေဂျာ · takeaway → ပါဆယ် · void → ပယ်ဖျက် · reject →
+  ငြင်းပယ် · paid → ငွေရှင်းပြီး · bill → ဘေလ် · receipt / voucher →
+  ပြေစာ / ဘောင်ချာ · location → ဆိုင်ခွဲ · stock → လက်ကျန်.
 - **Shop data is never translated** by us: menu, category and table
   names, the shop name, staff-typed notes — only our own UI text. The
   OWNER may give a Myanmar name: Menu (`nameMy`, `descriptionMy`),
@@ -460,32 +478,63 @@ independently of the app config). Everything else still goes through
   `localizedText(locale, en, my)` (lib/i18n/localizedText) — Myanmar when
   chosen AND not blank, else the English name, which is always there.
   Order/price snapshots and stored history stay English and are never
-  rewritten. The Backoffice, staff New Order, Order List, print, reports
-  and CSV always show the English name. The customer menu search matches
-  BOTH names (lib/storefront/menuSearch), whatever the language.
+  rewritten. The Myanmar Backoffice (and /print) shows shop data the same
+  way — `localizedText(staffLocale, en, my)` (bills carry
+  `BreakdownRow.nameMy`, reports and lists carry `nameMy`) — except where
+  a screen has its own EN | မြန်မာ toggle (below). CSV exports always use
+  the English name. Searches match BOTH names, whatever the language.
 - **Customer prices**: `common.price` — "{amount} Kyats" / "{amount}
   ကျပ်" (the amount from `formatAmountParts`: en-US digits and
   separators), via `useCustomerPrice` (or `getTranslations` on a server
   page); shared components (MenuCard, menu detail, line notices) take it
-  through their labels. The Backoffice, /print, Reports and CSV keep
-  `formatAmount` — "MMK".
+  through their labels. Staff screens (Backoffice, /print, the printed
+  report) use `bo.money` — "4,500 MMK" / "4,500 ကျပ်" — through
+  `useStaffMoney` (lib/hooks/useStaffWords, pure builder
+  lib/i18n/staffMoney); never a literal. CSV keeps `formatAmount` ("MMK").
 - **Myanmar typography** is tuned in ONE place:
   `lib/theme/myanmarTypography.ts` (`MYANMAR_FONT_SCALE`, minimum
   line-heights 1.6 / 1.8) applied to `:lang(my)` text through BOTH
   themes' CssBaseline (odTheme and theme.ts — the Backoffice's Myanmar
   views match the customer's). Myanmar parts carry lang="my" (langAttr).
   Never set Myanmar sizes in components.
-- The Backoffice stays English (root `<html lang="en">`) — **decided: no
-  Backoffice translation.** Its only Myanmar is shop data the owner
-  typed (e.g. the Add-ons panel's EN | မြန်မာ names toggle).
+- **The Backoffice is translated (#98 — reverses the old "no Backoffice
+  translation")**: staff pick EN | မြန်မာ in the account menu's Language
+  row → `setBackofficeLocaleAction` (backoffice/language/action.ts,
+  requireStaff first) sets `BO_LOCALE` ("en" | "my", default "en";
+  httpOnly, sameSite lax, 1 year, `secure` from the request) +
+  router.refresh(). Never localStorage. Every staff word is `bo.*` in
+  messages/*.json: sidebar, top bar, menus, pages, dialogs, snackbars,
+  aria-labels, the permissions catalog's words
+  (`bo.permissions.<KEY>`, `askOwner.<KEY>` — lib/access/permissions.ts
+  keeps only keys), staff enum labels (`bo.voidReason`,
+  `bo.rejectReason[Short]`, `bo.history.cancelReason`), Reports
+  (`lib/report/reportWords`), print vouchers and sign-in / sign-up (they
+  follow BO_LOCALE, no switch of their own). Stays English: CSV exports
+  (headers and values), server logs, the database, stored snapshots,
+  shop data without a Myanmar name, and the product name in the tab
+  title.
+- **Staff errors → `bo.errors.<CODE>`**: `useStaffErrorMessage()`
+  (lib/i18n/staffErrorMessage): English shows the server's message as
+  before; Myanmar shows the code's words (with `params`) or
+  `bo.errors.generic` — never the English message. A staff-reachable
+  error gets its own stable code (`ValidationError(message, "EMAIL_TAKEN")`)
+  in STAFF_ERROR_CODES + both files (tested). Zod shape errors stay
+  VALIDATION_ERROR (generic in Myanmar; forms check fields themselves).
+- Staff dates and times: next-intl's formatter (shop timezone) with
+  `numberingSystem: "latn"` — digits 0–9 in both languages, like money
+  (`useClockTime`, `useHistoryWords`, `reportWords`); MUI X pickers get
+  dayjs's locale via `components/StaffDateProvider`.
 - **NameLanguageToggle** (`components/NameLanguageToggle.tsx`) is THE
-  EN | မြန်မာ switch for Backoffice views of what customers could read
-  (the Add-ons panel, the add-on form's preview, staff New Order's menu
-  side). It is display only — it never changes stored data: the staff
-  cart keeps what it stores today, the order sent and every Order List /
-  detail / kitchen / print / report screen stay English. Its Myanmar
-  words come from `lib/i18n/customerWords` → `lib/i18n/customerLabels`,
-  the same key → label mapping the storefront uses (never literals).
+  EN | မြန်မာ switch look. As a preview of what customers could read it
+  stays on: the Add-ons panel and the add-on form's preview (unchanged,
+  their own defaults), staff New Order's menu side (default = the
+  Backoffice language until the device has its own `staffMenuLang:v1`)
+  and the print preview's voucher language (`printVoucherLang:v1`,
+  default = the Backoffice language; changes only the voucher's labels,
+  money words and Myanmar names; never on paper). Display only — never
+  stored data. Its Myanmar customer words come from
+  `lib/i18n/customerWords` → `lib/i18n/customerLabels`. The account
+  menu's Language row uses the same toggle for BO_LOCALE.
 - **Add-on names on order lines are read LIVE** from Addon /
   AddonCategories (`LINE_ADDONS_WITH_GROUP` in orderLineQuery — the
   group's name and nameMy only), not snapshotted: renaming a group or
@@ -501,8 +550,9 @@ independently of the app config). Everything else still goes through
   `roundStatus.<V>` (plus WITHDRAWN), `cancelReason.<V>` — looked up with
   `useCustomerLabels` (lib/hooks). The value lists are
   `lib/i18n/customerEnums.ts`, built from the Prisma enums, and a test
-  checks every value has words in both files. The Backoffice keeps its
-  own English labels (lib/order/voids, lib/order/cancelReason).
+  checks every value has words in both files. The Backoffice has its own
+  `bo.*` labels (the English ones in lib/order/voids, lib/order/
+  cancelReason, lib/order/rejectReason stay for CSV and tests).
 - **Customer errors → `errors.<CODE>`**: a customer screen never shows
   an action's English `message`; it shows `useErrorMessage()(error)`
   (lib/i18n/errorMessage), which translates `error.code` (filling in

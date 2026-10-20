@@ -71,6 +71,10 @@ const exportLineSelect = {
   voids: { select: { quantity: true } },
 } as const;
 
+/** A menu's or add-on's names: English (always there) and the shop's
+ *  Myanmar one (null when not given). */
+type ShopName = { name: string; nameMy: string | null };
+
 function toExportLine(
   order: {
     id: number;
@@ -81,12 +85,13 @@ function toExportLine(
     OrdersAddons: { unitPrice: number; addon: { name: string } }[];
     voids: { quantity: number }[];
   },
-  menuNames: Map<number, string>,
+  menuNames: Map<number, ShopName>,
 ): ExportLine {
   return {
     id: order.id,
     menuId: order.menuId,
-    menuName: menuNames.get(order.menuId) ?? "Unknown item",
+    // CSV exports stay English (the English name, always there).
+    menuName: menuNames.get(order.menuId)?.name ?? "Unknown item",
     // What was sold — voided units left out (lib/order/voids).
     quantity: effectiveQuantity(order),
     unitPrice: order.unitPrice,
@@ -236,7 +241,9 @@ export class ReportService {
       ReportService.loadMenuCategoryIds(companyId, menuIds),
       ReportService.loadAddonNames(current.addons.map((row) => row.addonId)),
     ]);
-    const menuName = (menuId: number) => menuNames.get(menuId) ?? "Unknown item";
+    const menuName = (menuId: number) => menuNames.get(menuId)?.name ?? "Unknown item";
+    // The shop's Myanmar name, for a Myanmar staff screen (null: none).
+    const menuNameMy = (menuId: number) => menuNames.get(menuId)?.nameMy ?? null;
     const categoryIds = (menuId: number) => categoryIdsByMenu.get(menuId) ?? [];
 
     const changes = new Map(
@@ -249,6 +256,7 @@ export class ReportService {
       current.menus.map((row) => ({
         ...row,
         name: menuName(row.menuId),
+        nameMy: menuNameMy(row.menuId),
         categoryIds: categoryIds(row.menuId),
         deltaPercent: changes.get(row.menuId) ?? null,
       })),
@@ -263,7 +271,8 @@ export class ReportService {
     const addons = current.addons
       .map((row) => ({
         ...row,
-        name: addonNames.get(row.addonId) ?? "Unknown add-on",
+        name: addonNames.get(row.addonId)?.name ?? "Unknown add-on",
+        nameMy: addonNames.get(row.addonId)?.nameMy ?? null,
         isRequiredGroup: requiredGroupAddonIds.has(row.addonId),
       }))
       .sort(
@@ -281,6 +290,7 @@ export class ReportService {
       slowSellers: slowSellers.map((row) => ({
         ...row,
         name: menuName(row.menuId),
+        nameMy: menuNameMy(row.menuId),
         categoryIds: categoryIds(row.menuId),
       })),
       addons,
@@ -291,6 +301,7 @@ export class ReportService {
       categories: orderable.visibleCategories.map((category) => ({
         id: category.id,
         name: category.name,
+        nameMy: category.nameMy ?? null,
       })),
     };
   }
@@ -471,9 +482,11 @@ export class ReportService {
       ReportService.loadMenuNames(menuIds),
       ReportService.loadAddonNames(addonIds),
     ]);
-    const menuName = (menuId: number) => menuNames.get(menuId) ?? "Unknown item";
+    const menuName = (menuId: number) => menuNames.get(menuId)?.name ?? "Unknown item";
+    const menuNameMy = (menuId: number) => menuNames.get(menuId)?.nameMy ?? null;
     const addonName = (addonId: number) =>
-      addonNames.get(addonId) ?? "Unknown add-on";
+      addonNames.get(addonId)?.name ?? "Unknown add-on";
+    const addonNameMy = (addonId: number) => addonNames.get(addonId)?.nameMy ?? null;
 
     return {
       period,
@@ -485,11 +498,13 @@ export class ReportService {
           return {
             menuId,
             name: menuName(menuId),
+            nameMy: menuNameMy(menuId),
             units: menu.units,
             status: menu.status,
             pairs: menu.pairs.map((pair) => ({
               ...pair,
               name: addonName(pair.addonId),
+              nameMy: addonNameMy(pair.addonId),
             })),
           };
         })
@@ -503,9 +518,11 @@ export class ReportService {
         .map((addonId) => ({
           addonId,
           name: addonName(addonId),
+          nameMy: addonNameMy(addonId),
           menus: pairing.byAddon[addonId].menus.map((entry) => ({
             ...entry,
             name: menuName(entry.menuId),
+            nameMy: menuNameMy(entry.menuId),
           })),
         }))
         .sort(
@@ -659,22 +676,28 @@ export class ReportService {
     }));
   }
 
+  /** menu id → its names (English, and the shop's Myanmar one). */
   private static async loadMenuNames(menuIds: readonly number[]) {
-    if (menuIds.length === 0) return new Map<number, string>();
+    if (menuIds.length === 0) return new Map<number, ShopName>();
     const menus = await prisma.menu.findMany({
       where: { id: { in: [...menuIds] } },
-      select: { id: true, name: true },
+      select: { id: true, name: true, nameMy: true },
     });
-    return new Map(menus.map((menu) => [menu.id, menu.name]));
+    return new Map(
+      menus.map((menu) => [menu.id, { name: menu.name, nameMy: menu.nameMy }]),
+    );
   }
 
+  /** add-on id → its names (English, and the shop's Myanmar one). */
   private static async loadAddonNames(addonIds: readonly number[]) {
-    if (addonIds.length === 0) return new Map<number, string>();
+    if (addonIds.length === 0) return new Map<number, ShopName>();
     const addons = await prisma.addon.findMany({
       where: { id: { in: [...addonIds] } },
-      select: { id: true, name: true },
+      select: { id: true, name: true, nameMy: true },
     });
-    return new Map(addons.map((addon) => [addon.id, addon.name]));
+    return new Map(
+      addons.map((addon) => [addon.id, { name: addon.name, nameMy: addon.nameMy }]),
+    );
   }
 
   /** menu id → ids of the company's live categories it is linked to. */

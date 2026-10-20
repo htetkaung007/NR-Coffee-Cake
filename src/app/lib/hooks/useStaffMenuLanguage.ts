@@ -5,7 +5,7 @@ import { readStorage, setStorageItem } from "./useStoredValue";
 import type { AppLocale } from "@/app/lib/i18n/locale";
 import {
   STAFF_MENU_LANGUAGE_KEY,
-  parseStaffMenuLanguage,
+  parseStoredLanguage,
 } from "@/app/lib/i18n/staffMenuLanguage";
 
 /** The choice made on this page load — wins over storage, so a switch
@@ -30,24 +30,26 @@ function subscribe(onChange: () => void) {
   };
 }
 
-function readStored(): AppLocale {
+function readStored(fallback: AppLocale): AppLocale {
   if (chosen !== null) return chosen;
-  // Storage blocked (private mode, policy) reads as null — English.
-  return parseStaffMenuLanguage(readStorage(STAFF_MENU_LANGUAGE_KEY));
+  // Nothing stored, or storage blocked (private mode, policy): the
+  // staff's own Backoffice language.
+  return parseStoredLanguage(readStorage(STAFF_MENU_LANGUAGE_KEY), fallback);
 }
 
 /**
- * The New Order menu side's language, remembered on this device. `null`
- * until the browser has read it (the server never knows it), so the page
- * can hold the menu's space instead of flashing the other language.
+ * The New Order menu side's language, remembered on this device; until
+ * the device has its own choice, the staff's Backoffice language
+ * (`fallback`, BO_LOCALE). `null` until the browser has read it (the
+ * server never knows it), so the page can hold the menu's space instead
+ * of flashing the other language.
  */
-export function useStaffMenuLanguage(): [
-  AppLocale | null,
-  (next: AppLocale) => void,
-] {
+export function useStaffMenuLanguage(
+  fallback: AppLocale,
+): [AppLocale | null, (next: AppLocale) => void] {
   const language = useSyncExternalStore<AppLocale | null>(
     subscribe,
-    readStored,
+    () => readStored(fallback),
     () => null,
   );
   const setLanguage = useCallback((next: AppLocale) => {

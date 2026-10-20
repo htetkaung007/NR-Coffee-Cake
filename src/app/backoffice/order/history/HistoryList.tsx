@@ -1,5 +1,7 @@
 "use client";
 
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useTranslations } from "next-intl";
 import {
   useCallback,
   useEffect,
@@ -91,6 +93,9 @@ export default function HistoryList({
   const [nextCursor, setNextCursor] = useState(seedNextCursor ?? null);
   const [status, setStatus] = useState<Status>(seedItems ? "idle" : "loadingFirst");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const t = useTranslations("bo.history");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
 
   const inFlightRef = useRef(false);
 
@@ -117,14 +122,14 @@ export default function HistoryList({
     });
     if (!result.success) {
       setStatus("errorFirst");
-      setErrorMessage(result.error.message);
+      setErrorMessage(errorText(result.error));
       return;
     }
     setItems(result.data.items);
     setNextCursor(result.data.nextCursor);
     setStatus("idle");
     // tab / day / search are fixed per mount (a change remounts this).
-  }, [tab, day, search]);
+  }, [tab, day, search, errorText]);
 
   const loadMore = useCallback(async () => {
     if (inFlightRef.current || !nextCursor) return;
@@ -140,13 +145,13 @@ export default function HistoryList({
     inFlightRef.current = false;
     if (!result.success) {
       setStatus("errorMore");
-      setErrorMessage(result.error.message);
+      setErrorMessage(errorText(result.error));
       return;
     }
     setItems((current) => [...current, ...result.data.items]);
     setNextCursor(result.data.nextCursor);
     setStatus("idle");
-  }, [tab, day, search, nextCursor]);
+  }, [tab, day, search, nextCursor, errorText]);
 
   // This instance is remounted (fresh key) whenever tab/day/search
   // change, so an empty dependency array really does mean "once per
@@ -163,7 +168,7 @@ export default function HistoryList({
         if (cancelled) return;
         if (!result.success) {
           setStatus("errorFirst");
-          setErrorMessage(result.error.message);
+          setErrorMessage(errorText(result.error));
           return;
         }
         setItems(result.data.items);
@@ -175,7 +180,7 @@ export default function HistoryList({
       cancelled = true;
     };
     // All fixed per mount (see above), so this runs once per mount.
-  }, [seedItems, tab, day, search]);
+  }, [seedItems, tab, day, search, errorText]);
 
   // The IntersectionObserver callback always calls the LATEST loadMore
   // (which closes over the current nextCursor) via a ref, same pattern
@@ -222,10 +227,10 @@ export default function HistoryList({
     return (
       <Stack spacing={1} sx={{ alignItems: "center", py: 4 }}>
         <Typography color="text.secondary">
-          {errorMessage ?? "Couldn't load order history."}
+          {errorMessage ?? t("loadError")}
         </Typography>
         <Button variant="outlined" onClick={() => void loadFirstPage()}>
-          Retry
+          {tCommon("retry")}
         </Button>
       </Stack>
     );
@@ -285,10 +290,10 @@ export default function HistoryList({
           sx={{ alignItems: "center", justifyContent: "center", py: 2 }}
         >
           <Typography color="text.secondary">
-            {errorMessage ?? "Couldn't load more"}
+            {errorMessage ?? t("loadMoreError")}
           </Typography>
           <Button variant="outlined" size="small" onClick={() => void loadMore()}>
-            Retry
+            {tCommon("retry")}
           </Button>
         </Stack>
       )}
@@ -299,14 +304,14 @@ export default function HistoryList({
           color="text.secondary"
           sx={{ textAlign: "center", py: 2 }}
         >
-          That&apos;s all
+          {t("thatsAll")}
         </Typography>
       )}
 
       {nextCursor !== null && status !== "loadingMore" && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
           <Button variant="outlined" onClick={() => void loadMore()}>
-            Load more
+            {t("loadMore")}
           </Button>
         </Box>
       )}

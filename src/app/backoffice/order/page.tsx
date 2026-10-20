@@ -4,7 +4,6 @@ import OrderListView from "./OrderListView";
 
 export default async function OrderPage() {
   const { context, fallback } = await requireBackofficeContext({
-    signedOut: "Please sign in to view orders.",
     access: "staff",
   });
   if (!context) return fallback;

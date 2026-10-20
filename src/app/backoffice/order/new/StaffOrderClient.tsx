@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Alert,
   Box,
@@ -13,7 +14,7 @@ import {
 } from "@mui/material";
 import { alpha, keyframes, useTheme } from "@mui/material/styles";
 import { cartLinesTotal, sumQuantities } from "@/app/lib/order/orderTotals";
-import { countLabel, formatAmount } from "@/app/lib/orderFormat";
+import { useStaffErrorMessage, useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import {
   touchTabletLandscapeMedia,
   reducedMotionQuery,
@@ -73,6 +74,7 @@ import StaffOrderPanel, {
 } from "./StaffOrderPanel";
 import OrderTargetPicker, {
   targetName,
+  useTargetWords,
   type PickerOccupancy,
   type StaffTable,
 } from "./OrderTargetPicker";
@@ -118,14 +120,26 @@ export default function StaffOrderClient({
   menus,
   categories,
 }: StaffOrderClientProps) {
+  const t = useTranslations("bo.newOrder");
+  const tCommon = useTranslations("bo.common");
+  const money = useStaffMoney();
+  const errorText = useStaffErrorMessage();
+  const targetWords = useTargetWords();
   const router = useRouter();
   const theme = useTheme();
-  // The menu side's EN | မြန်မာ (this device's choice; null until read).
-  // Display only — the stored cart and the order sent never change.
-  const [menuLanguage, setMenuLanguage] = useStaffMenuLanguage();
+  // The staff's Backoffice language (BO_LOCALE): every staff control.
+  const uiLanguage = useLocale();
+  // The menu side's EN | မြန်မာ (this device's choice — until it has
+  // one, the Backoffice language; null until read). Display only — the
+  // stored cart and the order sent never change.
+  const [menuLanguage, setMenuLanguage] = useStaffMenuLanguage(uiLanguage);
   const englishDetailLabels = useOrderUiLabels();
   const detailLabels =
     myanmarWordsOrNull(menuLanguage)?.orderUi ?? englishDetailLabels;
+  // The current order's line notices ("Only 1 left", "Sold out — …")
+  // are staff controls: the Backoffice language, whatever the menu side.
+  const noticeLabels =
+    myanmarWordsOrNull(uiLanguage)?.orderUi ?? englishDetailLabels;
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
   // Tables' In use / Free: re-rendered by the server on the Order List's
@@ -227,7 +241,7 @@ export default function StaffOrderClient({
   const noOpenBillsId = useId();
 
   const nameOf = (of: OrderTarget | null) =>
-    of ? targetName(of, tables, occupancy.counterBills) : null;
+    of ? targetName(of, tables, occupancy.counterBills, targetWords) : null;
   const currentTarget = nameOf(target);
 
   // Once the stored cart is known: preselect the link's target (asking
@@ -239,7 +253,7 @@ export default function StaffOrderClient({
   // A send is out or unanswered: lines and target are locked until it's
   // settled (the store refuses changes too — this only says why).
   const isLocked = isSendUnconfirmed(cart);
-  const lockedMessage = "Wait until we know whether the order went through.";
+  const lockedMessage = t("locked");
 
   const checkedLines = validation.result?.lines ?? [];
   const lines: StaffCartLine[] = cart.lines.map((line, index) => {
@@ -300,6 +314,15 @@ export default function StaffOrderClient({
     if (!isOrderOpen) setAddedPulse((count) => count + 1);
   }
 
+  /** Picking who it's for starts a new order — in this browser only;
+   *  nothing is written until Send. */
+  function handleTargetChange(next: OrderTarget | null) {
+    setPendingSwitch(null);
+    setError(null);
+    setTablePrompt(false);
+    staffCart.chooseTarget(next);
+  }
+
   /** The picker's change: with items in the order, ask first (switching
    *  clears it); the field keeps showing the old target until confirmed. */
   function requestTargetChange(next: OrderTarget | null) {
@@ -327,14 +350,6 @@ export default function StaffOrderClient({
     }
   }, [staffCart.isLoaded, fromLink, router]);
 
-  /** Picking who it's for starts a new order — in this browser only;
-   *  nothing is written until Send. */
-  function handleTargetChange(next: OrderTarget | null) {
-    setPendingSwitch(null);
-    setError(null);
-    setTablePrompt(false);
-    staffCart.chooseTarget(next);
-  }
   /** The toggle: the other mode keeps the selection only if it belongs
    *  there (it can't — a target has one mode — so it's cleared, asking
    *  first when the order has items). */
@@ -383,7 +398,7 @@ export default function StaffOrderClient({
     note: string,
     detail: Parameters<typeof toBrowserCartLine>[0],
   ): Promise<string | null> {
-    if (target === null) return "Choose a table or Counter first.";
+    if (target === null) return t("chooseFirstSentence");
     if (isLocked) return lockedMessage;
     const line = toBrowserCartLine(detail, quantity, addonIds, note);
     const lineIndex = dialog?.lineIndex;
@@ -426,9 +441,9 @@ export default function StaffOrderClient({
     setError(null);
     setSent(
       how === "sent"
-        ? { message: `Order ${order.orderNumber} sent to the kitchen`, entryKey: null }
+        ? { message: t("sent", { number: order.orderNumber }), entryKey: null }
         : {
-            message: `Order ${order.orderNumber} was already sent`,
+            message: t("alreadySent", { number: order.orderNumber }),
             entryKey: order.entryKey,
           },
     );
@@ -448,12 +463,12 @@ export default function StaffOrderClient({
     } catch {
       setSendCheck({
         state: "failed",
-        message: "Couldn't reach the server to check whether the order went through.",
+        message: t("checkFailed"),
       });
       return;
     }
     if (!response.success) {
-      setSendCheck({ state: "failed", message: response.error.message });
+      setSendCheck({ state: "failed", message: errorText(response.error) });
       return;
     }
     if (response.data.status === "sent") {
@@ -462,9 +477,7 @@ export default function StaffOrderClient({
     }
     staffCart.abandonSend();
     setSendCheck(null);
-    setError(
-      "The order wasn't sent. Check it, then send again.",
-    );
+    setError(t("notSent"));
   }
 
   // A stored order that was mid-send when the page closed or reloaded:
@@ -514,7 +527,7 @@ export default function StaffOrderClient({
       } else {
         // A plain refusal (a closed bill, a table gone): nothing written.
         staffCart.abandonSend();
-        setError(response.error.message);
+        setError(errorText(response.error));
       }
       return;
     }
@@ -524,9 +537,7 @@ export default function StaffOrderClient({
       staffCart.abandonSend();
       validation.showResult(result.validation);
       setError(
-        result.status === "pricesChanged"
-          ? "Prices have changed — check the order, then send again."
-          : "Some items can't be sent as they are — see below.",
+        result.status === "pricesChanged" ? t("pricesChanged") : t("cantSend"),
       );
       return;
     }
@@ -534,20 +545,20 @@ export default function StaffOrderClient({
   }
 
   const sendBlockedReason = isLocked && !isSending
-    ? "Waiting to hear whether the order went through"
+    ? t("waitingToHear")
     : target === null
-      ? "Choose a table or Counter first"
+      ? t("chooseFirst")
       : lines.length === 0
-        ? "Add items to start an order"
+        ? t("addItemsFirst")
         : lines.some((line) => line.blocked)
-          ? "Fix the items marked below first"
+          ? t("fixItemsFirst")
           : null;
 
   if (locationId === null) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="warning">
-          You aren&apos;t assigned to a location yet — contact an Admin.
+          {t("noLocation")}
         </Alert>
       </Box>
     );
@@ -559,8 +570,8 @@ export default function StaffOrderClient({
       // whom the order is for.
       title={
         inDrawer && currentTarget
-          ? `Current order — ${currentTarget}`
-          : "Current order"
+          ? t("currentOrderFor", { target: currentTarget })
+          : t("currentOrder")
       }
       lines={lines}
       total={total}
@@ -604,14 +615,14 @@ export default function StaffOrderClient({
       >
       <Box sx={isPickerRow ? { [touchTabletLandscapeMedia]: { flexShrink: 0 } } : undefined}>
       <SegmentedTabs
-        ariaLabel="Order for"
+        ariaLabel={t("orderFor")}
         value={mode}
         onSelect={selectMode}
         items={[
-          { value: "new", label: "New order" },
+          { value: "new", label: t("modeNew") },
           {
             value: "open",
-            label: "Add to open bill",
+            label: t("modeOpen"),
             count: openCount,
             disabled: openCount === 0,
             describedBy: openCount === 0 ? noOpenBillsId : undefined,
@@ -635,7 +646,7 @@ export default function StaffOrderClient({
           color="text.secondary"
           sx={{ mb: 1.5 }}
         >
-          No open bills
+          {t("noOpenBills")}
         </Typography>
       )}
       </Box>
@@ -665,17 +676,20 @@ export default function StaffOrderClient({
           onClose={() => setLinkNotice(null)}
           sx={{ mt: 1 }}
         >
-          {linkNotice}
+          {t(linkNotice)}
         </Alert>
       )}
     </>
   );
   const pendingSwitchName = pendingSwitch
     ? (nameOf(pendingSwitch.next) ??
-      (mode === "new" ? "Add to open bill" : "New order"))
+      (mode === "new" ? t("modeOpen") : t("modeNew")))
     : null;
 
   return (
+    // The line notices in Current order speak the Backoffice language;
+    // the menu detail below gets the menu side's own (detailLabels).
+    <OrderUiLabelsProvider value={noticeLabels}>
     <Box sx={{ px: { xs: 0, sm: 2, lg: 3 }, pt: { xs: 1.5, sm: 2, lg: 3 } }}>
       <Stack direction="row" useFlexGap sx={{ gap: 3, alignItems: "flex-start" }}>
         <Box sx={{ flex: 1, minWidth: 0, pb: { lg: 3 } }}>
@@ -691,12 +705,12 @@ export default function StaffOrderClient({
             }}
           >
             <Typography component="h1" variant="h6">
-              New Order
+              {t("title")}
             </Typography>
             <NameLanguageToggle
               value={menuLanguage ?? "en"}
               onChange={setMenuLanguage}
-              ariaLabel="Menu language"
+              ariaLabel={t("menuLanguage")}
             />
           </Stack>
           {!isDesktop && <Box sx={{ mb: 2 }}>{picker}</Box>}
@@ -709,7 +723,7 @@ export default function StaffOrderClient({
         </Box>
 
         <OrderSidePanel
-          label="Current order"
+          label={t("currentOrder")}
           showFrom="lg"
           width={400}
           fullHeight
@@ -722,7 +736,7 @@ export default function StaffOrderClient({
       {/* Pinned to the screen's bottom edge however few menus there are. */}
       <OrderBottomBar
         hideFrom="lg"
-        actionLabel="View order"
+        actionLabel={t("viewOrder")}
         onAction={() => setIsOrderOpen(true)}
         pinned
       >
@@ -753,15 +767,15 @@ export default function StaffOrderClient({
           <Typography variant="body2" sx={{ color: "text.primary" }}>
             {currentTarget && <>{currentTarget} · </>}
             {itemCount === 0 ? (
-              "No items yet"
+              t("noItems")
             ) : (
               <>
-                {countLabel(itemCount, "item", "items")} ·{" "}
+                {tCommon("itemCount", { count: itemCount })} ·{" "}
                 <Box
                   component="span"
                   sx={{ ...moneySx, whiteSpace: "nowrap" }}
                 >
-                  {formatAmount(total)}
+                  {money.amount(total)}
                 </Box>
               </>
             )}
@@ -770,7 +784,11 @@ export default function StaffOrderClient({
       </OrderBottomBar>
 
       <SidePanelDrawer
-        label={currentTarget ? `Current order — ${currentTarget}` : "Current order"}
+        label={
+          currentTarget
+            ? t("currentOrderFor", { target: currentTarget })
+            : t("currentOrder")
+        }
         placement="sheet"
         // Never over the side panel if the window widens while it's open.
         open={isOrderOpen && !isDesktop}
@@ -781,9 +799,12 @@ export default function StaffOrderClient({
 
       <ConfirmDialog
         open={pendingSwitch !== null}
-        title={`Switch to ${pendingSwitchName ?? "another order"}?`}
-        message={`The current order (${countLabel(itemCount, "item", "items")}) will be cleared.`}
-        confirmLabel="Switch and clear"
+        title={t("switchTitle", { name: pendingSwitchName ?? t("switchAnother") })}
+        message={t("switchMessage", {
+          items: tCommon("itemCount", { count: itemCount }),
+        })}
+        confirmLabel={t("switchConfirm")}
+        cancelLabel={tCommon("cancel")}
         destructive
         onConfirm={() => {
           if (pendingSwitch !== null) handleTargetChange(pendingSwitch.next);
@@ -824,7 +845,7 @@ export default function StaffOrderClient({
                 router.push(`/backoffice/order/${entryKey}`);
               }}
             >
-              View order
+              {t("viewOrder")}
             </Button>
           ) : undefined
         }
@@ -835,5 +856,6 @@ export default function StaffOrderClient({
         }
       />
     </Box>
+    </OrderUiLabelsProvider>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Box, Typography } from "@mui/material";
 import { alpha, keyframes, type Theme } from "@mui/material/styles";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -52,6 +53,7 @@ function belowTopBar(theme: Theme) {
  * once the rounds are accepted, rejected or expire.
  */
 export default function NewOrderBanner() {
+  const t = useTranslations("bo.alerts");
   const pathname = usePathname();
   const { pending } = useOrderAlerts();
 
@@ -120,8 +122,7 @@ export default function NewOrderBanner() {
             variant="body2"
             sx={{ flexGrow: 1, fontWeight: 700 }}
           >
-            New order waiting — {count} {count === 1 ? "needs" : "need"}{" "}
-            approval
+            {t("bannerWaiting", { count })}
           </Typography>
           <Typography
             component="span"
@@ -132,7 +133,7 @@ export default function NewOrderBanner() {
               fontWeight: 700,
             }}
           >
-            View orders
+            {t("viewOrders")}
             <ChevronRightIcon fontSize="small" />
           </Typography>
         </Box>

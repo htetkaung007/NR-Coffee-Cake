@@ -2,7 +2,8 @@
 
 import CalendarNavigator from "@/app/components/CalendarNavigator";
 import type { ReportPeriod } from "@/app/lib/report/reportPeriod";
-import { periodLabel } from "@/app/lib/report/reportPeriod";
+import { useTranslations } from "next-intl";
+import { useReportWords } from "./useReportWords";
 import {
   navigationDays,
   reportHref,
@@ -28,14 +29,16 @@ export default function PeriodNavigator({
   shopTimezone,
   onNavigate,
 }: PeriodNavigatorProps) {
+  const t = useTranslations("bo.reports");
+  const words = useReportWords();
   const { prevDay, nextDay } = navigationDays(period, today);
   const hrefFor = (day: string) => reportHref({ ...params, day });
 
   return (
     <CalendarNavigator
-      primary={periodLabel(period)}
-      prevLabel={`Previous ${period.kind}`}
-      nextLabel={`Next ${period.kind}`}
+      primary={words.period(period)}
+      prevLabel={period.kind === "week" ? t("previousWeek") : t("previousMonth")}
+      nextLabel={period.kind === "week" ? t("nextWeek") : t("nextMonth")}
       prevHref={hrefFor(prevDay)}
       nextHref={nextDay ? hrefFor(nextDay) : null}
       selectedDay={params.day}

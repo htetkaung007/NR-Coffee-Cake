@@ -1,7 +1,9 @@
 "use client";
 
 import { Box, ButtonBase, Card, Stack, Typography } from "@mui/material";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import type { ReportItems } from "./action";
 import ExpandedPanel, { RowChevron } from "./ExpandedPanel";
@@ -36,6 +38,9 @@ export default function AddonsCard({
   expandedIds,
   onToggle,
 }: AddonsCardProps) {
+  const t = useTranslations("bo.reports");
+  const locale = useLocale();
+  const money = useStaffMoney();
   return (
     <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 } }}>
       <Typography
@@ -43,12 +48,12 @@ export default function AddonsCard({
         component="h2"
         sx={{ ...sectionHeadingSx, mb: 1 }}
       >
-        Add-ons
+        {t("addons")}
       </Typography>
 
       {addons.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          No add-ons chosen in this period
+          {t("noAddons")}
         </Typography>
       ) : (
         <Stack component="ul" spacing={0} sx={{ m: 0, p: 0, listStyle: "none" }}>
@@ -56,23 +61,23 @@ export default function AddonsCard({
             const canExpand = !addon.isRequiredGroup;
             const expanded = canExpand && expandedIds.includes(addon.addonId);
             const panelId = `pairing-addon-${addon.addonId}`;
+            const name = localizedText(locale, addon.name, addon.nameMy);
             const summary = (
               <>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   <Typography variant="body1" noWrap sx={entryTitleSx}>
-                    {addon.name}
+                    {name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    chosen {addon.timesChosen}{" "}
-                    {addon.timesChosen === 1 ? "time" : "times"}
-                    {addon.isRequiredGroup ? " · required choice" : ""}
+                    {t("chosenTimes", { count: addon.timesChosen })}
+                    {addon.isRequiredGroup ? t("requiredChoice") : ""}
                   </Typography>
                 </Box>
                 <Typography
                   variant="body1"
                   sx={{ ...moneyToneSx("income"), flexShrink: 0 }}
                 >
-                  {formatAmount(addon.addonSales)}
+                  {money.amount(addon.addonSales)}
                 </Typography>
                 {canExpand && <RowChevron expanded={expanded} />}
               </>
@@ -122,7 +127,7 @@ export default function AddonsCard({
                 {expanded && (
                   <ExpandedPanel
                     id={panelId}
-                    label={`${addon.name} — most often with`}
+                    label={t("mostOftenWithLabel", { name })}
                   >
                     <AddonPairingPanel
                       state={pairing}

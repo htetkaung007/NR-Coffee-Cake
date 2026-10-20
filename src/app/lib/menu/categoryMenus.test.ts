@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { createTranslator } from "next-intl";
+import en from "../../../../messages/en.json";
 import {
-  categoryPreviewLine,
+  categoryPreviewLine as previewLine,
   groupCategoryMenus,
   planCategoryMenuRemoval,
 } from "./categoryMenus";
@@ -112,6 +114,15 @@ describe("groupCategoryMenus", () => {
 
 describe("categoryPreviewLine", () => {
   const names = (...list: string[]) => list.map((name) => ({ name }));
+  // The English words (bo.categories in en.json).
+  const t = createTranslator({ locale: "en", messages: en, namespace: "bo.categories" });
+  const words = {
+    count: (count: number) => t("itemCount", { count }),
+    more: (count: number) => t("more", { count }),
+    name: (menu: { name: string }) => menu.name,
+  };
+  const categoryPreviewLine = (menus: { name: string }[]) =>
+    previewLine(menus, words);
 
   it("names up to three menus", () => {
     expect(categoryPreviewLine(names("A", "B"))).toBe("2 items · A, B");

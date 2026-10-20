@@ -64,7 +64,7 @@ export class AddonService {
             },
           },
           orderBy: { menuId: "asc" },
-          select: { menu: { select: { id: true, name: true } } },
+          select: { menu: { select: { id: true, name: true, nameMy: true } } },
         },
       },
     });
@@ -143,6 +143,8 @@ export class AddonService {
     if (existing) {
       throw new ValidationError(
         `"${input.groupName}" already exists as an addon category.`,
+        "ADDON_GROUP_NAME_TAKEN",
+        { name: input.groupName },
       );
     }
 
@@ -198,7 +200,7 @@ export class AddonService {
       where: { id, isArchived: false },
     });
     if (!category) {
-      throw new ValidationError("Addon category not found.");
+      throw new ValidationError("Addon category not found.", "NOT_FOUND");
     }
 
     const nameTaken = await prisma.addonCategories.findFirst({
@@ -211,6 +213,8 @@ export class AddonService {
     if (nameTaken) {
       throw new ValidationError(
         `"${input.groupName}" already exists as an addon category.`,
+        "ADDON_GROUP_NAME_TAKEN",
+        { name: input.groupName },
       );
     }
 

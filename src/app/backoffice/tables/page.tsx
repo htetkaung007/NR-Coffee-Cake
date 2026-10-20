@@ -1,19 +1,19 @@
-import Link from "next/link";
-import { Box, Button, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import { Box, Typography } from "@mui/material";
+import ListPageHeader from "@/app/components/ListPageHeader";
 import { TableService } from "@/app/services";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
+import { getTranslations } from "next-intl/server";
 import TableCard from "./TableCard";
 
 export default async function TablesPage() {
   const { context, fallback } = await requireBackofficeContext({
-    signedOut: "Please sign in to view tables.",
-    noLocation: "Select a location first to view its tables.",
+    noLocation: "noLocationTables",
     access: "TABLES_MANAGE",
   });
   if (!context) return fallback;
   const { location } = context;
+  const t = await getTranslations("bo.tables");
 
   // Tables are scoped to whichever location the user currently has
   // selected — same "selected location" concept the Menu list uses.
@@ -21,28 +21,14 @@ export default async function TablesPage() {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h6">Tables</Typography>
-        <Link href="/backoffice/tables/new" passHref>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{ textTransform: "none" }}
-          >
-            New Table
-          </Button>
-        </Link>
-      </Box>
+      <ListPageHeader
+        title={t("title")}
+        newHref="/backoffice/tables/new"
+        newLabel={t("newTable")}
+      />
 
       {tables.length === 0 ? (
-        <Typography color="text.secondary">No tables yet.</Typography>
+        <Typography color="text.secondary">{t("noTables")}</Typography>
       ) : (
         <Box
           sx={{

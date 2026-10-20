@@ -1,11 +1,12 @@
 "use client";
 
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Box, Fab, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import StaffDateProvider from "@/app/components/StaffDateProvider";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
   getHistoryDetailAction,
@@ -46,10 +47,10 @@ interface HistoryViewProps {
   initialNextCursor: string | null;
 }
 
-const EMPTY_MESSAGE: Record<"paid" | "cancelled", string> = {
-  paid: "No paid bills on this day",
-  cancelled: "No cancelled orders on this day",
-};
+const EMPTY_MESSAGE = {
+  paid: "emptyPaid",
+  cancelled: "emptyCancelled",
+} as const;
 
 /**
  * Top-level client orchestrator — one instance per (day, tab): page.tsx
@@ -71,6 +72,8 @@ export default function HistoryView({
   initialItems,
   initialNextCursor,
 }: HistoryViewProps) {
+  const t = useTranslations("bo.history");
+  const errorText = useStaffErrorMessage();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -123,13 +126,13 @@ export default function HistoryView({
       setDetailResult(
         response.success
           ? { id: effectiveSelectedId, data: response.data }
-          : { id: effectiveSelectedId, error: response.error.message },
+          : { id: effectiveSelectedId, error: errorText(response.error) },
       );
     });
     return () => {
       cancelled = true;
     };
-  }, [effectiveSelectedId, tab]);
+  }, [effectiveSelectedId, tab, errorText]);
 
   const detail =
     detailResult && detailResult.id === effectiveSelectedId
@@ -200,7 +203,7 @@ export default function HistoryView({
       setDetailResult(
         response.success
           ? { id: effectiveSelectedId, data: response.data }
-          : { id: effectiveSelectedId, error: response.error.message },
+          : { id: effectiveSelectedId, error: errorText(response.error) },
       );
     });
   }
@@ -219,7 +222,7 @@ export default function HistoryView({
   const isFirstListMount = debouncedSearch === "" && refreshKey === 0;
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <StaffDateProvider>
       <Box>
         {/* Two columns from the very top (header included) at lg+ —
            below lg this is just a normal block (the right column is
@@ -261,7 +264,7 @@ export default function HistoryView({
                 selectedId={effectiveSelectedId}
                 onSelectItem={selectItem}
                 buildRowHref={buildRowHref}
-                emptyMessage={EMPTY_MESSAGE[tab]}
+                emptyMessage={t(EMPTY_MESSAGE[tab])}
                 onLoaded={handleFirstItemLoaded}
               />
             </Box>
@@ -273,7 +276,6 @@ export default function HistoryView({
               detail={detail}
               isLoading={isDetailLoading}
               errorMessage={detailErrorMessage}
-              shopTimezone={shopTimezone}
               onRetry={retryDetail}
             />
           </HistoryDetailPanel>
@@ -288,7 +290,6 @@ export default function HistoryView({
             detail={detail}
             isLoading={isDetailLoading}
             errorMessage={detailErrorMessage}
-            shopTimezone={shopTimezone}
             onRetry={retryDetail}
             onClose={closeDetail}
           />
@@ -296,7 +297,7 @@ export default function HistoryView({
 
         {showBackToTop && (
           <Fab
-            aria-label="Back to top"
+            aria-label={t("backToTop")}
             size="medium"
             color="primary"
             onClick={() => {
@@ -318,6 +319,6 @@ export default function HistoryView({
           </Fab>
         )}
       </Box>
-    </LocalizationProvider>
+    </StaffDateProvider>
   );
 }

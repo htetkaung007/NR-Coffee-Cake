@@ -7,13 +7,13 @@ import CloseIcon from "@mui/icons-material/Close";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import StatusChip from "../[entryKey]/StatusChip";
 import RoundSection from "../[entryKey]/RoundSection";
-import { formatClockTime } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useHistoryWords } from "./useHistoryWords";
 import {
   formatCancelNoteLine,
   formatCancelReasonLabel,
   formatCancelWait,
   formatDurationMinutes,
-  formatShopDateLabel,
   formatTimeRange,
 } from "./historyFormat";
 import type { CancelledRoundDetail, PaidBillDetail } from "./action";
@@ -25,7 +25,6 @@ interface HistoryDetailProps {
   detail: PaidBillDetail | CancelledRoundDetail | null;
   isLoading: boolean;
   errorMessage: string | null;
-  shopTimezone: string;
   onRetry: () => void;
   /** Given only inside the Dialog/Drawer overlay (below lg) — shows the
    *  close (×) button. The lg+ sticky panel never closes. */
@@ -55,10 +54,12 @@ export default function HistoryDetail({
   detail,
   isLoading,
   errorMessage,
-  shopTimezone,
   onRetry,
   onClose,
 }: HistoryDetailProps) {
+  const t = useTranslations("bo.history");
+  const tCommon = useTranslations("bo.common");
+  const words = useHistoryWords();
   if (isLoading) return <DetailSkeleton />;
 
   if (errorMessage) {
@@ -66,7 +67,7 @@ export default function HistoryDetail({
       <Stack spacing={1.5} sx={{ alignItems: "center", p: 3 }}>
         <Typography color="text.secondary">{errorMessage}</Typography>
         <Button variant="outlined" onClick={onRetry}>
-          Retry
+          {tCommon("retry")}
         </Button>
       </Stack>
     );
@@ -76,7 +77,7 @@ export default function HistoryDetail({
     return (
       <Stack spacing={1} sx={{ alignItems: "center", p: 4 }}>
         <Typography color="text.secondary">
-          Select a row to see its details.
+          {t("selectRow")}
         </Typography>
       </Stack>
     );
@@ -86,20 +87,26 @@ export default function HistoryDetail({
   const paid = isPaid ? (detail as PaidBillDetail) : null;
   const cancelled = !isPaid ? (detail as CancelledRoundDetail) : null;
 
-  const title = paid ? paid.title : (cancelled?.title ?? "");
+  const title = (paid ? paid.title : cancelled?.title) ?? tCommon("counter");
   // A recorded rejection: the cashier's note (Other only) and how long
   // the customer waited for it.
   const noteLine = cancelled
-    ? formatCancelNoteLine(cancelled.reason, cancelled.cancellation)
+    ? formatCancelNoteLine(cancelled.reason, cancelled.cancellation, words)
     : null;
   const waitLine = cancelled
-    ? formatCancelWait(cancelled.reason, cancelled.cancellation)
+    ? formatCancelWait(cancelled.reason, cancelled.cancellation, words)
     : null;
   const isCounter = paid ? paid.isCounter : (cancelled?.isCounter ?? false);
   const dateLine = paid
-    ? `${formatShopDateLabel(paid.paidAt, shopTimezone)} · ${formatTimeRange(paid.startedAt, paid.paidAt)}`
+    ? t("dateLine", {
+        date: words.shopDate(paid.paidAt),
+        range: formatTimeRange(paid.startedAt, paid.paidAt, words),
+      })
     : cancelled
-      ? `${formatShopDateLabel(cancelled.cancelledAt, shopTimezone)} · ${formatTimeRange(cancelled.createdAt, cancelled.cancelledAt)}`
+      ? t("dateLine", {
+          date: words.shopDate(cancelled.cancelledAt),
+          range: formatTimeRange(cancelled.createdAt, cancelled.cancelledAt, words),
+        })
       : "";
 
   const rounds = paid
@@ -136,7 +143,7 @@ export default function HistoryDetail({
               {title}
             </Typography>
             {paid ? (
-              <StatusChip tone="success" icon={<CheckIcon />} label="Paid" />
+              <StatusChip tone="success" icon={<CheckIcon />} label={t("paid")} />
             ) : (
               <StatusChip
                 tone="error"
@@ -144,21 +151,18 @@ export default function HistoryDetail({
                 label={formatCancelReasonLabel(
                   cancelled?.reason ?? "",
                   cancelled?.cancellation ?? null,
+                  words,
                 )}
               />
             )}
           </Stack>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            suppressHydrationWarning
-          >
+          <Typography variant="body2" color="text.secondary">
             {dateLine}
           </Typography>
         </Box>
         {onClose && (
           <IconButton
-            aria-label="Close details"
+            aria-label={t("closeDetails")}
             onClick={onClose}
             sx={{ width: 44, height: 44 }}
           >
@@ -186,10 +190,11 @@ export default function HistoryDetail({
               bgcolor: alpha(theme.palette.success.main, 0.12),
             })}
           >
-            <Typography variant="body2" suppressHydrationWarning>
-              Paid at {formatClockTime(paid.paidAt)} ·{" "}
-              {formatDurationMinutes(paid.startedAt, paid.paidAt)} at the{" "}
-              {isCounter ? "counter" : "table"}
+            <Typography variant="body2">
+              {t(isCounter ? "paidAtCounter" : "paidAtTable", {
+                time: words.clockTime(paid.paidAt),
+                duration: formatDurationMinutes(paid.startedAt, paid.paidAt, words),
+              })}
             </Typography>
           </Box>
         )}
@@ -208,7 +213,7 @@ export default function HistoryDetail({
           </Typography>
         )}
         <BillTotal
-          label={paid ? "Total paid" : "Not charged"}
+          label={paid ? t("totalPaid") : t("notCharged")}
           amount={paid ? paid.total : (cancelled?.amount ?? 0)}
         />
         {/* Paid bills only — a cancelled round was never a bill. Under

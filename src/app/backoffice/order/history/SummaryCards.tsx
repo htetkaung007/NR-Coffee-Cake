@@ -1,7 +1,8 @@
 "use client";
 
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { moneySx } from "../orderTypography";
 
 function SummaryCell({
@@ -49,21 +50,23 @@ export default function SummaryCards({
   paid: { bills: number; revenue: number; avgBill: number };
   cancelled: { count: number; notCharged: number };
 }) {
+  const t = useTranslations("bo.history");
+  const money = useStaffMoney();
   return (
     <Card variant="outlined" sx={{ mb: 2 }}>
       <Stack direction="row" divider={<Divider orientation="vertical" flexItem />}>
         {tab === "paid" ? (
           <>
-            <SummaryCell label="Bills" value={paid.bills} />
-            <SummaryCell label="Revenue" value={formatAmount(paid.revenue)} />
-            <SummaryCell label="Avg. bill" value={formatAmount(paid.avgBill)} />
+            <SummaryCell label={t("bills")} value={paid.bills} />
+            <SummaryCell label={t("revenue")} value={money.amount(paid.revenue)} />
+            <SummaryCell label={t("avgBill")} value={money.amount(paid.avgBill)} />
           </>
         ) : (
           <>
-            <SummaryCell label="Cancelled" value={cancelled.count} />
+            <SummaryCell label={t("cancelled")} value={cancelled.count} />
             <SummaryCell
-              label="Not charged"
-              value={formatAmount(cancelled.notCharged)}
+              label={t("notCharged")}
+              value={money.amount(cancelled.notCharged)}
             />
           </>
         )}

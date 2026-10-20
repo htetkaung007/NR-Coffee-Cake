@@ -16,6 +16,9 @@ import {
   myanmarNameCount,
   myanmarPlaceholder,
 } from "@/app/lib/menu/addonOptionNames";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { ADDON_OPTION_NAME_MAX } from "@/app/lib/schemas/addonSchema";
 import LanguageTaggedField from "./LanguageTaggedField";
 
 interface OptionRowsEditorProps {
@@ -35,7 +38,9 @@ interface OptionRowsEditorProps {
 const rowGridSx = {
   display: "grid",
   gap: 1,
-  alignItems: "center",
+  // Top-aligned: the name fields carry their character counters below,
+  // so the inputs (and the price / ×) line up along their tops.
+  alignItems: "start",
   gridTemplateColumns: {
     xs: "minmax(0, 1fr) 44px",
     md: "minmax(0, 1fr) minmax(0, 1fr) 128px 44px",
@@ -50,13 +55,14 @@ const rowGridSx = {
  *  has one, then success. Words plus an icon-free tint — the count says
  *  it, never colour alone. */
 function MyanmarCountChip({ named, total }: { named: number; total: number }) {
+  const t = useTranslations("bo.addonForm");
   const complete = named === total;
   return (
     <Chip
       size="small"
       label={
         <Typography variant="caption" component="span">
-          {named} of {total} have a Myanmar name
+          {t("myanmarCount", { named, total })}
         </Typography>
       }
       sx={(theme) => ({
@@ -86,6 +92,8 @@ export default function OptionRowsEditor({
   addOption,
   removeOption,
 }: OptionRowsEditorProps) {
+  const t = useTranslations("bo.addonForm");
+  const money = useStaffMoney();
   const { named, total } = myanmarNameCount(options);
 
   return (
@@ -101,7 +109,7 @@ export default function OptionRowsEditor({
         }}
       >
         <Typography variant="subtitle2" component="h2">
-          Options
+          {t("options")}
         </Typography>
         {total > 0 && <MyanmarCountChip named={named} total={total} />}
       </Stack>
@@ -111,8 +119,7 @@ export default function OptionRowsEditor({
         color="text.secondary"
         sx={{ mb: 2 }}
       >
-        Each option has an English name, a Myanmar name and an extra price (0 =
-        free).
+        {t("optionsHint")}
       </Typography>
 
       {/* Column headers — md and up only, where the fields have no tag. */}
@@ -121,9 +128,9 @@ export default function OptionRowsEditor({
         sx={{ ...rowGridSx, display: { xs: "none", md: "grid" }, mb: 1 }}
       >
         {[
-          { area: "en", text: "English name" },
-          { area: "my", text: "Myanmar name" },
-          { area: "price", text: "Extra price" },
+          { area: "en", text: t("colEnglish") },
+          { area: "my", text: t("colMyanmar") },
+          { area: "price", text: t("colPrice") },
         ].map((column) => (
           <Typography
             key={column.area}
@@ -158,8 +165,9 @@ export default function OptionRowsEditor({
               <LanguageTaggedField
                 tag="en"
                 tagBelowMdOnly
-                ariaLabel={`Option ${number} name in English`}
-                placeholder="e.g. Oat milk"
+                ariaLabel={t("optionEn", { number })}
+                placeholder={t("optionPlaceholder")}
+                maxLength={ADDON_OPTION_NAME_MAX}
                 value={row.name}
                 onChange={(event) =>
                   updateOption(index, "name", event.target.value)
@@ -170,9 +178,12 @@ export default function OptionRowsEditor({
                 tag="my"
                 tagBelowMdOnly
                 myanmar
-                ariaLabel={`Option ${number} name in Myanmar`}
-                placeholder={myanmarPlaceholder(row.name)}
-                maxLength={120}
+                ariaLabel={t("optionMy", { number })}
+                placeholder={myanmarPlaceholder(row.name, {
+                  empty: t("myanmarEmpty"),
+                  shownIfEmpty: (name) => t("shownIfEmpty", { name }),
+                })}
+                maxLength={ADDON_OPTION_NAME_MAX}
                 value={row.nameMy}
                 onChange={(event) =>
                   updateOption(index, "nameMy", event.target.value)
@@ -183,9 +194,9 @@ export default function OptionRowsEditor({
                 tag="price"
                 tagBelowMdOnly
                 numeric
-                ariaLabel={`Option ${number} extra price`}
+                ariaLabel={t("optionPrice", { number })}
                 placeholder="0"
-                endText="MMK"
+                endText={money.currency}
                 value={row.price}
                 onChange={(event) => {
                   // Keep only digits — avoids native type="number" quirks
@@ -199,7 +210,7 @@ export default function OptionRowsEditor({
               <IconButton
                 onClick={() => removeOption(index)}
                 disabled={options.length === 1}
-                aria-label={`Remove option ${number}`}
+                aria-label={t("removeOption", { number })}
                 sx={{ gridArea: "remove", width: 44, height: 44 }}
               >
                 <CloseIcon fontSize="small" />
@@ -215,7 +226,7 @@ export default function OptionRowsEditor({
         startIcon={<AddIcon />}
         sx={{ mt: 2, minHeight: 44 }}
       >
-        Add option
+        {t("addOption")}
       </Button>
     </Box>
   );

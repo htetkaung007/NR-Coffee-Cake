@@ -20,13 +20,15 @@ import RejectReasonDialog from "../RejectReasonDialog";
 import VoidItemDialog, { type VoidRequest } from "./VoidItemDialog";
 import type { ActionResult } from "@/app/lib/actionResult";
 import type { RejectReason } from "@/app/lib/order/rejectReason";
-import { countLabel, formatClockTime } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import type { VoidReason } from "@/app/lib/order/voids";
+import { useClockTime } from "@/app/lib/hooks/useStaffWords";
 
 /** One void on a line, as staff read it (lib/order/voids). */
 interface RoundLineVoid {
   quantity: number;
-  /** The reason in words ("Wrong item"). */
-  reason: string;
+  /** Why — shown in the staff's words (bo.voidReason). */
+  reason: VoidReason;
   /** Staff's note (Other only) — shown to staff, never to customers. */
   note: string | null;
   /** ISO time. */
@@ -72,16 +74,21 @@ export interface Round {
   lines: RoundLine[];
 }
 
-/** "Voided · 12:20 · Aye · Wrong item" ("Voided ×2 · …" for several). */
-function voidSummary(entry: RoundLineVoid) {
-  return [
-    entry.quantity > 1 ? `Voided ×${entry.quantity}` : "Voided",
-    formatClockTime(entry.at),
-    entry.by,
-    entry.reason,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+/** "Voided · 12:20 · Aye · Wrong item" ("Voided ×2 · …" for several),
+ *  in the staff's words. */
+function useVoidSummary() {
+  const t = useTranslations("bo.detail");
+  const tReason = useTranslations("bo.voidReason");
+  const clockTime = useClockTime();
+  return (entry: RoundLineVoid) =>
+    [
+      entry.quantity > 1 ? t("voidedCount", { count: entry.quantity }) : t("voided"),
+      clockTime(entry.at),
+      entry.by,
+      tReason(entry.reason),
+    ]
+      .filter(Boolean)
+      .join(" · ");
 }
 
 const THUMBNAIL_SIZE = 40;
@@ -121,6 +128,8 @@ function LineRow({
   /** Given when this viewer may void and the line can be: shows "Void". */
   onRequestVoid?: () => void;
 }) {
+  const t = useTranslations("bo.detail");
+  const voidSummary = useVoidSummary();
   const voided = line.quantity - line.remaining;
   const isFullyVoided = line.remaining === 0;
 
@@ -150,7 +159,7 @@ function LineRow({
         >
           <strong>{isFullyVoided ? line.quantity : line.remaining} ×</strong>{" "}
           {line.menuName}
-          {!isFullyVoided && voided > 0 && ` (${voided} voided)`}
+          {!isFullyVoided && voided > 0 && t("partlyVoided", { count: voided })}
         </Typography>
         {line.addonsText !== "" && (
           <Typography
@@ -168,7 +177,7 @@ function LineRow({
             sx={{ alignItems: "flex-start", mt: 0.5, color: "text.secondary" }}
           >
             <EditOutlinedIcon
-              titleAccess="Note"
+              titleAccess={t("note")}
               sx={{ fontSize: "1rem", mt: 0.25, flexShrink: 0 }}
             />
             {/* Plain text — React escapes it. */}
@@ -185,7 +194,6 @@ function LineRow({
             <Typography
               variant="body2"
               color="text.secondary"
-              suppressHydrationWarning
               sx={{ overflowWrap: "anywhere" }}
             >
               {voidSummary(entry)}
@@ -210,7 +218,7 @@ function LineRow({
           color="error"
           size="small"
           startIcon={<CancelOutlinedIcon />}
-          aria-label={`Void ${line.menuName}`}
+          aria-label={t("voidItem", { name: line.menuName })}
           aria-haspopup="dialog"
           onClick={onRequestVoid}
           sx={(theme) => ({
@@ -224,7 +232,7 @@ function LineRow({
             },
           })}
         >
-          Void
+          {t("void")}
         </Button>
       )}
     </Stack>
@@ -258,6 +266,9 @@ export default function RoundCard({
     request: VoidRequest,
   ) => Promise<ActionResult<unknown>>;
 }) {
+  const t = useTranslations("bo.detail");
+  const tCommon = useTranslations("bo.common");
+  const clockTime = useClockTime();
   const isAwaitingApproval = round.status === "PENDING_APPROVAL";
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [voidingLineId, setVoidingLineId] = useState<number | null>(null);
@@ -287,25 +298,23 @@ export default function RoundCard({
       >
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <Typography component="h2" variant="body1">
-            Order {round.orderNumber}
+            {t("roundTitle", { number: round.orderNumber })}
           </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            suppressHydrationWarning
-          >
-            {formatClockTime(round.createdAt)} ·{" "}
-            {countLabel(round.itemCount, "item", "items")}
+          <Typography variant="body2" color="text.secondary">
+            {t("roundMeta", {
+              time: clockTime(round.createdAt),
+              items: tCommon("itemCount", { count: round.itemCount }),
+            })}
           </Typography>
         </Box>
         {isAwaitingApproval ? (
           <StatusChip
             tone="warning"
             icon={<StatusDot />}
-            label="Needs approval"
+            label={t("needsApproval")}
           />
         ) : (
-          <StatusChip tone="success" icon={<CheckIcon />} label="Accepted" />
+          <StatusChip tone="success" icon={<CheckIcon />} label={t("accepted")} />
         )}
       </Stack>
 
@@ -353,11 +362,12 @@ export default function RoundCard({
             <Typography
               variant="body2"
               color="warning.main"
-              suppressHydrationWarning
               sx={{ flexGrow: 1, width: { xs: "100%", sm: "auto" } }}
             >
               {round.approvalDue &&
-                `${round.approvalDue.autoCancels ? "Expires" : "Confirm by"} ${formatClockTime(round.approvalDue.at)}`}
+                t(round.approvalDue.autoCancels ? "expires" : "confirmBy", {
+                  time: clockTime(round.approvalDue.at),
+                })}
             </Typography>
             <Button
               variant="outlined"
@@ -367,7 +377,7 @@ export default function RoundCard({
               onClick={() => setIsRejectOpen(true)}
               sx={{ minHeight: 44, flexGrow: { xs: 1, sm: 0 } }}
             >
-              Reject
+              {t("reject")}
             </Button>
             <Button
               variant="contained"
@@ -377,7 +387,7 @@ export default function RoundCard({
               onClick={onAccept}
               sx={{ minHeight: 44, flexGrow: { xs: 1, sm: 0 } }}
             >
-              Accept
+              {t("accept")}
             </Button>
           </Stack>
           <RejectReasonDialog

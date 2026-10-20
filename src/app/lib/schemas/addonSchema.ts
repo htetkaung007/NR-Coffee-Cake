@@ -13,21 +13,27 @@ import {
  * as two separate flows. A blank price means Free: empty string is
  * coerced to 0 rather than failing validation.
  */
+/** The longest group title / option name — ONE number per field pair,
+ *  shared by the English field and its Myanmar twin, here and in the
+ *  form's maxLength and counters. */
+export const ADDON_GROUP_NAME_MAX = 50;
+export const ADDON_OPTION_NAME_MAX = 120;
+
 const priceOrBlankIsFree = z
   .union([z.literal(""), z.coerce.number().int().min(0)])
   .transform((value) => (value === "" ? 0 : value));
 
 const optionSchema = z.object({
-  name: z.string().trim().min(1, "Option name is required.").max(120),
+  name: z.string().trim().min(1, "Option name is required.").max(ADDON_OPTION_NAME_MAX),
   /** Shown to customers who choose Myanmar; null → the English name. */
-  nameMy: optionalTextSchema(120),
+  nameMy: optionalTextSchema(ADDON_OPTION_NAME_MAX),
   price: priceOrBlankIsFree,
 });
 
 export const createAddonGroupSchema = z.object({
-  groupName: z.string().trim().min(1, "Group title is required.").max(50),
+  groupName: z.string().trim().min(1, "Group title is required.").max(ADDON_GROUP_NAME_MAX),
   /** Shown to customers who choose Myanmar; null → the English title. */
-  groupNameMy: optionalTextSchema(50),
+  groupNameMy: optionalTextSchema(ADDON_GROUP_NAME_MAX),
   isRequired: z.boolean(),
   options: z.array(optionSchema).min(1, "Add at least one option."),
   menuIds: optionalIdListSchema(),
@@ -46,9 +52,9 @@ const editableOptionSchema = optionSchema.extend({
 });
 
 export const updateAddonGroupSchema = z.object({
-  groupName: z.string().trim().min(1, "Group title is required.").max(50),
+  groupName: z.string().trim().min(1, "Group title is required.").max(ADDON_GROUP_NAME_MAX),
   /** Shown to customers who choose Myanmar; null → the English title. */
-  groupNameMy: optionalTextSchema(50),
+  groupNameMy: optionalTextSchema(ADDON_GROUP_NAME_MAX),
   isRequired: z.boolean(),
   options: z.array(editableOptionSchema).min(1, "Add at least one option."),
   menuIds: optionalIdListSchema(),

@@ -67,17 +67,21 @@ export function customerRoundStatus(round: {
     : round.status;
 }
 
-/** The Backoffice toast for rounds customers just withdrew (once each):
- *  "Customer cancelled order #A015 · Table 3", or "Customers cancelled 2
- *  orders" when several came in together. */
+/** The Backoffice toast for rounds customers just withdrew (once each),
+ *  as a bo.alerts message key and its values: "Customer cancelled order
+ *  #A015 · Table 3", or "Customers cancelled 2 orders" when several came
+ *  in together. */
 export function describeWithdrawals(
   rounds: readonly { orderNumber: string; tableName: string | null }[],
-): string {
+):
+  | { key: "withdrawnOne"; values: { number: string } }
+  | { key: "withdrawnOneAt"; values: { number: string; table: string } }
+  | { key: "withdrawnMany"; values: { count: number } } {
   if (rounds.length === 1) {
     const [round] = rounds;
     return round.tableName
-      ? `Customer cancelled order ${round.orderNumber} · ${round.tableName}`
-      : `Customer cancelled order ${round.orderNumber}`;
+      ? { key: "withdrawnOneAt", values: { number: round.orderNumber, table: round.tableName } }
+      : { key: "withdrawnOne", values: { number: round.orderNumber } };
   }
-  return `Customers cancelled ${rounds.length} orders`;
+  return { key: "withdrawnMany", values: { count: rounds.length } };
 }

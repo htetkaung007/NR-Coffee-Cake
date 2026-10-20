@@ -1,14 +1,16 @@
 import { Chip, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
+import { useTranslations } from "next-intl";
 import type { MenuCardStatus } from "@/app/lib/menu/menuCardStatus";
 
-/** The words for each menuCardStatus — the Backoffice's one set. */
-const MENU_STATUS_LABELS: Record<MenuCardStatus, string> = {
-  available: "Available",
-  unavailable: "Unavailable",
-  soldOut: "Sold out",
-  hidden: "Hidden here",
-};
+/** The words for each menuCardStatus — the Backoffice's one set
+ *  (bo.menus). */
+const MENU_STATUS_LABELS = {
+  available: "available",
+  unavailable: "unavailable",
+  soldOut: "soldOut",
+  hidden: "hiddenHere",
+} as const satisfies Record<MenuCardStatus, string>;
 
 /** Each ≥ 4.5:1 in light and dark: neutral on paper, except sold out —
  *  error.dark with white (error.main fails in dark mode). */
@@ -28,11 +30,12 @@ export default function MenuStatusChip({
   status: MenuCardStatus;
   sx?: SxProps<Theme>;
 }) {
+  const t = useTranslations("bo.menus");
   return (
     <Chip
       label={
         <Typography variant="caption" component="span">
-          {MENU_STATUS_LABELS[status]}
+          {t(MENU_STATUS_LABELS[status])}
         </Typography>
       }
       size="small"

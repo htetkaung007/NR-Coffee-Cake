@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import { useState, useTransition } from "react";
 import {
   Alert,
@@ -37,6 +39,8 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations("bo.settings");
+  const errorText = useStaffErrorMessage();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,7 +54,7 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
         permissions,
       });
       if (!result.success) {
-        setError(result.error.message);
+        setError(errorText(result.error));
         return;
       }
 
@@ -71,12 +75,12 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
           {error && <Alert severity="error">{error}</Alert>}
           {locations.length === 0 && (
             <Alert severity="warning">
-              Create a location first before adding a Manager.
+              {t("noLocationsYet")}
             </Alert>
           )}
 
           <TextField
-            label="Manager Email"
+            label={t("managerEmail")}
             type="email"
             required
             fullWidth
@@ -85,18 +89,18 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
           />
 
           <TextField
-            label="Password"
+            label={t("password")}
             type="password"
             required
             fullWidth
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            helperText="At least 8 characters."
+            helperText={t("passwordHint")}
           />
 
           <TextField
             select
-            label="Location"
+            label={t("location")}
             required
             fullWidth
             value={locationId}
@@ -111,7 +115,7 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
 
           <Box>
             <Typography variant="subtitle2" component="h3" sx={{ mb: 1 }}>
-              What this manager can do
+              {t("whatCanDo")}
             </Typography>
             <PermissionChecklist
               value={permissions}
@@ -126,7 +130,7 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
             disabled={isPending || locations.length === 0}
             sx={{ alignSelf: "flex-start", px: 3 }}
           >
-            {isPending ? "Adding..." : "Add Manager"}
+            {isPending ? t("adding") : t("addManager")}
           </Button>
         </Stack>
       </Box>
@@ -138,7 +142,7 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert severity="success" variant="filled" sx={{ width: "100%" }}>
-          Manager account created!
+          {t("managerCreated")}
         </Alert>
       </Snackbar>
     </>

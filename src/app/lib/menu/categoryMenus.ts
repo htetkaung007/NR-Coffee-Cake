@@ -11,6 +11,8 @@ export interface MenuCategoryLink {
 export interface CategoryMenu {
   id: number;
   name: string;
+  /** The shop's Myanmar name (the Myanmar Backoffice shows it). */
+  nameMy?: string | null;
   imageUrl: string | null;
   /** At the current location — menuCardStatus, the Backoffice card's. */
   status: MenuCardStatus;
@@ -28,7 +30,7 @@ export interface CategoryMenu {
  */
 export function groupCategoryMenus(input: {
   links: readonly (MenuCategoryLink & {
-    menu: { name: string; assetUrl: string | null };
+    menu: { name: string; nameMy?: string | null; assetUrl: string | null };
   })[];
   visibleCategoryIds: ReadonlySet<number>;
   stockByMenuId: ReadonlyMap<
@@ -55,6 +57,7 @@ export function groupCategoryMenus(input: {
     menus.push({
       id: link.menuId,
       name: link.menu.name,
+      nameMy: link.menu.nameMy ?? null,
       imageUrl: link.menu.assetUrl || null,
       status: menuCardStatus({
         stockQuantity: stock?.quantity ?? 0,
@@ -109,18 +112,20 @@ export function planCategoryMenuRemoval(input: {
   return { removeMenuIds, invalidIds, orphanedMenuIds };
 }
 
-/** What a category with no menus says (row preview and dialog). */
-export const NO_MENUS_TEXT =
-  "No menus yet — add this category from a menu's Edit page.";
-
-/** The row preview under a category's name: "N items · A, B, C +K more". */
-export function categoryPreviewLine(menus: readonly { name: string }[]) {
-  const count = `${menus.length} ${menus.length === 1 ? "item" : "items"}`;
+/** The row preview under a category's name: "N items · A, B, C +K
+ *  more" — in `words`' language (the staff's: bo.categories; names via
+ *  `name`, which picks the shop's Myanmar name in Myanmar). */
+export function categoryPreviewLine<Menu extends { name: string }>(
+  menus: readonly Menu[],
+  words: {
+    count: (count: number) => string;
+    more: (count: number) => string;
+    name: (menu: Menu) => string;
+  },
+) {
+  const count = words.count(menus.length);
   if (menus.length === 0) return count;
-  const shown = menus
-    .slice(0, 3)
-    .map((menu) => menu.name)
-    .join(", ");
-  const more = menus.length > 3 ? ` +${menus.length - 3} more` : "";
+  const shown = menus.slice(0, 3).map(words.name).join(", ");
+  const more = menus.length > 3 ? words.more(menus.length - 3) : "";
   return `${count} · ${shown}${more}`;
 }

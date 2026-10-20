@@ -15,8 +15,11 @@ import SearchField from "@/app/components/SearchField";
 import EmptyState from "@/app/components/EmptyState";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import { useDebouncedValue } from "@/app/lib/hooks/useDebouncedValue";
-import { formatAmount } from "@/app/lib/orderFormat";
-import { periodFor, periodLabel } from "@/app/lib/report/reportPeriod";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { periodFor } from "@/app/lib/report/reportPeriod";
+import { useReportWords } from "./useReportWords";
 import {
   buildItemList,
   reportHref,
@@ -57,6 +60,10 @@ export default function ItemsTab({
   params,
   onNavigate,
 }: ItemsTabProps) {
+  const t = useTranslations("bo.reports");
+  const locale = useLocale();
+  const words = useReportWords();
+  const money = useStaffMoney();
   const [sortBy, setSortBy] = useState<ReportSortBy>("sales");
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -68,7 +75,7 @@ export default function ItemsTab({
   // already seen are kept (usePairing).
   const [pairingDay, setPairingDay] = useState(today);
   const pairingPeriod = periodFor("month", pairingDay);
-  const pairingMonthLabel = periodLabel(pairingPeriod);
+  const pairingMonthLabel = words.period(pairingPeriod);
   const pairing = usePairing(pairingPeriod.startDay);
   // Which rows are open — kept across a month change, so the panels just
   // refresh in place.
@@ -108,29 +115,29 @@ export default function ItemsTab({
           }}
         >
           <SegmentedTabs
-            ariaLabel="Seller list"
+            ariaLabel={t("sellerList")}
             value={list}
             onNavigate={onNavigate}
             items={[
               {
                 value: "top",
-                label: "Top sellers",
+                label: t("topSellers"),
                 href: reportHref({ ...params, tab: "items", list: "top" }),
               },
               {
                 value: "slow",
-                label: "Slow sellers",
+                label: t("slowSellers"),
                 href: reportHref({ ...params, tab: "items", list: "slow" }),
               },
             ]}
           />
           <SegmentedTabs
-            ariaLabel="Sort by"
+            ariaLabel={t("sortBy")}
             value={sortBy}
             onSelect={setSortBy}
             items={[
-              { value: "sales", label: "By sales" },
-              { value: "quantity", label: "By quantity" },
+              { value: "sales", label: t("bySales") },
+              { value: "quantity", label: t("byQuantity") },
             ]}
           />
         </Stack>
@@ -139,20 +146,20 @@ export default function ItemsTab({
         <Stack
           direction="row"
           role="group"
-          aria-label="Filter by category"
+          aria-label={t("categoryFilter")}
           sx={{ gap: 1, overflowX: "auto", pb: 0.5 }}
         >
           {state.status === "ok" ? (
             <>
               <CategoryChip
-                label="All"
+                label={t("all")}
                 selected={categoryId === null}
                 onSelect={() => setCategoryId(null)}
               />
               {state.data.categories.map((category) => (
                 <CategoryChip
                   key={category.id}
-                  label={category.name}
+                  label={localizedText(locale, category.name, category.nameMy)}
                   selected={categoryId === category.id}
                   onSelect={() => setCategoryId(category.id)}
                 />
@@ -172,7 +179,7 @@ export default function ItemsTab({
         </Stack>
 
         <SearchField
-          label="Search menu"
+          label={t("searchMenu")}
           value={search}
           onChange={setSearch}
           sx={{ width: { xs: "100%", sm: 320 } }}
@@ -190,7 +197,7 @@ export default function ItemsTab({
       {!hasBills ? (
         <EmptyState
           Icon={ReceiptLongIcon}
-          message="No paid bills in this period"
+          message={t("noBills")}
         />
       ) : state.status === "loading" ? (
         <ItemRowsSkeleton />
@@ -203,10 +210,10 @@ export default function ItemsTab({
               Icon={isFiltered ? SearchOffIcon : ReceiptLongIcon}
               message={
                 isFiltered
-                  ? "No menu matches"
+                  ? t("noMenuMatches")
                   : list === "top"
-                    ? "No sales in this period"
-                    : "No menus to show"
+                    ? t("noSalesInPeriod")
+                    : t("noMenusToShow")
               }
             />
           ) : (
@@ -228,7 +235,9 @@ export default function ItemsTab({
                       setOpenMenus((ids) => toggle(ids, row.menuId))
                     }
                     panelId={`pairing-menu-${row.menuId}`}
-                    panelLabel={`${row.name} — most often chosen with`}
+                    panelLabel={t("mostOftenChosenWithLabel", {
+                      name: localizedText(locale, row.name, row.nameMy),
+                    })}
                     detail={
                       <MenuPairingPanel
                         state={pairing.state}
@@ -259,9 +268,11 @@ export default function ItemsTab({
           {state.data.reconciled && (
             <Card variant="outlined" sx={{ px: { xs: 1.5, sm: 2 }, py: 1.5 }}>
               <Typography variant="body2" color="text.secondary">
-                Menu items {formatAmount(state.data.itemsTotal)} + Add-ons{" "}
-                {formatAmount(state.data.addonsTotal)} = Sales{" "}
-                {formatAmount(state.data.salesTotal)}
+                {t("reconcile", {
+                  items: money.amount(state.data.itemsTotal),
+                  addons: money.amount(state.data.addonsTotal),
+                  sales: money.amount(state.data.salesTotal),
+                })}
               </Typography>
             </Card>
           )}

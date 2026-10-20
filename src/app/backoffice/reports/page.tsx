@@ -4,6 +4,8 @@ import { parseReportParams } from "@/app/lib/report/reportView";
 import { todayInShop } from "@/app/lib/shopDay";
 import { ReportService } from "@/app/services";
 import { config } from "@/app/utils/config";
+import { getLocale, getTranslations } from "next-intl/server";
+import { staffErrorMessage } from "@/app/lib/i18n/staffErrorMessage";
 import ReportsView from "./ReportsView";
 
 /** Reports — Admins only, for the location they have selected. The URL
@@ -24,7 +26,6 @@ export default async function ReportsPage({
   const raw = await searchParams;
 
   const { context, fallback } = await requireBackofficeContext({
-    signedOut: "Please sign in to view reports.",
     access: "REPORTS_VIEW",
   });
   if (!context) return fallback;
@@ -45,11 +46,17 @@ export default async function ReportsPage({
       anchorDay: params.day,
     });
   } catch (error) {
+    // An AppError in the staff's words (lib/i18n/staffErrorMessage);
+    // anything else is logged and shown generically.
+    const t = await getTranslations("bo.reports");
     if (error instanceof AppError) {
-      overviewError = error.message;
+      const tErrors = await getTranslations("bo.errors");
+      overviewError = staffErrorMessage(error, await getLocale(), (key, values) =>
+        tErrors(key, values),
+      );
     } else {
       console.error("[ReportsPage] Unhandled error:", error);
-      overviewError = "Couldn't load the report. Please try again.";
+      overviewError = t("loadError");
     }
   }
 

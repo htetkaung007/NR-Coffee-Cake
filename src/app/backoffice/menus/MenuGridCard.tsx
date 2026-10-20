@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { useOptimistic, useTransition } from "react";
 import Link from "next/link";
 import {
@@ -19,7 +20,9 @@ import {
   touchTabletMedia,
   visuallyHiddenSx,
 } from "@/app/lib/theme/sharedThemeTokens";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useLocale } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffErrorMessage, useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { menuCardStatus } from "@/app/lib/menu/menuCardStatus";
 import { stockBadge } from "@/app/lib/menu/stockLevel";
 import { moneyToneSx } from "@/app/backoffice/order/orderTypography";
@@ -27,7 +30,6 @@ import MenuThumb from "@/app/components/MenuThumb";
 import MenuStatusChip from "@/app/components/MenuStatusChip";
 import type { StatusMessage } from "@/app/components/StatusSnackbar";
 import { useCan } from "@/app/components/StaffAccessProvider";
-import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
 import { setMenuAvailableAction } from "./action";
 
 /** Shape returned by MenuService.getMenusWithDetails — the only fields
@@ -35,9 +37,14 @@ import { setMenuAvailableAction } from "./action";
 export interface MenuCardData {
   id: number;
   name: string;
+  /** The shop's Myanmar name / description — shown in the Myanmar
+   *  Backoffice (localizedText); null = none, the English shows. */
+  nameMy?: string | null;
   price: number;
   description?: string;
-  categories: string[];
+  descriptionMy?: string | null;
+  /** Its categories (in company order), with their Myanmar names. */
+  categoryRefs: { id: number; name: string; nameMy?: string | null }[];
   imageUrl: string | null;
   stockQuantity: number;
   isManuallyDisabled: boolean;
@@ -71,8 +78,6 @@ const STOCK_CHIP_SX = {
 /** The footer label hides (screen readers keep it) when the card itself
  *  is narrower than this — a container query, so the row never wraps. */
 const NARROW_CARD = "@container (max-width: 219.95px)";
-const HIDDEN_HERE_HINT =
-  "Not shown at this location — change it in the menu's form (owner)";
 
 export default function MenuGridCard({
   item,
@@ -81,7 +86,21 @@ export default function MenuGridCard({
   onNotify,
 }: MenuCardProps) {
   // Display only — the edit page and its action check the role too.
+  const t = useTranslations("bo.menus");
+  const tCommon = useTranslations("bo.common");
+  const tPermissions = useTranslations("bo.permissions");
+  const locale = useLocale();
+  const money = useStaffMoney();
+  const errorText = useStaffErrorMessage();
   const canEdit = useCan("owner");
+  // Shop data in the staff's language (the Myanmar name when given).
+  const name = localizedText(locale, item.name, item.nameMy);
+  const categoryNames =
+    item.categoryRefs.length > 0
+      ? item.categoryRefs
+          .map((category) => localizedText(locale, category.name, category.nameMy))
+          .join(", ")
+      : tCommon("uncategorized");
   // The switch flips at once (optimistic) and falls back to the server's
   // value on its own if the action fails.
   const [isPending, startTransition] = useTransition();
@@ -96,11 +115,17 @@ export default function MenuGridCard({
     isHiddenHere: item.isHiddenHere,
   });
   const stock = stockBadge(item.stockQuantity);
+  const stockLabel =
+    stock.kind === "soldOut"
+      ? t("soldOut")
+      : stock.kind === "low"
+        ? t("stockLeft", { count: item.stockQuantity })
+        : t("stockIn", { count: item.stockQuantity });
   const hiddenHintId = `menu-${item.id}-hidden-hint`;
   // Hidden here: the switch would change nothing a customer sees, so
   // it's disabled with its own visible hint (below) instead.
   const permissionHint =
-    canToggle || item.isHiddenHere ? "" : ASK_OWNER_HINTS.MENU_AVAILABILITY;
+    canToggle || item.isHiddenHere ? "" : tPermissions("askOwner.MENU_AVAILABILITY");
 
   function onToggle(nextOn: boolean) {
     startTransition(async () => {
@@ -112,16 +137,14 @@ export default function MenuGridCard({
       onNotify(
         result.success
           ? {
-              text: nextOn
-                ? `${item.name} is back on at ${locationName}`
-                : `${item.name} is off at ${locationName}`,
+              text: t(nextOn ? "backOn" : "off", { name, location: locationName }),
               severity: "success",
             }
-          : { text: result.error.message, severity: "error" },
+          : { text: errorText(result.error), severity: "error" },
       );
     });
   }
-  const description = item.description ?? "";
+  const description = localizedText(locale, item.description ?? "", item.descriptionMy);
 
   return (
     <Card
@@ -163,11 +186,7 @@ export default function MenuGridCard({
             transition: "opacity 150ms ease-out, filter 150ms ease-out",
           }}
         >
-          <MenuThumb
-            name={item.name}
-            imageUrl={item.imageUrl}
-            alt={item.name}
-          />
+          <MenuThumb name={name} imageUrl={item.imageUrl} alt={name} />
         </Box>
         {/* Corner chips, 8px in, siblings of the dimmed image so they
             stay at full contrast: category top-left (truncates), and a
@@ -176,7 +195,7 @@ export default function MenuGridCard({
         <Chip
           label={
             <Typography variant="caption" component="span">
-              {item.categories.join(", ")}
+              {categoryNames}
             </Typography>
           }
           size="small"
@@ -211,7 +230,7 @@ export default function MenuGridCard({
           <Chip
             label={
               <Typography variant="caption" component="span">
-                {stock.label}
+                {stockLabel}
               </Typography>
             }
             size="small"
@@ -246,7 +265,7 @@ export default function MenuGridCard({
             >
               <DoNotDisturbAltIcon fontSize="small" aria-hidden />
               <Typography variant="caption" component="span">
-                Unavailable
+                {t("unavailable")}
               </Typography>
             </Box>
           </Box>
@@ -280,7 +299,7 @@ export default function MenuGridCard({
         >
           <Typography
             variant="body1"
-            title={item.name}
+            title={name}
             sx={{
               flex: { sm: 1 },
               minWidth: 0,
@@ -295,7 +314,7 @@ export default function MenuGridCard({
               overflow: "hidden",
             }}
           >
-            {item.name}
+            {name}
           </Typography>
           <Typography
             variant="body1"
@@ -306,7 +325,7 @@ export default function MenuGridCard({
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {formatAmount(item.price)}
+            {money.amount(item.price)}
           </Typography>
         </Box>
 
@@ -335,7 +354,7 @@ export default function MenuGridCard({
             color="text.secondary"
             id={hiddenHintId}
           >
-            {HIDDEN_HERE_HINT}
+            {t("hiddenHint")}
           </Typography>
         )}
 
@@ -368,7 +387,7 @@ export default function MenuGridCard({
                     component="span"
                     sx={{ [NARROW_CARD]: visuallyHiddenSx }}
                   >
-                    {isSwitchedOn ? "Available" : "Unavailable"}
+                    {isSwitchedOn ? t("available") : t("unavailable")}
                   </Typography>
                 }
                 control={
@@ -378,7 +397,7 @@ export default function MenuGridCard({
                     onChange={(event) => onToggle(event.target.checked)}
                     slotProps={{
                       input: {
-                        "aria-label": `${item.name} available at ${locationName}`,
+                        "aria-label": t("availableAt", { name, location: locationName }),
                         "aria-describedby": item.isHiddenHere
                           ? hiddenHintId
                           : undefined,
@@ -393,11 +412,11 @@ export default function MenuGridCard({
 
           {/* Editing a menu is the owner's (its page checks too). */}
           {canEdit && (
-            <Tooltip title="Edit">
+            <Tooltip title={t("edit")}>
               <IconButton
                 component={Link}
                 href={`/backoffice/menus/${item.id}`}
-                aria-label={`Edit ${item.name}`}
+                aria-label={t("editMenu", { name })}
                 sx={{
                   width: 44,
                   height: 44,

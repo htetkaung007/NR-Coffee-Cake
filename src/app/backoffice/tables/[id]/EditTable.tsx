@@ -1,5 +1,6 @@
 "use client";
 
+import CenteredPage from "@/app/components/CenteredPage";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +19,8 @@ import PageHeader from "@/app/components/PageHeader";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
 import DangerZone from "@/app/components/DangerZone";
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 
 interface EditTableProps {
   table: {
@@ -30,6 +33,9 @@ interface EditTableProps {
 
 export default function EditTable({ table }: EditTableProps) {
   const router = useRouter();
+  const t = useTranslations("bo.tables");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
   const [name, setName] = useState(table.name);
   const [logo, setLogo] = useState<File | null>(null);
 
@@ -51,7 +57,7 @@ export default function EditTable({ table }: EditTableProps) {
     startSavingName(async () => {
       const result = await updateTableAction(table.id, formData);
       if (!result.success) {
-        setNameError(result.error.message);
+        setNameError(errorText(result.error));
         return;
       }
       setLogo(null); // clear the picker; router.refresh below shows the new QR
@@ -64,7 +70,7 @@ export default function EditTable({ table }: EditTableProps) {
     startDeleting(async () => {
       const result = await deleteTableAction(table.id);
       if (!result.success) {
-        setDeleteError(result.error.message);
+        setDeleteError(errorText(result.error));
         setDeleteDialogOpen(false);
         return;
       }
@@ -73,11 +79,11 @@ export default function EditTable({ table }: EditTableProps) {
   }
 
   return (
-    <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
+    <CenteredPage>
       <PageHeader
-        title="Edit Table"
+        title={t("editTitle")}
         backHref="/backoffice/tables"
-        backLabel="Back to tables"
+        backLabel={t("backToTables")}
       />
 
       {/* Rename + logo — one form, one submit, one error. Saving with
@@ -90,7 +96,7 @@ export default function EditTable({ table }: EditTableProps) {
         sx={{ mb: 3 }}
       >
         <TextField
-          label="Table Name"
+          label={t("tableName")}
           required
           fullWidth
           value={name}
@@ -104,7 +110,7 @@ export default function EditTable({ table }: EditTableProps) {
             startIcon={<UploadOutlinedIcon />}
             sx={{ fontSize: "0.8rem" }}
           >
-            {logo ? "Change Logo" : "Update New Logo"}
+            {logo ? tCommon("changeLogo") : t("updateLogo")}
             <input
               type="file"
               hidden
@@ -125,7 +131,7 @@ export default function EditTable({ table }: EditTableProps) {
             >
               <CheckCircleIcon sx={{ fontSize: 16 }} />
               <Typography variant="caption">
-                Image uploaded — {logo.name}
+                {tCommon("imageChosen", { name: logo.name })}
               </Typography>
             </Box>
           ) : (
@@ -134,8 +140,7 @@ export default function EditTable({ table }: EditTableProps) {
               color="text.secondary"
               sx={{ display: "block", mt: 0.5 }}
             >
-              Uploading a new logo regenerates the QR code image — reprint it
-              afterward to show the new logo. PNG, JPEG, or WEBP, up to 5MB.
+              {t("updateLogoHint")}
             </Typography>
           )}
         </Box>
@@ -147,12 +152,12 @@ export default function EditTable({ table }: EditTableProps) {
               color="text.secondary"
               sx={{ display: "block", mb: 0.5 }}
             >
-              Current QR code
+              {t("currentQr")}
             </Typography>
             <CardMedia
               component="img"
               image={table.qrcodeImageUrl}
-              alt={`QR code for ${table.name}`}
+              alt={t("qrAlt", { name: table.name })}
               sx={{
                 width: 120,
                 height: 120,
@@ -172,7 +177,7 @@ export default function EditTable({ table }: EditTableProps) {
               }
               sx={{ fontSize: "0.75rem" }}
             >
-              Save QR
+              {t("saveQr")}
             </Button>
           </Box>
         )}
@@ -184,7 +189,7 @@ export default function EditTable({ table }: EditTableProps) {
             disabled={isSavingName || !name.trim()}
             sx={{ px: 3 }}
           >
-            {isSavingName ? "Saving..." : "Save Changes"}
+            {isSavingName ? tCommon("saving") : tCommon("saveChanges")}
           </Button>
           <Button
             type="button"
@@ -192,16 +197,16 @@ export default function EditTable({ table }: EditTableProps) {
             disabled={isSavingName}
             onClick={() => router.push("/backoffice/tables")}
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
         </Box>
       </FormCard>
 
       {/* Delete — immediate hard delete, no archive step. Removes the
           Table row and its QR code image (MinIO) together. */}
-      <DangerZone title="Delete Table" error={deleteError}>
+      <DangerZone title={t("deleteTitle")} error={deleteError}>
         <Typography variant="caption" color="text.secondary">
-          Removes this table and its QR code permanently. This cannot be undone.
+          {t("deleteHint")}
         </Typography>
         <Box sx={{ mt: 1.5 }}>
           <Button
@@ -210,22 +215,23 @@ export default function EditTable({ table }: EditTableProps) {
             disabled={isDeleting}
             onClick={() => setDeleteDialogOpen(true)}
           >
-            Delete Table
+            {t("deleteTitle")}
           </Button>
         </Box>
       </DangerZone>
 
       <ConfirmDialog
         open={deleteDialogOpen}
-        title="Delete this table?"
-        message="Are you sure want to delete this table? This removes the table and its QR code from the database and storage permanently. This action cannot be undone."
-        confirmLabel="Yes, delete"
-        pendingLabel="Deleting..."
+        title={t("deleteConfirmTitle")}
+        message={t("deleteConfirmMessage")}
+        confirmLabel={tCommon("yesDelete")}
+        pendingLabel={tCommon("deleting")}
+        cancelLabel={tCommon("cancel")}
         destructive
         pending={isDeleting}
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialogOpen(false)}
       />
-    </Box>
+    </CenteredPage>
   );
 }

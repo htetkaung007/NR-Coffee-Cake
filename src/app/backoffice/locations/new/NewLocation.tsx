@@ -1,5 +1,6 @@
 "use client";
 
+import CenteredPage from "@/app/components/CenteredPage";
 import { useState } from "react";
 import {
   Box,
@@ -15,30 +16,21 @@ import {
 import FormCard, { SuccessSnackbar } from "@/app/components/FormCard";
 import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
+import { useTranslations } from "next-intl";
 import { createLocationAction } from "../action";
 
 type StartingMenus = "ALL" | "EMPTY";
 
-/** The new location's starting menus — required (ALL by default). */
-const STARTING_MENU_OPTIONS: {
-  value: StartingMenus;
-  label: string;
-  helper: string;
-}[] = [
-  {
-    value: "ALL",
-    label: "All current menus",
-    helper: "Every menu shows here. Stock starts at 0 — set it before opening.",
-  },
-  {
-    value: "EMPTY",
-    label: "Empty",
-    helper:
-      "Nothing shows yet. Turn menus on for this location from each menu's form.",
-  },
-];
+/** The new location's starting menus — required (ALL by default); the
+ *  words are bo.locations.<label> / <helper>. */
+const STARTING_MENU_OPTIONS = [
+  { value: "ALL", label: "startAll", helper: "startAllHint" },
+  { value: "EMPTY", label: "startEmpty", helper: "startEmptyHint" },
+] as const satisfies readonly { value: StartingMenus; label: string; helper: string }[];
 
 export default function NewLocation() {
+  const t = useTranslations("bo.locations");
+  const tCommon = useTranslations("bo.common");
   const { error, setError, isPending, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const [name, setName] = useState("");
@@ -57,15 +49,15 @@ export default function NewLocation() {
 
   return (
     <>
-      <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
+      <CenteredPage>
         <PageHeader
-          title="New Location"
+          title={t("newLocation")}
           backHref="/backoffice/locations"
-          backLabel="Back to locations"
+          backLabel={t("backToLocations")}
         />
         <FormCard onSubmit={handleSubmit} error={error}>
           <TextField
-            label="Location Name"
+            label={t("name")}
             required
             autoFocus
             fullWidth
@@ -74,7 +66,7 @@ export default function NewLocation() {
           />
 
           <FormControl component="fieldset" required>
-            <FormLabel component="legend">Starting menus</FormLabel>
+            <FormLabel component="legend">{t("startingMenus")}</FormLabel>
             <RadioGroup
               name="startingMenus"
               value={startingMenus}
@@ -90,9 +82,9 @@ export default function NewLocation() {
                   sx={{ alignItems: "flex-start", mr: 0, mt: 1 }}
                   label={
                     <Box sx={{ pt: 1 }}>
-                      <Typography variant="body2">{option.label}</Typography>
+                      <Typography variant="body2">{t(option.label)}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {option.helper}
+                        {t(option.helper)}
                       </Typography>
                     </Box>
                   }
@@ -107,15 +99,15 @@ export default function NewLocation() {
             disabled={isPending || !name.trim()}
             sx={{ alignSelf: "flex-start", px: 3 }}
           >
-            {isPending ? "Creating..." : "Create Location"}
+            {isPending ? tCommon("creating") : t("create")}
           </Button>
         </FormCard>
-      </Box>
+      </CenteredPage>
 
       <SuccessSnackbar
         open={showSuccess}
         onClose={closeSuccess}
-        message="Location created successfully!"
+        message={t("created")}
       />
     </>
   );

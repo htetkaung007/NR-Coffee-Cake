@@ -23,8 +23,15 @@ export function myanmarNameCount(rows: NamedRow[]): {
 }
 
 /** The Myanmar field's placeholder: what customers would see instead
- *  (the English name) once there is one. */
-export function myanmarPlaceholder(englishName: string): string {
+ *  (the English name) once there is one. The form passes the staff's
+ *  words (bo.addonForm); the default is the English. */
+export function myanmarPlaceholder(
+  englishName: string,
+  words: { empty: string; shownIfEmpty: (name: string) => string } = {
+    empty: "Myanmar name",
+    shownIfEmpty: (name) => `${name} (shown if empty)`,
+  },
+): string {
   const name = englishName.trim();
-  return name === "" ? "Myanmar name" : `${name} (shown if empty)`;
+  return name === "" ? words.empty : words.shownIfEmpty(name);
 }

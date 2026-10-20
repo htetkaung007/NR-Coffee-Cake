@@ -1,3 +1,5 @@
+import { getLocale, getTranslations } from "next-intl/server";
+import { staffErrorMessage } from "@/app/lib/i18n/staffErrorMessage";
 import { NextRequest } from "next/server";
 import { AppError } from "@/app/lib/errors";
 import {
@@ -33,6 +35,14 @@ const plain = (status: number, message: string) =>
  * against formula injection). Signed-out requests never get here: the
  * proxy (src/proxy.ts) sends them to sign-in.
  */
+/** An AppError in the staff's words (lib/i18n/staffErrorMessage) — the
+ *  file itself stays English; only these plain-text refusals follow the
+ *  staff's language. */
+async function staffError(error: AppError) {
+  const t = await getTranslations("bo.errors");
+  return staffErrorMessage(error, await getLocale(), (key, values) => t(key, values));
+}
+
 export async function GET(request: NextRequest) {
   // The same check as the Reports page and actions: the owner, or a
   // manager granted REPORTS_VIEW (read from the database each time).
@@ -41,9 +51,9 @@ export async function GET(request: NextRequest) {
     scope = await requirePermission("REPORTS_VIEW");
   } catch (error) {
     if (error instanceof AppError && error.code === "UNAUTHORIZED") {
-      return plain(401, "Please sign in.");
+      return plain(401, (await getTranslations("bo.access"))("signIn"));
     }
-    if (error instanceof AppError) return plain(403, error.message);
+    if (error instanceof AppError) return plain(403, await staffError(error));
     throw error;
   }
 
@@ -53,7 +63,9 @@ export async function GET(request: NextRequest) {
     kind: searchParams.get("period") ?? undefined,
     anchorDay: searchParams.get("day") ?? undefined,
   });
-  if (!parsed.success) return plain(400, "This export link isn't valid.");
+  if (!parsed.success) {
+    return plain(400, (await getTranslations("bo.reports"))("invalidExportLink"));
+  }
   const { type, kind, anchorDay } = parsed.data;
 
   try {
@@ -97,8 +109,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     // Only an AppError's message is safe to show (Rule 6).
-    if (error instanceof AppError) return plain(400, error.message);
+    if (error instanceof AppError) return plain(400, await staffError(error));
     console.error("[reports/export] Unhandled error:", error);
-    return plain(500, "Something went wrong. Please try again.");
+    return plain(500, (await getTranslations("bo.errors"))("generic"));
   }
 }

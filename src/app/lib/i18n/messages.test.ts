@@ -13,7 +13,7 @@ function keyPaths(messages: object, prefix = ""): string[] {
     .sort();
 }
 
-describe("customer messages", () => {
+describe("messages (customer and staff bo.*)", () => {
   it("has exactly the same keys in Myanmar and English", () => {
     expect(keyPaths(my)).toEqual(keyPaths(en));
   });

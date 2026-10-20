@@ -1,12 +1,16 @@
 import { Box, Stack, Typography } from "@mui/material";
+import { useLocale } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import type { BreakdownRow } from "@/app/lib/order/orderTotals";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 
 /** "Latte ×2" for the item; "+ Extra shot" (or "+ Extra shot ×2" when
- *  the line is for more than one) for an add-on. */
-function rowLabel(row: BreakdownRow) {
-  if (row.kind === "item") return `${row.name} ×${row.quantity}`;
-  return row.quantity > 1 ? `+ ${row.name} ×${row.quantity}` : `+ ${row.name}`;
+ *  the line is for more than one) for an add-on — the shop's Myanmar
+ *  name in Myanmar where it gave one (row.nameMy, localizedText). */
+function rowLabel(row: BreakdownRow, locale: string) {
+  const name = localizedText(locale, row.name, row.nameMy);
+  if (row.kind === "item") return `${name} ×${row.quantity}`;
+  return row.quantity > 1 ? `+ ${name} ×${row.quantity}` : `+ ${name}`;
 }
 
 const amountSx = {
@@ -26,9 +30,13 @@ interface BillLineRowsProps {
   print?: boolean;
   /** Extra style for the item's amount (e.g. the staff panel's bold). */
   itemAmountSx?: object;
-  /** How an amount reads — "3,000 MMK" (default); New Order's မြန်မာ
-   *  view passes the customer's "3,000 ကျပ်". */
+  /** How an amount reads — default: the staff's money words ("3,000
+   *  MMK" / "3,000 ကျပ်", useStaffMoney); New Order's မြန်မာ view passes
+   *  the customer's, the print preview its voucher language's. */
   formatMoney?: (amount: number) => string;
+  /** Which language the names show in — default: the staff's own
+   *  (BO_LOCALE); the print preview passes its voucher language. */
+  locale?: string;
 }
 
 /**
@@ -46,8 +54,11 @@ export default function BillLineRows({
   density = "regular",
   print = false,
   itemAmountSx,
-  formatMoney = formatAmount,
+  formatMoney,
+  locale,
 }: BillLineRowsProps) {
+  const money = useStaffMoney();
+  const staffLocale = useLocale();
   const itemVariant = density === "regular" ? "body1" : "body2";
   const addonVariant = density === "regular" ? "body2" : "caption";
   const addonColor = print ? "inherit" : "text.secondary";
@@ -74,14 +85,14 @@ export default function BillLineRows({
               component="span"
               sx={{ minWidth: 0, overflowWrap: "anywhere" }}
             >
-              {rowLabel(row)}
+              {rowLabel(row, locale ?? staffLocale)}
             </Typography>
             <Typography
               variant={variant}
               component="span"
               sx={{ ...amountSx, ...(isItem && itemAmountSx) }}
             >
-              {formatMoney(row.amount)}
+              {(formatMoney ?? money.amount)(row.amount)}
             </Typography>
           </Stack>
         );

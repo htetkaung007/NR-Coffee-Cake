@@ -4,6 +4,7 @@ import {
   voidReasonLabel,
   type VoidReason,
 } from "../order/voids";
+import { formatReasonCounts } from "../order/rejectReason";
 
 /** One void on a paid bill's line, with what it took back: `quantity`
  *  units at the line's own snapshot prices (menu + add-ons per unit). */
@@ -44,10 +45,15 @@ export function summarizeVoids(voids: readonly ReportVoid[]): VoidSummary {
   };
 }
 
-/** "Wrong item 2 · Other 1" — the non-zero reasons only; "" when none. */
-export function formatVoidReasonCounts(summary: VoidSummary["reasons"]): string {
-  return summary
-    .filter((entry) => entry.count > 0)
-    .map((entry) => `${voidReasonLabel(entry.reason)} ${entry.count}`)
-    .join(" · ");
+/** "Wrong item 2 · Other 1" — the non-zero reasons only; "" when none.
+ *  Staff screens pass their language's `label` (each "reason count"
+ *  pair); the default is the English label. */
+export function formatVoidReasonCounts(
+  summary: VoidSummary["reasons"],
+  label: (reason: VoidSummary["reasons"][number]["reason"], count: number) => string = (
+    reason,
+    count,
+  ) => `${voidReasonLabel(reason)} ${count}`,
+): string {
+  return formatReasonCounts(summary, label);
 }

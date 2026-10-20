@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import { useTransition } from "react";
 import {
   Alert,
@@ -48,6 +50,8 @@ export default function ManagerAccessEditor({
   onRequestClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
 
   function handleSave() {
     startTransition(async () => {
@@ -56,7 +60,7 @@ export default function ManagerAccessEditor({
         permissions: [...ticks],
       });
       if (result.success) onSaved();
-      else onError(result.error.message);
+      else onError(errorText(result.error));
     });
   }
 
@@ -86,7 +90,7 @@ export default function ManagerAccessEditor({
           )}
         </Box>
         <IconButton
-          aria-label="Close"
+          aria-label={tCommon("close")}
           onClick={onRequestClose}
           sx={{ width: 44, height: 44, flexShrink: 0 }}
         >
@@ -115,7 +119,7 @@ export default function ManagerAccessEditor({
         }}
       >
         <Button onClick={onRequestClose} disabled={isPending} sx={{ minHeight: 44 }}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button
           variant="contained"
@@ -124,7 +128,7 @@ export default function ManagerAccessEditor({
           loading={isPending}
           sx={{ minHeight: 44, px: 3 }}
         >
-          Save
+          {tCommon("save")}
         </Button>
       </Stack>
     </Box>

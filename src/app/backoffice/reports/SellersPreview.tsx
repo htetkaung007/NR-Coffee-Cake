@@ -4,7 +4,9 @@ import type { MouseEvent } from "react";
 import Link from "next/link";
 import { Box, Button, Card, Stack, Typography } from "@mui/material";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { buildItemList } from "@/app/lib/report/reportView";
 import { ErrorRetry, PreviewRowsSkeleton } from "./ReportStates";
 import type { ItemsState } from "./useReportItems";
@@ -37,8 +39,11 @@ export default function SellersPreview({
   seeAllHref,
   onNavigate,
 }: SellersPreviewProps) {
+  const t = useTranslations("bo.reports");
+  const locale = useLocale();
+  const money = useStaffMoney();
   const isBest = variant === "best";
-  const title = isBest ? "Best sellers" : "Slow sellers";
+  const title = isBest ? t("bestSellers") : t("slowSellers");
 
   const rows =
     state.status !== "ok"
@@ -73,7 +78,7 @@ export default function SellersPreview({
         <Button
           component={Link}
           href={seeAllHref}
-          aria-label={`See all ${title.toLowerCase()}`}
+          aria-label={t("seeAllOf", { list: title })}
           onClick={(event: MouseEvent<HTMLElement>) => {
             if (isPlainLeftClick(event)) {
               event.preventDefault();
@@ -82,7 +87,7 @@ export default function SellersPreview({
           }}
           sx={{ minHeight: 44 }}
         >
-          See all
+          {t("seeAll")}
         </Button>
       </Stack>
 
@@ -94,7 +99,7 @@ export default function SellersPreview({
       )}
       {state.status === "ok" && rows.length === 0 && (
         <Typography variant="body2" color="text.secondary">
-          {isBest ? "No sales this period" : "No menus to show"}
+          {isBest ? t("noSalesPeriod") : t("noMenusToShow")}
         </Typography>
       )}
       {state.status === "ok" && rows.length > 0 && (
@@ -125,7 +130,7 @@ export default function SellersPreview({
                 noWrap
                 sx={{ ...entryTitleSx, flexGrow: 1, minWidth: 0 }}
               >
-                {row.name}
+                {localizedText(locale, row.name, row.nameMy)}
               </Typography>
               {isBest ? (
                 <Box sx={{ textAlign: "right", flexShrink: 0 }}>
@@ -133,7 +138,7 @@ export default function SellersPreview({
                     variant="body1"
                     sx={{ ...moneyToneSx("income"), lineHeight: 1.3 }}
                   >
-                    {formatAmount(row.itemSales)}
+                    {money.amount(row.itemSales)}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -150,8 +155,8 @@ export default function SellersPreview({
                   sx={{ flexShrink: 0 }}
                 >
                   {row.quantity === 0 && row.itemSales === 0
-                    ? "No sales this period"
-                    : `${row.quantity} sold`}
+                    ? t("noSalesPeriod")
+                    : t("sold", { count: row.quantity })}
                 </Typography>
               )}
             </Stack>

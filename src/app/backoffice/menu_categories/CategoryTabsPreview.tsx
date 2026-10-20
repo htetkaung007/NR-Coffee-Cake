@@ -2,11 +2,18 @@
 
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import type { CategoryItem } from "./SortableCategoryRow";
 
 /** Mirrors MenuBrowser's synthetic first tab — the one the customer menu
- *  opens on (MenuBrowser's initial activeCategory). */
-const ALL_TAB = "All";
+ *  opens on (MenuBrowser's initial activeCategory): in the staff's
+ *  language, as a customer of that language reads it. */
+function useAllTab() {
+  const t = useTranslations("bo.categories");
+  return myanmarWordsOrNull(useLocale())?.allCategories ?? t("all");
+}
 
 /** One row of tab chips, in the list's live order. The real customer
  *  menu gives an empty category no tab; here it keeps its place as a
@@ -18,11 +25,14 @@ function TabChips({
   categories: CategoryItem[];
   compact: boolean;
 }) {
+  const t = useTranslations("bo.categories");
+  const locale = useLocale();
+  const allTab = useAllTab();
   const chipSize = compact ? "small" : "medium";
   return (
     <Stack
       component="ul"
-      aria-label="Category tabs as customers see them"
+      aria-label={t("tabsLabel")}
       direction="row"
       useFlexGap
       sx={{
@@ -49,10 +59,10 @@ function TabChips({
         component="li"
         size={chipSize}
         color="primary"
-        aria-label={`${ALL_TAB} (opens first)`}
+        aria-label={t("allOpensFirst", { all: allTab })}
         label={
           <Typography variant="body2" component="span">
-            {ALL_TAB}
+            {allTab}
           </Typography>
         }
         sx={{ flexShrink: 0 }}
@@ -66,7 +76,7 @@ function TabChips({
             variant="outlined"
             label={
               <Typography variant="body2" component="span">
-                {category.name}
+                {localizedText(locale, category.name, category.nameMy)}
               </Typography>
             }
             sx={{ flexShrink: 0 }}
@@ -77,10 +87,12 @@ function TabChips({
             key={category.id}
             size={chipSize}
             variant="outlined"
-            aria-label={`${category.name} — not shown to customers yet (no items)`}
+            aria-label={t("notShownYet", {
+              name: localizedText(locale, category.name, category.nameMy),
+            })}
             label={
               <Typography variant="body2" component="span">
-                {category.name}
+                {localizedText(locale, category.name, category.nameMy)}
               </Typography>
             }
             sx={{
@@ -117,6 +129,8 @@ export default function CategoryTabsPreview({
   categories: CategoryItem[];
   variant: "compact" | "full";
 }) {
+  const t = useTranslations("bo.categories");
+  const allTab = useAllTab();
   const compact = variant === "compact";
   const hasEmptyCategories = categories.some(
     (category) => category.itemCount === 0,
@@ -129,7 +143,7 @@ export default function CategoryTabsPreview({
       color="text.secondary"
       sx={{ textTransform: "uppercase", mb: compact ? 1 : 0 }}
     >
-      Customer menu preview
+      {t("previewLabel")}
     </Typography>
   );
 
@@ -139,10 +153,10 @@ export default function CategoryTabsPreview({
       <Card variant="outlined" sx={{ p: compact ? 2.5 : 2 }}>
         {!compact && label}
         <Typography variant="body1" component="p" noWrap>
-          {shopName ?? "Your shop"}
+          {shopName ?? t("yourShop")}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Table · Dine in
+          {t("tableDineIn")}
         </Typography>
 
         <Box sx={{ mt: 2 }}>
@@ -184,10 +198,8 @@ export default function CategoryTabsPreview({
               ))}
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              “All” opens first; the tabs follow this order — on the staff order
-              screen too.
-              {hasEmptyCategories &&
-                " Categories without items stay hidden from customers until you add one."}
+              {t("previewNote", { all: allTab })}
+              {hasEmptyCategories && t("previewEmptyNote")}
             </Typography>
           </>
         )}

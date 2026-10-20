@@ -10,16 +10,19 @@ import {
   type Theme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { useTranslations } from "next-intl";
 import { langAttr } from "@/app/lib/i18n/locale";
+import CharacterCount from "../CharacterCount";
 
 /** The start tag's words: which language (or what) the field holds. */
 type FieldTag = "en" | "my" | "price";
 
-const TAG_TEXT: Record<FieldTag, string> = {
+/** "EN" / "မြန်မာ" are each language's own name (never translated);
+ *  "Price" is the staff's word (bo.addonForm.tagPrice). */
+const LANGUAGE_TAG_TEXT = {
   en: "EN",
   my: "မြန်မာ",
-  price: "Price",
-};
+} as const;
 
 interface LanguageTaggedFieldProps {
   /** The real accessible name ("Group name in English") — the visual
@@ -37,6 +40,8 @@ interface LanguageTaggedFieldProps {
   /** The value is Myanmar text (lang="my" on the input). */
   myanmar?: boolean;
   placeholder?: string;
+  /** The schema's limit: the input's maxLength, and the "12/50
+   *  characters" counter under it (the same on both language twins). */
   maxLength?: number;
   required?: boolean;
   /** A price: numeric keypad, right-aligned digits. */
@@ -70,6 +75,7 @@ export default function LanguageTaggedField({
   size = "small",
   sx,
 }: LanguageTaggedFieldProps) {
+  const t = useTranslations("bo.addonForm");
   const startAdornment = tag ? (
     <InputAdornment
       position="start"
@@ -109,7 +115,7 @@ export default function LanguageTaggedField({
             whiteSpace: "nowrap",
           }}
         >
-          {TAG_TEXT[tag]}
+          {tag === "price" ? t("tagPrice") : LANGUAGE_TAG_TEXT[tag]}
         </Typography>
       </Box>
     </InputAdornment>
@@ -131,6 +137,11 @@ export default function LanguageTaggedField({
       onChange={onChange}
       placeholder={placeholder}
       required={required}
+      helperText={
+        maxLength !== undefined && !numeric ? (
+          <CharacterCount count={value.length} max={maxLength} />
+        ) : undefined
+      }
       sx={sx}
       slotProps={{
         input: { startAdornment, endAdornment },

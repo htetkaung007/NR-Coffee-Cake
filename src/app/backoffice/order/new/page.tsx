@@ -23,7 +23,6 @@ export default async function NewStaffOrderPage({
 }) {
   const { for: forParam } = await searchParams;
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: "Please sign in to place an order.",
     access: "staff",
   });
   if (!scope) return fallback;

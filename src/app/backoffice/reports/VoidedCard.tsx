@@ -1,6 +1,8 @@
 "use client";
 
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { useReasonCountLabels } from "./useReportWords";
 import { formatVoidReasonCounts } from "@/app/lib/report/voidReport";
 import type { ReportOverview } from "./action";
 import { FigureCard, FigureCell } from "./CancelledCard";
@@ -14,14 +16,17 @@ export default function VoidedCard({
 }: {
   voided: ReportOverview["current"]["voided"];
 }) {
+  const t = useTranslations("bo.reports");
+  const money = useStaffMoney();
+  const reasonLabels = useReasonCountLabels();
   return (
-    <FigureCard title="Voided items">
+    <FigureCard title={t("voidedTitle")}>
       <FigureCell
-        label="Items voided"
+        label={t("itemsVoided")}
         value={String(voided.count)}
-        detail={formatVoidReasonCounts(voided.reasons) || undefined}
+        detail={formatVoidReasonCounts(voided.reasons, reasonLabels.void) || undefined}
       />
-      <FigureCell label="Not charged" value={formatAmount(voided.value)} />
+      <FigureCell label={t("notCharged")} value={money.amount(voided.value)} />
     </FigureCard>
   );
 }

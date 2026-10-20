@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, useTransition } from "react";
 import {
   AppBar,
   Toolbar,
@@ -16,6 +16,8 @@ import {
   Switch,
 } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -23,6 +25,7 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
+import TranslateIcon from "@mui/icons-material/Translate";
 import { signOut, useSession } from "next-auth/react";
 import { clearStaffCarts } from "@/app/lib/hooks/useStaffCart";
 import { useThemeMode } from "../lib/theme/ThemeModeProvider";
@@ -33,6 +36,9 @@ import {
 import { useBackofficeSidebar } from "../lib/hooks/useBackofficeSidebar";
 import { SIDEBAR_ID } from "./BackofficeSideBar";
 import OnlineMenuStatus, { type TopBarLocation } from "./OnlineMenuStatus";
+import NameLanguageToggle from "./NameLanguageToggle";
+import { setBackofficeLocaleAction } from "@/app/backoffice/language/action";
+import type { AppLocale } from "@/app/lib/i18n/locale";
 
 const LOCATIONS_HREF = "/backoffice/locations";
 
@@ -51,7 +57,8 @@ function LocationPill({
   maxWidth: number | string;
 }) {
   // A Manager can't pick one — theirs is assigned by an Admin.
-  const label = name ?? (isLink ? "Select a location" : "No location assigned");
+  const t = useTranslations("bo.topBar");
+  const label = name ?? (isLink ? t("selectLocation") : t("noLocation"));
   const pill = (
     <Box
       sx={(theme) => ({
@@ -97,7 +104,7 @@ function LocationPill({
       component={Link}
       href={LOCATIONS_HREF}
       title={label}
-      aria-label={name ? `Location: ${name}` : "Select a location"}
+      aria-label={name ? t("locationLink", { name }) : t("selectLocation")}
       sx={(theme) => ({
         ...wrapperSx,
         textDecoration: "none",
@@ -116,20 +123,79 @@ function LocationPill({
   );
 }
 
+/** The account menu's Language row: EN | မြန်မာ for the whole staff
+ *  surface — this device's BO_LOCALE cookie (setBackofficeLocaleAction,
+ *  staff only), then a refresh so the server renders the new language.
+ *  Not a menu item (MenuList only focuses MenuItems; the toggle's two
+ *  buttons are reached with Tab). */
+function LanguageRow() {
+  const t = useTranslations("bo.account");
+  const locale = useLocale();
+  const router = useRouter();
+  const [isSaving, startSaving] = useTransition();
+  const [shown, setShown] = useState<AppLocale>(locale);
+  // The server's answer (after the refresh) wins over the optimistic one.
+  const [seenLocale, setSeenLocale] = useState(locale);
+  if (seenLocale !== locale) {
+    setSeenLocale(locale);
+    setShown(locale);
+  }
+
+  function choose(next: AppLocale) {
+    if (next === shown) return;
+    setShown(next);
+    startSaving(async () => {
+      const result = await setBackofficeLocaleAction(next);
+      if (result.success) router.refresh();
+      else setShown(locale);
+    });
+  }
+
+  return (
+    <Box
+      component="li"
+      role="presentation"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        minHeight: 44,
+        px: 2,
+        py: 0.5,
+      }}
+    >
+      <ListItemIcon sx={{ minWidth: 36 }}>
+        <TranslateIcon fontSize="small" />
+      </ListItemIcon>
+      <Typography variant="body1" sx={{ flex: 1, minWidth: 0 }}>
+        {t("language")}
+      </Typography>
+      <NameLanguageToggle
+        value={shown}
+        onChange={choose}
+        ariaLabel={t("languageChoice")}
+        disabled={isSaving}
+      />
+    </Box>
+  );
+}
+
 /** The account button (the avatar) and its menu: who's signed in (name +
- *  role in words), Dark mode — this device's setting
- *  (ThemeModeProvider) — and Sign out. Every role gets it. The Dark mode
- *  item is ONE control (a menuitemcheckbox) that keeps the menu open so
- *  the change shows; its Switch is only the visual. */
+ *  role in words), Language — this device's staff language (BO_LOCALE) —
+ *  Dark mode — this device's setting (ThemeModeProvider) — and Sign out.
+ *  Every role gets it. The Dark mode item is ONE control (a
+ *  menuitemcheckbox) that keeps the menu open so the change shows; its
+ *  Switch is only the visual. */
 function AccountMenu() {
+  const t = useTranslations("bo.account");
   const { data: session } = useSession();
   const { mode, toggleMode } = useThemeMode();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const buttonId = useId();
   const menuId = useId();
 
-  const name = session?.user?.name || session?.user?.email || "Account";
-  const roleLabel = session?.user?.role === "ADMIN" ? "Owner" : "Manager";
+  const name = session?.user?.name || session?.user?.email || t("fallbackName");
+  const roleLabel = session?.user?.role === "ADMIN" ? t("owner") : t("manager");
   const isDark = mode === "dark";
   const open = anchor !== null;
 
@@ -138,7 +204,7 @@ function AccountMenu() {
       <IconButton
         id={buttonId}
         onClick={(event) => setAnchor(event.currentTarget)}
-        aria-label={`Account menu, ${name}`}
+        aria-label={t("menuLabel", { name })}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
@@ -179,6 +245,7 @@ function AccountMenu() {
           </Typography>
         </Box>
         <Divider />
+        <LanguageRow />
         <MenuItem
           role="menuitemcheckbox"
           aria-checked={isDark}
@@ -189,7 +256,7 @@ function AccountMenu() {
           <ListItemIcon>
             {isDark ? <DarkModeIcon fontSize="small" /> : <LightModeIcon fontSize="small" />}
           </ListItemIcon>
-          <ListItemText>Dark mode</ListItemText>
+          <ListItemText>{t("darkMode")}</ListItemText>
           <Switch
             edge="end"
             size="small"
@@ -212,7 +279,7 @@ function AccountMenu() {
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Sign out</ListItemText>
+          <ListItemText>{t("signOut")}</ListItemText>
         </MenuItem>
       </Menu>
     </>
@@ -236,6 +303,7 @@ export function BackofficeTopBar({
   location,
   canChangeLocation,
 }: BackofficeTopBarProps) {
+  const t = useTranslations("bo.topBar");
   const locationName = location?.name ?? null;
   const sidebar = useBackofficeSidebar();
 
@@ -268,7 +336,7 @@ export function BackofficeTopBar({
           <IconButton
             edge="start"
             onClick={sidebar.toggle}
-            aria-label={sidebar.isRail ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={sidebar.isRail ? t("expandSidebar") : t("collapseSidebar")}
             aria-expanded={!sidebar.isRail}
             aria-controls={SIDEBAR_ID}
             sx={{
@@ -285,7 +353,7 @@ export function BackofficeTopBar({
           <IconButton
             edge="start"
             onClick={onMenuClick}
-            aria-label="Open menu"
+            aria-label={t("openMenu")}
             sx={{ display: { sm: "none" }, color: "text.primary" }}
           >
             <MenuIcon />

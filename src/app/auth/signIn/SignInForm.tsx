@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import {
@@ -14,10 +15,7 @@ import {
 import AuthCard from "../AuthCard";
 import NextLink from "next/link";
 import GoogleIcon from "@mui/icons-material/Google";
-import {
-  SIGNUP_CLOSED_ERROR,
-  SIGNUP_CLOSED_MESSAGE,
-} from "@/app/lib/access/signUp";
+import { SIGNUP_CLOSED_ERROR } from "@/app/lib/access/signUp";
 import AuthCredentialFields from "../AuthCredentialFields";
 import { isAppPath } from "@/app/lib/http/appPath";
 import { authButtonSx } from "../authButtonSx";
@@ -30,6 +28,7 @@ export default function SignInForm({
   /** Display only — shows the "Sign Up" link while no shop exists yet. */
   isSignUpOpen: boolean;
 }) {
+  const t = useTranslations("bo.auth");
   const router = useRouter();
   const searchParams = useSearchParams();
   // Only an in-app path — never a full URL (a crafted link could send
@@ -54,7 +53,7 @@ export default function SignInForm({
       await signIn("google", { callbackUrl });
     } catch (err) {
       console.error("[SignInForm] Google sign-in failed:", err);
-      setError("An error occurred with Google Sign In.");
+      setError(t("googleSignInError"));
     }
   };
 
@@ -74,7 +73,7 @@ export default function SignInForm({
       setLoading(false);
 
       if (result?.error) {
-        setError("Invalid email or password.");
+        setError(t("invalidCredentials"));
         return;
       }
 
@@ -83,16 +82,16 @@ export default function SignInForm({
     } catch (err) {
       console.error("[SignInForm] Credentials sign-in failed:", err);
       setLoading(false);
-      setError("An unexpected error occurred.");
+      setError(t("unexpected"));
     }
   }
 
   return (
     <AuthCard>
       <AuthHeading
-        eyebrow="Welcome Back"
-        title="Sign In"
-        intro="We are glad to see you again! Please sign in to continue."
+        eyebrow={t("welcomeBack")}
+        title={t("signIn")}
+        intro={t("signInIntro")}
       />
 
       {isSignUpClosedRedirect && (
@@ -101,7 +100,7 @@ export default function SignInForm({
           role="status"
           sx={{ width: "100%", mb: 3, borderRadius: 2 }}
         >
-          {SIGNUP_CLOSED_MESSAGE}
+          {t("signUpClosed")}
         </Alert>
       )}
 
@@ -113,12 +112,12 @@ export default function SignInForm({
         size="large"
         sx={{ ...authButtonSx, mb: 3 }}
       >
-        Continue with Google
+        {t("continueGoogle")}
       </Button>
 
       <Divider sx={{ width: "100%", mb: 3 }}>
         <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-          OR WITH EMAIL
+          {t("orEmail")}
         </Typography>
       </Divider>
 
@@ -140,19 +139,19 @@ export default function SignInForm({
           </Alert>
         )}
 
-        <AuthSubmitButton isBusy={loading}>Sign In</AuthSubmitButton>
+        <AuthSubmitButton isBusy={loading}>{t("signIn")}</AuthSubmitButton>
 
         {isSignUpOpen && (
           <Box sx={{ mt: 3, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
-              Do not have an account?{" "}
+              {t("noAccount")}{" "}
               <Link
                 component={NextLink}
                 href="/auth/signup"
                 variant="body2"
                 sx={{ fontWeight: "bold", textDecoration: "none" }}
               >
-                Sign Up
+                {t("signUp")}
               </Link>
             </Typography>
           </Box>

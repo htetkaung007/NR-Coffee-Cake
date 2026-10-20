@@ -17,6 +17,9 @@ import {
   topBarHeight,
 } from "@/app/lib/theme/sharedThemeTokens";
 import AddonGroupPanel, { type AddonGroup } from "./AddonGroupPanel";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import RequiredChip from "./RequiredChip";
 import { setAddonAvailableAction, setAddonGroupRequiredAction } from "./action";
 
@@ -49,6 +52,8 @@ function GroupCard({
   group: AddonGroup;
   selected: boolean;
 }) {
+  const t = useTranslations("bo.addons");
+  const locale = useLocale();
   const { onCount, total, isBlocked } = addonGroupAvailability(
     group.isRequired,
     group.addons,
@@ -86,12 +91,12 @@ function GroupCard({
           variant="body1"
           sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}
         >
-          {group.name}
+          {localizedText(locale, group.name, group.nameMy)}
         </Typography>
         <RequiredChip isRequired={group.isRequired} />
       </Stack>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-        {onCount} of {total} on
+        {t("onCount", { on: onCount, total })}
       </Typography>
       {isBlocked && (
         <Stack
@@ -101,7 +106,7 @@ function GroupCard({
         >
           <WarningAmberIcon fontSize="small" />
           <Typography variant="body2" sx={{ color: "text.primary" }}>
-            All options off — its menus can&apos;t be ordered
+            {t("allOffShort")}
           </Typography>
         </Stack>
       )}
@@ -127,6 +132,9 @@ export default function AddonsView({
   /** Display only — every change is checked by the Server Action. */
   isOwner: boolean;
 }) {
+  const t = useTranslations("bo.addons");
+  const locale = useLocale();
+  const errorText = useStaffErrorMessage();
   const router = useRouter();
   const theme = useTheme();
   const isWide = useMediaQuery(theme.breakpoints.up("md"));
@@ -144,7 +152,13 @@ export default function AddonsView({
   async function toggle(
     key: string,
     value: boolean,
-    run: () => Promise<{ success: boolean; error?: { message: string } }>,
+    run: () => Promise<
+      | { success: true }
+      | {
+          success: false;
+          error: { message: string; code: string; params?: Record<string, string | number> };
+        }
+    >,
     confirmation: string,
   ) {
     setOverrides((current) => ({ ...current, [key]: value }));
@@ -165,7 +179,7 @@ export default function AddonsView({
         return rest;
       });
       setMessage({
-        text: result.error?.message ?? "Something went wrong.",
+        text: errorText(result.error),
         severity: "error",
       });
     }
@@ -187,13 +201,13 @@ export default function AddonsView({
       onClose={onClose}
       inSheet={onClose !== undefined}
       onToggleAddon={(addonId, isAvailable) => {
-        const name =
-          group.addons.find((addon) => addon.id === addonId)?.name ?? "Option";
+        const addon = group.addons.find((entry) => entry.id === addonId);
+        const name = addon ? localizedText(locale, addon.name, addon.nameMy) : t("option");
         void toggle(
           `addon-${addonId}`,
           isAvailable,
           () => setAddonAvailableAction(addonId, isAvailable),
-          `${name} turned ${isAvailable ? "on" : "off"}`,
+          t(isAvailable ? "turnedOn" : "turnedOff", { name }),
         );
       }}
       onToggleRequired={(isRequired) =>
@@ -201,7 +215,9 @@ export default function AddonsView({
           `required-${group.id}`,
           isRequired,
           () => setAddonGroupRequiredAction(group.id, isRequired),
-          `${group.name} is now ${isRequired ? "required" : "optional"}`,
+          t(isRequired ? "nowRequired" : "nowOptional", {
+            name: localizedText(locale, group.name, group.nameMy),
+          }),
         )
       }
     />
@@ -217,7 +233,7 @@ export default function AddonsView({
           alignItems: "start",
         }}
       >
-        <Stack component="nav" aria-label="Add-on groups" spacing={1.5}>
+        <Stack component="nav" aria-label={t("groupsLabel")} spacing={1.5}>
           {shown.map((group) => (
             <GroupCard
               key={group.id}
@@ -230,7 +246,7 @@ export default function AddonsView({
         {/* md and up: the panel beside the list, sticky below the top bar. */}
         <Box
           component="aside"
-          aria-label="Add-on group"
+          aria-label={t("groupLabel")}
           sx={(theme) => ({
             display: { xs: "none", md: "block" },
             position: "sticky",
@@ -247,7 +263,7 @@ export default function AddonsView({
             panel(selected)
           ) : (
             <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-              Select a group to turn its options on or off.
+              {t("selectGroup")}
             </Typography>
           )}
         </Box>
@@ -258,7 +274,7 @@ export default function AddonsView({
       <SidePanelDrawer
         open={!isWide && selected !== null}
         onClose={closeDrawer}
-        label={selected ? selected.name : "Add-on group"}
+        label={selected ? localizedText(locale, selected.name, selected.nameMy) : t("groupLabel")}
         placement="sheet"
         swipeToClose
       >

@@ -1,16 +1,16 @@
-import Link from "next/link";
-import { Box, Button, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import { getTranslations } from "next-intl/server";
+import { Box, Typography } from "@mui/material";
+import ListPageHeader from "@/app/components/ListPageHeader";
 import { LocationService } from "@/app/services";
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
 import LocationCard from "./LocationCard";
 
 export default async function LocationsPage() {
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: "Please sign in to view locations.",
     access: "owner",
   });
   if (!scope) return fallback;
+  const t = await getTranslations("bo.locations");
   const { companyId, userId } = scope;
 
   const [locations, selectedLocation] = await Promise.all([
@@ -20,28 +20,14 @@ export default async function LocationsPage() {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 3,
-        }}
-      >
-        <Typography variant="h6">Locations</Typography>
-        <Link href="/backoffice/locations/new" passHref>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{ textTransform: "none" }}
-          >
-            New Location
-          </Button>
-        </Link>
-      </Box>
+      <ListPageHeader
+        title={t("title")}
+        newHref="/backoffice/locations/new"
+        newLabel={t("newLocation")}
+      />
 
       {locations.length === 0 ? (
-        <Typography color="text.secondary">No locations yet.</Typography>
+        <Typography color="text.secondary">{t("noLocations")}</Typography>
       ) : (
         <Box
           sx={{

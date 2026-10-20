@@ -18,22 +18,18 @@ import {
 } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  countLabel,
-  CURRENCY_LABEL,
-  formatAmount,
-  formatCompactAmount,
-} from "@/app/lib/orderFormat";
-import { periodLabel, type ReportPeriod } from "@/app/lib/report/reportPeriod";
+import { useTranslations } from "next-intl";
+import { formatCompactAmount } from "@/app/lib/orderFormat";
+import type { ReportPeriod } from "@/app/lib/report/reportPeriod";
 import {
   axisLabelIndexes,
-  barLabel,
   barRatio,
   chartTicks,
-  formatReportDay,
   niceMax,
   progressCaption,
 } from "@/app/lib/report/reportView";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { useReportWords } from "./useReportWords";
 import {
   hoverCapableMedia,
   visuallyHiddenSx,
@@ -104,6 +100,9 @@ export default function DailySalesChart({
   daily,
   today,
 }: DailySalesChartProps) {
+  const t = useTranslations("bo.reports");
+  const words = useReportWords();
+  const money = useStaffMoney();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   // True until the first draw has finished — from then on, no animation.
   const [isFirstDraw, setIsFirstDraw] = useState(true);
@@ -137,7 +136,7 @@ export default function DailySalesChart({
   const max = niceMax(Math.max(0, ...daily.map((entry) => entry.sales)));
   const ticks = chartTicks(max);
   const labelled = new Set(axisLabelIndexes(daily.length, period.kind));
-  const caption = progressCaption(period, today);
+  const caption = progressCaption(period, today, words);
   const isDense = daily.length > 8;
   const isWeek = period.kind === "week";
   const stagger = Math.min(MAX_STAGGER_MS, TOTAL_STAGGER_MS / daily.length);
@@ -158,7 +157,7 @@ export default function DailySalesChart({
         }}
       >
         <Typography variant="body1" component="h2" sx={sectionHeadingSx}>
-          Daily sales
+          {t("dailySales")}
         </Typography>
         {caption && (
           <Typography variant="caption" color="text.secondary">
@@ -178,7 +177,7 @@ export default function DailySalesChart({
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          Sales ({CURRENCY_LABEL})
+          {t("salesAxis", { currency: money.currency })}
         </Typography>
         {caption && (
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -193,7 +192,7 @@ export default function DailySalesChart({
               }}
             />
             <Typography variant="caption" color="text.secondary">
-              Today
+              {t("today")}
             </Typography>
           </Stack>
         )}
@@ -252,7 +251,7 @@ export default function DailySalesChart({
                 <Box component="span" sx={{ display: "block" }}>
                   &nbsp;
                 </Box>
-                Bills
+                {t("billsLabel")}
               </Typography>
             )}
           </Box>
@@ -292,7 +291,7 @@ export default function DailySalesChart({
                       component={Link}
                       href={historyHref(entry.day)}
                       prefetch={false}
-                      aria-label={barLabel(entry, isToday)}
+                      aria-label={words.barLabel(entry.day, entry.sales, entry.bills, isToday)}
                       onPointerDown={(event) => {
                         setIsTouch(event.pointerType === "touch");
                       }}
@@ -407,7 +406,7 @@ export default function DailySalesChart({
             <Box aria-hidden sx={{ display: "flex", mt: 0.5, minHeight: 32 }}>
               {daily.map((entry, index) => {
                 const isToday = entry.day === today;
-                const [weekday] = formatReportDay(entry.day).split(" ");
+                const weekday = words.weekday(entry.day);
                 return (
                   <Box
                     key={entry.day}
@@ -484,22 +483,23 @@ export default function DailySalesChart({
                     component="p"
                     color="text.secondary"
                   >
-                    {formatReportDay(active.day)}
-                    {active.day === today ? " · Today" : ""}
+                    {active.day === today
+                      ? t("todaySuffix", { day: words.reportDay(active.day) })
+                      : words.reportDay(active.day)}
                   </Typography>
                   <Typography
                     variant="body2"
                     component="p"
                     sx={moneyToneSx("income")}
                   >
-                    {formatAmount(active.sales)}
+                    {money.amount(active.sales)}
                   </Typography>
                   <Typography
                     variant="caption"
                     component="p"
                     color="text.secondary"
                   >
-                    {countLabel(active.bills, "bill", "bills")}
+                    {words.bills(active.bills)}
                   </Typography>
                   {isTouch && (
                     <Typography
@@ -507,7 +507,7 @@ export default function DailySalesChart({
                       component="p"
                       color="text.secondary"
                     >
-                      Tap again to open
+                      {t("tapAgain")}
                     </Typography>
                   )}
                 </>
@@ -532,7 +532,7 @@ export default function DailySalesChart({
         }
         sx={{ mt: 1, minHeight: 44 }}
       >
-        View as table
+        {t("viewAsTable")}
       </Button>
 
       <Fade
@@ -544,7 +544,7 @@ export default function DailySalesChart({
         <Box id={tableId}>
           <DailySalesTable
             daily={daily}
-            caption={`Daily sales, ${periodLabel(period)}`}
+            caption={t("dailySalesFor", { period: words.period(period) })}
           />
         </Box>
       </Fade>
@@ -556,19 +556,19 @@ export default function DailySalesChart({
       {!isTableOpen && (
         <Box sx={visuallyHiddenSx}>
           <table>
-            <caption>Daily sales, {periodLabel(period)}</caption>
+            <caption>{t("dailySalesFor", { period: words.period(period) })}</caption>
             <thead>
               <tr>
-                <th scope="col">Day</th>
-                <th scope="col">Sales</th>
-                <th scope="col">Bills</th>
+                <th scope="col">{t("day")}</th>
+                <th scope="col">{t("colSales")}</th>
+                <th scope="col">{t("billsLabel")}</th>
               </tr>
             </thead>
             <tbody>
               {daily.map((entry) => (
                 <tr key={entry.day}>
-                  <th scope="row">{formatReportDay(entry.day)}</th>
-                  <td>{formatAmount(entry.sales)}</td>
+                  <th scope="row">{words.reportDay(entry.day)}</th>
+                  <td>{money.amount(entry.sales)}</td>
                   <td>{entry.bills}</td>
                 </tr>
               ))}
@@ -590,6 +590,9 @@ function DailySalesTable({
   daily: DailySales[];
   caption: string;
 }) {
+  const t = useTranslations("bo.reports");
+  const words = useReportWords();
+  const money = useStaffMoney();
   const totalSales = daily.reduce((sum, entry) => sum + entry.sales, 0);
   const totalBills = daily.reduce((sum, entry) => sum + entry.bills, 0);
   const numberSx = {
@@ -644,13 +647,13 @@ function DailySalesTable({
             }}
           >
             <TableCell scope="col">
-              <Typography variant="caption">Day</Typography>
+              <Typography variant="caption">{t("day")}</Typography>
             </TableCell>
             <TableCell scope="col" sx={numberSx}>
-              <Typography variant="caption">Sales</Typography>
+              <Typography variant="caption">{t("colSales")}</Typography>
             </TableCell>
             <TableCell scope="col" sx={numberSx}>
-              <Typography variant="caption">Bills</Typography>
+              <Typography variant="caption">{t("billsLabel")}</Typography>
             </TableCell>
           </TableRow>
         </TableHead>
@@ -661,7 +664,7 @@ function DailySalesTable({
             return (
               <TableRow key={entry.day}>
                 <TableCell component="th" scope="row" sx={{ color: rowColor }}>
-                  {formatReportDay(entry.day)}
+                  {words.reportDay(entry.day)}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -669,7 +672,7 @@ function DailySalesTable({
                     color: isZero ? "text.secondary" : moneyColor("income"),
                   }}
                 >
-                  {formatAmount(entry.sales)}
+                  {money.amount(entry.sales)}
                 </TableCell>
                 <TableCell sx={{ ...numberSx, color: rowColor }}>
                   {entry.bills}
@@ -696,12 +699,12 @@ function DailySalesTable({
               sx={{ color: "text.primary" }}
             >
               <Typography variant="body2" sx={moneyToneSx("neutral")}>
-                Total
+                {t("total")}
               </Typography>
             </TableCell>
             <TableCell sx={numberSx}>
               <Typography variant="body2" sx={moneyToneSx("income")}>
-                {formatAmount(totalSales)}
+                {money.amount(totalSales)}
               </Typography>
             </TableCell>
             <TableCell sx={numberSx}>

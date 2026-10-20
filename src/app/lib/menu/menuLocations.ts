@@ -35,10 +35,10 @@ export const NO_LOCATION_MESSAGE = "Choose at least one location.";
 export function planMenuLocations(facts: MenuLocationFacts): MenuLocationPlan {
   const active = new Set(facts.activeLocationIds);
   const shown = new Set(facts.shownLocationIds);
-  if (shown.size === 0) throw new ValidationError(NO_LOCATION_MESSAGE);
+  if (shown.size === 0) throw new ValidationError(NO_LOCATION_MESSAGE, "MENU_NEEDS_LOCATION");
   for (const locationId of shown) {
     if (!active.has(locationId)) {
-      throw new ValidationError("Choose locations from your own company.");
+      throw new ValidationError("Choose locations from your own company.", "NOT_FOUND");
     }
   }
 

@@ -8,7 +8,8 @@ import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import type { EntryBill } from "@/app/lib/order/orderTotals";
-import { countLabel, formatMoneyDelta } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import BillTotal from "../BillTotal";
 import PrintBillButton from "../PrintBillButton";
 import RoundSection from "./RoundSection";
@@ -45,6 +46,9 @@ export default function BillContent({
   canPrint,
   onClose,
 }: BillContentProps) {
+  const t = useTranslations("bo.detail");
+  const tOrders = useTranslations("bo.orders");
+  const money = useStaffMoney();
   // Unique per instance — the panel and the drawer can both be mounted.
   const reasonId = useId();
   const printReasonId = useId();
@@ -60,19 +64,15 @@ export default function BillContent({
       >
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <Typography component="h2" variant="h6">
-            Bill
+            {t("bill")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {countLabel(
-              bill.acceptedRounds.length,
-              "accepted order",
-              "accepted orders",
-            )}
+            {t("acceptedOrders", { count: bill.acceptedRounds.length })}
           </Typography>
         </Box>
         {onClose && (
           <IconButton
-            aria-label="Close bill"
+            aria-label={t("closeBill")}
             onClick={onClose}
             sx={{ width: 44, height: 44 }}
           >
@@ -86,9 +86,7 @@ export default function BillContent({
           <Typography variant="body2" color="text.secondary" sx={{ pt: 2 }}>
             {/* canPrint: some round was accepted — so it was all voided
                 (the bill lists only what's payable). */}
-            {canPrint
-              ? "Nothing to charge — everything accepted was voided."
-              : "Nothing accepted yet."}
+            {canPrint ? t("allVoided") : t("nothingAccepted")}
           </Typography>
         )}
 
@@ -116,17 +114,17 @@ export default function BillContent({
               sx={{ color: "warning.main" }}
             />
             <Typography variant="body2" sx={{ flexGrow: 1, minWidth: 0 }}>
-              Waiting approval {round.orderNumber}
+              {t("waitingApproval", { number: round.orderNumber })}
             </Typography>
             <Typography variant="body2" sx={{ flexShrink: 0 }}>
-              {formatMoneyDelta(round.amount)}
+              {money.delta(round.amount)}
             </Typography>
           </Stack>
         ))}
       </Box>
 
       <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
-        <BillTotal label="Total" amount={bill.total} sx={{ mb: 2 }} />
+        <BillTotal label={t("total")} amount={bill.total} sx={{ mb: 2 }} />
         {/* Print and Add items side by side, Mark as paid under them —
             the primary (and only) payment action. Printing never settles
             anything; Add items opens New Order for this same bill (a NEW
@@ -148,7 +146,7 @@ export default function BillContent({
               startIcon={<AddIcon />}
               sx={{ minHeight: 44 }}
             >
-              Add items
+              {t("addItems")}
             </Button>
           </Stack>
           <Button
@@ -160,7 +158,7 @@ export default function BillContent({
             onClick={onMarkPaid}
             sx={{ minHeight: 44 }}
           >
-            Mark as paid
+            {t("markAsPaid")}
           </Button>
         </Stack>
         {!canPrint && (
@@ -170,7 +168,7 @@ export default function BillContent({
             color="text.secondary"
             sx={{ mt: 1 }}
           >
-            Nothing to print yet
+            {tOrders("nothingToPrint")}
           </Typography>
         )}
         {payBlockedReason && (

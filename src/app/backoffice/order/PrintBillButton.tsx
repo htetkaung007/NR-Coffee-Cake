@@ -2,6 +2,7 @@
 
 import { Box, Button, IconButton, Tooltip } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
+import { useTranslations } from "next-intl";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 /** What to print: an open Order List entry's bill, or a paid bill's
@@ -48,7 +49,8 @@ export default function PrintBillButton({
   reasonId,
   ...target
 }: PrintBillButtonProps) {
-  const label = "billId" in target ? "Print receipt" : "Print bill";
+  const t = useTranslations("bo.orders");
+  const label = "billId" in target ? t("printReceipt") : t("printBill");
 
   if (variant === "full") {
     return (
@@ -68,7 +70,7 @@ export default function PrintBillButton({
   }
 
   return (
-    <Tooltip title={disabled ? "Nothing to print yet" : label}>
+    <Tooltip title={disabled ? t("nothingToPrint") : label}>
       {/* A disabled button fires no pointer events, so the Tooltip
           listens on this wrapper instead (MUI's disabled-tooltip
           guidance). */}

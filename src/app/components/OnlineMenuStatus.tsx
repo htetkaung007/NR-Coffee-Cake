@@ -3,6 +3,7 @@
 import { useId, useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Button,
@@ -16,6 +17,7 @@ import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
 import { setOnlineMenuAction } from "@/app/backoffice/locations/action";
 import { hoverCapableMedia } from "../lib/theme/sharedThemeTokens";
 import StatusSnackbar, { type StatusMessage } from "./StatusSnackbar";
+import { useStaffErrorMessage } from "../lib/hooks/useStaffWords";
 
 /** The selected location as the top bar reads it (one read —
  *  LocationService.getTopBarLocation). */
@@ -24,9 +26,6 @@ export interface TopBarLocation {
   name: string;
   onlineMenuEnabled: boolean;
 }
-
-const HELPER_TEXT =
-  "On: anyone with the menu link can see the menu. Off: only customers who scanned the QR can. Ordering always needs the QR.";
 
 /** The status dot: success when on, neutral (text.secondary) when off —
  *  never red, off is the normal default (DESIGN.md Rule 13). Decorative:
@@ -64,6 +63,8 @@ export default function OnlineMenuStatus({
   /** The owner (ADMIN) — shows the switch. */
   canChange: boolean;
 }) {
+  const t = useTranslations("bo.onlineMenu");
+  const errorText = useStaffErrorMessage();
   const router = useRouter();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [message, setMessage] = useState<StatusMessage | null>(null);
@@ -76,7 +77,7 @@ export default function OnlineMenuStatus({
   const titleId = useId();
   const helperId = useId();
 
-  const stateLabel = enabled ? "Online menu on" : "Online menu off";
+  const stateLabel = enabled ? t("stateOn") : t("stateOff");
 
   function handleToggle() {
     const next = !enabled;
@@ -84,7 +85,7 @@ export default function OnlineMenuStatus({
       setOptimisticEnabled(next);
       const result = await setOnlineMenuAction(location.id, next);
       if (!result.success) {
-        setMessage({ text: result.error.message, severity: "error" });
+        setMessage({ text: errorText(result.error), severity: "error" });
         return;
       }
       router.refresh();
@@ -95,7 +96,7 @@ export default function OnlineMenuStatus({
     <>
       <ButtonBase
         onClick={(event) => setAnchor(event.currentTarget)}
-        aria-label={`${stateLabel} — ${location.name}`}
+        aria-label={t("chipLabel", { state: stateLabel, name: location.name })}
         aria-haspopup="dialog"
         aria-expanded={anchor !== null}
         aria-controls={anchor ? popoverId : undefined}
@@ -145,7 +146,7 @@ export default function OnlineMenuStatus({
                 : theme.palette.text.secondary,
             })}
           >
-            {enabled ? "Online menu" : "Online menu off"}
+            {enabled ? t("chipOn") : t("stateOff")}
           </Typography>
         </Box>
       </ButtonBase>
@@ -189,7 +190,7 @@ export default function OnlineMenuStatus({
                 onChange={handleToggle}
                 slotProps={{
                   input: {
-                    "aria-label": "Online menu",
+                    "aria-label": t("switchLabel"),
                     "aria-describedby": helperId,
                   },
                 }}
@@ -202,7 +203,7 @@ export default function OnlineMenuStatus({
               component="p"
               sx={{ mt: 0.5 }}
             >
-              {HELPER_TEXT}
+              {t("helper")}
             </Typography>
             <Button
               component={Link}
@@ -211,7 +212,7 @@ export default function OnlineMenuStatus({
               variant="text"
               sx={{ mt: 1, minHeight: 44, px: 0 }}
             >
-              Location settings
+              {t("locationSettings")}
             </Button>
           </>
         ) : (
@@ -226,7 +227,7 @@ export default function OnlineMenuStatus({
               component="p"
               sx={{ mt: 0.5 }}
             >
-              Only the owner can change this.
+              {t("ownerOnly")}
             </Typography>
           </>
         )}

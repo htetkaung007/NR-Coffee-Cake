@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { remainingSeconds } from "@/app/lib/approval/approvalCountdown";
 
 // One shared 1-second clock for every countdown on the page instead of
@@ -63,21 +64,24 @@ export default function ApprovalCountdown({
   expiresAt,
   autoCancels,
 }: ApprovalCountdownProps) {
+  const t = useTranslations("bo.orders");
   const now = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  let label = "--:-- left";
+  let label = t("timeUnknown");
   if (now !== null) {
     // The one definition of "time left" (rounded up, never below 0) —
     // here measured straight against the deadline, nothing elapsed yet.
     const secondsToDeadline = (new Date(expiresAt).getTime() - now) / 1000;
     const secondsLeft = remainingSeconds(secondsToDeadline, 0);
     if (secondsLeft > 0) {
-      label = `${formatRemaining(secondsLeft)} left`;
+      label = t("timeLeft", { time: formatRemaining(secondsLeft) });
     } else if (autoCancels) {
-      label = "Expiring…";
+      label = t("expiring");
     } else {
       // Whole seconds past the deadline, counting up from 0:00.
-      label = `Overdue ${formatRemaining(Math.max(0, Math.floor(-secondsToDeadline)))}`;
+      label = t("overdue", {
+        time: formatRemaining(Math.max(0, Math.floor(-secondsToDeadline))),
+      });
     }
   }
 

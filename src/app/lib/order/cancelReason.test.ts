@@ -54,15 +54,17 @@ describe("customerRoundStatus", () => {
 
 describe("describeWithdrawals", () => {
   it("names a Counter order the customer cancelled", () => {
-    expect(describeWithdrawals([{ orderNumber: "#A015", tableName: null }])).toBe(
-      "Customer cancelled order #A015",
-    );
+    expect(describeWithdrawals([{ orderNumber: "#A015", tableName: null }])).toEqual({
+      key: "withdrawnOne",
+      values: { number: "#A015" },
+    });
   });
 
   it("adds the table for a Table order", () => {
-    expect(describeWithdrawals([{ orderNumber: "#A016", tableName: "Table 3" }])).toBe(
-      "Customer cancelled order #A016 · Table 3",
-    );
+    expect(describeWithdrawals([{ orderNumber: "#A016", tableName: "Table 3" }])).toEqual({
+      key: "withdrawnOneAt",
+      values: { number: "#A016", table: "Table 3" },
+    });
   });
 
   it("combines several into one message", () => {
@@ -71,6 +73,6 @@ describe("describeWithdrawals", () => {
         { orderNumber: "#A015", tableName: null },
         { orderNumber: "#A016", tableName: "Table 3" },
       ]),
-    ).toBe("Customers cancelled 2 orders");
+    ).toEqual({ key: "withdrawnMany", values: { count: 2 } });
   });
 });

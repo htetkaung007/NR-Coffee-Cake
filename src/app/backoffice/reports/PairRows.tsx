@@ -1,6 +1,8 @@
 "use client";
 
 import { Box, Stack, Typography } from "@mui/material";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import type { PairingRow } from "@/app/lib/report/reportView";
 import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
 import { entryTitleSx } from "../order/orderTypography";
@@ -10,6 +12,8 @@ import { entryTitleSx } from "../order/orderTypography";
  *  a screen reader also gets the plain counts ("58 of 94 units"). The bar
  *  runs 0–100%, so two rows can be compared by eye. */
 export default function PairRows({ rows }: { rows: PairingRow[] }) {
+  const t = useTranslations("bo.reports");
+  const locale = useLocale();
   return (
     <Stack component="ul" spacing={1} sx={{ m: 0, p: 0, listStyle: "none" }}>
       {rows.map((row) => (
@@ -39,7 +43,7 @@ export default function PairRows({ rows }: { rows: PairingRow[] }) {
             noWrap
             sx={{ ...entryTitleSx, gridArea: "name" }}
           >
-            {row.name}
+            {localizedText(locale, row.name, row.nameMy)}
           </Typography>
           <Typography
             variant="body1"
@@ -47,7 +51,7 @@ export default function PairRows({ rows }: { rows: PairingRow[] }) {
           >
             {row.rate}%
             <Box component="span" sx={visuallyHiddenSx}>
-              {` — ${row.pairUnits} of ${row.menuUnits} units`}
+              {t("pairUnits", { pair: row.pairUnits, menu: row.menuUnits })}
             </Box>
           </Typography>
           <Box
@@ -73,7 +77,7 @@ export default function PairRows({ rows }: { rows: PairingRow[] }) {
             color="text.secondary"
             sx={{ gridArea: "n", textAlign: { xs: "right", sm: "left" } }}
           >
-            n = {row.menuUnits} units
+            {t("nUnits", { count: row.menuUnits })}
           </Typography>
         </Box>
       ))}

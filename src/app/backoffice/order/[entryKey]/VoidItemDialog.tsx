@@ -21,12 +21,13 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import RemoveIcon from "@mui/icons-material/Remove";
 import type { ActionResult } from "@/app/lib/actionResult";
 import {
   VOID_NOTE_MAX_LENGTH,
   VOID_REASONS,
-  voidReasonLabel,
   type VoidReason,
 } from "@/app/lib/order/voids";
 
@@ -70,6 +71,10 @@ export default function VoidItemDialog({
   onClose: () => void;
   onVoid: (request: VoidRequest) => Promise<ActionResult<unknown>>;
 }) {
+  const t = useTranslations("bo.void");
+  const tCommon = useTranslations("bo.common");
+  const tReason = useTranslations("bo.voidReason");
+  const errorText = useStaffErrorMessage();
   const titleId = useId();
   const reasonLabelId = useId();
   const [quantity, setQuantity] = useState(1);
@@ -108,7 +113,7 @@ export default function VoidItemDialog({
     });
     setIsPending(false);
     if (result.success) onClose();
-    else setError(result.error.message);
+    else setError(errorText(result.error));
   }
 
   return (
@@ -134,23 +139,22 @@ export default function VoidItemDialog({
         sx={{ display: "flex", flexDirection: "column", minHeight: 0 }}
       >
         <DialogTitle id={titleId} sx={{ overflowWrap: "anywhere" }}>
-          Void {menuName}?
+          {t("title", { name: menuName })}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
-              It comes off the bill. The line stays on the order, struck
-              through, with the reason.
+              {t("intro")}
             </Typography>
             {error && <Alert severity="error">{error}</Alert>}
 
             {remaining > 1 && (
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography variant="body2" sx={{ flexGrow: 1 }}>
-                  How many
+                  {t("howMany")}
                 </Typography>
                 <IconButton
-                  aria-label="One fewer"
+                  aria-label={t("fewer")}
                   disabled={isPending || quantity <= 1}
                   onClick={() => setQuantity((value) => value - 1)}
                   sx={stepperSx}
@@ -160,13 +164,13 @@ export default function VoidItemDialog({
                 <Typography
                   variant="body1"
                   aria-live="polite"
-                  aria-label={`Void ${quantity} of ${remaining}`}
+                  aria-label={t("count", { count: quantity, total: remaining })}
                   sx={{ minWidth: 32, textAlign: "center" }}
                 >
                   {quantity}
                 </Typography>
                 <IconButton
-                  aria-label="One more"
+                  aria-label={t("more")}
                   disabled={isPending || quantity >= remaining}
                   onClick={() => setQuantity((value) => value + 1)}
                   sx={stepperSx}
@@ -177,7 +181,7 @@ export default function VoidItemDialog({
             )}
 
             <FormControl disabled={isPending}>
-              <FormLabel id={reasonLabelId}>Reason</FormLabel>
+              <FormLabel id={reasonLabelId}>{t("reason")}</FormLabel>
               <RadioGroup
                 aria-labelledby={reasonLabelId}
                 value={reason ?? ""}
@@ -188,7 +192,7 @@ export default function VoidItemDialog({
                     key={value}
                     value={value}
                     control={<Radio />}
-                    label={voidReasonLabel(value)}
+                    label={tReason(value)}
                     sx={{ minHeight: 44 }}
                   />
                 ))}
@@ -197,8 +201,8 @@ export default function VoidItemDialog({
 
             {reason === "OTHER" && (
               <TextField
-                label="Note (optional)"
-                placeholder="e.g. spilled before serving"
+                label={t("noteLabel")}
+                placeholder={t("notePlaceholder")}
                 fullWidth
                 value={note}
                 disabled={isPending}
@@ -212,7 +216,7 @@ export default function VoidItemDialog({
                     component="span"
                     sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}
                   >
-                    <span>Staff only — the customer never sees it.</span>
+                    <span>{t("noteHint")}</span>
                     <Box component="span" sx={{ flexShrink: 0 }}>
                       {note.length}/{VOID_NOTE_MAX_LENGTH}
                     </Box>
@@ -229,14 +233,14 @@ export default function VoidItemDialog({
                   onChange={(event) => setReturnToStock(event.target.checked)}
                 />
               }
-              label="Put back in stock"
+              label={t("restock")}
               sx={{ minHeight: 44 }}
             />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button onClick={close} disabled={isPending} sx={{ minHeight: 44 }}>
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             type="submit"
@@ -245,7 +249,7 @@ export default function VoidItemDialog({
             disabled={isPending || reason === null}
             sx={{ minHeight: 44 }}
           >
-            {isPending ? "Voiding…" : "Void item"}
+            {isPending ? t("voiding") : t("confirm")}
           </Button>
         </DialogActions>
       </Box>

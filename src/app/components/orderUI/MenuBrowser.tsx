@@ -17,6 +17,7 @@ import MenuDetailDialog from "./MenuDetailDialog";
 import { useLocale, useMessages, useTranslations } from "next-intl";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
+import { orderableFirst } from "@/app/lib/menu/orderableFirst";
 import MenuCard from "../MenuCard";
 import {
   touchCardGap,
@@ -194,14 +195,18 @@ export default function MenuBrowser({
     }
   }
 
+  // Filtered by category and search first, then the orderable menus
+  // before the sold-out / switched-off ones (lib/menu/orderableFirst).
   const visibleMenus = useMemo(
     () =>
-      menus.filter(
-        (menu) =>
-          (activeCategory === ALL_CATEGORIES ||
-            menu.categories.includes(activeCategory)) &&
-          // Both names, whatever language is chosen.
-          matchesMenuSearch(menu, searchTerm),
+      orderableFirst(
+        menus.filter(
+          (menu) =>
+            (activeCategory === ALL_CATEGORIES ||
+              menu.categories.includes(activeCategory)) &&
+            // Both names, whatever language is chosen.
+            matchesMenuSearch(menu, searchTerm),
+        ),
       ),
     [menus, activeCategory, searchTerm],
   );

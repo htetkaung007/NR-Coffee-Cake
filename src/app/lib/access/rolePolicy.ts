@@ -25,9 +25,6 @@ export function signedOutError() {
   return new AppError("You must be signed in.", "UNAUTHORIZED");
 }
 
-/** The FORBIDDEN message for owner-only changes on the add-ons page. */
-export const OWNER_ONLY_MESSAGE = "Only the owner can change this.";
-
 /**
  * THE role check for Server Actions, pure: signed in (company + user),
  * and one of `allowed` — otherwise a safe AppError (UNAUTHORIZED /

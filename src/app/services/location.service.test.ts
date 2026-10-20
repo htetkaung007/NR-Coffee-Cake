@@ -66,7 +66,8 @@ describe("LocationService.deleteLocation", () => {
   it("refuses a location with sales history and writes nothing", async () => {
     counts.bills = 1;
     await expect(LocationService.deleteLocation(5, 1)).rejects.toMatchObject({
-      code: "VALIDATION_ERROR",
+      // Its own code, so a Myanmar staff screen can say it in Myanmar.
+      code: "LOCATION_HAS_SALES",
       message: expect.stringContaining("sales history"),
     });
     expect(writes).toEqual([]);

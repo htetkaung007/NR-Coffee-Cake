@@ -5,7 +5,6 @@ import {
   isCurrentPeriod,
   nextPeriod,
   periodFor,
-  periodLabel,
   periodRangeUtc,
   previousPeriod,
   type ReportPeriod,
@@ -250,35 +249,6 @@ describe("elapsedDays", () => {
     const month = periodFor("month", "2026-09-10");
     expect(elapsedDays(month, "2026-09-12")).toBe(12);
     expect(elapsedDays(month, "2026-11-01")).toBe(30);
-  });
-});
-
-describe("periodLabel", () => {
-  it("writes a week that crosses a month as 'Sep 28 – Oct 4, 2026'", () => {
-    expect(periodLabel(periodFor("week", "2026-09-30"))).toBe(
-      "Sep 28 – Oct 4, 2026",
-    );
-  });
-
-  it("writes a month as its name and year", () => {
-    expect(periodLabel(periodFor("month", "2026-09-10"))).toBe("September 2026");
-  });
-
-  it("writes a week inside one month with both ends named", () => {
-    expect(periodLabel(periodFor("week", "2026-09-23"))).toBe(
-      "Sep 21 – Sep 27, 2026",
-    );
-  });
-
-  it("gives each end its year when a week crosses a year", () => {
-    expect(periodLabel(periodFor("week", "2027-01-01"))).toBe(
-      "Dec 28, 2026 – Jan 3, 2027",
-    );
-  });
-
-  it("names every month in English", () => {
-    expect(periodLabel(periodFor("month", "2027-02-10"))).toBe("February 2027");
-    expect(periodLabel(periodFor("month", "2026-12-10"))).toBe("December 2026");
   });
 });
 

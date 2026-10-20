@@ -7,7 +7,9 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
-import { countLabel, formatAmount, formatClockTime } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { useHistoryWords } from "./useHistoryWords";
 import {
   formatCancelReasonLabel,
   formatTimeRange,
@@ -94,6 +96,7 @@ function RowShell({
   secondaryLine,
   amount,
 }: RowShellProps) {
+  const money = useStaffMoney();
   return (
     <Box
       component={Link}
@@ -152,7 +155,7 @@ function RowShell({
         variant="body1"
         sx={{ ...moneySx, flexShrink: 0, color: "text.primary" }}
       >
-        {formatAmount(amount)}
+        {money.amount(amount)}
       </Typography>
       <ChevronRightIcon
         aria-hidden
@@ -174,24 +177,28 @@ export function PaidBillRow({
   onSelect: () => void;
   selected: boolean;
 }) {
+  const t = useTranslations("bo.history");
+  const tCommon = useTranslations("bo.common");
+  const words = useHistoryWords();
   return (
     <RowShell
       href={href}
       onSelect={onSelect}
       selected={selected}
-      badge={<RowBadge title={item.title} isCounter={item.isCounter} />}
-      title={item.title}
+      badge={<RowBadge title={item.title ?? ""} isCounter={item.isCounter} />}
+      title={item.title ?? tCommon("counter")}
       amount={item.total}
       secondaryLine={
         <Typography
           component="span"
           variant="body2"
           color="text.secondary"
-          suppressHydrationWarning
         >
-          {formatTimeRange(item.openedAt, item.paidAt)} ·{" "}
-          {countLabel(item.itemCount, "item", "items")} ·{" "}
-          {item.orderNumbers.join(" ")}
+          {t("rowPaid", {
+            time: formatTimeRange(item.openedAt, item.paidAt, words),
+            items: tCommon("itemCount", { count: item.itemCount }),
+            numbers: item.orderNumbers.join(" "),
+          })}
         </Typography>
       }
     />
@@ -209,13 +216,16 @@ export function CancelledRoundRow({
   onSelect: () => void;
   selected: boolean;
 }) {
+  const t = useTranslations("bo.history");
+  const tCommon = useTranslations("bo.common");
+  const words = useHistoryWords();
   return (
     <RowShell
       href={href}
       onSelect={onSelect}
       selected={selected}
-      badge={<RowBadge title={item.title} isCounter={item.isCounter} />}
-      title={item.title}
+      badge={<RowBadge title={item.title ?? ""} isCounter={item.isCounter} />}
+      title={item.title ?? tCommon("counter")}
       amount={item.amount}
       secondaryLine={
         // Wraps, so a long "Rejected · …" chip drops to its own line on a
@@ -235,17 +245,19 @@ export function CancelledRoundRow({
             component="span"
             variant="body2"
             color="text.secondary"
-            suppressHydrationWarning
           >
-            {formatClockTime(item.cancelledAt)} ·{" "}
-            {countLabel(item.itemCount, "item", "items")} · {item.orderNumber}
+            {t("rowCancelled", {
+              time: words.clockTime(item.cancelledAt),
+              items: tCommon("itemCount", { count: item.itemCount }),
+              number: item.orderNumber,
+            })}
           </Typography>
           <Chip
             size="small"
             variant="outlined"
             label={
               <Typography variant="caption" component="span">
-                {formatCancelReasonLabel(item.reason, item.cancellation)}
+                {formatCancelReasonLabel(item.reason, item.cancellation, words)}
               </Typography>
             }
           />

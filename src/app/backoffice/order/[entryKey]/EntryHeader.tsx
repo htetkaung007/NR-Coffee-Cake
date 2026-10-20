@@ -3,7 +3,8 @@
 import { Box, Stack, Typography } from "@mui/material";
 import BackLink from "@/app/components/BackLink";
 import StatusChip, { StatusDot } from "./StatusChip";
-import { countLabel, formatClockTime } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useClockTime } from "@/app/lib/hooks/useStaffWords";
 
 interface EntryHeaderProps {
   title: string;
@@ -24,20 +25,22 @@ export default function EntryHeader({
   startedAt,
   pendingCount,
 }: EntryHeaderProps) {
+  const t = useTranslations("bo.detail");
+  const tCommon = useTranslations("bo.common");
+  const clockTime = useClockTime();
+  const orders = tCommon("orderCount", { count: orderCount });
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 2 }}>
-      <BackLink href="/backoffice/order" label="Back to orders" />
+      <BackLink href="/backoffice/order" label={t("backToOrders")} />
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography component="h1" variant="h6" noWrap>
           {title}
         </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          suppressHydrationWarning
-        >
-          {countLabel(orderCount, "order", "orders")} ·{" "}
-          {isTableGroup ? "seated" : "started"} {formatClockTime(startedAt)}
+        <Typography variant="body2" color="text.secondary">
+          {t(isTableGroup ? "seatedAt" : "startedAt", {
+            orders,
+            time: clockTime(startedAt),
+          })}
         </Typography>
       </Box>
       {pendingCount > 0 && (
@@ -50,12 +53,10 @@ export default function EntryHeader({
                 component="span"
                 sx={{ display: { xs: "none", sm: "inline" } }}
               >
-                {pendingCount === 1
-                  ? "1 order needs approval"
-                  : `${pendingCount} orders need approval`}
+                {t("pendingLong", { count: pendingCount })}
               </Box>
               <Box component="span" sx={{ display: { sm: "none" } }}>
-                {pendingCount} new
+                {t("pendingShort", { count: pendingCount })}
               </Box>
             </>
           }

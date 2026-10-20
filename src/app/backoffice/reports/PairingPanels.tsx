@@ -2,12 +2,12 @@
 
 import type { ReactNode } from "react";
 import { Skeleton, Stack, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { addonPairingView, menuPairingView } from "@/app/lib/report/reportView";
 import PairRows from "./PairRows";
 import { ErrorRetry } from "./ReportStates";
 import type { PairingState } from "./usePairing";
 
-const EXCLUSION_NOTE = "Required choices (e.g. size) are excluded.";
 
 interface PanelBaseProps {
   state: PairingState;
@@ -26,6 +26,7 @@ function PanelBody({
   title: string;
   children: (data: Extract<PairingState, { status: "ok" }>["data"]) => ReactNode;
 }) {
+  const t = useTranslations("bo.reports");
   return (
     <Stack spacing={1.25}>
       <Typography variant="body2" color="text.secondary">
@@ -43,7 +44,7 @@ function PanelBody({
       )}
       {state.status === "ok" && children(state.data)}
       <Typography variant="caption" color="text.secondary">
-        {EXCLUSION_NOTE}
+        {t("exclusionNote")}
       </Typography>
     </Stack>
   );
@@ -58,25 +59,26 @@ export function MenuPairingPanel({
   monthLabel,
   menuId,
 }: PanelBaseProps & { menuId: number }) {
+  const t = useTranslations("bo.reports");
   return (
     <PanelBody
       state={state}
       onRetry={onRetry}
-      title={`Most often chosen with · ${monthLabel}`}
+      title={t("mostOftenChosenWith", { month: monthLabel })}
     >
       {(data) => {
         const view = menuPairingView(data.menus, menuId);
         if (view.status === "notEnough") {
           return (
             <Typography variant="body1">
-              {view.units} / {data.minUnits} sold so far — not enough data yet
+              {t("notEnoughYet", { units: view.units, min: data.minUnits })}
             </Typography>
           );
         }
         if (view.rows.length === 0) {
           return (
             <Typography variant="body2" color="text.secondary">
-              No add-ons were chosen with this menu
+              {t("noAddonsWithMenu")}
             </Typography>
           );
         }
@@ -94,19 +96,19 @@ export function AddonPairingPanel({
   monthLabel,
   addonId,
 }: PanelBaseProps & { addonId: number }) {
+  const t = useTranslations("bo.reports");
   return (
     <PanelBody
       state={state}
       onRetry={onRetry}
-      title={`Most often with · ${monthLabel}`}
+      title={t("mostOftenWith", { month: monthLabel })}
     >
       {(data) => {
         const rows = addonPairingView(data.addons, data.menus, addonId);
         if (rows.length === 0) {
           return (
             <Typography variant="body1">
-              Not enough data yet — a menu needs {data.minUnits} units sold in
-              the month
+              {t("notEnoughAddon", { min: data.minUnits })}
             </Typography>
           );
         }

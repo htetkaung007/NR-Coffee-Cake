@@ -18,7 +18,9 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import TableRestaurantOutlinedIcon from "@mui/icons-material/TableRestaurantOutlined";
 import QrCode2Icon from "@mui/icons-material/QrCode2";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import { useTranslations } from "next-intl";
 import { rotateAccessKeyAction } from "./action";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import NewQrCodeMenu from "./NewQrCodeMenu";
 import { downloadQrCode } from "@/app/lib/qr/downloadQrCode";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
@@ -44,13 +46,13 @@ interface TableCardProps {
  * works, and it's the same approach a receipt/label print flow would
  * use anyway.
  */
-function handlePrintQrCode(qrcodeImageUrl: string, tableName: string) {
+function handlePrintQrCode(qrcodeImageUrl: string, title: string) {
   const printWindow = window.open("", "_blank");
   if (!printWindow) return; // popup blocked — nothing we can do here
 
   printWindow.document.write(`
     <html>
-      <head><title>QR Code — ${tableName}</title></head>
+      <head><title>${title}</title></head>
       <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;">
         <img src="${qrcodeImageUrl}" style="max-width:90%;" onload="window.print()" />
       </body>
@@ -68,10 +70,11 @@ function handlePrintQrCode(qrcodeImageUrl: string, tableName: string) {
  *    unreachable, or the file is gone). */
 type QrProblem = "missing" | "broken";
 
-const QR_PROBLEM_TEXT: Record<QrProblem, string> = {
-  missing: "QR not set up yet",
-  broken: "QR image couldn't load — check file storage, then reload",
-};
+/** Each problem's words (bo.tables). */
+const QR_PROBLEM_TEXT = {
+  missing: "qrMissing",
+  broken: "qrBroken",
+} as const satisfies Record<QrProblem, string>;
 
 const actionButtonSx = {
   minHeight: 44,
@@ -96,8 +99,9 @@ function QrActionButton({
   problem: QrProblem | null;
   onClick: () => void;
 }) {
+  const t = useTranslations("bo.tables");
   return (
-    <Tooltip title={problem ? QR_PROBLEM_TEXT[problem] : ""}>
+    <Tooltip title={problem ? t(QR_PROBLEM_TEXT[problem]) : ""}>
       <Box component="span" sx={{ display: "block", minWidth: 0 }}>
         <Button
           fullWidth
@@ -129,6 +133,9 @@ function QrPreview({
   problem: QrProblem | null;
   onImageError: () => void;
 }) {
+  const t = useTranslations("bo.tables");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
   const [isCreating, startCreating] = useTransition();
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -136,7 +143,7 @@ function QrPreview({
     setCreateError(null);
     startCreating(async () => {
       const result = await rotateAccessKeyAction(table.id);
-      if (!result.success) setCreateError(result.error.message);
+      if (!result.success) setCreateError(errorText(result.error));
     });
   }
 
@@ -166,7 +173,7 @@ function QrPreview({
         <Box
           component="img"
           src={qrcodeImageUrl}
-          alt={`QR code for ${table.name}`}
+          alt={t("qrAlt", { name: table.name })}
           onError={onImageError}
           sx={{ width: "100%", height: "100%", objectFit: "contain" }}
         />
@@ -174,7 +181,7 @@ function QrPreview({
         <>
           <QrCode2Icon aria-hidden sx={{ color: "text.secondary" }} />
           <Typography variant="body2" color="text.secondary">
-            {problem ? QR_PROBLEM_TEXT[problem] : ""}
+            {problem ? t(QR_PROBLEM_TEXT[problem]) : ""}
           </Typography>
           {problem === "missing" && (
             <Button
@@ -184,7 +191,7 @@ function QrPreview({
               disabled={isCreating}
               sx={actionButtonSx}
             >
-              {isCreating ? "Creating…" : "Create QR code"}
+              {isCreating ? tCommon("creating") : t("createQr")}
             </Button>
           )}
           {createError && (
@@ -206,6 +213,8 @@ function QrPreview({
  * status colour — DESIGN.md Rule 13).
  */
 export default function TableCard({ table }: TableCardProps) {
+  const t = useTranslations("bo.tables");
+  const tCommon = useTranslations("bo.common");
   // "" (the column default) means no QR, the same as null.
   const qrcodeImageUrl = table.qrcodeImageUrl || null;
   // The URL whose image failed to load — a new URL gets a fresh try.
@@ -254,7 +263,7 @@ export default function TableCard({ table }: TableCardProps) {
           </Typography>
           {table.isCounter && (
             <Typography variant="caption" color="text.secondary">
-              Counter · walk-in orders
+              {t("counterCaption")}
             </Typography>
           )}
         </Box>
@@ -262,18 +271,18 @@ export default function TableCard({ table }: TableCardProps) {
           <Chip
             label={
               <Typography variant="caption" component="span">
-                Archived
+                {tCommon("archived")}
               </Typography>
             }
             size="small"
             color="default"
           />
         )}
-        <Tooltip title="Edit">
+        <Tooltip title={t("edit")}>
           <IconButton
             component={Link}
             href={`/backoffice/tables/${table.id}`}
-            aria-label={`Edit ${table.name}`}
+            aria-label={t("editTable", { name: table.name })}
             sx={{
               width: 44,
               height: 44,
@@ -297,15 +306,16 @@ export default function TableCard({ table }: TableCardProps) {
         }}
       >
         <QrActionButton
-          label="Print QR"
+          label={t("printQr")}
           icon={<PrintOutlinedIcon fontSize="small" />}
           problem={problem}
           onClick={() =>
-            qrcodeImageUrl && handlePrintQrCode(qrcodeImageUrl, table.name)
+            qrcodeImageUrl &&
+            handlePrintQrCode(qrcodeImageUrl, t("printTitle", { name: table.name }))
           }
         />
         <QrActionButton
-          label="Save QR"
+          label={t("saveQr")}
           icon={<DownloadOutlinedIcon fontSize="small" />}
           problem={problem}
           onClick={() =>

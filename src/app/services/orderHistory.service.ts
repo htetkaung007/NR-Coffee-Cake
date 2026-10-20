@@ -94,15 +94,16 @@ export class OrderHistoryService {
     };
   }
 
-  /** "Table X" / "Counter" — the one place this label is decided, from
-   *  a round's own isCounter flag (never table.isCounter — a round's
-   *  OWN channel at the time it was placed is what the history page
+  /** "Table X", or null for the Counter (the page shows the word in
+   *  the staff's language) — the one place this is decided, from a
+   *  round's own isCounter flag (never table.isCounter — a round's OWN
+   *  channel at the time it was placed is what the history page
    *  describes, matching entryKeyFor's reasoning elsewhere). */
   private static titleFor(session: {
     isCounter: boolean;
     table: { name: string } | null;
-  }) {
-    return !session.isCounter && session.table ? session.table.name : "Counter";
+  }): string | null {
+    return !session.isCounter && session.table ? session.table.name : null;
   }
 
   /** Opaque (paidAt|updateTime, id) pagination cursor — base64 so it's
@@ -157,7 +158,8 @@ export class OrderHistoryService {
       billNumber: string;
       total: number;
       paidAt: Date;
-      title: string;
+      /** The table's name; null for the Counter. */
+      title: string | null;
       isCounter: boolean;
       openedAt: Date;
       itemCount: number;
@@ -240,9 +242,7 @@ export class OrderHistoryService {
         billNumber: bill.billNumber,
         total: bill.total,
         paidAt: bill.paidAt,
-        title: firstRound
-          ? OrderHistoryService.titleFor(firstRound)
-          : "Counter",
+        title: firstRound ? OrderHistoryService.titleFor(firstRound) : null,
         isCounter: firstRound?.isCounter ?? true,
         openedAt: firstRound?.createdAt ?? bill.createdAt,
         // Voided units left out (lib/order/voids).
@@ -308,7 +308,8 @@ export class OrderHistoryService {
     Page<{
       id: number;
       orderNumber: string;
-      title: string;
+      /** The table's name; null for the Counter. */
+      title: string | null;
       isCounter: boolean;
       reason: string;
       /** The round's OrderCancellation details; null when it was
@@ -496,12 +497,18 @@ export class OrderHistoryService {
     where: { isArchived: false },
     orderBy: { id: "asc" as const },
     include: {
-      menu: { select: { name: true } },
+      // The Myanmar names too — a Myanmar staff screen or voucher shows
+      // them (BreakdownRow.nameMy); prices stay the snapshots.
+      menu: { select: { name: true, nameMy: true } },
       OrdersAddons: {
         include: {
           // With its group — "Sweet: Low" on the bill and reprint.
           addon: {
-            select: { name: true, addonCategory: { select: { name: true } } },
+            select: {
+              name: true,
+              nameMy: true,
+              addonCategory: { select: { name: true, nameMy: true } },
+            },
           },
         },
       },
@@ -556,7 +563,7 @@ export class OrderHistoryService {
       billNumber: bill.billNumber,
       total: bill.total,
       paidAt: bill.paidAt,
-      title: firstRound ? OrderHistoryService.titleFor(firstRound) : "Counter",
+      title: firstRound ? OrderHistoryService.titleFor(firstRound) : null,
       isCounter: firstRound?.isCounter ?? true,
       startedAt: firstRound?.createdAt ?? bill.createdAt,
       rounds: acceptedRounds,

@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { Box, Switch, TextField, Typography } from "@mui/material";
-import { createMenuCategorySchema } from "@/app/lib/schemas/menu_menuCategorySchema";
+import { useTranslations } from "next-intl";
+import {
+  CATEGORY_NAME_MAX,
+  createMenuCategorySchema,
+} from "@/app/lib/schemas/menu_menuCategorySchema";
+import CharacterCount from "../CharacterCount";
 
 /** The name rule the Server Actions use — checked here on blur. */
 const nameRule = createMenuCategorySchema.shape.name;
@@ -34,13 +39,21 @@ export default function MenuCategoryFields({
   isEnabled: boolean;
   onEnabledChange: (isEnabled: boolean) => void;
 }) {
+  const t = useTranslations("bo.categoryFields");
+  const tCommon = useTranslations("bo.common");
   const [isTouched, setIsTouched] = useState(false);
-  const nameError = isTouched ? categoryNameError(name) : null;
+  // The rule is the schema's; the words are the staff's language.
+  const nameError =
+    isTouched && categoryNameError(name)
+      ? name.trim() === ""
+        ? t("nameRequired")
+        : t("nameTooLong")
+      : null;
 
   return (
     <>
       <TextField
-        label="Category Name"
+        label={t("name")}
         required
         autoFocus
         fullWidth
@@ -48,17 +61,28 @@ export default function MenuCategoryFields({
         onChange={(event) => onNameChange(event.target.value)}
         onBlur={() => setIsTouched(true)}
         error={nameError !== null}
-        helperText={nameError ?? " "}
-        slotProps={{ htmlInput: { maxLength: 50 } }}
+        helperText={
+          nameError ?? <CharacterCount count={name.length} max={CATEGORY_NAME_MAX} />
+        }
+        slotProps={{ htmlInput: { maxLength: CATEGORY_NAME_MAX } }}
         sx={{ mb: 1 }}
       />
       <TextField
-        label="Myanmar name (optional)"
+        label={tCommon("myanmarName")}
         fullWidth
         value={nameMy}
         onChange={(event) => onNameMyChange(event.target.value)}
-        helperText="Shown to customers who choose Myanmar. Empty → the English name is shown."
-        slotProps={{ htmlInput: { maxLength: 50, lang: "my" } }}
+        helperText={
+          <CharacterCount
+            count={nameMy.length}
+            max={CATEGORY_NAME_MAX}
+            hint={tCommon("myanmarHelper")}
+          />
+        }
+        slotProps={{
+          htmlInput: { maxLength: CATEGORY_NAME_MAX, lang: "my" },
+          formHelperText: { component: "div" },
+        }}
         sx={{ mb: 2 }}
       />
 
@@ -75,18 +99,16 @@ export default function MenuCategoryFields({
         }}
       >
         <Box>
-          <Typography variant="body2">Show at this location</Typography>
+          <Typography variant="body2">{t("showHere")}</Typography>
           <Typography variant="caption" color="text.secondary">
-            {isEnabled
-              ? "Customers at this location see this category."
-              : "Hidden from customers at this location."}
+            {isEnabled ? t("shownHint") : t("hiddenHint")}
           </Typography>
         </Box>
         <Switch
           checked={isEnabled}
           onChange={(event) => onEnabledChange(event.target.checked)}
           slotProps={{
-            input: { "aria-label": "Show category at this location" },
+            input: { "aria-label": t("showHereLabel") },
           }}
         />
       </Box>

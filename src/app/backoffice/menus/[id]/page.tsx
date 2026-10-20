@@ -8,6 +8,7 @@ import {
 } from "@/app/services";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import MenuForm from "@/app/components/menuForm/MenuForm";
+import { getTranslations } from "next-intl/server";
 
 export default async function EditMenuPage({
   params,
@@ -18,7 +19,6 @@ export default async function EditMenuPage({
   const menuId = Number(id);
 
   const { context, fallback } = await requireBackofficeContext({
-    signedOut: "Please sign in to edit a menu.",
     access: "owner",
   });
   if (!context) return fallback;
@@ -36,7 +36,9 @@ export default async function EditMenuPage({
   if (!menu) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">Menu not found.</Typography>
+        <Typography color="text.secondary">
+          {(await getTranslations("bo.menus"))("notFound")}
+        </Typography>
       </Box>
     );
   }
@@ -54,7 +56,7 @@ export default async function EditMenuPage({
       locations={menuLocations.map(({ locationId, name }) => ({ locationId, name }))}
       currentLocation={{
         locationId: location.locationId,
-        name: currentLocation?.name ?? "this location",
+        name: currentLocation?.name ?? (await getTranslations("bo.menus"))("thisLocation"),
       }}
     />
   );

@@ -6,6 +6,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import type { SvgIconComponent } from "@mui/icons-material";
+import { useTranslations } from "next-intl";
 
 /** One way out of the Reports page — a real link either way: the
  *  printable report opens in a new tab (so this page stays where it
@@ -37,23 +38,24 @@ export default function ReportExportMenu({
   linesCsvHref,
   cancelledCsvHref,
 }: ReportExportMenuProps) {
+  const t = useTranslations("bo.reports");
   const buttonId = useId();
   const menuId = useId();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const isOpen = anchorEl !== null;
 
   const items: ExportItem[] = [
-    { label: "Report (print / PDF)", href: printHref, icon: PrintOutlinedIcon },
+    { label: t("exportReport"), href: printHref, icon: PrintOutlinedIcon },
     {
-      label: "Order lines (CSV)",
-      hint: "Includes customer notes.",
+      label: t("exportLines"),
+      hint: t("exportLinesHint"),
       href: linesCsvHref,
       icon: TableChartOutlinedIcon,
       isDownload: true,
     },
     {
-      label: "Cancelled orders (CSV)",
-      hint: "Includes customer and staff notes.",
+      label: t("exportCancelled"),
+      hint: t("exportCancelledHint"),
       href: cancelledCsvHref,
       icon: TableChartOutlinedIcon,
       isDownload: true,
@@ -65,7 +67,7 @@ export default function ReportExportMenu({
       <Button
         id={buttonId}
         variant="outlined"
-        aria-label="Export"
+        aria-label={t("export")}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
@@ -74,7 +76,7 @@ export default function ReportExportMenu({
       >
         <DownloadIcon fontSize="small" />
         <Box component="span" sx={{ display: { xs: "none", md: "inline" }, ml: 1 }}>
-          Export
+          {t("export")}
         </Box>
       </Button>
       <Menu

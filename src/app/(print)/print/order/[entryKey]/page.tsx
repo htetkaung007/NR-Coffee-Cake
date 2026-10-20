@@ -1,6 +1,8 @@
 import { CompanyService, LocationService, OrderListService } from "@/app/services";
 import { buildEntryBillFromSessions } from "@/app/lib/order/orderTotals";
+import { getTranslations } from "next-intl/server";
 import ReceiptLayout from "../../ReceiptLayout";
+import { VOUCHER_MESSAGES } from "../../voucherMessages";
 import { PrintMessage, getPrintContext } from "../../../printContext";
 
 /** Printable bill for one Order List entry — accepted rounds only (a
@@ -20,7 +22,10 @@ export default async function PrintOrderPage({
   const { companyId, locationId } = context;
 
   const entry = await OrderListService.getOpenEntry(locationId, entryKey);
-  if (!entry) return <PrintMessage>This bill is no longer open.</PrintMessage>;
+  if (!entry) {
+    const t = await getTranslations("bo.print");
+    return <PrintMessage>{t("noLongerOpen")}</PrintMessage>;
+  }
 
   const [shopName, location] = await Promise.all([
     CompanyService.getName(companyId),
@@ -32,7 +37,8 @@ export default async function PrintOrderPage({
   return (
     <ReceiptLayout
       backHref={`/backoffice/order/${entry.key}`}
-      backLabel="Back to order"
+      backLabel="backToOrder"
+      voucherMessages={VOUCHER_MESSAGES}
       shopName={shopName}
       locationName={location?.name ?? null}
       title={entry.title}

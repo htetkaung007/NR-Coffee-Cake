@@ -1,5 +1,6 @@
 "use client";
 
+import CenteredPage from "@/app/components/CenteredPage";
 import { useState } from "react";
 import {
   Box,
@@ -15,11 +16,16 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FormCard, { SuccessSnackbar } from "@/app/components/FormCard";
 import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
+import { useTranslations } from "next-intl";
 import { createTableAction } from "../action";
 
+/** The Counter's stored name (shop data — the same in every language;
+ *  TableService sets it). */
 const COUNTER_NAME = "Counter QR code";
 
 export default function NewTable() {
+  const t = useTranslations("bo.tables");
+  const tCommon = useTranslations("bo.common");
   const { error, setError, isPending, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const [name, setName] = useState("");
@@ -40,11 +46,11 @@ export default function NewTable() {
 
   return (
     <>
-      <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
+      <CenteredPage>
         <PageHeader
-          title="New Table"
+          title={t("newTable")}
           backHref="/backoffice/tables"
-          backLabel="Back to tables"
+          backLabel={t("backToTables")}
         />
         <FormCard onSubmit={handleSubmit} error={error}>
           {/* Prominent on purpose (own bordered box, filled icon,
@@ -75,7 +81,7 @@ export default function NewTable() {
                     fontSize="small"
                     color={isCounter ? "primary" : "action"}
                   />
-                  <Typography sx={{ fontWeight: 700 }}>Counter</Typography>
+                  <Typography sx={{ fontWeight: 700 }}>{t("counterSwitch")}</Typography>
                 </Box>
               }
             />
@@ -84,14 +90,12 @@ export default function NewTable() {
               color="text.secondary"
               sx={{ display: "block", ml: 5.5 }}
             >
-              {isCounter
-                ? `This creates the walk-in counter QR code, not a seated table. Its name is fixed as "${COUNTER_NAME}".`
-                : "Turn on if this QR code is for the walk-in counter instead of a seated table."}
+              {isCounter ? t("counterOn", { name: COUNTER_NAME }) : t("counterOff")}
             </Typography>
           </Box>
 
           <TextField
-            label="Table Name"
+            label={t("tableName")}
             required={!isCounter}
             autoFocus
             fullWidth
@@ -99,9 +103,7 @@ export default function NewTable() {
             value={isCounter ? COUNTER_NAME : name}
             onChange={(event) => setName(event.target.value)}
             helperText={
-              isCounter
-                ? "Locked while Counter is on."
-                : "e.g. Table 1, Patio A — a QR code will be generated automatically."
+              isCounter ? t("nameLocked") : t("nameHint")
             }
           />
 
@@ -111,7 +113,7 @@ export default function NewTable() {
               variant="outlined"
               startIcon={<UploadOutlinedIcon />}
             >
-              {logo ? "Change Logo" : "Upload Logo (optional)"}
+              {logo ? tCommon("changeLogo") : t("uploadLogo")}
               <input
                 type="file"
                 hidden
@@ -132,7 +134,7 @@ export default function NewTable() {
               >
                 <CheckCircleIcon sx={{ fontSize: 16 }} />
                 <Typography variant="caption">
-                  Image uploaded — {logo.name}
+                  {tCommon("imageChosen", { name: logo.name })}
                 </Typography>
               </Box>
             ) : (
@@ -141,8 +143,7 @@ export default function NewTable() {
                 color="text.secondary"
                 sx={{ display: "block", mt: 0.5 }}
               >
-                Shown in the center of the QR code. If skipped, a default table
-                icon is used instead. PNG, JPEG, or WEBP, up to 5MB.
+                {t("logoHint")}
               </Typography>
             )}
           </Box>
@@ -153,15 +154,15 @@ export default function NewTable() {
             disabled={isPending || (!isCounter && !name.trim())}
             sx={{ alignSelf: "flex-start", px: 3 }}
           >
-            {isPending ? "Creating..." : "Create Table"}
+            {isPending ? tCommon("creating") : t("createTable")}
           </Button>
         </FormCard>
-      </Box>
+      </CenteredPage>
 
       <SuccessSnackbar
         open={showSuccess}
         onClose={closeSuccess}
-        message="Table created successfully!"
+        message={t("created")}
       />
     </>
   );

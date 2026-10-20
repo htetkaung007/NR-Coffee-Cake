@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
@@ -16,10 +17,10 @@ export default async function AddonsPage({
 }) {
   const { group } = await searchParams;
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: "Please sign in to view add-ons.",
     access: "staff",
   });
   if (!scope) return fallback;
+  const t = await getTranslations("bo.addons");
 
   const groups = await AddonService.getAddonGroupsOverview(scope.companyId);
   const selectedId = group && /^\d+$/.test(group) ? Number(group) : null;
@@ -32,7 +33,9 @@ export default async function AddonsPage({
         direction="row"
         sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}
       >
-        <Typography variant="h6">Add-ons</Typography>
+        <Typography variant="h6" component="h1">
+          {t("title")}
+        </Typography>
         {/* New groups are the owner's (the page checks too). */}
         {isOwner && (
           <Link href="/backoffice/addons/new">
@@ -41,7 +44,7 @@ export default async function AddonsPage({
               size="small"
               sx={{ display: { xs: "none", sm: "inline-flex" } }}
             >
-              + New Add-on Group
+              {t("newGroup")}
             </Button>
           </Link>
         )}
@@ -50,13 +53,13 @@ export default async function AddonsPage({
       {isOwner && (
         <NewItemFab
           href="/backoffice/addons/new"
-          label="New add-on group"
+          label={t("newGroupFab")}
           hideFrom="sm"
         />
       )}
 
       {groups.length === 0 ? (
-        <Typography color="text.secondary">No addon groups yet.</Typography>
+        <Typography color="text.secondary">{t("noGroups")}</Typography>
       ) : (
         <AddonsView groups={groups} selectedId={selectedId} isOwner={isOwner} />
       )}

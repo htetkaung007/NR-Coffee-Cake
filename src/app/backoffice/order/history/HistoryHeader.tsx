@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { useTranslations } from "next-intl";
 import SearchField from "@/app/components/SearchField";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import StickyPageHeader from "@/app/components/StickyPageHeader";
@@ -41,9 +42,10 @@ function RefreshButton({
   isRefreshing: boolean;
   sx?: SxProps<Theme>;
 }) {
+  const t = useTranslations("bo.history");
   return (
     <IconButton
-      aria-label="Refresh"
+      aria-label={t("refresh")}
       onClick={onRefresh}
       disabled={isRefreshing}
       sx={[{ width: 44, height: 44 }, ...(Array.isArray(sx) ? sx : [sx])]}
@@ -53,10 +55,7 @@ function RefreshButton({
   );
 }
 
-const TABS: { value: "paid" | "cancelled"; label: string }[] = [
-  { value: "paid", label: "Paid" },
-  { value: "cancelled", label: "Cancelled" },
-];
+const TABS = ["paid", "cancelled"] as const;
 
 /** Sticky (the shared Orders header with Refresh, day navigator+search,
  *  Paid/Cancelled switch) — the summary cards and the list scroll away
@@ -81,6 +80,7 @@ export default function HistoryHeader({
   onRefresh,
   isRefreshing,
 }: HistoryHeaderProps) {
+  const t = useTranslations("bo.history");
   const counts: Record<"paid" | "cancelled", number> = {
     paid: paidCount,
     cancelled: cancelledCount,
@@ -127,7 +127,7 @@ export default function HistoryHeader({
         />
 
         <SearchField
-          label="Table or order #"
+          label={t("search")}
           value={search}
           onChange={onSearchChange}
           sx={{ width: { xs: "100%", sm: 260 }, ml: { sm: "auto" } }}
@@ -146,13 +146,13 @@ export default function HistoryHeader({
          content and pushed to the right edge, lining up with the search
          field above. */}
       <SegmentedTabs
-        ariaLabel="Order history tabs"
+        ariaLabel={t("tabs")}
         value={tab}
-        items={TABS.map((item) => ({
-          value: item.value,
-          label: item.label,
-          href: buildTabHref(item.value),
-          count: counts[item.value],
+        items={TABS.map((value) => ({
+          value,
+          label: t(value),
+          href: buildTabHref(value),
+          count: counts[value],
         }))}
         sx={{ ml: { sm: "auto" } }}
       />

@@ -1,12 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import { useState, useTransition } from "react";
 import { Alert, Box, Button, Snackbar, TextField } from "@mui/material";
 import { companyNameSchema } from "@/app/lib/schemas/companyNameSchema";
 import { updateCompanyNameAction } from "./action";
 
-const HELPER_TEXT =
-  "Shown in the Backoffice top bar. Customers see your location name instead.";
 
 /** The company's name, edited in place. Save is enabled only for a valid
  *  name that differs from the saved one; the field's error comes from
@@ -19,9 +19,17 @@ export default function CompanyNameForm({ initialName }: { initialName: string }
   const [serverError, setServerError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations("bo.settings");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
 
   const parsed = companyNameSchema.safeParse(value);
-  const schemaError = parsed.success ? null : parsed.error.issues[0]?.message;
+  // The schema's rule, the staff's words: empty, or too long.
+  const schemaError = parsed.success
+    ? null
+    : value.trim() === ""
+      ? t("companyNameRequired")
+      : t("companyNameTooLong");
   const fieldError = serverError ?? (touched ? schemaError : null);
   const canSave = parsed.success && parsed.data !== savedName && !isPending;
 
@@ -35,7 +43,7 @@ export default function CompanyNameForm({ initialName }: { initialName: string }
     startTransition(async () => {
       const result = await updateCompanyNameAction(formData);
       if (!result.success) {
-        setServerError(result.error.message);
+        setServerError(errorText(result.error));
         return;
       }
       setSavedName(result.data.name);
@@ -59,7 +67,7 @@ export default function CompanyNameForm({ initialName }: { initialName: string }
         }}
       >
         <TextField
-          label="Company name"
+          label={t("companyName")}
           name="name"
           fullWidth
           value={value}
@@ -74,7 +82,7 @@ export default function CompanyNameForm({ initialName }: { initialName: string }
             if (event.key === "Enter") setTouched(true);
           }}
           error={Boolean(fieldError)}
-          helperText={fieldError ?? HELPER_TEXT}
+          helperText={fieldError ?? t("companyNameHelper")}
           disabled={isPending}
         />
         <Button
@@ -84,7 +92,7 @@ export default function CompanyNameForm({ initialName }: { initialName: string }
           // Phones: its own line; sm+: as tall as the field beside it.
           sx={{ minHeight: { xs: 44, sm: 56 }, flexShrink: 0, alignSelf: "flex-start" }}
         >
-          {isPending ? "Saving..." : "Save"}
+          {isPending ? tCommon("saving") : tCommon("save")}
         </Button>
       </Box>
 
@@ -95,7 +103,7 @@ export default function CompanyNameForm({ initialName }: { initialName: string }
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert severity="success" variant="filled" sx={{ width: "100%" }}>
-          Company name updated
+          {t("companyUpdated")}
         </Alert>
       </Snackbar>
     </>

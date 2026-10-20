@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,7 +36,6 @@ import { markEntryPaidAction } from "./action";
 import ApprovalCountdown from "./ApprovalCountdown";
 import MarkPaidDialog from "./MarkPaidDialog";
 import { useCan } from "@/app/components/StaffAccessProvider";
-import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
 import PrintBillButton from "./PrintBillButton";
 import NewOrderToast, {
   describeNewRounds,
@@ -43,7 +43,7 @@ import NewOrderToast, {
 } from "./NewOrderToast";
 import OrderSoundToggle from "./OrderSoundToggle";
 import OrdersPageHeader from "./OrdersPageHeader";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { entryTitleSx, moneySx, sectionHeadingSx } from "./orderTypography";
 
 interface OrderEntry {
@@ -118,11 +118,15 @@ function EntryCard({
   const [isPending, startTransition] = useTransition();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   // Display only — markEntryPaidAction checks the permission itself.
+  const t = useTranslations("bo.orders");
+  const tCommon = useTranslations("bo.common");
+  const tPermissions = useTranslations("bo.permissions");
+  const money = useStaffMoney();
   const canTakePayment = useCan("ORDERS_MARK_PAID");
 
   const SourceIcon = entry.isTableGroup ? TableRestaurantIcon : StorefrontIcon;
   const sourceAccent = entry.isTableGroup ? TABLE_ACCENT : COUNTER_ACCENT;
-  const sourceLabel = entry.isTableGroup ? "Table" : "Counter";
+  const sourceLabel = entry.isTableGroup ? tCommon("table") : tCommon("counter");
 
   function runAction(action: () => Promise<unknown>) {
     startTransition(async () => {
@@ -225,7 +229,7 @@ function EntryCard({
               </Typography>
               {entry.sessions.length > 1 && (
                 <Chip
-                  label={`${entry.sessions.length} rounds`}
+                  label={tCommon("roundCount", { count: entry.sessions.length })}
                   size="small"
                   variant="outlined"
                 />
@@ -244,7 +248,7 @@ function EntryCard({
                   variant="body2"
                   sx={{ fontWeight: 700 }}
                 >
-                  Needs approval
+                  {t("needsApproval")}
                 </Typography>
                 {entry.earliestApprovalExpiresAt && (
                   <>
@@ -262,7 +266,7 @@ function EntryCard({
 
             <Box sx={{ minHeight: 44, display: "flex", alignItems: "center" }}>
               <Typography variant="body1" sx={moneySx}>
-                {formatAmount(entry.combinedTotal)}
+                {money.amount(entry.combinedTotal)}
               </Typography>
             </Box>
           </Stack>
@@ -290,21 +294,24 @@ function EntryCard({
           />
           {/* Without the permission: disabled, saying why (a disabled
              button inside a Tooltip needs the span — DESIGN.md Rule 22). */}
-          <Tooltip title={canTakePayment ? "" : ASK_OWNER_HINTS.ORDERS_MARK_PAID}>
+          <Tooltip title={canTakePayment ? "" : tPermissions("askOwner.ORDERS_MARK_PAID")}>
             <span>
               <Button
                 variant="contained"
                 color="success"
                 aria-label={
                   canTakePayment
-                    ? `Paid: ${entry.title}`
-                    : `Paid: ${entry.title} — ${ASK_OWNER_HINTS.ORDERS_MARK_PAID}`
+                    ? t("paidLabel", { title: entry.title })
+                    : t("paidLabelBlocked", {
+                        title: entry.title,
+                        reason: tPermissions("askOwner.ORDERS_MARK_PAID"),
+                      })
                 }
                 disabled={!canTakePayment || isPending || entry.hasPendingApproval}
                 onClick={() => setIsConfirmOpen(true)}
                 sx={{ minHeight: 44, minWidth: 72 }}
               >
-                Paid
+                {t("paid")}
               </Button>
             </span>
           </Tooltip>
@@ -328,6 +335,7 @@ function EntryCard({
  *  The first order into the section replaces it with its card (and
  *  that card's usual "appear" cue and toast). */
 function SectionEmptyState({ Icon }: { Icon: SvgIconComponent }) {
+  const t = useTranslations("bo.orders");
   return (
     <Stack
       spacing={1}
@@ -343,9 +351,9 @@ function SectionEmptyState({ Icon }: { Icon: SvgIconComponent }) {
       }}
     >
       <Icon fontSize="large" sx={{ color: "text.secondary" }} />
-      <Typography variant="body1">No orders yet</Typography>
+      <Typography variant="body1">{t("emptyTitle")}</Typography>
       <Typography variant="body2" color="text.secondary">
-        New orders appear here automatically.
+        {t("emptyHint")}
       </Typography>
     </Stack>
   );
@@ -370,6 +378,7 @@ function SourceSection({
   effects: Record<string, CardEffect>;
   onEffectEnd: (entryKey: string) => void;
 }) {
+  const t = useTranslations("bo.orders");
   return (
     <Box component="section" aria-labelledby={headingId}>
       <Stack
@@ -384,7 +393,7 @@ function SourceSection({
           variant="body1"
           sx={{ ...sectionHeadingSx, color: "text.primary" }}
         >
-          {label} ({entries.length})
+          {t("withCount", { label, count: entries.length })}
         </Typography>
       </Stack>
       {entries.length === 0 ? (
@@ -420,6 +429,8 @@ export default function OrderListView({
   const [notice, setNotice] = useState<NewOrderNotice | null>(null);
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
   const { sound } = useOrderAlerts();
+  const t = useTranslations("bo.orders");
+  const tCommon = useTranslations("bo.common");
 
   // Fires once per refresh that brought new rounds needing approval
   // (never for what was already waiting when the Backoffice opened):
@@ -453,7 +464,7 @@ export default function OrderListView({
   }
 
   // The provider prefixes this with the pending count, e.g. "(2) Orders".
-  useDocumentTitle("Orders");
+  useDocumentTitle(t("title"));
 
   // Every entry lands in exactly one of these three lists — awaiting
   // approval wins over source, so nothing is ever shown twice.
@@ -470,9 +481,9 @@ export default function OrderListView({
   const tableCount = entries.filter((entry) => entry.isTableGroup).length;
   const counterCount = entries.length - tableCount;
   const filters: { value: SourceFilter; label: string; count: number }[] = [
-    { value: "all", label: "All", count: entries.length },
-    { value: "table", label: "Tables", count: tableCount },
-    { value: "counter", label: "Counter", count: counterCount },
+    { value: "all", label: t("all"), count: entries.length },
+    { value: "table", label: t("tables"), count: tableCount },
+    { value: "counter", label: tCommon("counter"), count: counterCount },
   ];
 
   return (
@@ -490,7 +501,7 @@ export default function OrderListView({
                 direction="row"
                 useFlexGap
                 role="group"
-                aria-label="Filter orders by source"
+                aria-label={t("filterLabel")}
                 sx={{ flexWrap: "wrap", gap: 1 }}
               >
                 {filters.map(({ value, label, count }) => {
@@ -498,7 +509,7 @@ export default function OrderListView({
                   return (
                     <Chip
                       key={value}
-                      label={`${label} (${count})`}
+                      label={t("withCount", { label, count })}
                       clickable
                       aria-pressed={selected}
                       color={selected ? "primary" : "default"}
@@ -539,7 +550,7 @@ export default function OrderListView({
               variant="body1"
               sx={{ ...sectionHeadingSx, color: "text.primary" }}
             >
-              Needs approval ({needsApproval.length})
+              {t("needsApprovalCount", { count: needsApproval.length })}
             </Typography>
           </Stack>
           <Grid container spacing={1.5}>
@@ -561,7 +572,7 @@ export default function OrderListView({
           <Grid size={{ xs: 12, md: 6 }}>
             <SourceSection
               headingId="tables-heading"
-              label="Tables"
+              label={t("tables")}
               Icon={TableRestaurantIcon}
               accent={TABLE_ACCENT}
               entries={tableEntries}
@@ -574,7 +585,7 @@ export default function OrderListView({
           <Grid size={{ xs: 12, md: 6 }}>
             <SourceSection
               headingId="counter-heading"
-              label="Counter"
+              label={tCommon("counter")}
               Icon={StorefrontIcon}
               accent={COUNTER_ACCENT}
               entries={counterEntries}

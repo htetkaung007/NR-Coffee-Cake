@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Box } from "@mui/material";
 import { topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
 
@@ -19,10 +20,11 @@ export default function HistoryDetailPanel({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations("bo.history");
   return (
     <Box
       component="aside"
-      aria-label="Details"
+      aria-label={t("details")}
       sx={(theme) => {
         const top = topBarHeight(theme);
         return {

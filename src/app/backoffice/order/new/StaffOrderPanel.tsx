@@ -26,7 +26,8 @@ import { langAttr, type AppLocale } from "@/app/lib/i18n/locale";
 import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { localizeAddonSelections } from "@/app/lib/order/addonLabel";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 
 /** Highest quantity a line can be raised to — the same cap the staff
  *  cart schema enforces (staffOrderSchema's `quantity`). */
@@ -73,7 +74,8 @@ const stepperButtonSx = {
 } as const;
 
 /** The menu side's language for the lines' names and prices: English
- *  keeps the Backoffice's "MMK"; မြန်မာ uses the customer's words. */
+ *  keeps the Backoffice's "MMK"; မြန်မာ uses the customer's words (the
+ *  same "ကျပ်" the Myanmar Backoffice shows). */
 interface LineWords {
   language: AppLocale;
   formatMoney: (amount: number) => string;
@@ -95,6 +97,7 @@ function OrderLine({
   onChangeQuantity: (line: StaffCartLine, next: number) => void;
   onRemove: (line: StaffCartLine) => void;
 }) {
+  const t = useTranslations("bo.newOrder");
   return (
     <Box
       component="li"
@@ -104,7 +107,7 @@ function OrderLine({
         <ButtonBase
           disabled={locked}
           onClick={() => onEdit(line)}
-          aria-label={`Edit ${line.menuName}`}
+          aria-label={t("editLine", { name: line.menuName })}
           sx={(theme) => ({
             flex: 1,
             minWidth: 0,
@@ -172,7 +175,7 @@ function OrderLine({
       >
         {line.quantity === 1 ? (
           <IconButton
-            aria-label={`Remove ${line.menuName}`}
+            aria-label={t("removeLine", { name: line.menuName })}
             disabled={locked}
             onClick={() => onRemove(line)}
             sx={stepperButtonSx}
@@ -181,7 +184,7 @@ function OrderLine({
           </IconButton>
         ) : (
           <IconButton
-            aria-label={`One less ${line.menuName}`}
+            aria-label={t("oneLess", { name: line.menuName })}
             disabled={locked}
             onClick={() => onChangeQuantity(line, line.quantity - 1)}
             sx={stepperButtonSx}
@@ -191,13 +194,13 @@ function OrderLine({
         )}
         <Typography
           variant="body1"
-          aria-label={`Quantity ${line.quantity}`}
+          aria-label={t("quantity", { count: line.quantity })}
           sx={{ minWidth: 32, textAlign: "center" }}
         >
           {line.quantity}
         </Typography>
         <IconButton
-          aria-label={`One more ${line.menuName}`}
+          aria-label={t("oneMore", { name: line.menuName })}
           disabled={locked || line.quantity >= MAX_LINE_QUANTITY}
           onClick={() => onChangeQuantity(line, line.quantity + 1)}
           sx={stepperButtonSx}
@@ -233,7 +236,7 @@ interface StaffOrderPanelProps {
   sendCheck: SendCheck | null;
   onRetryCheck: () => void;
   /** The menu side's EN | မြန်မာ view: the lines' names and the prices
-   *  (labels and Send stay English). */
+   *  (labels and Send follow the staff's Backoffice language). */
   language: AppLocale;
 }
 
@@ -261,10 +264,13 @@ export default function StaffOrderPanel({
   onRetryCheck,
   language,
 }: StaffOrderPanelProps) {
+  const t = useTranslations("bo.newOrder");
+  const tCommon = useTranslations("bo.common");
+  const money = useStaffMoney();
   const reasonId = useId();
   const words: LineWords = {
     language,
-    formatMoney: myanmarWordsOrNull(language)?.price ?? formatAmount,
+    formatMoney: myanmarWordsOrNull(language)?.price ?? money.amount,
   };
 
   return (
@@ -284,7 +290,7 @@ export default function StaffOrderPanel({
           </Typography>
           {onClose && (
             <IconButton
-              aria-label="Close order"
+              aria-label={t("closeOrder")}
               onClick={onClose}
               sx={{ width: 44, height: 44 }}
             >
@@ -304,7 +310,7 @@ export default function StaffOrderPanel({
             icon={<CircularProgress size={20} color="inherit" />}
             sx={{ mt: 1.5 }}
           >
-            Checking whether the order went through…
+            {t("checking")}
           </Alert>
         )}
         {sendCheck?.state === "failed" && (
@@ -313,13 +319,12 @@ export default function StaffOrderPanel({
             role="status"
             action={
               <Button color="inherit" onClick={onRetryCheck} sx={{ minHeight: 44 }}>
-                Retry
+                {tCommon("retry")}
               </Button>
             }
             sx={{ mt: 1.5 }}
           >
-            {sendCheck.message} The items stay locked so the order
-            can&apos;t be sent twice.
+            {t("stayLocked", { message: sendCheck.message })}
           </Alert>
         )}
       </Box>
@@ -334,15 +339,15 @@ export default function StaffOrderPanel({
               fontSize="large"
               sx={{ color: "text.secondary" }}
             />
-            <Typography variant="body1">No items yet</Typography>
+            <Typography variant="body1">{t("noItems")}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Tap a menu to add it
+              {t("tapToAdd")}
             </Typography>
           </Stack>
         ) : (
           <Box
             component="ul"
-            aria-label="Items in this order"
+            aria-label={t("itemsLabel")}
             sx={{ listStyle: "none", m: 0, p: 0 }}
           >
             {lines.map((line) => (
@@ -362,7 +367,7 @@ export default function StaffOrderPanel({
 
       <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
         <BillTotal
-          label="Total"
+          label={t("total")}
           amount={total}
           formatMoney={words.formatMoney}
           sx={{ mb: 2 }}
@@ -379,7 +384,7 @@ export default function StaffOrderPanel({
           }
           sx={{ minHeight: 44 }}
         >
-          {isSending ? "Sending…" : "Send to kitchen"}
+          {isSending ? t("sending") : t("send")}
         </Button>
         {sendBlockedReason && (
           <Typography

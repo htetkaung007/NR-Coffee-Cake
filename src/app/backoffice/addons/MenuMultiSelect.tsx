@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import { useState } from "react";
 import {
   Box,
@@ -15,6 +17,8 @@ import SearchIcon from "@mui/icons-material/Search";
 export interface MenuOption {
   id: number;
   name: string;
+  /** The shop's Myanmar name — shown in the Myanmar Backoffice. */
+  nameMy?: string | null;
 }
 
 interface MenuMultiSelectProps {
@@ -34,6 +38,11 @@ export default function MenuMultiSelect({
   selectedMenuIds,
   onChange,
 }: MenuMultiSelectProps) {
+  const t = useTranslations("bo.addonForm");
+  const tMenu = useTranslations("bo.menuForm");
+  const tCommon = useTranslations("bo.common");
+  const locale = useLocale();
+  const nameOf = (menu: MenuOption) => localizedText(locale, menu.name, menu.nameMy);
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
 
@@ -45,8 +54,12 @@ export default function MenuMultiSelect({
     );
   }
 
-  const filteredMenus = menus.filter((menu) =>
-    menu.name.toLowerCase().includes(search.trim().toLowerCase()),
+  // Both names match, whatever the language shown.
+  const term = search.trim().toLowerCase();
+  const filteredMenus = menus.filter(
+    (menu) =>
+      menu.name.toLowerCase().includes(term) ||
+      (menu.nameMy ?? "").toLowerCase().includes(term),
   );
   const selectedMenus = menus.filter((menu) =>
     selectedMenuIds.includes(menu.id),
@@ -59,11 +72,11 @@ export default function MenuMultiSelect({
   return (
     <Box>
       <Typography variant="body2" sx={{ mb: 1 }}>
-        Connect to Menus
+        {t("connectMenus")}
       </Typography>
 
       <TextField
-        placeholder="Search menu items..."
+        placeholder={t("searchMenus")}
         size="small"
         fullWidth
         value={search}
@@ -83,8 +96,8 @@ export default function MenuMultiSelect({
       {filteredMenus.length === 0 ? (
         <Typography variant="caption" color="text.secondary">
           {menus.length === 0
-            ? "No menu items yet."
-            : "No menu items match your search."}
+            ? t("noMenus")
+            : t("noMenuMatch")}
         </Typography>
       ) : (
         <Box
@@ -106,7 +119,7 @@ export default function MenuMultiSelect({
             return (
               <Chip
                 key={menu.id}
-                label={menu.name}
+                label={nameOf(menu)}
                 onClick={() => toggle(menu.id)}
                 color={isSelected ? "primary" : "default"}
                 variant={isSelected ? "filled" : "outlined"}
@@ -124,8 +137,7 @@ export default function MenuMultiSelect({
             color="text.secondary"
             sx={{ display: "block", mb: 0.75 }}
           >
-            Connected to {selectedMenus.length}{" "}
-            {selectedMenus.length === 1 ? "menu item" : "menu items"}
+            {t("connectedTo", { count: selectedMenus.length })}
           </Typography>
           <Stack
             spacing={0.75}
@@ -150,9 +162,9 @@ export default function MenuMultiSelect({
                   py: 0.5,
                 }}
               >
-                <Typography variant="body2">{menu.name}</Typography>
+                <Typography variant="body2">{nameOf(menu)}</Typography>
                 <Chip
-                  label="Remove"
+                  label={tCommon("remove")}
                   size="small"
                   onClick={() => toggle(menu.id)}
                   variant="outlined"
@@ -168,7 +180,7 @@ export default function MenuMultiSelect({
               onClick={() => setShowAll((current) => !current)}
               sx={{ mt: 0.5 }}
             >
-              {showAll ? "Show Less" : `Show More (${hiddenCount})`}
+              {showAll ? tMenu("showLess") : tMenu("showMore", { count: hiddenCount })}
             </Button>
           )}
         </Box>

@@ -22,6 +22,12 @@ export function locationDeletion(facts: {
   return { allowed: true };
 }
 
+/** Each block's stable error code (bo.errors — the staff's words). */
+export const LOCATION_DELETION_CODES: Record<LocationDeletionBlock, string> = {
+  hasSales: "LOCATION_HAS_SALES",
+  hasManagers: "LOCATION_HAS_MANAGERS",
+};
+
 /** The owner-facing explanation for each block. */
 export const LOCATION_DELETION_MESSAGES: Record<LocationDeletionBlock, string> = {
   hasSales:

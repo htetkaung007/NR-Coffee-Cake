@@ -22,7 +22,7 @@ export async function cleanImageUpload(
     .metadata()
     .then((metadata) => asUploadImageFormat(metadata.format))
     .catch(() => null); // not an image sharp can read at all
-  if (format === null) throw new ValidationError(UPLOAD_IMAGE_ERROR);
+  if (format === null) throw new ValidationError(UPLOAD_IMAGE_ERROR, "IMAGE_INVALID");
 
   const buffer = await sharp(input).rotate().toFormat(format).toBuffer();
   return { buffer, contentType: imageContentType(format) };

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -45,6 +47,7 @@ const PAGE_HREF = "/backoffice/setting";
 /** "What managers can always do / what only you can do", folded away
  *  until asked for. No height animation — it just appears. */
 function AccessRulesDisclosure() {
+  const t = useTranslations("bo.settings");
   const [isOpen, setIsOpen] = useState(false);
   const contentId = useId();
   return (
@@ -56,12 +59,12 @@ function AccessRulesDisclosure() {
         endIcon={isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         sx={{ minHeight: 44, px: 1, ml: -1 }}
       >
-        What managers can always do / what only you can do
+        {t("rulesToggle")}
       </Button>
       {isOpen && (
         <Stack id={contentId} spacing={1} sx={{ mt: 1 }}>
-          <AlwaysAllowedList title="Managers can always" />
-          <OwnerOnlyList title="Only you can" />
+          <AlwaysAllowedList title={t("managersCanAlways")} />
+          <OwnerOnlyList title={t("onlyYouCan")} />
         </Stack>
       )}
     </Box>
@@ -86,6 +89,8 @@ function MoveManagerSelect({
   );
   const [isMoving, startMoving] = useTransition();
   const fieldId = useId();
+  const t = useTranslations("bo.settings");
+  const errorText = useStaffErrorMessage();
 
   const options =
     manager.locationId === null ||
@@ -93,7 +98,7 @@ function MoveManagerSelect({
       ? locations
       : [
           ...locations,
-          { id: manager.locationId, name: manager.locationName ?? "Closed location" },
+          { id: manager.locationId, name: manager.locationName ?? t("closedLocation") },
         ];
   const value = pendingLocationId ?? manager.locationId ?? "";
 
@@ -106,10 +111,13 @@ function MoveManagerSelect({
       onStatus(
         result.success
           ? {
-              text: `${manager.email} moved to ${target?.name ?? "the new location"}`,
+              text: t("movedTo", {
+                email: manager.email,
+                location: target?.name ?? t("newLocation"),
+              }),
               severity: "success",
             }
-          : { text: result.error.message, severity: "error" },
+          : { text: errorText(result.error), severity: "error" },
       );
     });
   }
@@ -118,12 +126,12 @@ function MoveManagerSelect({
     <TextField
       select
       id={fieldId}
-      label="Move to…"
+      label={t("moveTo")}
       value={value}
       disabled={isMoving || options.length < 2}
       onChange={(event) => move(Number(event.target.value))}
       helperText={
-        options.length < 2 ? "Add another location to move managers." : undefined
+        options.length < 2 ? t("addAnotherLocation") : undefined
       }
       sx={{ minWidth: { sm: 200 }, width: { xs: "100%", sm: "auto" } }}
     >
@@ -150,6 +158,9 @@ function ManagerCard({
   locations: LocationOption[];
   onStatus: (message: StatusMessage) => void;
 }) {
+  const t = useTranslations("bo.settings");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
   const [isRemoving, startRemoving] = useTransition();
   const displayName = manager.name || manager.email;
@@ -160,8 +171,8 @@ function ManagerCard({
       setIsRemoveOpen(false);
       onStatus(
         result.success
-          ? { text: `${displayName} removed`, severity: "success" }
-          : { text: result.error.message, severity: "error" },
+          ? { text: t("removed", { name: displayName }), severity: "success" }
+          : { text: errorText(result.error), severity: "error" },
       );
     });
   }
@@ -200,16 +211,20 @@ function ManagerCard({
               />
             )}
             <Typography variant="body2" color="text.secondary">
-              {manager.permissions.length} of {GRANTABLE_PERMISSIONS.length}{" "}
-              extras
+              {t("extras", {
+                count: manager.permissions.length,
+                total: GRANTABLE_PERMISSIONS.length,
+              })}
             </Typography>
           </Stack>
         </Box>
 
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={1}
-          sx={{ alignItems: { xs: "stretch", sm: "center" } }}
+          useFlexGap
+          // Wraps in the centred column (and with longer Myanmar words)
+          // instead of running past the card.
+          sx={{ alignItems: { xs: "stretch", sm: "center" }, flexWrap: "wrap", gap: 1 }}
         >
           <MoveManagerSelect
             manager={manager}
@@ -222,29 +237,30 @@ function ManagerCard({
             href={`${PAGE_HREF}?manager=${manager.id}`}
             scroll={false}
             variant="outlined"
-            aria-label={`Edit access for ${manager.email}`}
+            aria-label={t("editAccessFor", { email: manager.email })}
             sx={{ minHeight: 44, flexShrink: 0 }}
           >
-            Edit access
+            {t("editAccess")}
           </Button>
           <Button
             color="error"
             disabled={isRemoving}
             onClick={() => setIsRemoveOpen(true)}
-            aria-label={`Remove ${manager.email}`}
+            aria-label={t("removeManagerLabel", { email: manager.email })}
             sx={{ minHeight: 44, flexShrink: 0 }}
           >
-            Remove
+            {t("remove")}
           </Button>
         </Stack>
       </Stack>
 
       <ConfirmDialog
         open={isRemoveOpen}
-        title={`Remove ${displayName}?`}
-        message="They can no longer sign in. Sales history is not affected. You can add them again later with the same email."
-        confirmLabel="Remove manager"
-        pendingLabel="Removing..."
+        title={t("removeTitle", { name: displayName })}
+        message={t("removeMessage")}
+        confirmLabel={t("removeConfirm")}
+        pendingLabel={t("removing")}
+        cancelLabel={tCommon("cancel")}
         destructive
         pending={isRemoving}
         onConfirm={remove}
@@ -271,6 +287,8 @@ export default function ManagersSection({
   locations: LocationOption[];
   selectedId: number | null;
 }) {
+  const t = useTranslations("bo.settings");
+  const tCategories = useTranslations("bo.categories");
   const router = useRouter();
   const selected =
     managers.find((manager) => manager.id === selectedId) ?? null;
@@ -319,9 +337,9 @@ export default function ManagersSection({
         {managers.length === 0 ? (
           <Stack spacing={0.5} sx={{ alignItems: "center", py: 3 }}>
             <PersonOutlinedIcon aria-hidden sx={{ color: "text.secondary" }} />
-            <Typography variant="body2">No managers yet.</Typography>
+            <Typography variant="body2">{t("noManagers")}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Add one below.
+              {t("addOneBelow")}
             </Typography>
           </Stack>
         ) : (
@@ -346,7 +364,7 @@ export default function ManagersSection({
       <SidePanelDrawer
         open={selected !== null}
         onClose={requestClose}
-        label={selected ? `Access for ${selected.email}` : "Manager access"}
+        label={selected ? t("accessFor", { email: selected.email }) : t("managerAccess")}
       >
         {selected && (
           <ManagerAccessEditor
@@ -370,9 +388,9 @@ export default function ManagersSection({
 
       <ConfirmDialog
         open={isConfirmOpen}
-        title="Discard changes?"
-        confirmLabel="Discard"
-        cancelLabel="Keep editing"
+        title={tCategories("discardTitle")}
+        confirmLabel={tCategories("discard")}
+        cancelLabel={tCategories("keepEditing")}
         destructive
         onConfirm={close}
         onCancel={() => setIsConfirmOpen(false)}
@@ -385,7 +403,7 @@ export default function ManagersSection({
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert severity="success" variant="filled" sx={{ width: "100%" }}>
-          Access updated for {savedFor}
+          {t("accessUpdated", { email: savedFor ?? "" })}
         </Alert>
       </Snackbar>
 

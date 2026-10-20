@@ -1,5 +1,6 @@
 "use client";
 
+import { isOrderableOnCard } from "@/app/lib/menu/orderableFirst";
 import {
   Box,
   Card,
@@ -152,7 +153,7 @@ export default function MenuCard({
   // The compact card's overrides, applied on touch tablets only.
   const onTouchTablet = (styles: Record<string, unknown>) =>
     compact ? { [touchTabletMedia]: styles } : {};
-  const isAvailable = item.stockQuantity > 0 && item.isAvailable;
+  const isAvailable = isOrderableOnCard(item);
   // Only worth saying "Only 3 left" about something that can still be
   // ordered — a switched-off or sold-out item already reads "out of stock".
   // "Low" is the shared rule (lib/menu/stockLevel): 1 to 4 left.

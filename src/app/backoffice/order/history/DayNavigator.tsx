@@ -2,7 +2,9 @@
 
 import CalendarNavigator from "@/app/components/CalendarNavigator";
 import { addDays } from "@/app/lib/shopDay";
+import { useTranslations } from "next-intl";
 import { formatDayLabel } from "./historyFormat";
+import { useHistoryWords } from "./useHistoryWords";
 
 interface DayNavigatorProps {
   day: string;
@@ -31,16 +33,18 @@ export default function DayNavigator({
   onNavigate,
   buildHref,
 }: DayNavigatorProps) {
+  const t = useTranslations("bo.history");
+  const words = useHistoryWords();
   const prevDay = addDays(day, -1);
   const nextDay = addDays(day, 1);
-  const { primary, secondary } = formatDayLabel(day, today);
+  const { primary, secondary } = formatDayLabel(day, today, words);
 
   return (
     <CalendarNavigator
       primary={primary}
       secondary={secondary}
-      prevLabel="Previous day"
-      nextLabel="Next day"
+      prevLabel={t("previousDay")}
+      nextLabel={t("nextDay")}
       prevHref={prevDay >= minDay ? buildHref(prevDay) : null}
       nextHref={nextDay <= maxDay ? buildHref(nextDay) : null}
       selectedDay={day}

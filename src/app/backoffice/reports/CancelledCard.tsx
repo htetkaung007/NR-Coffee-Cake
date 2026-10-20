@@ -2,7 +2,9 @@
 
 import type { ReactNode } from "react";
 import { Box, Card, Divider, Stack, Typography } from "@mui/material";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { useReasonCountLabels } from "./useReportWords";
 import { formatRejectReasonCounts } from "@/app/lib/order/rejectReason";
 import type { ReportOverview } from "./action";
 import { moneyToneSx, sectionHeadingSx } from "../order/orderTypography";
@@ -91,25 +93,30 @@ export default function CancelledCard({
 }: {
   cancelled: ReportOverview["current"]["cancelled"];
 }) {
+  const t = useTranslations("bo.reports");
+  const money = useStaffMoney();
+  const reasonLabels = useReasonCountLabels();
   return (
     <FigureCard
-      title="Cancelled orders"
+      title={t("cancelledTitle")}
       after={
         cancelled.withdrawn > 0 && (
           // Not the shop's miss — counted apart, never in the figures above.
           <Typography variant="caption" component="p" color="text.secondary" sx={{ mt: 1 }}>
-            Also cancelled by customers before approval: {cancelled.withdrawn}
+            {t("alsoWithdrawn", { count: cancelled.withdrawn })}
           </Typography>
         )
       }
     >
         <FigureCell
-          label="Rejected"
+          label={t("rejected")}
           value={String(cancelled.rejected)}
-          detail={formatRejectReasonCounts(cancelled.reasons) || undefined}
+          detail={
+            formatRejectReasonCounts(cancelled.reasons, reasonLabels.reject) || undefined
+          }
         />
-        <FigureCell label="Timed out" value={String(cancelled.timedOut)} />
-        <FigureCell label="Not charged" value={formatAmount(cancelled.notCharged)} />
+        <FigureCell label={t("timedOut")} value={String(cancelled.timedOut)} />
+        <FigureCell label={t("notCharged")} value={money.amount(cancelled.notCharged)} />
     </FigureCard>
   );
 }

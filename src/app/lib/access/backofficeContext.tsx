@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { Box, Typography } from "@mui/material";
+import { getTranslations } from "next-intl/server";
 import { AppError } from "@/app/lib/errors";
 import type { AccessRule, PermissionKey } from "@/app/lib/access/permissions";
 import type { StaffScope } from "@/app/lib/access/rolePolicy";
@@ -30,18 +31,21 @@ function BackofficeNotice({ message }: { message: string }) {
 /** Who may open a Backoffice page — the shared AccessRule. */
 type PageAccess = AccessRule;
 
-/** The notice a manager without access sees, per page area. */
-const PERMISSION_AREA: Partial<Record<PermissionKey, string>> = {
-  REPORTS_VIEW: "Reports",
-  TABLES_MANAGE: "Tables",
+/** The page area a manager without access is told to ask for — its
+ *  sidebar word (bo.nav). */
+const PERMISSION_AREA: Partial<Record<PermissionKey, "reports" | "tables">> = {
+  REPORTS_VIEW: "reports",
+  TABLES_MANAGE: "tables",
 };
 
-function forbiddenMessage(access: PageAccess) {
-  if (access === "owner") return "Only the owner can open this page.";
+/** The notice a manager without access sees, in the staff's language. */
+async function forbiddenMessage(access: PageAccess) {
+  const t = await getTranslations("bo.access");
+  if (access === "owner") return t("ownerOnlyPage");
   const area = access === "staff" ? undefined : PERMISSION_AREA[access];
-  return area
-    ? `Ask the owner for access to ${area}.`
-    : "Ask the owner for access to this page.";
+  if (!area) return t("askForPage");
+  const tNav = await getTranslations("bo.nav");
+  return t("askForArea", { area: tNav(area) });
 }
 
 /** The same server-side check the Server Actions run (lib/access/roleGuard). */
@@ -56,19 +60,16 @@ function checkAccess(access: PageAccess): Promise<StaffScope> {
  * from the session (and, for a permission, the database), never from
  * anything the browser sent. Pages don't throw or redirect: they render
  * a plain notice in place (signed out, or not allowed), so this hands
- * back either the user's scope or that notice:
+ * back either the user's scope or that notice (in the staff's language,
+ * bo.access):
  *
  *   const { scope, fallback } = await requireBackofficeAccess({
- *     signedOut: "Please sign in to view settings.",
  *     access: "owner",
  *   });
  *   if (!scope) return fallback;
  */
 export async function requireBackofficeAccess(options: {
-  signedOut: string;
   access: PageAccess;
-  /** Overrides the default "not allowed" notice. */
-  forbidden?: string;
 }): Promise<
   | { scope: StaffScope; fallback: null }
   | { scope: null; fallback: ReactElement }
@@ -79,8 +80,8 @@ export async function requireBackofficeAccess(options: {
     if (!(error instanceof AppError)) throw error;
     const message =
       error.code === "UNAUTHORIZED"
-        ? options.signedOut
-        : (options.forbidden ?? forbiddenMessage(options.access));
+        ? (await getTranslations("bo.access"))("signIn")
+        : await forbiddenMessage(options.access);
     return { scope: null, fallback: <BackofficeNotice message={message} /> };
   }
 }
@@ -92,7 +93,7 @@ export async function requireBackofficeAccess(options: {
  * back either the context or that notice:
  *
  *   const { context, fallback } = await requireBackofficeContext({
- *     signedOut: "Please sign in to view orders.",
+ *     access: "staff",
  *   });
  *   if (!context) return fallback;
  *
@@ -103,20 +104,16 @@ export async function requireBackofficeAccess(options: {
  * Lives in lib/ next to getSessionContext for the same reason: reading
  * the session is a Controller-layer concern (Rule 1).
  */
-export async function requireBackofficeContext(messages: {
-  signedOut: string;
-  noLocation?: string;
+export async function requireBackofficeContext(options: {
   access?: PageAccess;
-  /** Overrides the default "not allowed" notice. */
-  forbidden?: string;
+  /** The no-location notice's bo.access key (default "noLocation"). */
+  noLocation?: "noLocation" | "noLocationTables";
 }): Promise<
   | { context: BackofficeContext; fallback: null }
   | { context: null; fallback: ReactElement }
 > {
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: messages.signedOut,
-    access: messages.access ?? "staff",
-    forbidden: messages.forbidden,
+    access: options.access ?? "staff",
   });
   if (!scope) return { context: null, fallback };
   const { companyId, userId, role } = scope;
@@ -136,10 +133,9 @@ export async function requireBackofficeContext(messages: {
       context: null,
       fallback: (
         <BackofficeNotice
-          message={
-            messages.noLocation ??
-            "No location selected. Please choose a location first."
-          }
+          message={(await getTranslations("bo.access"))(
+            options.noLocation ?? "noLocation",
+          )}
         />
       ),
     };

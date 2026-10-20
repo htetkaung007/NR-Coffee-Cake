@@ -9,21 +9,26 @@ import {
 import type { AppLocale } from "@/app/lib/i18n/locale";
 
 /**
- * EN | မြန်မာ — which language a Backoffice screen shows what customers
- * could read (shop data names, and on New Order the menu side's words).
- * Display only: it never changes stored data. The Backoffice UI itself
- * stays English. Used by the Add-ons panel, the add-on form's "Customer
- * sees" preview and staff New Order. Small, 44px touch height.
+ * EN | မြန်မာ — the one language switch look on staff screens. As a
+ * preview switch it picks which language a Backoffice screen shows what
+ * customers could read (shop data names, and on New Order the menu
+ * side's words) — display only, it never changes stored data: the
+ * Add-ons panel, the add-on form's "Customer sees" preview, staff New
+ * Order and the print preview. The account menu's Language row uses it
+ * for the staff's own language (BO_LOCALE). Small, 44px touch height.
  */
 export default function NameLanguageToggle({
   value,
   onChange,
   ariaLabel,
+  disabled,
   sx,
 }: {
   value: AppLocale;
   onChange: (next: AppLocale) => void;
   ariaLabel: string;
+  /** While a choice is being saved. */
+  disabled?: boolean;
   /** Layout only (margins, flex). */
   sx?: SxProps<Theme>;
 }) {
@@ -36,6 +41,7 @@ export default function NameLanguageToggle({
         if (next) onChange(next);
       }}
       aria-label={ariaLabel}
+      disabled={disabled}
       sx={[{ flexShrink: 0 }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       <ToggleButton value="en" sx={{ minWidth: 44, minHeight: 44 }}>

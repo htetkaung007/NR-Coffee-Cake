@@ -8,6 +8,7 @@ import {
   type PermissionKey,
 } from "../lib/access/permissions";
 import {
+  MANAGER_ASSIGNMENT_CODES,
   MANAGER_ASSIGNMENT_MESSAGES,
   managerAssignmentBlock,
 } from "../lib/location/managerAssignment";
@@ -61,7 +62,7 @@ export class ManagerService {
     ];
     const existingUser = await AppService.getUserByEmail(input.email);
     if (existingUser) {
-      throw new ValidationError("Email is already registered.");
+      throw new ValidationError("Email is already registered.", "EMAIL_TAKEN");
     }
 
     // The location comes from the owner's form: it must be the owner's
@@ -72,7 +73,12 @@ export class ManagerService {
       input.companyId,
     );
     const block = managerAssignmentBlock({ target: location });
-    if (block) throw new ValidationError(MANAGER_ASSIGNMENT_MESSAGES[block]);
+    if (block) {
+      throw new ValidationError(
+        MANAGER_ASSIGNMENT_MESSAGES[block],
+        MANAGER_ASSIGNMENT_CODES[block],
+      );
+    }
 
     const hashedPassword = await bcrypt.hash(input.password, 10);
     const companyMenus = await MenuService.getMenus(input.companyId);
@@ -227,7 +233,12 @@ export class ManagerService {
       target: location,
       currentLocationId: manager.locationId,
     });
-    if (block) throw new ValidationError(MANAGER_ASSIGNMENT_MESSAGES[block]);
+    if (block) {
+      throw new ValidationError(
+        MANAGER_ASSIGNMENT_MESSAGES[block],
+        MANAGER_ASSIGNMENT_CODES[block],
+      );
+    }
 
     await prisma.user.update({
       where: { id: manager.id },

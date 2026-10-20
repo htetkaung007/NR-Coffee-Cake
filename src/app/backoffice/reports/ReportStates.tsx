@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Button, Card, Skeleton, Stack, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 
 /** Skeletons shaped like what they stand in for (DESIGN.md Rule 14), so
  *  nothing jumps when the data arrives. Static — no animation of ours. */
@@ -140,6 +141,7 @@ export function ErrorRetry({
   /** Less room around it — for an error inside a card or a panel. */
   dense?: boolean;
 }) {
+  const t = useTranslations("bo.common");
   return (
     <Stack
       spacing={1}
@@ -147,7 +149,7 @@ export function ErrorRetry({
     >
       <Typography color="text.secondary">{message}</Typography>
       <Button variant="outlined" onClick={onRetry} sx={{ minHeight: 44 }}>
-        Retry
+        {t("retry")}
       </Button>
     </Stack>
   );

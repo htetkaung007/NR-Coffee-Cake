@@ -2,10 +2,14 @@
 
 import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 
 export interface MenuCategoryOption {
   id: number;
   name: string;
+  /** The shop's Myanmar name — shown in the Myanmar Backoffice. */
+  nameMy?: string | null;
 }
 
 interface MenuCategoryChipsProps {
@@ -28,6 +32,8 @@ export default function MenuCategoryChips({
   onCreateCategory,
   error,
 }: MenuCategoryChipsProps) {
+  const t = useTranslations("bo.menuForm");
+  const locale = useLocale();
   return (
     <Box>
       <Stack
@@ -46,7 +52,7 @@ export default function MenuCategoryChips({
           id="menu-category-label"
           sx={{ mb: 1, color: error ? "error.main" : undefined }}
         >
-          Menu Category
+          {t("category")}
         </Typography>
         <Button
           size="small"
@@ -54,7 +60,7 @@ export default function MenuCategoryChips({
           onClick={onCreateCategory}
           sx={{ minHeight: 44 }}
         >
-          New category
+          {t("newCategory")}
         </Button>
       </Stack>
       <Stack
@@ -75,7 +81,7 @@ export default function MenuCategoryChips({
               key={category.id}
               label={
                 <Typography variant="caption" component="span">
-                  {category.name}
+                  {localizedText(locale, category.name, category.nameMy)}
                 </Typography>
               }
               onClick={() => onToggle(category.id)}

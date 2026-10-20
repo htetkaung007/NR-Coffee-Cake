@@ -33,15 +33,21 @@ import StatusSnackbar, { type StatusMessage } from "../StatusSnackbar";
 import FormCard, { SuccessSnackbar } from "../FormCard";
 import PageHeader from "../PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
-import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
+import { useLocale, useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { langAttr } from "@/app/lib/i18n/locale";
+import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
+import {
+  MENU_DESCRIPTION_MAX,
+  MENU_NAME_MAX,
+} from "@/app/lib/schemas/menu_menuCategorySchema";
+import CharacterCount from "../CharacterCount";
 import {
   menuFormProblems,
   type MenuFormProblem,
 } from "@/app/lib/menu/menuFormProblems";
 
-/** Under each Myanmar field (shop data for customers who choose Myanmar). */
-const MYANMAR_HELPER =
-  "Shown to customers who choose Myanmar. Empty → the English name is shown.";
 
 interface MenuFormInitialData {
   id: number;
@@ -80,6 +86,10 @@ export default function MenuForm({
   locations,
   currentLocation,
 }: MenuFormProps) {
+  const t = useTranslations("bo.menuForm");
+  const tCommon = useTranslations("bo.common");
+  const locale = useLocale();
+  const money = useStaffMoney();
   const { error, setError, isPending, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const isEditMode = Boolean(initialData);
@@ -150,15 +160,18 @@ export default function MenuForm({
     shownLocationIds,
   });
   const shownProblems = hasTriedSubmit ? problems : [];
-  const problemFor = (field: MenuFormProblem["field"]) =>
-    shownProblems.find((problem) => problem.field === field)?.message;
+  /** A problem in the staff's words (bo.menuForm.problems). */
+  const problemText = (problem: MenuFormProblem) =>
+    t(`problems.${problem.code}`, { currency: money.currency });
+  const problemFor = (field: MenuFormProblem["field"]) => {
+    const problem = shownProblems.find((entry) => entry.field === field);
+    return problem ? problemText(problem) : undefined;
+  };
   const nameInputRef = useRef<HTMLInputElement>(null);
   const priceInputRef = useRef<HTMLInputElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
   const locationsRef = useRef<HTMLDivElement>(null);
 
-  const MAX_NAME_LENGTH = 50;
-  const MAX_DESCRIPTION_LENGTH = 100;
 
   useEffect(
     () => () => {
@@ -181,7 +194,9 @@ export default function MenuForm({
       current.includes(created.id) ? current : [...current, created.id],
     );
     setCategoryMessage({
-      text: `${created.name} created and selected`,
+      text: t("categoryCreated", {
+        name: localizedText(locale, created.name, created.nameMy),
+      }),
       severity: "success",
     });
   }
@@ -262,14 +277,19 @@ export default function MenuForm({
     );
   }
 
+  // The preview speaks the Backoffice language: in Myanmar, the
+  // customer's Myanmar card (its words and the Myanmar names).
+  const previewWords = myanmarWordsOrNull(locale);
+  const previewCategory = categoryOptions.find((category) =>
+    selectedCategoryIds.includes(category.id),
+  );
   const previewData: MenuCardData = {
-    name: name || "Dish name",
-    description: description || "",
+    name: localizedText(locale, name || t("dishPlaceholder"), nameMy),
+    description: localizedText(locale, description || "", descriptionMy),
     price: Number(price) || 0,
-    category:
-      categoryOptions.find((category) =>
-        selectedCategoryIds.includes(category.id),
-      )?.name ?? "Uncategorized",
+    category: previewCategory
+      ? localizedText(locale, previewCategory.name, previewCategory.nameMy)
+      : tCommon("uncategorized"),
     imageUrl: imagePreviewUrl,
     stockQuantity: quantity,
     isAvailable,
@@ -279,9 +299,9 @@ export default function MenuForm({
     <>
       <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pt: { xs: 2, sm: 3, md: 4 } }}>
         <PageHeader
-          title={isEditMode ? "Edit Menu Item" : "New Menu Item"}
+          title={isEditMode ? t("editTitle") : t("newTitle")}
           backHref="/backoffice/menus"
-          backLabel="Back to menus"
+          backLabel={t("backToMenus")}
         />
       </Box>
       <Box
@@ -305,40 +325,45 @@ export default function MenuForm({
         <FormCard
           header={{
             icon: <EditOutlinedIcon color="primary" />,
-            title: "Menu Item Details",
-            subtitle: isEditMode
-              ? "Update this item's information, price, category, and stock."
-              : "Configure item information, price, category, and stock.",
+            title: t("detailsTitle"),
+            subtitle: isEditMode ? t("detailsEdit") : t("detailsNew"),
           }}
         >
           <TextField
-            label="Dish / Item Name"
+            label={t("name")}
             required
             fullWidth
             value={name}
             onChange={(event) => setName(event.target.value)}
             inputRef={nameInputRef}
             slotProps={{
-              htmlInput: { maxLength: MAX_NAME_LENGTH },
+              htmlInput: { maxLength: MENU_NAME_MAX },
             }}
             error={Boolean(problemFor("name"))}
             helperText={
               problemFor("name") ??
-              `${name.length}/${MAX_NAME_LENGTH} characters`
+              tCommon("characters", { count: name.length, max: MENU_NAME_MAX })
             }
           />
           <TextField
-            label="Myanmar name (optional)"
+            label={tCommon("myanmarName")}
             fullWidth
             value={nameMy}
             onChange={(event) => setNameMy(event.target.value)}
             slotProps={{
-              htmlInput: { maxLength: MAX_NAME_LENGTH, lang: "my" },
+              htmlInput: { maxLength: MENU_NAME_MAX, lang: "my" },
+              formHelperText: { component: "div" },
             }}
-            helperText={MYANMAR_HELPER}
+            helperText={
+              <CharacterCount
+                count={nameMy.length}
+                max={MENU_NAME_MAX}
+                hint={tCommon("myanmarHelper")}
+              />
+            }
           />
           <TextField
-            label="Description"
+            label={t("description")}
             multiline
             minRows={2}
             maxRows={3}
@@ -346,12 +371,15 @@ export default function MenuForm({
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             slotProps={{
-              htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH },
+              htmlInput: { maxLength: MENU_DESCRIPTION_MAX },
             }}
-            helperText={`${description.length}/${MAX_DESCRIPTION_LENGTH} characters`}
+            helperText={tCommon("characters", {
+              count: description.length,
+              max: MENU_DESCRIPTION_MAX,
+            })}
           />
           <TextField
-            label="Myanmar description (optional)"
+            label={t("descriptionMy")}
             multiline
             minRows={2}
             maxRows={3}
@@ -359,9 +387,16 @@ export default function MenuForm({
             value={descriptionMy}
             onChange={(event) => setDescriptionMy(event.target.value)}
             slotProps={{
-              htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH, lang: "my" },
+              htmlInput: { maxLength: MENU_DESCRIPTION_MAX, lang: "my" },
+              formHelperText: { component: "div" },
             }}
-            helperText={MYANMAR_HELPER}
+            helperText={
+              <CharacterCount
+                count={descriptionMy.length}
+                max={MENU_DESCRIPTION_MAX}
+                hint={tCommon("myanmarHelper")}
+              />
+            }
           />
 
           <Box ref={categoriesRef}>
@@ -382,7 +417,7 @@ export default function MenuForm({
             }}
           >
             <TextField
-              label="Selling Price"
+              label={t("price")}
               required
               type="number"
               value={price}
@@ -395,7 +430,7 @@ export default function MenuForm({
                 input: {
                   endAdornment: (
                     <InputAdornment position="end">
-                      {CURRENCY_LABEL}
+                      {money.currency}
                     </InputAdornment>
                   ),
                 },
@@ -406,10 +441,10 @@ export default function MenuForm({
               onChange={setQuantity}
               label={
                 isEditMode
-                  ? `Stock at ${currentLocation.name}`
+                  ? t("stockAt", { location: currentLocation.name })
                   : hasLocationChoice
-                    ? "Starting stock (each selected location)"
-                    : "Starting stock"
+                    ? t("startingStockEach")
+                    : t("startingStock")
               }
             />
           </Box>
@@ -453,16 +488,16 @@ export default function MenuForm({
             }}
           >
             <Box>
-              <Typography variant="body2">Is Available</Typography>
+              <Typography variant="body2">{t("isAvailable")}</Typography>
               <Typography variant="caption" color="text.secondary">
-                Show this item in the digital menu for customer ordering.
+                {t("isAvailableHint")}
               </Typography>
             </Box>
             <Switch
               checked={isAvailable}
               onChange={(event) => setIsAvailable(event.target.checked)}
               slotProps={{
-                input: { "aria-label": "Make menu item available" },
+                input: { "aria-label": t("isAvailableLabel") },
               }}
             />
           </Box>
@@ -475,11 +510,11 @@ export default function MenuForm({
               {shownProblems.length > 0 && (
                 <>
                   <AlertTitle>
-                    {isEditMode ? "To save changes:" : "To create this menu:"}
+                    {isEditMode ? t("toSave") : t("toCreate")}
                   </AlertTitle>
                   <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
                     {shownProblems.map((problem) => (
-                      <li key={problem.field}>{problem.message}</li>
+                      <li key={problem.field}>{problemText(problem)}</li>
                     ))}
                   </Box>
                 </>
@@ -498,11 +533,11 @@ export default function MenuForm({
           >
             {isPending
               ? isEditMode
-                ? "Saving..."
-                : "Creating..."
+                ? tCommon("saving")
+                : tCommon("creating")
               : isEditMode
-                ? "Save Changes"
-                : "Create Menu"}
+                ? tCommon("saveChanges")
+                : t("create")}
           </Button>
         </FormCard>
 
@@ -523,7 +558,7 @@ export default function MenuForm({
                 },
               }}
             />
-            LIVE CUSTOMER PREVIEW
+            {t("livePreview")}
           </Typography>
           <Divider sx={{ mb: 2 }} />
           {/* Backoffice runs the Bo theme, but this card must look exactly
@@ -531,8 +566,8 @@ export default function MenuForm({
           <SurfaceThemeScope surface="od">
             {/* The card fills whatever width it's given; the preview
                 keeps the customer grid's typical card size. */}
-            <Box sx={{ maxWidth: 360, mx: "auto" }}>
-              <MenuCard item={previewData} />
+            <Box sx={{ maxWidth: 360, mx: "auto" }} lang={langAttr(locale)}>
+              <MenuCard item={previewData} labels={previewWords?.cardLabels} />
             </Box>
           </SurfaceThemeScope>
         </Box>
@@ -542,9 +577,7 @@ export default function MenuForm({
         open={showSuccess}
         onClose={closeSuccess}
         message={
-          isEditMode
-            ? "Menu updated successfully!"
-            : "Menu created successfully!"
+          isEditMode ? t("updated") : t("created")
         }
       />
 

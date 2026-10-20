@@ -3,6 +3,7 @@
 import { IconButton, InputAdornment, TextField } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useTranslations } from "next-intl";
 import SearchIcon from "@mui/icons-material/Search";
 
 /**
@@ -22,6 +23,7 @@ export default function SearchField({
   onChange: (value: string) => void;
   sx?: SxProps<Theme>;
 }) {
+  const t = useTranslations("bo.common");
   return (
     <TextField
       size="small"
@@ -39,7 +41,7 @@ export default function SearchField({
           endAdornment: value && (
             <InputAdornment position="end">
               <IconButton
-                aria-label="Clear search"
+                aria-label={t("clearSearch")}
                 size="small"
                 onClick={() => onChange("")}
                 sx={{ width: 44, height: 44 }}

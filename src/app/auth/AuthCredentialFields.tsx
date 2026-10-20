@@ -1,6 +1,7 @@
 "use client";
 
 import { TextField } from "@mui/material";
+import { useTranslations } from "next-intl";
 
 /** The email + password fields of the sign-in and sign-up forms. */
 export default function AuthCredentialFields({
@@ -14,11 +15,12 @@ export default function AuthCredentialFields({
   password: string;
   onPasswordChange: (value: string) => void;
 }) {
+  const t = useTranslations("bo.auth");
   return (
     <>
       <TextField
         fullWidth
-        label="Email Address"
+        label={t("email")}
         type="email"
         variant="outlined"
         margin="normal"
@@ -28,7 +30,7 @@ export default function AuthCredentialFields({
       />
       <TextField
         fullWidth
-        label="Password"
+        label={t("password")}
         type="password"
         variant="outlined"
         margin="normal"

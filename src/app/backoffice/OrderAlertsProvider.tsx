@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { Alert, Snackbar } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { usePolling } from "@/app/lib/hooks/usePolling";
 import { describeWithdrawals } from "@/app/lib/order/cancelReason";
 import { DEFAULT_REFRESH_INTERVAL_MS } from "@/app/lib/hooks/useAutoRefresh";
@@ -137,6 +138,7 @@ export function OrderAlertsProvider({
   const [pending, setPending] = useState<PendingApprovalRound[]>([]);
   const { enabled, isLocked, toggle, play, volume, setVolume, playTest } =
     useOrderAlertSound();
+  const t = useTranslations("bo.alerts");
 
   const seenSessionIds = useRef<Set<number> | null>(null);
   // Withdrawals already shown (or already there when the Backoffice
@@ -144,7 +146,7 @@ export function OrderAlertsProvider({
   const seenWithdrawalIds = useRef<Set<number> | null>(null);
   const [withdrawalNotice, setWithdrawalNotice] = useState<{
     id: number;
-    message: string;
+    message: ReturnType<typeof describeWithdrawals>;
   } | null>(null);
   const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
 
@@ -321,7 +323,8 @@ export function OrderAlertsProvider({
           onClose={() => setIsWithdrawalOpen(false)}
           sx={{ width: "100%" }}
         >
-          {withdrawalNotice?.message}
+          {withdrawalNotice &&
+            t(withdrawalNotice.message.key, withdrawalNotice.message.values)}
         </Alert>
       </Snackbar>
     </OrderAlertsContext.Provider>

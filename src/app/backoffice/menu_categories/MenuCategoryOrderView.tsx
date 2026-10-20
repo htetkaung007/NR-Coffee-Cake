@@ -2,6 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import {
   Alert,
   Box,
@@ -66,11 +69,6 @@ interface MenuCategoryOrderViewProps {
   shopName: string | null;
 }
 
-const SCREEN_READER_INSTRUCTIONS =
-  "To reorder, press Space to pick up the category. Use the Up and Down " +
-  "arrow keys to move it, press Space again to drop it, or press Escape " +
-  "to cancel.";
-
 /**
  * The Backoffice "Menu categories" page: the company-wide category order
  * as it applies to the selected location. Only categories visible here
@@ -86,6 +84,10 @@ export default function MenuCategoryOrderView({
   hiddenCategories,
   shopName,
 }: MenuCategoryOrderViewProps) {
+  const t = useTranslations("bo.categories");
+  const tCommon = useTranslations("bo.common");
+  const locale = useLocale();
+  const errorText = useStaffErrorMessage();
   const router = useRouter();
   const dndId = useId();
   const hiddenListId = useId();
@@ -149,25 +151,29 @@ export default function MenuCategoryOrderView({
     }),
   );
 
-  const nameOf = (id: UniqueIdentifier) =>
-    items.find((category) => category.id === id)?.name ?? "The category";
+  const nameOf = (id: UniqueIdentifier) => {
+    const category = items.find((entry) => entry.id === id);
+    return category
+      ? localizedText(locale, category.name, category.nameMy)
+      : t("theCategory");
+  };
   const positionOf = (id: UniqueIdentifier) =>
     items.findIndex((category) => category.id === id) + 1;
   const total = items.length;
 
   const announcements: Announcements = {
     onDragStart: ({ active }) =>
-      `Picked up ${nameOf(active.id)}. Position ${positionOf(active.id)} of ${total}.`,
+      t("pickedUp", { name: nameOf(active.id), position: positionOf(active.id), total }),
     onDragOver: ({ active, over }) =>
       over
-        ? `${nameOf(active.id)} was moved to position ${positionOf(over.id)} of ${total}.`
-        : `${nameOf(active.id)} is no longer over the list.`,
+        ? t("movedOver", { name: nameOf(active.id), position: positionOf(over.id), total })
+        : t("notOver", { name: nameOf(active.id) }),
     onDragEnd: ({ active, over }) =>
       over
-        ? `${nameOf(active.id)} was dropped at position ${positionOf(over.id)} of ${total}.`
-        : `${nameOf(active.id)} was dropped.`,
+        ? t("droppedAt", { name: nameOf(active.id), position: positionOf(over.id), total })
+        : t("dropped", { name: nameOf(active.id) }),
     onDragCancel: ({ active }) =>
-      `Reordering cancelled. ${nameOf(active.id)} stays at position ${positionOf(active.id)} of ${total}.`,
+      t("cancelled", { name: nameOf(active.id), position: positionOf(active.id), total }),
   };
 
   /** The one save path: show the new order right away, save it once,
@@ -184,7 +190,7 @@ export default function MenuCategoryOrderView({
     setIsSaving(false);
     if (!result.success) {
       setItems(previous);
-      setError(`Couldn't save the new order — ${result.error.message}`);
+      setError(t("saveFailed", { error: errorText(result.error) }));
     }
   }
 
@@ -204,7 +210,7 @@ export default function MenuCategoryOrderView({
     pendingFocus.current = { id, direction };
     void commitOrder(
       arrayMove(items, from, to),
-      `${items[from].name} moved to position ${to + 1} of ${items.length}.`,
+      t("moved", { name: nameOf(id), position: to + 1, total: items.length }),
     );
   }
 
@@ -222,13 +228,13 @@ export default function MenuCategoryOrderView({
       ),
     );
     setError(null);
-    setStatusMessage("Categories sorted A to Z.");
+    setStatusMessage(t("sorted"));
     setIsSaving(true);
     const result = await sortMenuCategoriesAlphabeticallyAction();
     setIsSaving(false);
     if (!result.success) {
       setItems(previous);
-      setError(`Couldn't sort the categories — ${result.error.message}`);
+      setError(t("sortFailed", { error: errorText(result.error) }));
       return;
     }
     const byId = new Map(previous.map((category) => [category.id, category]));
@@ -256,10 +262,10 @@ export default function MenuCategoryOrderView({
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography component="h1" variant="h6">
-              Menu categories
+              {t("title")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              The order customers and staff see the category tabs in
+              {t("subtitle")}
             </Typography>
           </Box>
           <Button
@@ -268,7 +274,7 @@ export default function MenuCategoryOrderView({
             startIcon={<AddIcon />}
             sx={{ display: { xs: "none", sm: "inline-flex" }, minHeight: 44 }}
           >
-            New menu category
+            {t("newCategory")}
           </Button>
         </Stack>
 
@@ -302,7 +308,7 @@ export default function MenuCategoryOrderView({
               >
                 <DragIndicatorIcon fontSize="small" aria-hidden />
                 <Typography variant="body2">
-                  Drag to reorder, or use the arrows
+                  {t("dragHint")}
                 </Typography>
               </Stack>
               <Button
@@ -313,7 +319,7 @@ export default function MenuCategoryOrderView({
                 onClick={() => setIsSortConfirmOpen(true)}
                 sx={{ minHeight: 44 }}
               >
-                Sort A → Z
+                {t("sortAz")}
               </Button>
             </Stack>
 
@@ -329,7 +335,7 @@ export default function MenuCategoryOrderView({
 
             {items.length === 0 ? (
               <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                No categories are shown at this location yet.
+                {t("noneShown")}
               </Typography>
             ) : (
               <DndContext
@@ -340,7 +346,7 @@ export default function MenuCategoryOrderView({
                 accessibility={{
                   announcements,
                   screenReaderInstructions: {
-                    draggable: SCREEN_READER_INSTRUCTIONS,
+                    draggable: t("srInstructions"),
                   },
                 }}
               >
@@ -350,7 +356,7 @@ export default function MenuCategoryOrderView({
                 >
                   <Stack
                     component="ol"
-                    aria-label="Category order"
+                    aria-label={t("orderLabel")}
                     spacing={1}
                     sx={{ listStyle: "none", m: 0, p: 0 }}
                   >
@@ -387,9 +393,7 @@ export default function MenuCategoryOrderView({
                   sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    {hiddenCategories.length === 1
-                      ? "1 category hidden at this location isn't shown"
-                      : `${hiddenCategories.length} categories hidden at this location aren't shown`}
+                    {t("hiddenCount", { count: hiddenCategories.length })}
                   </Typography>
                   <Button
                     size="small"
@@ -398,14 +402,14 @@ export default function MenuCategoryOrderView({
                     onClick={() => setShowHidden((shown) => !shown)}
                     sx={{ minHeight: 44 }}
                   >
-                    {showHidden ? "Hide" : "Show"}
+                    {showHidden ? t("hide") : t("show")}
                   </Button>
                 </Stack>
                 {showHidden && (
                   <Stack
                     id={hiddenListId}
                     component="ul"
-                    aria-label="Hidden at this location"
+                    aria-label={t("hiddenLabel")}
                     spacing={1}
                     sx={{ listStyle: "none", m: 0, p: 0, mt: 1 }}
                   >
@@ -418,7 +422,9 @@ export default function MenuCategoryOrderView({
                               isEnabledAtLocation: false,
                             })
                           }
-                          aria-label={`Edit ${category.name} (hidden here)`}
+                          aria-label={t("editHidden", {
+                            name: localizedText(locale, category.name, category.nameMy),
+                          })}
                           sx={(theme) => ({
                             width: "100%",
                             minHeight: 44,
@@ -444,7 +450,7 @@ export default function MenuCategoryOrderView({
                         >
                           <Box sx={{ minWidth: 0 }}>
                             <Typography variant="body1" noWrap>
-                              {category.name}
+                              {localizedText(locale, category.name, category.nameMy)}
                             </Typography>
                             <CategoryMenusPreview menus={category.menus} />
                           </Box>
@@ -453,7 +459,7 @@ export default function MenuCategoryOrderView({
                             color="text.secondary"
                             sx={{ flexShrink: 0 }}
                           >
-                            Hidden here
+                            {t("hiddenHere")}
                           </Typography>
                         </ButtonBase>
                       </Box>
@@ -490,7 +496,7 @@ export default function MenuCategoryOrderView({
 
       <NewItemFab
         onClick={() => setIsCreateOpen(true)}
-        label="New menu category"
+        label={t("newCategory")}
         hideFrom="sm"
       />
 
@@ -501,7 +507,9 @@ export default function MenuCategoryOrderView({
         onClose={() => setIsCreateOpen(false)}
         onCreated={(created) => {
           setCreatedMessage({
-            text: `${created.name} created`,
+            text: t("created", {
+              name: localizedText(locale, created.name, created.nameMy),
+            }),
             severity: "success",
           });
           router.refresh();
@@ -514,9 +522,10 @@ export default function MenuCategoryOrderView({
 
       <ConfirmDialog
         open={isSortConfirmOpen}
-        title="Sort categories A → Z?"
-        message="Your custom order will be replaced. This can't be undone."
-        confirmLabel="Sort A → Z"
+        title={t("sortTitle")}
+        message={t("sortMessage")}
+        confirmLabel={t("sortAz")}
+        cancelLabel={tCommon("cancel")}
         onConfirm={() => void handleSortConfirmed()}
         onCancel={() => setIsSortConfirmOpen(false)}
       />

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Box, Typography } from "@mui/material";
 import { AddonService, MenuService } from "@/app/services";
 import { requireBackofficeAccess } from "@/app/lib/access/backofficeContext";
@@ -12,7 +13,6 @@ export default async function EditAddonGroupPage({
   const addonCategoryId = Number(id);
 
   const { scope, fallback } = await requireBackofficeAccess({
-    signedOut: "Please sign in to edit an addon group.",
     access: "owner",
   });
   if (!scope) return fallback;
@@ -28,13 +28,17 @@ export default async function EditAddonGroupPage({
     return (
       <Box sx={{ p: 3 }}>
         <Typography color="text.secondary">
-          Addon category not found.
+          {(await getTranslations("bo.addons"))("notFound")}
         </Typography>
       </Box>
     );
   }
 
-  const menus = menusData.map((menu) => ({ id: menu.id, name: menu.name }));
+  const menus = menusData.map((menu) => ({
+    id: menu.id,
+    name: menu.name,
+    nameMy: menu.nameMy,
+  }));
 
   return (
     <NewAddon

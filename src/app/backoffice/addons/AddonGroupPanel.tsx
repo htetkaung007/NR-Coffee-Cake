@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -17,9 +18,10 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { addonGroupAvailability } from "@/app/lib/cart/addonSelection";
+import { useLocale } from "next-intl";
 import { formatAmount } from "@/app/lib/orderFormat";
-import { OWNER_ONLY_MESSAGE } from "@/app/lib/access/rolePolicy";
-import { ASK_OWNER_HINTS } from "@/app/lib/access/permissions";
+import { customerWords } from "@/app/lib/i18n/customerWords";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import { langAttr, type AppLocale } from "@/app/lib/i18n/locale";
 import NameLanguageToggle from "@/app/components/NameLanguageToggle";
 import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
@@ -42,7 +44,7 @@ export interface AddonGroup {
     isAvailable: boolean;
   }[];
   /** This company's live menus using the group. */
-  menus: { id: number; name: string }[];
+  menus: { id: number; name: string; nameMy?: string | null }[];
 }
 
 interface AddonGroupPanelProps {
@@ -74,10 +76,10 @@ const TEXT = {
   touch: { title: "h5", body: "body1", small: "body2", section: "body2" },
 } as const;
 
-/** "Latte, Mocha and Flat white" — menu names in a sentence. */
-function listNames(names: readonly string[]) {
-  if (names.length <= 1) return names.join("");
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+/** "Latte, Mocha, and Flat white" — menu names in a sentence, in the
+ *  staff's language (Intl.ListFormat). */
+function listNames(names: readonly string[], locale: string) {
+  return new Intl.ListFormat(locale, { type: "conjunction" }).format(names);
 }
 
 /**
@@ -97,6 +99,10 @@ export default function AddonGroupPanel({
   onClose,
   inSheet = false,
 }: AddonGroupPanelProps) {
+  const t = useTranslations("bo.addons");
+  const tCommon = useTranslations("bo.common");
+  const tPermissions = useTranslations("bo.permissions");
+  const locale = useLocale();
   const isTouch = useMediaQuery(touchScreenQuery);
   const text = isTouch ? TEXT.touch : TEXT.pointer;
   // A section label keeps its small-caps look in the bigger variant.
@@ -104,12 +110,13 @@ export default function AddonGroupPanel({
     ? { textTransform: "uppercase", letterSpacing: "0.08em" }
     : undefined;
   const { isBlocked } = addonGroupAvailability(group.isRequired, group.addons);
-  const menuNames = group.menus.map((menu) => menu.name);
+  const menuNames = group.menus.map((menu) => localizedText(locale, menu.name, menu.nameMy));
   // Which language the shop data names (group + options) show in — the
-  // labels stay English. Resets per group (the panel is keyed by it).
+  // labels follow the staff's Backoffice language. Resets per group (the
+  // panel is keyed by it).
   const [nameLocale, setNameLocale] = useState<AppLocale>("en");
   // မြန်မာ also shows the customer's money words ("1,000 ကျပ်",
-  // "အခမဲ့"); EN keeps the Backoffice's "MMK" / "Free".
+  // "အခမဲ့"); EN keeps "MMK" / "Free" (the English preview).
   const myanmarWords = myanmarWordsOrNull(nameLocale);
   const hasUntranslated =
     nameLocale === "my" && hasMissingMyanmarName(group, group.addons);
@@ -123,7 +130,7 @@ export default function AddonGroupPanel({
       fullWidth={inSheet}
       sx={{ minHeight: 44, flexShrink: 0 }}
     >
-      Edit
+      {t("edit")}
     </Button>
   );
 
@@ -150,7 +157,7 @@ export default function AddonGroupPanel({
         {!inSheet && editButton}
         {onClose && (
           <IconButton
-            aria-label="Close"
+            aria-label={tCommon("close")}
             onClick={onClose}
             sx={{ width: 44, height: 44, flexShrink: 0 }}
           >
@@ -167,16 +174,15 @@ export default function AddonGroupPanel({
         <NameLanguageToggle
           value={nameLocale}
           onChange={setNameLocale}
-          ariaLabel="Show names in"
+          ariaLabel={t("showNamesIn")}
         />
       </Stack>
 
       {isBlocked && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          All options are off —{" "}
           {menuNames.length > 0
-            ? `${listNames(menuNames)} can't be ordered right now.`
-            : "nothing using this group can be ordered right now."}
+            ? t("allOff", { menus: listNames(menuNames, locale) })
+            : t("allOffNoMenus")}
         </Alert>
       )}
 
@@ -187,14 +193,14 @@ export default function AddonGroupPanel({
       >
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="body1" id={`required-${group.id}-label`}>
-            Required
+            {t("required")}
           </Typography>
           <Typography variant={text.body} color="text.secondary">
             {!isOwner
-              ? OWNER_ONLY_MESSAGE
+              ? t("ownerOnly")
               : group.isRequired
-                ? "Customers must choose one before adding to cart."
-                : "Optional — customers can skip it."}
+                ? t("requiredHint")
+                : t("optionalHint")}
           </Typography>
         </Box>
         <Switch
@@ -215,16 +221,16 @@ export default function AddonGroupPanel({
         component="h3"
         sx={sectionSx}
       >
-        Options
+        {t("options")}
       </Typography>
       {!canToggleAvailability && group.addons.length > 0 && (
         <Typography variant={text.body} color="text.secondary">
-          {ASK_OWNER_HINTS.ADDON_AVAILABILITY}
+          {tPermissions("askOwner.ADDON_AVAILABILITY")}
         </Typography>
       )}
       {group.addons.length === 0 ? (
         <Typography variant={text.body} color="text.secondary">
-          No options yet — add some on the Edit page.
+          {t("noOptions")}
         </Typography>
       ) : (
         <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
@@ -260,7 +266,7 @@ export default function AddonGroupPanel({
                     color="text.secondary"
                     component="p"
                   >
-                    Off · customers can&apos;t pick it
+                    {t("offHint")}
                   </Typography>
                 )}
               </Box>
@@ -276,7 +282,7 @@ export default function AddonGroupPanel({
                 }}
               >
                 {addon.price === 0
-                  ? (myanmarWords?.free ?? "Free")
+                  ? (myanmarWords ?? customerWords("en")).free
                   : (myanmarWords?.price(addon.price) ??
                     formatAmount(addon.price))}
               </Typography>
@@ -289,7 +295,11 @@ export default function AddonGroupPanel({
                   onToggleAddon(addon.id, event.target.checked)
                 }
                 slotProps={{
-                  input: { "aria-label": `${addon.name} available` },
+                  input: {
+                    "aria-label": t("availableLabel", {
+                      name: localizedText(nameLocale, addon.name, addon.nameMy),
+                    }),
+                  },
                 }}
               />
             </Stack>
@@ -305,8 +315,7 @@ export default function AddonGroupPanel({
         component="h3"
         sx={sectionSx}
       >
-        Used on {group.menus.length}{" "}
-        {group.menus.length === 1 ? "menu" : "menus"}
+        {t("usedOn", { count: group.menus.length })}
       </Typography>
       {group.menus.length > 0 && (
         <Stack
@@ -322,7 +331,7 @@ export default function AddonGroupPanel({
               variant="outlined"
               label={
                 <Typography variant={text.small} component="span">
-                  {menu.name}
+                  {localizedText(locale, menu.name, menu.nameMy)}
                 </Typography>
               }
             />
@@ -337,7 +346,7 @@ export default function AddonGroupPanel({
           color="text.secondary"
           sx={{ mt: 2 }}
         >
-          Dotted names have no Myanmar name yet.
+          {t("dottedNames")}
         </Typography>
       )}
     </>

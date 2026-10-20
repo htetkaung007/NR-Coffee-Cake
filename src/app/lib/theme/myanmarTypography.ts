@@ -2,9 +2,12 @@
  * Myanmar text — tuned in ONE place. Burmese glyphs look larger than
  * Latin at the same size, and stacked vowels and medials (ကြို, ပြီ,
  * ကျွန်) need taller lines or they get clipped. So text whose language is
- * Myanmar (`:lang(my)` — the storefront sets lang on its pages; the
- * Backoffice's Myanmar parts set it with langAttr, and portalled dialogs
- * on themselves) is drawn a little smaller, with a minimum line-height.
+ * Myanmar (`:lang(my)` — the storefront sets lang on its pages, the
+ * Backoffice / print / sign-in on theirs when the staff language is
+ * Myanmar (StaffIntlProvider); Myanmar shop data inside an English page
+ * sets it with langAttr, and portalled dialogs on themselves) is drawn a
+ * little smaller, with a minimum line-height and no letter-spacing (the
+ * tracking some variants have pulls Burmese clusters apart).
  * BOTH themes add these rules through their CssBaseline, each from its
  * own variants (odTheme.ts, theme.ts) — so the staff New Order's မြန်မာ
  * view matches the customer's Myanmar. English text never matches them,
@@ -20,15 +23,17 @@ const MIN_LINE_HEIGHT_HEADING = 1.6;
 /** Smallest line-height for Myanmar body text and captions. */
 const MIN_LINE_HEIGHT_BODY = 1.8;
 
-/** The typography variants used on customer screens, with their minimum
- *  line-height, and the CSS selector of the element drawn in them. */
+/** The typography variants used on customer and staff screens, with
+ *  their minimum line-height, and the CSS selector of the element drawn
+ *  in them. Form fields are never targeted (≥ 16px on phones —
+ *  lib/theme/inputFontSize). */
 const TARGETS: { variant: string; selector: string; minLineHeight: number }[] = [
-  ...["h5", "h6", "subtitle1", "subtitle2"].map((variant) => ({
+  ...["h1", "h2", "h3", "h4", "h5", "h6", "subtitle1", "subtitle2"].map((variant) => ({
     variant,
     selector: `.MuiTypography-${variant}`,
     minLineHeight: MIN_LINE_HEIGHT_HEADING,
   })),
-  ...["body1", "body2", "caption"].map((variant) => ({
+  ...["body1", "body2", "caption", "overline"].map((variant) => ({
     variant,
     selector: `.MuiTypography-${variant}`,
     minLineHeight: MIN_LINE_HEIGHT_BODY,
@@ -36,6 +41,11 @@ const TARGETS: { variant: string; selector: string; minLineHeight: number }[] = 
   // Buttons and tabs are drawn in the `button` variant.
   { variant: "button", selector: ".MuiButton-root", minLineHeight: MIN_LINE_HEIGHT_HEADING },
   { variant: "button", selector: ".MuiTab-root", minLineHeight: MIN_LINE_HEIGHT_HEADING },
+  { variant: "button", selector: ".MuiToggleButton-root", minLineHeight: MIN_LINE_HEIGHT_HEADING },
+  // Staff screens: menu rows (the account menu, selects' lists) and
+  // table cells draw their text without a Typography element.
+  { variant: "body1", selector: ".MuiMenuItem-root", minLineHeight: MIN_LINE_HEIGHT_BODY },
+  { variant: "body2", selector: ".MuiTableCell-root", minLineHeight: MIN_LINE_HEIGHT_BODY },
 ];
 
 type FontSize = string | number;
@@ -66,6 +76,7 @@ export function myanmarTypographyStyles(
     const { fontSize, lineHeight, ...rest } = variant as Record<string, unknown>;
     const rule: Record<string, unknown> = {
       lineHeight: atLeast(lineHeight, target.minLineHeight),
+      letterSpacing: "normal",
     };
     if (typeof fontSize === "string" || typeof fontSize === "number") {
       rule.fontSize = scaledFontSize(fontSize, scale);

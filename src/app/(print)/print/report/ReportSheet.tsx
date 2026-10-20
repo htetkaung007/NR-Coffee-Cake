@@ -4,17 +4,21 @@ import type { ReactNode } from "react";
 import { Box, Button, GlobalStyles, Stack, Typography } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
 import type { ReportItems, ReportOverview } from "@/app/backoffice/reports/action";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useLocale, useTranslations } from "next-intl";
 import { formatRejectReasonCounts } from "@/app/lib/order/rejectReason";
 import { formatVoidReasonCounts } from "@/app/lib/report/voidReport";
 import {
   barRatio,
   formatDelta,
-  formatReportDay,
   printableReportTitle,
-  REPORT_FOOTNOTE,
   type ItemListRow,
 } from "@/app/lib/report/reportView";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import {
+  useReasonCountLabels,
+  useReportWords,
+} from "@/app/backoffice/reports/useReportWords";
 import { moneySx } from "@/app/backoffice/order/orderTypography";
 
 // Paper is black on white whatever the app's light/dark mode (DESIGN.md
@@ -86,6 +90,61 @@ function Section({
   );
 }
 
+/** A printed table's header row (numbers right-aligned; `barColumn`
+ *  adds the daily table's empty bar column). A <thead> repeats itself on
+ *  a new page. */
+function HeaderRow({
+  columns,
+  barColumn = false,
+}: {
+  columns: readonly { label: string; number?: boolean }[];
+  barColumn?: boolean;
+}) {
+  return (
+    <thead>
+      <tr>
+        {columns.map((column) => (
+          <Typography
+            key={column.label}
+            component="th"
+            variant="caption"
+            scope="col"
+            className={column.number ? "number" : undefined}
+          >
+            {column.label}
+          </Typography>
+        ))}
+        {barColumn && <Box component="th" aria-hidden sx={{ width: "30%" }} />}
+      </tr>
+    </thead>
+  );
+}
+
+/** A titled two-column table of "label … value" rows (cancellations,
+ *  voids). */
+function FiguresSection({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: readonly (readonly [label: string, value: ReactNode])[];
+}) {
+  return (
+    <Section title={title}>
+      <Box component="table" sx={tableSx}>
+        <Typography component="tbody" variant="body2">
+          {rows.map(([label, value]) => (
+            <tr key={label}>
+              <th scope="row">{label}</th>
+              <td className="number">{value}</td>
+            </tr>
+          ))}
+        </Typography>
+      </Box>
+    </Section>
+  );
+}
+
 function KeyNumber({ label, value }: { label: string; value: string }) {
   return (
     <Box sx={{ border: 1, borderColor: RULE, borderRadius: 1, p: 1 }}>
@@ -118,6 +177,7 @@ function DayBar({ ratio }: { ratio: number }) {
 /** The screen-only bar above the sheet: Print (the browser's own dialog,
  *  where "Save as PDF" is a printer) and Close. Hidden on paper. */
 function Toolbar({ reportsHref }: { reportsHref: string }) {
+  const t = useTranslations("bo.reports");
   function close() {
     window.close();
     // A tab the browser won't let a script close: go back instead.
@@ -146,13 +206,13 @@ function Toolbar({ reportsHref }: { reportsHref: string }) {
         onClick={() => window.print()}
         sx={{ minHeight: 44 }}
       >
-        Print or save as PDF
+        {t("printTitle")}
       </Button>
       <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
-        Choose &quot;Save as PDF&quot; as the printer to get a file.
+        {t("printHint")}
       </Typography>
       <Button onClick={close} sx={{ minHeight: 44, alignSelf: { xs: "flex-start", sm: "auto" } }}>
-        Close
+        {t("close")}
       </Button>
     </Stack>
   );
@@ -162,7 +222,8 @@ function Toolbar({ reportsHref }: { reportsHref: string }) {
  * The printable weekly / monthly report: one A4 sheet (a month runs to
  * two pages at most), black on white, plain — for the owner. Every
  * figure is the Reports page's own (same service, same formatters):
- * money in plain black here, never green or red.
+ * money in plain black here, never green or red. In the staff's language
+ * (BO_LOCALE) — no switch of its own.
  */
 export default function ReportSheet({
   locationName,
@@ -172,11 +233,16 @@ export default function ReportSheet({
   topAddons,
   reportsHref,
 }: ReportSheetProps) {
+  const t = useTranslations("bo.reports");
+  const locale = useLocale();
+  const words = useReportWords();
+  const money = useStaffMoney();
+  const reasonLabels = useReasonCountLabels();
   const { period, current, deltas } = overview;
   const { summary, daily, channels, cancelled, voided } = current;
   const busiestDay = Math.max(0, ...daily.map((entry) => entry.sales));
-  const reasons = formatRejectReasonCounts(cancelled.reasons);
-  const voidReasons = formatVoidReasonCounts(voided.reasons);
+  const reasons = formatRejectReasonCounts(cancelled.reasons, reasonLabels.reject);
+  const voidReasons = formatVoidReasonCounts(voided.reasons, reasonLabels.void);
 
   return (
     <>
@@ -213,14 +279,14 @@ export default function ReportSheet({
             {locationName}
           </Typography>
           <Typography variant="h6" component="h1" sx={{ color: INK }}>
-            {printableReportTitle(period)}
+            {printableReportTitle(period, words)}
           </Typography>
           <Typography variant="caption" component="p" sx={{ color: MUTED }}>
-            Generated {generatedAt} · {REPORT_FOOTNOTE}
+            {t("generated", { time: generatedAt, footnote: t("footnote") })}
           </Typography>
         </Box>
 
-        <Section title="Key numbers">
+        <Section title={t("keyNumbers")}>
           <Box
             sx={{
               display: "grid",
@@ -228,53 +294,40 @@ export default function ReportSheet({
               gap: 1,
             }}
           >
-            <KeyNumber label="Sales" value={formatAmount(summary.sales)} />
-            <KeyNumber label="Bills" value={String(summary.bills)} />
-            <KeyNumber label="Avg. bill" value={formatAmount(summary.avgBill)} />
+            <KeyNumber label={t("sales")} value={money.amount(summary.sales)} />
+            <KeyNumber label={t("billsLabel")} value={String(summary.bills)} />
+            <KeyNumber label={t("avgBill")} value={money.amount(summary.avgBill)} />
             <KeyNumber
-              label="Sales vs previous period"
-              value={formatDelta(deltas.sales, period.kind).label}
+              label={t("salesVsPrevious")}
+              value={formatDelta(deltas.sales, period.kind, words).label}
             />
             <KeyNumber
-              label="Cancelled"
-              value={`${cancelled.count} (${cancelled.rejected} rejected · ${cancelled.timedOut} timed out)`}
+              label={t("cancelled")}
+              value={t("cancelledBreakdown", {
+                count: cancelled.count,
+                rejected: cancelled.rejected,
+                timedOut: cancelled.timedOut,
+              })}
             />
-            <KeyNumber label="Not charged" value={formatAmount(cancelled.notCharged)} />
+            <KeyNumber label={t("notCharged")} value={money.amount(cancelled.notCharged)} />
           </Box>
         </Section>
 
-        <Section title="Daily sales" keepTogether={false}>
+        <Section title={t("dailySales")} keepTogether={false}>
           <Box component="table" sx={tableSx}>
-            <thead>
-              <tr>
-                <Typography component="th" variant="caption" scope="col">
-                  Date
-                </Typography>
-                <Typography component="th" variant="caption" scope="col">
-                  Day
-                </Typography>
-                <Typography component="th" variant="caption" scope="col" className="number">
-                  Bills
-                </Typography>
-                <Typography component="th" variant="caption" scope="col" className="number">
-                  Sales
-                </Typography>
-                <Box component="th" aria-hidden sx={{ width: "30%" }} />
-              </tr>
-            </thead>
+            <HeaderRow barColumn columns={[{ label: t("colDate") }, { label: t("day") }, { label: t("billsLabel"), number: true }, { label: t("colSales"), number: true }]} />
             <Typography component="tbody" variant="body2">
               {daily.map((entry) => {
-                const [weekday, ...date] = formatReportDay(entry.day).split(" ");
                 return (
                   <Box
                     component="tr"
                     key={entry.day}
                     sx={{ color: entry.sales === 0 ? ZERO_DAY : INK }}
                   >
-                    <td>{date.join(" ")}</td>
-                    <td>{weekday}</td>
+                    <td>{words.dayMonth(entry.day)}</td>
+                    <td>{words.weekday(entry.day)}</td>
                     <td className="number">{entry.bills}</td>
-                    <td className="number">{formatAmount(entry.sales)}</td>
+                    <td className="number">{money.amount(entry.sales)}</td>
                     <td>
                       <DayBar ratio={barRatio(entry.sales, busiestDay)} />
                     </td>
@@ -282,49 +335,31 @@ export default function ReportSheet({
                 );
               })}
               <Box component="tr" sx={{ ...moneySx, color: INK }}>
-                <td>TOTAL</td>
+                <td>{t("totalCaps")}</td>
                 <td />
                 <td className="number">{summary.bills}</td>
-                <td className="number">{formatAmount(summary.sales)}</td>
+                <td className="number">{money.amount(summary.sales)}</td>
                 <td />
               </Box>
             </Typography>
           </Box>
         </Section>
 
-        <Section title="Best sellers">
+        <Section title={t("bestSellers")}>
           {bestSellers.length === 0 ? (
             <Typography variant="body2" sx={{ color: MUTED }}>
-              No items sold in this period.
+              {t("noItemsSold")}
             </Typography>
           ) : (
             <Box component="table" sx={tableSx}>
-              <thead>
-                <tr>
-                  <Typography component="th" variant="caption" scope="col">
-                    #
-                  </Typography>
-                  <Typography component="th" variant="caption" scope="col">
-                    Item
-                  </Typography>
-                  <Typography component="th" variant="caption" scope="col" className="number">
-                    Qty
-                  </Typography>
-                  <Typography component="th" variant="caption" scope="col" className="number">
-                    Sales
-                  </Typography>
-                  <Typography component="th" variant="caption" scope="col" className="number">
-                    Share
-                  </Typography>
-                </tr>
-              </thead>
+              <HeaderRow columns={[{ label: "#" }, { label: t("colItem") }, { label: t("colQty"), number: true }, { label: t("colSales"), number: true }, { label: t("colShare"), number: true }]} />
               <Typography component="tbody" variant="body2">
                 {bestSellers.map((row) => (
                   <tr key={row.menuId}>
                     <td>{row.rank}</td>
-                    <td>{row.name}</td>
+                    <td>{localizedText(locale, row.name, row.nameMy)}</td>
                     <td className="number">{row.quantity}</td>
-                    <td className="number">{formatAmount(row.itemSales)}</td>
+                    <td className="number">{money.amount(row.itemSales)}</td>
                     <td className="number">{row.share}%</td>
                   </tr>
                 ))}
@@ -333,32 +368,20 @@ export default function ReportSheet({
           )}
         </Section>
 
-        <Section title="Top add-ons">
+        <Section title={t("topAddons")}>
           {topAddons.length === 0 ? (
             <Typography variant="body2" sx={{ color: MUTED }}>
-              No add-ons chosen in this period.
+              {t("noAddonsChosen")}
             </Typography>
           ) : (
             <Box component="table" sx={tableSx}>
-              <thead>
-                <tr>
-                  <Typography component="th" variant="caption" scope="col">
-                    Add-on
-                  </Typography>
-                  <Typography component="th" variant="caption" scope="col" className="number">
-                    Times
-                  </Typography>
-                  <Typography component="th" variant="caption" scope="col" className="number">
-                    Sales
-                  </Typography>
-                </tr>
-              </thead>
+              <HeaderRow columns={[{ label: t("colAddon") }, { label: t("colTimes"), number: true }, { label: t("colSales"), number: true }]} />
               <Typography component="tbody" variant="body2">
                 {topAddons.map((addon) => (
                   <tr key={addon.addonId}>
-                    <td>{addon.name}</td>
+                    <td>{localizedText(locale, addon.name, addon.nameMy)}</td>
                     <td className="number">{addon.timesChosen}</td>
-                    <td className="number">{formatAmount(addon.addonSales)}</td>
+                    <td className="number">{money.amount(addon.addonSales)}</td>
                   </tr>
                 ))}
               </Typography>
@@ -366,86 +389,45 @@ export default function ReportSheet({
           )}
         </Section>
 
-        <Section title="Order channels">
+        <Section title={t("channelsTitle")}>
           <Box component="table" sx={tableSx}>
-            <thead>
-              <tr>
-                <Typography component="th" variant="caption" scope="col">
-                  Channel
-                </Typography>
-                <Typography component="th" variant="caption" scope="col" className="number">
-                  Bills
-                </Typography>
-                <Typography component="th" variant="caption" scope="col" className="number">
-                  Sales
-                </Typography>
-                <Typography component="th" variant="caption" scope="col" className="number">
-                  Share
-                </Typography>
-              </tr>
-            </thead>
+            <HeaderRow columns={[{ label: t("colChannel") }, { label: t("billsLabel"), number: true }, { label: t("colSales"), number: true }, { label: t("colShare"), number: true }]} />
             <Typography component="tbody" variant="body2">
               <tr>
-                <td>Table</td>
+                <td>{t("table")}</td>
                 <td className="number">{channels.table.bills}</td>
-                <td className="number">{formatAmount(channels.table.sales)}</td>
+                <td className="number">{money.amount(channels.table.sales)}</td>
                 <td className="number">{channels.tableShare}%</td>
               </tr>
               <tr>
-                <td>Counter</td>
+                <td>{t("counter")}</td>
                 <td className="number">{channels.counter.bills}</td>
-                <td className="number">{formatAmount(channels.counter.sales)}</td>
+                <td className="number">{money.amount(channels.counter.sales)}</td>
                 <td className="number">{channels.counterShare}%</td>
               </tr>
             </Typography>
           </Box>
         </Section>
 
-        <Section title="Cancellations">
-          <Box component="table" sx={tableSx}>
-            <Typography component="tbody" variant="body2">
-              <tr>
-                <th scope="row">Rejected</th>
-                <td className="number">{cancelled.rejected}</td>
-              </tr>
-              <tr>
-                <th scope="row">Why rejected</th>
-                <td className="number">{reasons || "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Timed out</th>
-                <td className="number">{cancelled.timedOut}</td>
-              </tr>
-              <tr>
-                <th scope="row">Not charged</th>
-                <td className="number">{formatAmount(cancelled.notCharged)}</td>
-              </tr>
-              <tr>
-                <th scope="row">Cancelled by customers (not counted above)</th>
-                <td className="number">{cancelled.withdrawn}</td>
-              </tr>
-            </Typography>
-          </Box>
-        </Section>
+        <FiguresSection
+          title={t("cancellations")}
+          rows={[
+            [t("rejected"), cancelled.rejected],
+            [t("whyRejected"), reasons || "—"],
+            [t("timedOut"), cancelled.timedOut],
+            [t("notCharged"), money.amount(cancelled.notCharged)],
+            [t("withdrawnNotCounted"), cancelled.withdrawn],
+          ]}
+        />
 
-        <Section title="Voided items">
-          <Box component="table" sx={tableSx}>
-            <Typography component="tbody" variant="body2">
-              <tr>
-                <th scope="row">Items voided</th>
-                <td className="number">{voided.count}</td>
-              </tr>
-              <tr>
-                <th scope="row">Why voided</th>
-                <td className="number">{voidReasons || "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Not charged</th>
-                <td className="number">{formatAmount(voided.value)}</td>
-              </tr>
-            </Typography>
-          </Box>
-        </Section>
+        <FiguresSection
+          title={t("voidedTitle")}
+          rows={[
+            [t("itemsVoided"), voided.count],
+            [t("whyVoided"), voidReasons || "—"],
+            [t("notCharged"), money.amount(voided.value)],
+          ]}
+        />
       </Box>
     </>
   );

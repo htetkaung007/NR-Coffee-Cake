@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Stack, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 const SECTIONS = [
-  { value: "open" as const, label: "Open", href: "/backoffice/order" },
-  { value: "history" as const, label: "History", href: "/backoffice/order/history" },
+  { value: "open" as const, href: "/backoffice/order" },
+  { value: "history" as const, href: "/backoffice/order/history" },
 ];
 
 /** [Open] [History] — links (not local state, per DESIGN.md Rule 17),
@@ -17,6 +18,7 @@ const SECTIONS = [
  *  on both routes (its isActive check is a startsWith on
  *  "/backoffice/order"). */
 export default function OrderSectionNav() {
+  const t = useTranslations("bo.orders");
   const pathname = usePathname();
   const active = pathname?.startsWith("/backoffice/order/history")
     ? "history"
@@ -26,7 +28,7 @@ export default function OrderSectionNav() {
     <Stack
       direction="row"
       role="group"
-      aria-label="Order view"
+      aria-label={t("sectionNav")}
       sx={{
         display: "inline-flex",
         border: 1,
@@ -71,7 +73,7 @@ export default function OrderSectionNav() {
                 },
               })}
             >
-              {section.label}
+              {t(section.value)}
             </Typography>
           </Link>
         );

@@ -183,6 +183,16 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
   theme padding (the customer theme makes MUI Chip's height a minimum
   too), so a bigger size or Myanmar's taller lines never spill out. Tap
   targets stay ≥ 44px; images keep their fixed aspect ratios.
+- **Myanmar Backoffice** (BO_LOCALE "my"): the same `:lang(my)` rules
+  (myanmarTypography also covers h1–h4, overline, menu rows, table
+  cells and toggle buttons, and drops letter-spacing). Noto Sans Myanmar
+  for body, buttons, sidebar, chips, tables, forms; Noto Serif Myanmar
+  only where the theme already uses the display face (page titles and
+  large headings — h1/h2/h6). Myanmar words are longer and taller: boxes
+  grow (minHeight, never a fixed height), labels that can't wrap get
+  noWrap + ellipsis with minWidth 0 on the flex parent, buttons may wrap
+  to two lines. Digits stay 0–9 (money and dates). The 260px sidebar and
+  the rail tooltips fit the Myanmar names.
 - **Myanmar text** is drawn a little smaller (`MYANMAR_FONT_SCALE` =
   0.96) with taller minimum lines —
   `lib/theme/myanmarTypography.ts` (`MYANMAR_FONT_SCALE`, the one knob),
@@ -233,7 +243,12 @@ Use theme spacing steps for padding/margin/gap; never hand-pick values like
   the name or the money). The word uses `palette.errorText` /
   `palette.successText` (≥ 4.5:1 on paper and page, both modes).
 - Print output is always `common.black` on `common.white`, regardless of
-  light/dark mode.
+  light/dark mode. **Receipts / bills** print in the voucher language:
+  the Backoffice language by default; the screen-only bar above the
+  paper (Back · EN | မြန်မာ · Print, `displayPrint: none`) switches the
+  voucher's labels, money words and the shop's Myanmar names, remembered
+  per device ("printVoucherLang:v1"); the page height is re-measured.
+  The printed report sheet follows the Backoffice language, no toggle.
 - **Online menu status chip** (Backoffice top bar, selected location):
   on = success dot + "Online menu" (`palette.successText`), off = neutral
   dot (`text.secondary`) + "Online menu off" — never red (off is the
@@ -266,6 +281,15 @@ double-taps), or an optimistic update. A disabled control shows WHY
 ## 16. Forms and inputs
 
 - Real labels, not placeholder-only.
+- **Character limits are visible**: every name / description field
+  shows "12/50 characters" (`components/CharacterCount`, in the staff's
+  language), and its Myanmar twin shows the SAME counter (beside its
+  "Shown to customers who choose Myanmar…" hint) — menu name /
+  description, category name, add-on group title and option names. ONE
+  number per field pair, exported next to the Zod schema
+  (`MENU_NAME_MAX`, `MENU_DESCRIPTION_MAX`, `CATEGORY_NAME_MAX`,
+  `ADDON_GROUP_NAME_MAX`, `ADDON_OPTION_NAME_MAX`) and used by the schema,
+  the input's maxLength and the counter (string length, as Zod counts).
 - Validate on blur, not on every keystroke.
 - Right input mode (`inputMode="numeric"`, `type="tel"`).
 - Auto-focus the first field when a form/sheet opens.
@@ -291,8 +315,11 @@ double-taps), or an optimistic update. A disabled control shows WHY
   [Open] [History] are links, not local state.
 - Backoffice create/edit pages start with PageHeader: a back link to the
   section's list page (a link, never history back) + the page title (h1).
-- Account menu (top-bar avatar): name + role, Dark mode (per device), Sign
-  out — for every role.
+- Account menu (top-bar avatar): name + role, **Language** (EN | မြန်မာ —
+  the NameLanguageToggle look, 44px, accessible name "Backoffice
+  language"; the staff's BO_LOCALE cookie, saved on the server, the page
+  refreshes in the new language), Dark mode (per device), Sign out — for
+  every role. Language sits right above Dark mode.
 
 ## 18. Responsive layout — mobile-first
 
@@ -319,6 +346,14 @@ double-taps), or an optimistic update. A disabled control shows WHY
   minmax(MIN, 1fr))` with ONE named MIN (and gap) per grid, so the
   columns follow the space actually available — the orientation, the
   sidebar (full or rail) and New Order's side panel.
+- **Menu grid order** (customer /menu and staff New Order): filtered by
+  category and search first, then orderable menus before the
+  not-orderable ones (sold out — stock 0 — or switched off), each group
+  keeping its usual order (stable) — `lib/menu/orderableFirst`, the same
+  "orderable" rule MenuCard dims by. Nothing is hidden.
+- **Centred Backoffice pages**: New / Edit Location and Table and
+  Settings share ONE column — `components/CenteredPage` (max 480px,
+  centred, page padding); a PageHeader's back link stays on its left.
 - **Customer menu grid:** 2 columns <600 · 3 at ≥600 · 4 at ≥900 (max 4),
   grid capped at ~1400px and centered, equal-height rows. **Touch
   tablets:** compact cards, MIN 212px (`TOUCH_CARD_MIN_PX`) with 16px
@@ -383,9 +418,10 @@ double-taps), or an optimistic update. A disabled control shows WHY
   switches the menu side only — menu names, chips, search results (both
   names always match), the detail sheet and the Current order lines'
   names and prices ("3,500 ကျပ်", "ထည့်မယ်", "Sweet: Low" localized);
-  staff controls (Order for, the mode toggle, Send to kitchen, notices,
-  errors) stay English. Remembered per device (localStorage
-  "staffMenuLang:v1"); the menu holds placeholders until it's read, so
+  staff controls (Order for, the mode toggle, Send to kitchen, line
+  notices, errors) follow the Backoffice language. Remembered per device
+  (localStorage "staffMenuLang:v1"; until the device has a choice, the
+  Backoffice language); the menu holds placeholders until it's read, so
   the other language never flashes (shaped like the card).
   Menu grid: 2 columns on phones, from `sm` as many 150–200px cards as
   fit (laptops / desktops). Touch tablets: compact cards, MIN 176px, 12px
@@ -774,7 +810,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-19: reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-10-20 (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

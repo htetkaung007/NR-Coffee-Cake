@@ -53,18 +53,40 @@ export function waitSeconds(
   return Math.round(milliseconds / 1000);
 }
 
-/** "45s", "1m 40s", "12m", "1h 05m"; "—" when unknown. */
-export function formatDuration(seconds: number | null): string {
+/** How a duration's parts are written — the staff screens pass their
+ *  language's words (bo.history.duration*); the default is the compact
+ *  "45s" / "1m 40s" / "12m" / "1h 05m". */
+export interface DurationUnits {
+  seconds: (seconds: number) => string;
+  minutes: (minutes: number) => string;
+  minutesSeconds: (minutes: number, seconds: number) => string;
+  /** `minutes` comes zero-padded ("05"). */
+  hoursMinutes: (hours: number, minutes: string) => string;
+}
+
+const COMPACT_UNITS: DurationUnits = {
+  seconds: (seconds) => `${seconds}s`,
+  minutes: (minutes) => `${minutes}m`,
+  minutesSeconds: (minutes, seconds) => `${minutes}m ${seconds}s`,
+  hoursMinutes: (hours, minutes) => `${hours}h ${minutes}m`,
+};
+
+/** "45s", "1m 40s", "12m", "1h 05m" (in `units`' words); "—" when
+ *  unknown. */
+export function formatDuration(
+  seconds: number | null,
+  units: DurationUnits = COMPACT_UNITS,
+): string {
   if (seconds === null || seconds < 0) return "—";
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) return units.seconds(seconds);
   if (seconds < 3600) {
     const minutes = Math.floor(seconds / 60);
     const rest = seconds % 60;
-    return rest === 0 ? `${minutes}m` : `${minutes}m ${rest}s`;
+    return rest === 0 ? units.minutes(minutes) : units.minutesSeconds(minutes, rest);
   }
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+  return units.hoursMinutes(hours, String(minutes).padStart(2, "0"));
 }
 
 /** What a round's OrderCancellation row adds to its History entry — the

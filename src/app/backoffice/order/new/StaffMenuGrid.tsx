@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Button,
@@ -23,6 +24,7 @@ import { langAttr, type AppLocale } from "@/app/lib/i18n/locale";
 import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { matchesMenuSearch } from "@/app/lib/storefront/menuSearch";
+import { orderableFirst } from "@/app/lib/menu/orderableFirst";
 import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 /** What MenuCard needs, plus what the grid filters and adds by. */
@@ -142,6 +144,8 @@ export default function StaffMenuGrid({
   // Myanmar: the customer's own words (lib/i18n/customerWords); English:
   // the card's Backoffice defaults ("MMK", the + icon).
   const myanmar = myanmarWordsOrNull(language);
+  const t = useTranslations("bo.newOrder");
+  const tOrders = useTranslations("bo.orders");
   const theme = useTheme();
   // lg: where the page shows the current order beside the menus.
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
@@ -162,17 +166,22 @@ export default function StaffMenuGrid({
     }
   }, [isDesktop]);
 
+  // Filtered by category and search first, then the orderable menus
+  // before the sold-out / switched-off ones (lib/menu/orderableFirst —
+  // as the customer menu).
   const visibleMenus = useMemo(() => {
-    return menus.filter(
-      (menu) =>
-        (activeCategory === ALL || menu.categoryIds.includes(activeCategory)) &&
-        // Both names, whichever language is shown (as the customer menu).
-        matchesMenuSearch(menu, debouncedSearch),
+    return orderableFirst(
+      menus.filter(
+        (menu) =>
+          (activeCategory === ALL || menu.categoryIds.includes(activeCategory)) &&
+          // Both names, whichever language is shown (as the customer menu).
+          matchesMenuSearch(menu, debouncedSearch),
+      ),
     );
   }, [menus, activeCategory, debouncedSearch]);
 
   const chips: { value: number | typeof ALL; label: string }[] = [
-    { value: ALL, label: myanmar?.allCategories ?? "All" },
+    { value: ALL, label: myanmar?.allCategories ?? tOrders("all") },
     ...categories.map((category) => ({
       value: category.id,
       label: localizedText(language ?? "en", category.name, category.nameMy),
@@ -184,7 +193,7 @@ export default function StaffMenuGrid({
       <TextField
         inputRef={searchRef}
         size="small"
-        label="Search menus"
+        label={t("searchMenus")}
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         slotProps={{
@@ -197,7 +206,7 @@ export default function StaffMenuGrid({
             endAdornment: search && (
               <InputAdornment position="end">
                 <IconButton
-                  aria-label="Clear search"
+                  aria-label={t("clearSearch")}
                   onClick={() => setSearch("")}
                   sx={{ width: 44, height: 44, mr: -1 }}
                 >
@@ -212,7 +221,7 @@ export default function StaffMenuGrid({
       {/* One sideways-scrolling row, like the customer menu's tabs. */}
       <Stack
         role="group"
-        aria-label="Filter by category"
+        aria-label={t("categoryFilter")}
         direction="row"
         spacing={1}
         sx={{
@@ -281,12 +290,12 @@ export default function StaffMenuGrid({
           <SearchOffIcon fontSize="large" sx={{ color: "text.secondary" }} />
           <Typography variant="body1">
             {debouncedSearch.trim()
-              ? `No menus match “${debouncedSearch.trim()}”`
-              : "No menus in this category"}
+              ? t("noMatch", { search: debouncedSearch.trim() })
+              : t("noMenusInCategory")}
           </Typography>
           {search && (
             <Button onClick={() => setSearch("")} sx={{ minHeight: 44 }}>
-              Clear search
+              {t("clearSearch")}
             </Button>
           )}
         </Stack>

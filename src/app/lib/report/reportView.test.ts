@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
+import { createTranslator } from "next-intl";
+import en from "../../../../messages/en.json";
+import { staffMoney } from "../i18n/staffMoney";
+import { dateNamesFor, reportWords } from "./reportWords";
 import {
   axisLabelIndexes,
-  barLabel,
   barRatio,
   buildItemList,
   chartTicks,
   formatDelta,
-  formatReportDay,
   addonPairingView,
   menuPairingView,
   navigationDays,
@@ -26,6 +28,13 @@ import {
   printableReportTitle,
   reportExportHref,
 } from "./reportView";
+
+/** The English words, from en.json — what the Reports page shows. */
+const words = reportWords(
+  createTranslator({ locale: "en", messages: en, namespace: "bo.reports" }),
+  dateNamesFor("en"),
+  staffMoney(createTranslator({ locale: "en", messages: en, namespace: "bo.money" })).amount,
+);
 
 const TODAY = "2026-09-30"; // a Wednesday; its week is Sep 28 – Oct 4
 
@@ -120,45 +129,45 @@ describe("navigationDays", () => {
 
 describe("formatDelta", () => {
   it("shows an increase with an up arrow", () => {
-    const delta = formatDelta(12, "week");
+    const delta = formatDelta(12, "week", words);
     expect(delta.direction).toBe("up");
     expect(delta.label).toBe("▲ 12% vs last week");
   });
 
   it("shows a decrease with a down arrow and no minus sign", () => {
-    const delta = formatDelta(-8.5, "month");
+    const delta = formatDelta(-8.5, "month", words);
     expect(delta.direction).toBe("down");
     expect(delta.label).toBe("▼ 8.5% vs last month");
   });
 
   it("shows no change as flat", () => {
-    const delta = formatDelta(0, "week");
+    const delta = formatDelta(0, "week", words);
     expect(delta.direction).toBe("flat");
     expect(delta.label).toBe("▬ 0% vs last week");
   });
 
   it("is a dash when there is nothing to compare with", () => {
-    const delta = formatDelta(null, "week");
+    const delta = formatDelta(null, "week", words);
     expect(delta.direction).toBe("none");
     expect(delta.label).toBe("—");
     expect(delta.amount).toBe("");
   });
 
   it("gives the arrow and the amount separately for a table row", () => {
-    const delta = formatDelta(326.8, "week");
+    const delta = formatDelta(326.8, "week", words);
     expect(delta.arrow).toBe("▲");
     expect(delta.amount).toBe("326.8%");
   });
 
   it("drops a trailing .0", () => {
-    expect(formatDelta(50, "week").amount).toBe("50%");
+    expect(formatDelta(50, "week", words).amount).toBe("50%");
   });
 
   it("says it in words for a screen reader", () => {
-    expect(formatDelta(12, "week").spoken).toBe("Up 12% vs last week");
-    expect(formatDelta(-3, "month").spoken).toBe("Down 3% vs last month");
-    expect(formatDelta(0, "week").spoken).toBe("No change vs last week");
-    expect(formatDelta(null, "week").spoken).toBe("No comparison available");
+    expect(formatDelta(12, "week", words).spoken).toBe("Up 12% vs last week");
+    expect(formatDelta(-3, "month", words).spoken).toBe("Down 3% vs last month");
+    expect(formatDelta(0, "week", words).spoken).toBe("No change vs last week");
+    expect(formatDelta(null, "week", words).spoken).toBe("No comparison available");
   });
 });
 
@@ -224,34 +233,34 @@ describe("axisLabelIndexes", () => {
   });
 });
 
-describe("formatReportDay", () => {
+describe("words.reportDay", () => {
   it("writes weekday, day and month", () => {
-    expect(formatReportDay("2026-09-28")).toBe("Mon 28 Sep");
-    expect(formatReportDay("2026-10-04")).toBe("Sun 4 Oct");
+    expect(words.reportDay("2026-09-28")).toBe("Mon 28 Sep");
+    expect(words.reportDay("2026-10-04")).toBe("Sun 4 Oct");
   });
 });
 
-describe("barLabel", () => {
+describe("words.barLabel", () => {
   it("says the day, the sales and the bills", () => {
-    expect(barLabel({ day: "2026-09-28", sales: 142000, bills: 12 }, false)).toBe(
+    expect(words.barLabel("2026-09-28", 142000, 12, false)).toBe(
       "Mon 28 Sep: 142,000 MMK, 12 bills",
     );
   });
 
   it("says '1 bill' for a single bill", () => {
-    expect(barLabel({ day: "2026-09-29", sales: 2000, bills: 1 }, false)).toBe(
+    expect(words.barLabel("2026-09-29", 2000, 1, false)).toBe(
       "Tue 29 Sep: 2,000 MMK, 1 bill",
     );
   });
 
   it("says a day with no sales plainly", () => {
-    expect(barLabel({ day: "2026-09-29", sales: 0, bills: 0 }, false)).toBe(
+    expect(words.barLabel("2026-09-29", 0, 0, false)).toBe(
       "Tue 29 Sep: 0 MMK, 0 bills",
     );
   });
 
   it("marks today", () => {
-    expect(barLabel({ day: "2026-09-30", sales: 5000, bills: 2 }, true)).toBe(
+    expect(words.barLabel("2026-09-30", 5000, 2, true)).toBe(
       "Wed 30 Sep: 5,000 MMK, 2 bills, today",
     );
   });
@@ -259,20 +268,20 @@ describe("barLabel", () => {
 
 describe("progressCaption", () => {
   it("counts the days so far of the current week", () => {
-    expect(progressCaption(periodFor("week", TODAY), TODAY)).toBe(
+    expect(progressCaption(periodFor("week", TODAY), TODAY, words)).toBe(
       "Week in progress · 3 of 7 days",
     );
   });
 
   it("counts the days so far of the current month", () => {
-    expect(progressCaption(periodFor("month", TODAY), TODAY)).toBe(
+    expect(progressCaption(periodFor("month", TODAY), TODAY, words)).toBe(
       "Month in progress · 30 of 30 days",
     );
   });
 
   it("is null for a finished period", () => {
-    expect(progressCaption(periodFor("week", "2026-09-23"), TODAY)).toBeNull();
-    expect(progressCaption(periodFor("month", "2026-08-10"), TODAY)).toBeNull();
+    expect(progressCaption(periodFor("week", "2026-09-23"), TODAY, words)).toBeNull();
+    expect(progressCaption(periodFor("month", "2026-08-10"), TODAY, words)).toBeNull();
   });
 });
 
@@ -564,13 +573,13 @@ describe("addonPairingView", () => {
 
 describe("pairingMonthCaption", () => {
   it("names the current month as in progress", () => {
-    expect(pairingMonthCaption(periodFor("month", TODAY), TODAY)).toBe(
+    expect(pairingMonthCaption(periodFor("month", TODAY), TODAY, words)).toBe(
       "September in progress",
     );
   });
 
   it("is null for a finished month", () => {
-    expect(pairingMonthCaption(periodFor("month", "2026-08-10"), TODAY)).toBeNull();
+    expect(pairingMonthCaption(periodFor("month", "2026-08-10"), TODAY, words)).toBeNull();
   });
 });
 
@@ -590,13 +599,13 @@ describe("printableReportHref", () => {
 
 describe("printableReportTitle", () => {
   it("names a month", () => {
-    expect(printableReportTitle(periodFor("month", "2026-10-15"))).toBe(
+    expect(printableReportTitle(periodFor("month", "2026-10-15"), words)).toBe(
       "Monthly report — October 2026",
     );
   });
 
   it("names a week with its dates", () => {
-    expect(printableReportTitle(periodFor("week", "2026-10-01"))).toBe(
+    expect(printableReportTitle(periodFor("week", "2026-10-01"), words)).toBe(
       "Weekly report — Sep 28 – Oct 4, 2026",
     );
   });

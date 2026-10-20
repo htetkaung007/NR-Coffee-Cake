@@ -2,6 +2,7 @@ import { Box, Typography } from "@mui/material";
 import { TableService } from "@/app/services";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
+import { getTranslations } from "next-intl/server";
 import EditTable from "./EditTable";
 
 export default async function EditTablePage({
@@ -13,7 +14,6 @@ export default async function EditTablePage({
   const tableId = Number(id);
 
   const { context, fallback } = await requireBackofficeContext({
-    signedOut: "You must be signed in to manage tables.",
     access: "TABLES_MANAGE",
   });
   if (!context) return fallback;
@@ -28,7 +28,9 @@ export default async function EditTablePage({
   if (!table) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography color="text.secondary">Table not found.</Typography>
+        <Typography color="text.secondary">
+          {(await getTranslations("bo.tables"))("notFound")}
+        </Typography>
       </Box>
     );
   }

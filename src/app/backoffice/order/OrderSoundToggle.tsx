@@ -12,6 +12,7 @@ import {
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import { useTranslations } from "next-intl";
 import { MAX_VOLUME, MIN_VOLUME } from "@/app/lib/hooks/useOrderAlertSound";
 
 interface OrderSoundToggleProps {
@@ -41,6 +42,7 @@ export default function OrderSoundToggle({
   onVolumeChange,
   onTestBeep,
 }: OrderSoundToggleProps) {
+  const t = useTranslations("bo.alerts");
   const [volumeAnchor, setVolumeAnchor] = useState<HTMLElement | null>(null);
   // The bell going off (e.g. from another tab) closes the slider for
   // good — adjusting state during render, so it can't reopen on its own
@@ -52,11 +54,11 @@ export default function OrderSoundToggle({
     <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
       {isLocked && (
         <Typography variant="caption" color="text.secondary" role="status">
-          Tap anywhere to enable sound
+          {t("tapToEnableSound")}
         </Typography>
       )}
       <IconButton
-        aria-label="Sound alert for new orders"
+        aria-label={t("soundToggle")}
         aria-pressed={enabled}
         onClick={onToggle}
         sx={{ width: 44, height: 44 }}
@@ -64,7 +66,7 @@ export default function OrderSoundToggle({
         {enabled ? <NotificationsActiveIcon /> : <NotificationsOffIcon />}
       </IconButton>
       <IconButton
-        aria-label="Alert volume"
+        aria-label={t("volume")}
         aria-haspopup="true"
         aria-expanded={isVolumeOpen}
         aria-controls={isVolumeOpen ? VOLUME_POPOVER_ID : undefined}
@@ -94,10 +96,10 @@ export default function OrderSoundToggle({
           }}
         >
           <Typography variant="caption" color="text.secondary" component="p">
-            Alert volume
+            {t("volume")}
           </Typography>
           <Slider
-            aria-label="Alert volume"
+            aria-label={t("volume")}
             min={MIN_VOLUME}
             max={MAX_VOLUME}
             step={10}

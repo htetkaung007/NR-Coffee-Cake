@@ -1,5 +1,8 @@
 "use client";
 
+import CenteredPage from "@/app/components/CenteredPage";
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,7 +15,6 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  LOCATION_DELETION_MESSAGES,
   type LocationDeletion,
 } from "@/app/lib/location/locationDeletion";
 import {
@@ -48,6 +50,9 @@ export default function EditLocation({
   deletion,
   blockingManagers,
 }: EditLocationProps) {
+  const t = useTranslations("bo.locations");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
   const router = useRouter();
   const [name, setName] = useState(location.name);
   const [isArchived, setIsArchived] = useState(location.isArchived);
@@ -74,7 +79,7 @@ export default function EditLocation({
 
     startSavingName(async () => {
       const result = await updateLocationNameAction(location.id, formData);
-      if (!result.success) setNameError(result.error.message);
+      if (!result.success) setNameError(errorText(result.error));
     });
   }
 
@@ -85,7 +90,7 @@ export default function EditLocation({
     startTogglingArchive(async () => {
       const result = await toggleLocationArchiveAction(location.id, next);
       if (!result.success) {
-        setArchiveError(result.error.message);
+        setArchiveError(errorText(result.error));
         return;
       }
       setIsArchived(next);
@@ -97,7 +102,7 @@ export default function EditLocation({
     startDeleting(async () => {
       const result = await hardDeleteLocationAction(location.id);
       if (!result.success) {
-        setDeleteError(result.error.message);
+        setDeleteError(errorText(result.error));
         setDeleteDialogOpen(false);
         return;
       }
@@ -106,11 +111,11 @@ export default function EditLocation({
   }
 
   return (
-    <Box sx={{ maxWidth: 480, mx: "auto", p: { xs: 2, sm: 3, md: 4 } }}>
+    <CenteredPage>
       <PageHeader
-        title="Edit Location"
+        title={t("editTitle")}
         backHref="/backoffice/locations"
-        backLabel="Back to locations"
+        backLabel={t("backToLocations")}
       />
 
       {/* Rename — its own form, its own submit, its own error */}
@@ -121,7 +126,7 @@ export default function EditLocation({
         sx={{ mb: 3 }}
       >
         <TextField
-          label="Location Name"
+          label={t("name")}
           required
           fullWidth
           value={name}
@@ -133,7 +138,7 @@ export default function EditLocation({
           disabled={isSavingName || !name.trim()}
           sx={{ alignSelf: "flex-start", px: 3 }}
         >
-          {isSavingName ? "Saving..." : "Save Name"}
+          {isSavingName ? tCommon("saving") : t("saveName")}
         </Button>
       </FormCard>
 
@@ -162,19 +167,17 @@ export default function EditLocation({
         >
           <Box>
             <Typography variant="body2">
-              {isArchived ? "Closed" : "Open"}
+              {isArchived ? t("closed") : t("open")}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {isArchived
-                ? "This location is archived — reopen it to make it operational again."
-                : "Archiving closes this location; it can be reopened anytime."}
+              {isArchived ? t("archivedHint") : t("archiveHint")}
             </Typography>
           </Box>
           <Switch
             checked={!isArchived}
             disabled={isTogglingArchive}
             onChange={handleToggleArchive}
-            slotProps={{ input: { "aria-label": "Location open/closed" } }}
+            slotProps={{ input: { "aria-label": t("openClosed") } }}
           />
         </Box>
       </Box>
@@ -190,15 +193,14 @@ export default function EditLocation({
           location with no sales history and no managers; right away,
           archived or not. */}
       <DangerZone
-        title="Danger zone"
+        title={t("dangerZone")}
         titleId="danger-zone-title"
         error={deleteError}
       >
         {deletion.allowed ? (
           <>
             <Typography variant="caption" color="text.secondary">
-              No sales here yet, so this location can be deleted — with its
-              tables, QR codes and stock. This can&apos;t be undone.
+              {t("canDelete")}
             </Typography>
             <Box sx={{ mt: 1.5 }}>
               <Button
@@ -208,20 +210,19 @@ export default function EditLocation({
                 onClick={openDeleteDialog}
                 sx={{ minHeight: 44 }}
               >
-                Delete location permanently
+                {t("deletePermanently")}
               </Button>
             </Box>
           </>
         ) : deletion.reason === "hasManagers" ? (
           <>
             <Typography variant="caption" color="text.secondary" component="p">
-              Managers are assigned to this location.{" "}
-              {LOCATION_DELETION_MESSAGES.hasManagers}
+              {t("managersAssigned")} {t("hasManagers")}
             </Typography>
             {blockingManagers.length > 0 && (
               <Box
                 component="ul"
-                aria-label="Managers at this location"
+                aria-label={t("managersHere")}
                 sx={{ m: 0, mt: 1, pl: 2.5 }}
               >
                 {blockingManagers.map(({ id, name }) => (
@@ -243,29 +244,34 @@ export default function EditLocation({
                 variant="outlined"
                 sx={{ minHeight: 44 }}
               >
-                Manage in Settings
+                {t("manageInSettings")}
               </Button>
             </Box>
           </>
         ) : (
           <Typography variant="caption" color="text.secondary" component="p">
-            {LOCATION_DELETION_MESSAGES.hasSales}
+            {t("hasSales")}
           </Typography>
         )}
       </DangerZone>
 
       <ConfirmDialog
         open={deleteDialogOpen}
-        title={`Delete ${location.name} permanently?`}
-        message="This removes the location with its tables, their QR codes and its stock. It can't be undone. Type the location's name to confirm."
-        confirmLabel="Delete"
-        pendingLabel="Deleting..."
+        title={t("deleteTitle", { name: location.name })}
+        message={t("deleteMessage")}
+        confirmLabel={tCommon("delete")}
+        pendingLabel={tCommon("deleting")}
+        cancelLabel={tCommon("cancel")}
         destructive
         pending={isDeleting}
-        requireTypedText={{ text: location.name, label: "Location name" }}
+        requireTypedText={{
+          text: location.name,
+          label: t("nameLabel"),
+          helper: tCommon("typeToConfirm", { text: location.name }),
+        }}
         onConfirm={handleHardDelete}
         onCancel={() => setDeleteDialogOpen(false)}
       />
-    </Box>
+    </CenteredPage>
   );
 }

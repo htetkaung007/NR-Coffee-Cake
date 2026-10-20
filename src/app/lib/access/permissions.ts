@@ -13,85 +13,47 @@ import type { StaffRole } from "./rolePolicy";
 
 export type PermissionGroup = "Orders" | "Daily" | "Tables" | "Business";
 
-/** Everything an owner can tick for a manager, in the order shown. */
+/** Everything an owner can tick for a manager, in the order shown. The
+ *  words — label and description — are bo.permissions.<KEY> in
+ *  messages/*.json (tested: every key has them in both languages). */
 export const GRANTABLE_PERMISSIONS = [
-  {
-    key: "ORDERS_MARK_PAID",
-    group: "Orders",
-    label: "Mark bills as paid",
-    description: "Take payment and close a table or counter bill.",
-    defaultForNewManager: true,
-  },
-  {
-    key: "ORDERS_VOID",
-    group: "Orders",
-    label: "Void items",
-    description:
-      "Take items back off an accepted, unpaid order (with a reason).",
-    defaultForNewManager: false,
-  },
-  {
-    key: "MENU_AVAILABILITY",
-    group: "Daily",
-    label: "Turn menus on/off",
-    description: "Mark a menu sold out or back on at their location.",
-    defaultForNewManager: true,
-  },
-  {
-    key: "ADDON_AVAILABILITY",
-    group: "Daily",
-    label: "Turn add-ons on/off",
-    description: "e.g. out of oat milk.",
-    defaultForNewManager: true,
-  },
-  {
-    key: "TABLES_MANAGE",
-    group: "Tables",
-    label: "Manage tables and QR codes",
-    description: "Create, rename and delete tables; print QR codes.",
-    defaultForNewManager: false,
-  },
-  {
-    key: "REPORTS_VIEW",
-    group: "Business",
-    label: "View reports",
-    description: "Sales reports and CSV/PDF export.",
-    defaultForNewManager: false,
-  },
+  { key: "ORDERS_MARK_PAID", group: "Orders", defaultForNewManager: true },
+  { key: "ORDERS_VOID", group: "Orders", defaultForNewManager: false },
+  { key: "MENU_AVAILABILITY", group: "Daily", defaultForNewManager: true },
+  { key: "ADDON_AVAILABILITY", group: "Daily", defaultForNewManager: true },
+  { key: "TABLES_MANAGE", group: "Tables", defaultForNewManager: false },
+  { key: "REPORTS_VIEW", group: "Business", defaultForNewManager: false },
 ] as const satisfies readonly {
   key: string;
   group: PermissionGroup;
-  label: string;
-  description: string;
   defaultForNewManager: boolean;
 }[];
 
 /** One grantable permission ("ORDERS_MARK_PAID", …). */
 export type PermissionKey = (typeof GRANTABLE_PERMISSIONS)[number]["key"];
 
-/** What a manager without a permission is told where its control sits
- *  disabled (display only — the server refuses anyway). */
-export const ASK_OWNER_HINTS = {
-  ORDERS_MARK_PAID: "Ask the owner to let you take payment",
-  MENU_AVAILABILITY: "Ask the owner to let you turn menus on/off",
-  ADDON_AVAILABILITY: "Ask the owner to let you turn add-ons on/off",
-} as const satisfies Partial<Record<PermissionKey, string>>;
+/** The permissions whose disabled control tells a manager to "Ask the
+ *  owner …" (bo.permissions.askOwner.<KEY>; display only — the server
+ *  refuses anyway). */
+export const ASK_OWNER_HINT_KEYS = [
+  "ORDERS_MARK_PAID",
+  "MENU_AVAILABILITY",
+  "ADDON_AVAILABILITY",
+] as const satisfies readonly PermissionKey[];
 
-/** What every manager can always do — for display. */
-export const ALWAYS_ALLOWED = [
-  "Take orders, and accept or reject them",
-  "Place a new order",
-  "See order history",
-] as const;
+/** What every manager can always do — for display
+ *  (bo.permissions.alwaysAllowed.<KEY>). */
+export const ALWAYS_ALLOWED = ["takeOrders", "placeOrder", "seeHistory"] as const;
 
-/** What only the owner can ever do — never grantable. For display. */
+/** What only the owner can ever do — never grantable. For display
+ *  (bo.permissions.ownerOnly.<KEY>). */
 export const OWNER_ONLY = [
-  "Locations",
-  "Managers & permissions",
-  "Company settings",
-  "Menu setup — create, edit and delete menus and prices",
-  "Menu categories",
-  "Add-on groups — options, prices, Required",
+  "locations",
+  "managers",
+  "company",
+  "menuSetup",
+  "categories",
+  "addonGroups",
 ] as const;
 
 /** What a new manager (and every manager when this was introduced) gets. */

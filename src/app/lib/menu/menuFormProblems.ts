@@ -8,6 +8,9 @@ import { NO_LOCATION_MESSAGE } from "./menuLocations";
 
 export interface MenuFormProblem {
   field: "name" | "price" | "categories" | "locations";
+  /** The problem's words on screen: bo.menuForm.problems.<code>. */
+  code: "nameRequired" | "priceWhole" | "pricePositive" | "categoryRequired" | "locationRequired";
+  /** The schema's English words (the server's own message). */
   message: string;
 }
 
@@ -32,24 +35,28 @@ export function menuFormProblems(input: {
   const problems: MenuFormProblem[] = [];
 
   if (input.name.trim() === "") {
-    problems.push({ field: "name", message: MENU_NAME_REQUIRED_MESSAGE });
+    problems.push({ field: "name", code: "nameRequired", message: MENU_NAME_REQUIRED_MESSAGE });
   }
 
   const price = Number(input.price);
   if (!Number.isFinite(price)) {
-    problems.push({ field: "price", message: MENU_PRICE_POSITIVE_MESSAGE });
+    problems.push({ field: "price", code: "pricePositive", message: MENU_PRICE_POSITIVE_MESSAGE });
   } else if (!Number.isInteger(price)) {
-    problems.push({ field: "price", message: MENU_PRICE_WHOLE_MESSAGE });
+    problems.push({ field: "price", code: "priceWhole", message: MENU_PRICE_WHOLE_MESSAGE });
   } else if (price <= 0) {
-    problems.push({ field: "price", message: MENU_PRICE_POSITIVE_MESSAGE });
+    problems.push({ field: "price", code: "pricePositive", message: MENU_PRICE_POSITIVE_MESSAGE });
   }
 
   if (input.categoryIds.length === 0) {
-    problems.push({ field: "categories", message: MENU_CATEGORY_REQUIRED_MESSAGE });
+    problems.push({
+      field: "categories",
+      code: "categoryRequired",
+      message: MENU_CATEGORY_REQUIRED_MESSAGE,
+    });
   }
 
   if (input.requiresLocation && input.shownLocationIds.length === 0) {
-    problems.push({ field: "locations", message: NO_LOCATION_MESSAGE });
+    problems.push({ field: "locations", code: "locationRequired", message: NO_LOCATION_MESSAGE });
   }
 
   return problems;

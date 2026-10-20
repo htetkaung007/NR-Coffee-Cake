@@ -3,6 +3,7 @@ import {
   LocationService,
   MenuCategoryService,
 } from "@/app/services";
+import { getTranslations } from "next-intl/server";
 import MenuForm from "@/app/components/menuForm/MenuForm";
 
 /** The create form's data — the caller (page.tsx) has checked the owner
@@ -32,7 +33,7 @@ export default async function NewMenu({
       }))}
       currentLocation={{
         locationId: currentLocationId,
-        name: currentLocation?.name ?? "this location",
+        name: currentLocation?.name ?? (await getTranslations("bo.menus"))("thisLocation"),
       }}
     />
   );

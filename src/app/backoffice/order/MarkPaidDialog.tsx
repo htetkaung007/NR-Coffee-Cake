@@ -12,7 +12,9 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { countLabel, formatAmountParts } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { formatAmountParts } from "@/app/lib/orderFormat";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { moneyColor, moneySx } from "./orderTypography";
 
 interface MarkPaidDialogProps {
@@ -40,6 +42,9 @@ export default function MarkPaidDialog({
   onCancel,
   onConfirm,
 }: MarkPaidDialogProps) {
+  const t = useTranslations("bo.markPaid");
+  const tCommon = useTranslations("bo.common");
+  const money = useStaffMoney();
   const titleId = useId();
   const amountId = useId();
   const warningId = useId();
@@ -54,7 +59,7 @@ export default function MarkPaidDialog({
       aria-labelledby={titleId}
       aria-describedby={`${amountId} ${warningId}`}
     >
-      <DialogTitle id={titleId}>Mark {title} as paid?</DialogTitle>
+      <DialogTitle id={titleId}>{t("title", { title })}</DialogTitle>
       <DialogContent>
         <Box
           id={amountId}
@@ -77,10 +82,11 @@ export default function MarkPaidDialog({
             color="text.secondary"
             sx={{ textTransform: "uppercase" }}
           >
-            Total to collect
+            {t("totalToCollect")}
           </Typography>
           {/* Big number, small currency — one line of plain text, so it
-             reads as "4,570 MMK" (the space is a real text node). */}
+             reads as "4,570 MMK" / "4,570 ကျပ်" (the space is a real text
+             node; the word is the staff's money word). */}
           <Typography variant="h4" component="p">
             <Box
               component="span"
@@ -97,20 +103,20 @@ export default function MarkPaidDialog({
               component="span"
               color="text.secondary"
             >
-              {amount.currency}
+              {money.currency}
             </Typography>
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {title} · {countLabel(orderCount, "order", "orders")}
+            {t("summary", { title, orders: tCommon("orderCount", { count: orderCount }) })}
           </Typography>
         </Box>
         <DialogContentText id={warningId}>
-          This can&apos;t be undone.
+          {t("cannotUndo")}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel} sx={{ minHeight: 44 }}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button
           variant="contained"
@@ -119,7 +125,7 @@ export default function MarkPaidDialog({
           autoFocus
           sx={{ minHeight: 44 }}
         >
-          Mark as paid
+          {t("confirm")}
         </Button>
       </DialogActions>
     </Dialog>

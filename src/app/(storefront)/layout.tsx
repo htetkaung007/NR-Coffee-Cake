@@ -2,12 +2,14 @@ import { Suspense } from "react";
 import type { Viewport } from "next";
 import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
+import type enMessages from "../../../messages/en.json";
+import { customerClientMessages } from "@/app/lib/i18n/messageScopes";
 import { SurfaceThemeProvider } from "@/app/lib/theme/ThemeModeProvider";
 import { LOCALE_COOKIE } from "@/app/lib/i18n/locale";
 import LanguageCard from "@/app/components/orderUI/LanguageCard";
 import { CompanyService } from "@/app/services";
-import HtmlLang from "@/app/components/orderUI/HtmlLang";
+import HtmlLang from "@/app/components/HtmlLang";
 import { CustomerOrderUiLabels } from "@/app/components/orderUI/OrderUiLabels";
 import OrderBotBar, { BottomBarProvider } from "@/app/components/orderUI/OrderBotBar";
 
@@ -26,9 +28,10 @@ export const viewport: Viewport = {
 
 /**
  * The customer side: the customer theme and the customer's language
- * (next-intl, from the NEXT_LOCALE cookie — src/i18n/request.ts). The
- * translations provider lives only here, never in the root or Backoffice
- * layout. Everything inside carries lang={locale}, so screen readers read
+ * (next-intl, from the NEXT_LOCALE cookie — src/i18n/request.ts). This
+ * provider gets the customer words only (never the staff's bo.*, which
+ * StaffIntlProvider gives the Backoffice) and lives only here, never in
+ * the root layout. Everything inside carries lang={locale}, so screen readers read
  * Burmese as Burmese (the root <html lang> is "en" for the Backoffice).
  */
 export default async function StorefrontLayout({
@@ -37,6 +40,7 @@ export default async function StorefrontLayout({
   children: React.ReactNode;
 }) {
   const locale = await getLocale();
+  const messages = (await getMessages()) as typeof enMessages;
   // No cookie yet = first visit on this device: offer the language sheet.
   const hasChosenLanguage = (await cookies()).has(LOCALE_COOKIE);
   // The card's badge initials — read only when the card may show.
@@ -44,7 +48,7 @@ export default async function StorefrontLayout({
 
   return (
     <SurfaceThemeProvider surface="od">
-      <NextIntlClientProvider>
+      <NextIntlClientProvider messages={customerClientMessages(messages)}>
         {/* display: contents — a lang boundary that adds no box to the
            layout (pages size themselves against <body>). */}
         <div lang={locale} style={{ display: "contents" }}>

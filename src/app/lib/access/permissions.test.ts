@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
+import en from "../../../../messages/en.json";
+import my from "../../../../messages/my.json";
 import {
   ALWAYS_ALLOWED,
+  ASK_OWNER_HINT_KEYS,
   canAccess,
   permissionChanges,
   DEFAULT_MANAGER_PERMISSIONS,
@@ -40,10 +43,20 @@ describe("the catalog", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("gives every permission a label and a description", () => {
-    for (const entry of GRANTABLE_PERMISSIONS) {
-      expect(entry.label.trim()).not.toBe("");
-      expect(entry.description.trim()).not.toBe("");
+  it("gives every permission a label and a description, in both languages", () => {
+    for (const { key, group } of GRANTABLE_PERMISSIONS) {
+      for (const messages of [en, my]) {
+        expect(messages.bo.permissions[key].label.trim()).not.toBe("");
+        expect(messages.bo.permissions[key].description.trim()).not.toBe("");
+        expect(messages.bo.permissions.groups[group].trim()).not.toBe("");
+      }
+    }
+  });
+
+  it("has an Ask-the-owner hint for every key that shows one, in both languages", () => {
+    for (const key of ASK_OWNER_HINT_KEYS) {
+      expect(en.bo.permissions.askOwner[key].trim()).not.toBe("");
+      expect(my.bo.permissions.askOwner[key].trim()).not.toBe("");
     }
   });
 });
@@ -65,17 +78,24 @@ describe("isPermissionKey", () => {
 
 describe("what is never ticked", () => {
   it("spells out what every manager can always do, and what only the owner can", () => {
-    for (const line of [...ALWAYS_ALLOWED, ...OWNER_ONLY]) {
-      expect(line.trim()).not.toBe("");
+    for (const messages of [en, my]) {
+      for (const key of ALWAYS_ALLOWED) {
+        expect(messages.bo.permissions.alwaysAllowed[key].trim()).not.toBe("");
+      }
+      for (const key of OWNER_ONLY) {
+        expect(messages.bo.permissions.ownerOnly[key].trim()).not.toBe("");
+      }
     }
     expect(ALWAYS_ALLOWED.length).toBeGreaterThan(0);
     expect(OWNER_ONLY.length).toBeGreaterThan(0);
   });
 
   it("never offers an owner-only area as a grantable permission", () => {
-    const grantableLabels = GRANTABLE_PERMISSIONS.map((entry) => entry.label.toLowerCase());
+    const grantableLabels = GRANTABLE_PERMISSIONS.map((entry) =>
+      en.bo.permissions[entry.key].label.toLowerCase(),
+    );
     for (const area of OWNER_ONLY) {
-      expect(grantableLabels).not.toContain(area.toLowerCase());
+      expect(grantableLabels).not.toContain(en.bo.permissions.ownerOnly[area].toLowerCase());
     }
   });
 });

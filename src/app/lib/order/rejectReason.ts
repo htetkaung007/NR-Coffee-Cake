@@ -66,13 +66,25 @@ export function summarizeRejectReasons(
 }
 
 /** "Out of stock 1 · Looks fake 2" — the non-zero buckets only; "" when
- *  there are none. */
+ *  there are none. Staff screens pass their language's `label` (each
+ *  "reason count" pair); the default is the English short label. */
 export function formatRejectReasonCounts(
   summary: readonly { reason: RejectReasonBucket; count: number }[],
+  label: (reason: RejectReasonBucket, count: number) => string = (reason, count) =>
+    `${rejectReasonShortLabel(reason)} ${count}`,
+): string {
+  return formatReasonCounts(summary, label);
+}
+
+/** "A 2 · B 1" — the non-zero entries of a reason summary, each written
+ *  by `label`; "" when there are none (rejections, voids). */
+export function formatReasonCounts<Reason>(
+  summary: readonly { reason: Reason; count: number }[],
+  label: (reason: Reason, count: number) => string,
 ): string {
   return summary
     .filter((entry) => entry.count > 0)
-    .map((entry) => `${rejectReasonShortLabel(entry.reason)} ${entry.count}`)
+    .map((entry) => label(entry.reason, entry.count))
     .join(" · ");
 }
 

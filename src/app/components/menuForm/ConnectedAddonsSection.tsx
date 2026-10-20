@@ -15,7 +15,9 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ConnectAddonGroupDialog from "../ConnectAddonGroupDialog";
 import { AddonGroupOption } from "../ConnectAddonGroupDialog";
-import { formatMoneyDelta } from "@/app/lib/orderFormat";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 
 interface ConnectedAddonsSectionProps {
   addonCategories: AddonGroupOption[];
@@ -31,6 +33,9 @@ export default function ConnectedAddonsSection({
   selectedAddonCategoryIds,
   onChangeSelectedAddonCategoryIds,
 }: ConnectedAddonsSectionProps) {
+  const t = useTranslations("bo.menuForm");
+  const locale = useLocale();
+  const money = useStaffMoney();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
@@ -66,9 +71,9 @@ export default function ConnectedAddonsSection({
         }}
       >
         <Box>
-          <Typography variant="body2">Connected Add-ons & Modifiers</Typography>
+          <Typography variant="body2">{t("addonsTitle")}</Typography>
           <Typography variant="caption" color="text.secondary">
-            Link extra toppings, sauces, or sides to this item.
+            {t("addonsHint")}
           </Typography>
         </Box>
         <Button
@@ -78,13 +83,13 @@ export default function ConnectedAddonsSection({
           onClick={() => setDialogOpen(true)}
           sx={{ whiteSpace: "nowrap" }}
         >
-          Add New Group
+          {t("addNewGroup")}
         </Button>
       </Stack>
 
       {connectedCategories.length === 0 ? (
         <Typography variant="caption" color="text.secondary">
-          No add-on groups connected yet.
+          {t("noGroups")}
         </Typography>
       ) : (
         <>
@@ -121,10 +126,10 @@ export default function ConnectedAddonsSection({
                     sx={{ alignItems: "center" }}
                   >
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {category.name}
+                      {localizedText(locale, category.name, category.nameMy)}
                     </Typography>
                     <Chip
-                      label="Connected"
+                      label={t("connected")}
                       size="small"
                       color="primary"
                       variant="outlined"
@@ -135,14 +140,14 @@ export default function ConnectedAddonsSection({
                       component={Link}
                       href={`/backoffice/addons/${category.id}`}
                       size="small"
-                      aria-label={`Edit ${category.name}`}
+                      aria-label={t("editGroup", { name: category.name })}
                     >
                       <EditOutlinedIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
                       onClick={() => disconnect(category.id)}
-                      aria-label={`Disconnect ${category.name}`}
+                      aria-label={t("disconnectGroup", { name: category.name })}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
@@ -159,8 +164,11 @@ export default function ConnectedAddonsSection({
                       size="small"
                       label={
                         addon.price === 0
-                          ? addon.name
-                          : `${addon.name} (${formatMoneyDelta(addon.price)})`
+                          ? localizedText(locale, addon.name, addon.nameMy)
+                          : t("optionWithPrice", {
+                              name: localizedText(locale, addon.name, addon.nameMy),
+                              price: money.delta(addon.price),
+                            })
                       }
                       variant="outlined"
                       sx={{ bgcolor: "background.paper", borderColor: "divider" }}
@@ -177,7 +185,7 @@ export default function ConnectedAddonsSection({
               onClick={() => setShowAll((current) => !current)}
               sx={{ mt: 1 }}
             >
-              {showAll ? "Show Less" : `Show More (${hiddenCount})`}
+              {showAll ? t("showLess") : t("showMore", { count: hiddenCount })}
             </Button>
           )}
         </>

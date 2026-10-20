@@ -2,6 +2,7 @@
 
 import { Box, Stack } from "@mui/material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import { useTranslations } from "next-intl";
 import EmptyState from "@/app/components/EmptyState";
 import { reportHref, type ReportParams } from "@/app/lib/report/reportView";
 import type { ReportOverview } from "./action";
@@ -33,11 +34,12 @@ export default function OverviewTab({
   today,
   onNavigate,
 }: OverviewTabProps) {
+  const t = useTranslations("bo.reports");
   if (overview.current.summary.bills === 0) {
     return (
       <EmptyState
         Icon={ReceiptLongIcon}
-        message="No paid bills in this period"
+        message={t("noBills")}
       />
     );
   }

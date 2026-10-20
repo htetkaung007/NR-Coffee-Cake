@@ -126,7 +126,7 @@ export class AppService {
 
     const existingUser = await AppService.getUserByEmail(input.email);
     if (existingUser) {
-      throw new ValidationError("Email is already registered.");
+      throw new ValidationError("Email is already registered.", "EMAIL_TAKEN");
     }
 
     const hashedPassword = await bcrypt.hash(input.password, 10);

@@ -3,7 +3,9 @@
 import { Box, Card, Stack, Typography } from "@mui/material";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import TableRestaurantIcon from "@mui/icons-material/TableRestaurant";
-import { countLabel, formatAmount } from "@/app/lib/orderFormat";
+import { useTranslations } from "next-intl";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { useReportWords } from "./useReportWords";
 import type { ReportOverview } from "./action";
 import {
   moneyColor,
@@ -18,17 +20,20 @@ type Channels = ReportOverview["current"]["channels"];
  *  for Table, secondary for Counter), but every number is also written
  *  out beneath — the bar is never the only carrier (DESIGN.md Rule 13). */
 export default function ChannelsCard({ channels }: { channels: Channels }) {
+  const t = useTranslations("bo.reports");
+  const money = useStaffMoney();
+  const words = useReportWords();
   const rows = [
     {
       key: "table" as const,
-      label: "Table",
+      label: t("table"),
       Icon: TableRestaurantIcon,
       share: channels.tableShare,
       ...channels.table,
     },
     {
       key: "counter" as const,
-      label: "Counter",
+      label: t("counter"),
       Icon: StorefrontIcon,
       share: channels.counterShare,
       ...channels.counter,
@@ -41,15 +46,18 @@ export default function ChannelsCard({ channels }: { channels: Channels }) {
   return (
     <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 } }}>
       <Typography variant="body1" component="h2" sx={sectionHeadingSx}>
-        Order channels
+        {t("channelsTitle")}
       </Typography>
 
       <Box
         role="img"
         aria-label={
           hasSales
-            ? `Table ${channels.tableShare}%, Counter ${channels.counterShare}%`
-            : "No sales"
+            ? t("channelsLabel", {
+                table: channels.tableShare,
+                counter: channels.counterShare,
+              })
+            : t("noSales")
         }
         sx={{
           display: "flex",
@@ -95,9 +103,9 @@ export default function ChannelsCard({ channels }: { channels: Channels }) {
             </Typography>
             <Typography variant="body2" color="text.secondary">
               <Box component="span" sx={{ color: moneyColor("income") }}>
-                {formatAmount(row.sales)}
+                {money.amount(row.sales)}
               </Box>{" "}
-              · {countLabel(row.bills, "bill", "bills")}
+              · {words.bills(row.bills)}
             </Typography>
           </Stack>
         ))}

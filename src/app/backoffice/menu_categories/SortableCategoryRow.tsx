@@ -7,10 +7,11 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useLocale, useTranslations } from "next-intl";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import {
   categoryPreviewLine,
-  NO_MENUS_TEXT,
   type CategoryMenu,
 } from "@/app/lib/menu/categoryMenus";
 
@@ -40,7 +41,16 @@ export interface CategoryItem {
 /** The line under a category's name: "N items · A, B, C +K more" — one
  *  line, ellipsis (works for Myanmar names too), full text in title. */
 export function CategoryMenusPreview({ menus }: { menus: CategoryMenu[] }) {
-  const text = menus.length === 0 ? NO_MENUS_TEXT : categoryPreviewLine(menus);
+  const t = useTranslations("bo.categories");
+  const locale = useLocale();
+  const text =
+    menus.length === 0
+      ? t("noMenus")
+      : categoryPreviewLine(menus, {
+          count: (count) => t("itemCount", { count }),
+          more: (count) => t("more", { count }),
+          name: (menu) => localizedText(locale, menu.name, menu.nameMy),
+        });
   return (
     <Typography variant="body2" color="text.secondary" noWrap title={text}>
       {text}
@@ -97,6 +107,9 @@ export default function SortableCategoryRow({
     transition: reduceMotion ? null : undefined,
   });
 
+  const t = useTranslations("bo.categories");
+  const locale = useLocale();
+  const name = localizedText(locale, category.name, category.nameMy);
   const isFirst = index === 0;
   const isLast = index === total - 1;
 
@@ -130,7 +143,7 @@ export default function SortableCategoryRow({
         ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
-        aria-label={`Drag to reorder ${category.name}`}
+        aria-label={t("dragItem", { name })}
         sx={{
           width: 44,
           height: 44,
@@ -145,7 +158,7 @@ export default function SortableCategoryRow({
 
       <ButtonBase
         onClick={() => onOpen(category)}
-        aria-label={`Edit ${category.name}`}
+        aria-label={t("editItem", { name })}
         sx={(theme) => ({
           flex: 1,
           minWidth: 0,
@@ -185,7 +198,7 @@ export default function SortableCategoryRow({
         </Box>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="body1" noWrap>
-            {category.name}
+            {name}
           </Typography>
           <CategoryMenusPreview menus={category.menus} />
         </Box>
@@ -197,7 +210,7 @@ export default function SortableCategoryRow({
       <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
         <IconButton
           ref={(element) => registerArrow(`${category.id}:up`, element)}
-          aria-label={`Move ${category.name} up`}
+          aria-label={t("moveUp", { name })}
           disabled={isFirst}
           aria-disabled={isFirst || isSaving}
           onClick={() => onMove(category.id, "up")}
@@ -207,7 +220,7 @@ export default function SortableCategoryRow({
         </IconButton>
         <IconButton
           ref={(element) => registerArrow(`${category.id}:down`, element)}
-          aria-label={`Move ${category.name} down`}
+          aria-label={t("moveDown", { name })}
           disabled={isLast}
           aria-disabled={isLast || isSaving}
           onClick={() => onMove(category.id, "down")}

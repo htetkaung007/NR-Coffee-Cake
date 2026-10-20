@@ -1,16 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { ActionResult } from "@/app/lib/actionResult";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 
 export type ResourceState<T> =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "ok"; data: T };
 
-type Entry<T> = Exclude<ResourceState<T>, { status: "loading" }>;
-
-const FAILED = "Couldn't load this report.";
+/** What's kept per key: the data, or the action's error as it came (null
+ *  when the request itself failed) — put into words when read, in the
+ *  staff's language. */
+type Entry<T> =
+  | { status: "ok"; data: T }
+  | {
+      status: "error";
+      error: { message: string; code: string; params?: Record<string, string | number> } | null;
+    };
 
 /**
  * One server-action result per `key`, fetched in the background the first
@@ -30,6 +38,8 @@ export function useKeyedResource<T>(
   key: string | null,
   load: () => Promise<ActionResult<T>>,
 ) {
+  const t = useTranslations("bo.reports");
+  const errorText = useStaffErrorMessage();
   const [entries, setEntries] = useState<Record<string, Entry<T>>>({});
   const [attempt, setAttempt] = useState(0);
   const requested = useRef(new Set<string>());
@@ -53,10 +63,10 @@ export function useKeyedResource<T>(
         store(
           result.success
             ? { status: "ok", data: result.data }
-            : { status: "error", message: result.error.message },
+            : { status: "error", error: result.error },
         ),
       )
-      .catch(() => store({ status: "error", message: FAILED }));
+      .catch(() => store({ status: "error", error: null }));
   }, [key, attempt]);
 
   const retry = useCallback(() => {
@@ -70,6 +80,13 @@ export function useKeyedResource<T>(
   }, [key]);
 
   const entry = key === null ? undefined : entries[key];
-  const state: ResourceState<T> = entry ?? { status: "loading" };
+  const state: ResourceState<T> = !entry
+    ? { status: "loading" }
+    : entry.status === "ok"
+      ? entry
+      : {
+          status: "error",
+          message: entry.error ? errorText(entry.error) : t("loadErrorThis"),
+        };
   return { state, retry };
 }

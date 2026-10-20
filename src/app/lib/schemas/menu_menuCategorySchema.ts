@@ -8,6 +8,14 @@ import {
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 import { NO_LOCATION_MESSAGE } from "@/app/lib/menu/menuLocations";
 
+/** The longest names / descriptions — ONE number per field pair, shared
+ *  by the English field and its Myanmar twin, here and in the forms'
+ *  maxLength and "12/50 characters" counters (string length, as Zod
+ *  counts it). */
+export const MENU_NAME_MAX = 50;
+export const MENU_DESCRIPTION_MAX = 100;
+export const CATEGORY_NAME_MAX = 50;
+
 /** Most locations one company can tick on a menu form. */
 const MAX_SHOWN_LOCATIONS = 50;
 
@@ -24,16 +32,19 @@ export const createMenuSchema = z.object({
     .string()
     .trim()
     .min(1, MENU_NAME_REQUIRED_MESSAGE)
-    .max(50, "Menu item name cannot exceed 50 characters."),
+    .max(MENU_NAME_MAX, `Menu item name cannot exceed ${MENU_NAME_MAX} characters.`),
   /** Shown to customers who choose Myanmar; null → the English name. */
-  nameMy: optionalTextSchema(50, "Myanmar name cannot exceed 50 characters."),
+  nameMy: optionalTextSchema(
+    MENU_NAME_MAX,
+    `Myanmar name cannot exceed ${MENU_NAME_MAX} characters.`,
+  ),
   description: z
     .string()
     .trim()
-    .max(100, "Description cannot exceed 100 characters."),
+    .max(MENU_DESCRIPTION_MAX, `Description cannot exceed ${MENU_DESCRIPTION_MAX} characters.`),
   descriptionMy: optionalTextSchema(
-    100,
-    "Myanmar description cannot exceed 100 characters.",
+    MENU_DESCRIPTION_MAX,
+    `Myanmar description cannot exceed ${MENU_DESCRIPTION_MAX} characters.`,
   ),
   price: z.coerce
     .number()
@@ -83,9 +94,9 @@ export const setMenuAvailableSchema = z.object({
 export type SetMenuAvailableInput = z.infer<typeof setMenuAvailableSchema>;
 
 export const createMenuCategorySchema = z.object({
-  name: z.string().trim().min(1, "Category name is required.").max(50),
+  name: z.string().trim().min(1, "Category name is required.").max(CATEGORY_NAME_MAX),
   /** Shown to customers who choose Myanmar; null → the English name. */
-  nameMy: optionalTextSchema(50),
+  nameMy: optionalTextSchema(CATEGORY_NAME_MAX),
   isEnabled: z.boolean(),
 });
 

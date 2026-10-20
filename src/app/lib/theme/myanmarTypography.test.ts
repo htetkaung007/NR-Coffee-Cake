@@ -60,9 +60,28 @@ describe("myanmarTypographyStyles", () => {
     expect(styles[".MuiButton-root:lang(my)"].lineHeight).toBe(1.75);
   });
 
-  it("covers buttons and tabs with the button variant", () => {
+  it("covers buttons, tabs and toggle buttons with the button variant", () => {
     expect(styles[".MuiButton-root:lang(my)"].fontSize).toBe("calc(0.875rem * 0.9)");
     expect(styles[".MuiTab-root:lang(my)"].fontSize).toBe("calc(0.875rem * 0.9)");
+    expect(styles[".MuiToggleButton-root:lang(my)"].fontSize).toBe("calc(0.875rem * 0.9)");
+  });
+
+  it("covers the staff screens' menu rows and table cells", () => {
+    const all = myanmarTypographyStyles({
+      body1: { fontSize: "1rem", lineHeight: 1.5 },
+      body2: { fontSize: "0.875rem", lineHeight: 1.43 },
+    });
+    expect(all[".MuiMenuItem-root:lang(my)"].lineHeight).toBe(1.8);
+    expect(all[".MuiTableCell-root:lang(my)"].fontSize).toBe("calc(0.875rem * 0.96)");
+  });
+
+  it("covers the page-title headings too", () => {
+    const all = myanmarTypographyStyles({ h4: { fontSize: "2rem", lineHeight: 1.2 } });
+    expect(all[".MuiTypography-h4:lang(my)"].lineHeight).toBe(1.6);
+  });
+
+  it("drops letter-spacing for Myanmar text", () => {
+    expect(styles[".MuiTypography-caption:lang(my)"].letterSpacing).toBe("normal");
   });
 
   it("skips a variant the theme doesn't define", () => {

@@ -2,6 +2,7 @@ import { prisma } from "../utils/prisma";
 import type { Prisma } from "../../../prisma/generated/client";
 import { NotFoundError, ValidationError } from "../lib/errors";
 import {
+  LOCATION_DELETION_CODES,
   LOCATION_DELETION_MESSAGES,
   locationDeletion,
 } from "../lib/location/locationDeletion";
@@ -208,7 +209,10 @@ export class LocationService {
         await LocationService.deletionFacts(tx, locationId, companyId),
       );
       if (!deletion.allowed) {
-        throw new ValidationError(LOCATION_DELETION_MESSAGES[deletion.reason]);
+        throw new ValidationError(
+          LOCATION_DELETION_MESSAGES[deletion.reason],
+          LOCATION_DELETION_CODES[deletion.reason],
+        );
       }
 
       const tables = await tx.table.findMany({
@@ -314,6 +318,7 @@ export class LocationService {
     if (user.role === "MANAGER") {
       throw new ValidationError(
         "Managers can't switch locations — contact your Admin.",
+        "MANAGER_CANT_SWITCH",
       );
     }
     await LocationService.getCompanyLocation(locationId, companyId);

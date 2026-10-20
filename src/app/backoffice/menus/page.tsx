@@ -1,6 +1,7 @@
 import { LocationService, MenuService, PermissionService } from "@/app/services";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
-import { ASK_OWNER_HINTS, hasPermission } from "@/app/lib/access/permissions";
+import { hasPermission } from "@/app/lib/access/permissions";
+import { getTranslations } from "next-intl/server";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
@@ -9,12 +10,13 @@ import MenuGrid from "./MenuGrid";
 
 export default async function MenusPage() {
   const { context, fallback } = await requireBackofficeContext({
-    signedOut: "Please sign in to view menus.",
     // Managers see the list (they'll turn menus on/off here); creating
     // and editing are the owner's (menus/new, menus/[id]).
     access: "staff",
   });
   if (!context) return fallback;
+  const tPermissions = await getTranslations("bo.permissions");
+  const t = await getTranslations("bo.menus");
   const { companyId, location, role, userId } = context;
   // Display only — creating a menu is the owner's (its page checks too).
   const isOwner = role === "ADMIN";
@@ -26,7 +28,7 @@ export default async function MenusPage() {
   ]);
   // Display only — setMenuAvailableAction checks the permission itself.
   const canToggle = hasPermission(role, granted, "MENU_AVAILABILITY");
-  const locationName = locationRow?.name ?? "this location";
+  const locationName = locationRow?.name ?? t("thisLocation");
 
   return (
     // The same page padding and header spacing as the Tables page.
@@ -47,8 +49,8 @@ export default async function MenusPage() {
         }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h6">
-            Menus
+          <Typography variant="h6" component="h1">
+            {t("title")}
           </Typography>
           <Stack
             direction="row"
@@ -57,12 +59,12 @@ export default async function MenusPage() {
           >
             <PlaceOutlinedIcon fontSize="small" aria-hidden />
             <Typography variant="body2">
-              Availability for: {locationName}
+              {t("availabilityFor", { location: locationName })}
             </Typography>
           </Stack>
           {!canToggle && (
             <Typography variant="body2" color="text.secondary">
-              {ASK_OWNER_HINTS.MENU_AVAILABILITY}
+              {tPermissions("askOwner.MENU_AVAILABILITY")}
             </Typography>
           )}
         </Box>
@@ -72,12 +74,12 @@ export default async function MenusPage() {
             href="/backoffice/menus/new"
             sx={{ display: { xs: "none", lg: "inline-flex" }, flexShrink: 0 }}
           >
-            Create Menu
+            {t("createMenu")}
           </Button>
         )}
       </Box>
       {menus.length === 0 ? (
-        <Typography color="text.secondary">No menu items yet.</Typography>
+        <Typography color="text.secondary">{t("noMenus")}</Typography>
       ) : (
         <MenuGrid
           menus={menus.map((menu) => ({
@@ -95,7 +97,7 @@ export default async function MenusPage() {
           <NewItemFabSpacer hideFrom="lg" />
           <NewItemFab
             href="/backoffice/menus/new"
-            label="Create menu"
+            label={t("createMenuFab")}
             hideFrom="lg"
           />
         </>

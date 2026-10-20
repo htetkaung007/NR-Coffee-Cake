@@ -2,7 +2,9 @@
 
 import type { ReactNode } from "react";
 import { Box, ButtonBase, Typography } from "@mui/material";
-import { formatAmount } from "@/app/lib/orderFormat";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import type { ReportPeriodKind } from "@/app/lib/report/reportPeriod";
 import type { ItemListRow } from "@/app/lib/report/reportView";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
@@ -29,6 +31,7 @@ const ROW_GRID_SX = {
 
 /** Column titles for the sm+ layout (phones label each value in words). */
 export function ItemsListHeader() {
+  const t = useTranslations("bo.reports");
   const title = (text: string, area: string, align?: "right") => (
     <Typography
       variant="caption"
@@ -49,11 +52,11 @@ export function ItemsListHeader() {
       }}
     >
       {title("#", "rank")}
-      {title("Item", "name")}
-      {title("Sold", "qty")}
-      {title("Sales", "sales", "right")}
-      {title("Share", "share")}
-      {title("Change", "delta", "right")}
+      {title(t("colItem"), "name")}
+      {title(t("colSold"), "qty")}
+      {title(t("colSales"), "sales", "right")}
+      {title(t("colShare"), "share")}
+      {title(t("colChange"), "delta", "right")}
     </Box>
   );
 }
@@ -86,6 +89,10 @@ export default function ItemRow({
   panelId,
   panelLabel,
 }: ItemRowProps) {
+  const t = useTranslations("bo.reports");
+  const locale = useLocale();
+  const money = useStaffMoney();
+  const name = localizedText(locale, row.name, row.nameMy);
   const hasSales = row.quantity > 0 || row.itemSales > 0;
   const barWidth = maxShare > 0 ? (row.share / maxShare) * 100 : 0;
 
@@ -113,7 +120,7 @@ export default function ItemRow({
           noWrap
           sx={{ ...entryTitleSx, gridArea: "name" }}
         >
-          {row.name}
+          {name}
         </Typography>
 
         {hasSales ? (
@@ -126,7 +133,7 @@ export default function ItemRow({
                 textAlign: "right",
               }}
             >
-              {formatAmount(row.itemSales)}
+              {money.amount(row.itemSales)}
             </Typography>
             <Box
               sx={{
@@ -142,7 +149,7 @@ export default function ItemRow({
                 color="text.secondary"
                 sx={{ gridArea: "qty" }}
               >
-                {row.quantity} sold
+                {t("sold", { count: row.quantity })}
               </Typography>
               <Box
                 sx={{
@@ -194,7 +201,7 @@ export default function ItemRow({
               gridColumn: { sm: "qty-start / delta-end" },
             }}
           >
-            No sales this period
+            {t("noSalesPeriod")}
           </Typography>
         )}
         {onToggle && (
@@ -205,7 +212,7 @@ export default function ItemRow({
       </RowHeader>
 
       {expanded && detail && panelId && (
-        <ExpandedPanel id={panelId} label={panelLabel ?? `${row.name} details`}>
+        <ExpandedPanel id={panelId} label={panelLabel ?? t("rowDetails", { name })}>
           {detail}
         </ExpandedPanel>
       )}

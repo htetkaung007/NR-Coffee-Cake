@@ -1,48 +1,89 @@
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-import { formatDuration, type CancellationDetail } from "@/app/lib/order/cancellation";
-import { formatClockTime } from "@/app/lib/orderFormat";
-import { rejectReasonLabel } from "@/app/lib/order/rejectReason";
-import { cancelReasonLabel } from "@/app/lib/order/cancelReason";
+import {
+  formatDuration,
+  type CancellationDetail,
+  type DurationUnits,
+} from "@/app/lib/order/cancellation";
+import type { RejectReason } from "@/app/lib/order/rejectReason";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-/** Every "day" string here is already a shop-calendar day ("YYYY-MM-DD",
- *  computed by shopDay.ts) — parsed with dayjs.utc purely to read its
- *  calendar parts (weekday, month, day-of-month) without any further
- *  timezone conversion, never to re-derive "which day" something was. */
+/**
+ * History's words, built from the staff's language (useHistoryWords —
+ * bo.history and bo.rejectReason in messages/*.json, dates and times
+ * through next-intl's formatter in the SHOP timezone). Every helper
+ * here only arranges them. Pure.
+ *
+ * Every "day" string is already a shop-calendar day ("YYYY-MM-DD",
+ * computed by shopDay.ts) — its weekday / date are read from its
+ * calendar parts, never re-derived from an instant.
+ */
+export interface HistoryWords {
+  today: string;
+  yesterday: string;
+  /** "Fri" for a shop day. */
+  weekday: (day: string) => string;
+  /** "Fri, Sep 25" for a shop day. */
+  dayDate: (day: string) => string;
+  /** "Fri, Sep 25" for an instant, read on the shop's calendar. */
+  shopDate: (iso: string) => string;
+  /** "11:20 AM" for an instant, in shop time. */
+  clockTime: (iso: string) => string;
+  /** "45 min". */
+  minutes: (minutes: number) => string;
+  /** "Rejected" / "Timed out" / "Cancelled by customer". */
+  cancelReason: (reason: "REJECTED" | "EXPIRED" | "WITHDRAWN") => string;
+  /** The cashier's reason ("Out of stock"). */
+  rejectReason: (reason: RejectReason) => string;
+  /** "Rejected · Out of stock". */
+  rejectedWith: (reason: string) => string;
+  /** "Timed out · no decision in 10m". */
+  timedOutAfter: (duration: string) => string;
+  /** "Waited 4m 20s before it was rejected". */
+  waited: (duration: string) => string;
+  durationUnits: DurationUnits;
+}
 
 /** "Today" / "Yesterday" / a weekday name for line 1, "Fri, Sep 25" for
  *  line 2 (always shown, whatever line 1 says) — the day navigator's
  *  label. `today` is the shop's current day (todayInShop()). */
-export function formatDayLabel(day: string, today: string) {
-  const yesterday = dayjs.utc(today).subtract(1, "day").format("YYYY-MM-DD");
+export function formatDayLabel(day: string, today: string, words: HistoryWords) {
   const primary =
     day === today
-      ? "Today"
-      : day === yesterday
-        ? "Yesterday"
-        : dayjs.utc(day).format("ddd");
-  return { primary, secondary: dayjs.utc(day).format("ddd, MMM D") };
+      ? words.today
+      : day === previousDay(today)
+        ? words.yesterday
+        : words.weekday(day);
+  return { primary, secondary: words.dayDate(day) };
+}
+
+/** The calendar day before `day` ("YYYY-MM-DD", UTC parts only). */
+function previousDay(day: string) {
+  const date = new Date(`${day}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
 }
 
 /** "11:20 AM – 12:05 PM" — a paid bill's opened-to-paid span. */
-export function formatTimeRange(startIso: string, endIso: string) {
-  return `${formatClockTime(startIso)} – ${formatClockTime(endIso)}`;
+export function formatTimeRange(
+  startIso: string,
+  endIso: string,
+  words: HistoryWords,
+) {
+  return `${words.clockTime(startIso)} – ${words.clockTime(endIso)}`;
 }
 
 /** "45 min" between two ISO timestamps — never negative (clock skew
  *  between reads is the only way it could go below zero). */
-export function formatDurationMinutes(startIso: string, endIso: string) {
+export function formatDurationMinutes(
+  startIso: string,
+  endIso: string,
+  words: HistoryWords,
+) {
   const minutes = Math.max(
     0,
     Math.round(
       (new Date(endIso).getTime() - new Date(startIso).getTime()) / 60000,
     ),
   );
-  return `${minutes} min`;
+  return words.minutes(minutes);
 }
 
 /** "Rejected" / "Timed out" / "Cancelled by customer" — the reasons this
@@ -51,17 +92,18 @@ export function formatDurationMinutes(startIso: string, endIso: string) {
  *  Without a record it stays the plain label. */
 export function formatCancelReasonLabel(
   reason: string,
-  cancellation: CancellationDetail | null = null,
+  cancellation: CancellationDetail | null,
+  words: HistoryWords,
 ) {
-  if (reason === "WITHDRAWN") return cancelReasonLabel(reason, "staff");
+  if (reason === "WITHDRAWN") return words.cancelReason("WITHDRAWN");
   if (reason === "REJECTED") {
     return cancellation?.rejectReason
-      ? `Rejected · ${rejectReasonLabel(cancellation.rejectReason)}`
-      : "Rejected";
+      ? words.rejectedWith(words.rejectReason(cancellation.rejectReason))
+      : words.cancelReason("REJECTED");
   }
   return cancellation?.waitSeconds != null
-    ? `Timed out · no decision in ${formatDuration(cancellation.waitSeconds)}`
-    : "Timed out";
+    ? words.timedOutAfter(formatDuration(cancellation.waitSeconds, words.durationUnits))
+    : words.cancelReason("EXPIRED");
 }
 
 /** "Rejected · Other — coffee machine broken" — the detail view's line
@@ -70,6 +112,7 @@ export function formatCancelReasonLabel(
 export function formatCancelNoteLine(
   reason: string,
   cancellation: CancellationDetail | null,
+  words: HistoryWords,
 ) {
   if (
     reason !== "REJECTED" ||
@@ -78,7 +121,7 @@ export function formatCancelNoteLine(
   ) {
     return null;
   }
-  return `${formatCancelReasonLabel(reason, cancellation)} — ${cancellation.note}`;
+  return `${formatCancelReasonLabel(reason, cancellation, words)} — ${cancellation.note}`;
 }
 
 /** "Waited 4m 20s before it was rejected" — the detail view's line for a
@@ -87,16 +130,8 @@ export function formatCancelNoteLine(
 export function formatCancelWait(
   reason: string,
   cancellation: CancellationDetail | null,
+  words: HistoryWords,
 ) {
   if (reason !== "REJECTED" || cancellation?.waitSeconds == null) return null;
-  return `Waited ${formatDuration(cancellation.waitSeconds)} before it was rejected`;
-}
-
-/** "Fri, Sep 25" for an absolute timestamp, read on the SHOP's calendar
- *  (never the viewer's own timezone) — the detail view's date line.
- *  Unlike the other helpers here, this one does need a live timezone
- *  conversion (the input is a real instant, not an already-resolved
- *  shop-day string), so it takes shopTimezone explicitly. */
-export function formatShopDateLabel(iso: string, shopTimezone: string) {
-  return dayjs(iso).tz(shopTimezone).format("ddd, MMM D");
+  return words.waited(formatDuration(cancellation.waitSeconds, words.durationUnits));
 }

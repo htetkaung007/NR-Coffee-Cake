@@ -23,11 +23,16 @@ import { createAddonGroupAction } from "../backoffice/addons/action";
 import { emptyOptionRow, useOptionRows } from "../lib/hooks/useOptionRows";
 import GroupNameFields from "./addonForm/GroupNameFields";
 import OptionRowsEditor from "./addonForm/OptionRowsEditor";
+import { useLocale, useTranslations } from "next-intl";
+import { localizedText } from "@/app/lib/i18n/localizedText";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 
 export interface AddonGroupOption {
   id: number;
   name: string;
-  addons: { id: number; name: string; price: number }[];
+  /** The shop's Myanmar names — shown in the Myanmar Backoffice. */
+  nameMy?: string | null;
+  addons: { id: number; name: string; nameMy?: string | null; price: number }[];
 }
 
 interface ConnectAddonGroupDialogProps {
@@ -45,6 +50,10 @@ export default function ConnectAddonGroupDialog({
   selectedIds,
   onChangeSelectedIds,
 }: ConnectAddonGroupDialogProps) {
+  const t = useTranslations("bo.connectAddon");
+  const tCommon = useTranslations("bo.common");
+  const locale = useLocale();
+  const errorText = useStaffErrorMessage();
   const router = useRouter();
   const [draftIds, setDraftIds] = useState<number[]>(selectedIds);
   const [search, setSearch] = useState("");
@@ -84,8 +93,12 @@ export default function ConnectAddonGroupDialog({
     );
   }
 
-  const filteredCategories = addonCategories.filter((category) =>
-    category.name.toLowerCase().includes(search.trim().toLowerCase()),
+  // Both names match, whatever the language shown.
+  const term = search.trim().toLowerCase();
+  const filteredCategories = addonCategories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(term) ||
+      (category.nameMy ?? "").toLowerCase().includes(term),
   );
 
   async function handleSave() {
@@ -112,7 +125,7 @@ export default function ConnectAddonGroupDialog({
       setIsSaving(false);
 
       if (!result.success) {
-        setError(result.error.message);
+        setError(errorText(result.error));
         return;
       }
 
@@ -136,8 +149,8 @@ export default function ConnectAddonGroupDialog({
           justifyContent: "space-between",
         }}
       >
-        Connect Add-On Group
-        <IconButton size="small" onClick={onClose} aria-label="Close">
+        {t("title")}
+        <IconButton size="small" onClick={onClose} aria-label={tCommon("close")}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
@@ -150,11 +163,11 @@ export default function ConnectAddonGroupDialog({
         )}
 
         <Typography variant="body2" sx={{ mb: 1 }}>
-          Quick Select Existing Add-on Group
+          {t("quickSelect")}
         </Typography>
 
         <TextField
-          placeholder="Search groups..."
+          placeholder={t("search")}
           size="small"
           fullWidth
           value={search}
@@ -174,8 +187,8 @@ export default function ConnectAddonGroupDialog({
         {filteredCategories.length === 0 ? (
           <Typography variant="caption" color="text.secondary">
             {addonCategories.length === 0
-              ? "No addon groups yet — create one below."
-              : "No groups match your search."}
+              ? t("noGroupsYet")
+              : t("noMatch")}
           </Typography>
         ) : (
           <Box
@@ -213,11 +226,10 @@ export default function ConnectAddonGroupDialog({
                 >
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {category.name}
+                      {localizedText(locale, category.name, category.nameMy)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {category.addons.length}{" "}
-                      {category.addons.length === 1 ? "choice" : "choices"}
+                      {t("choices", { count: category.addons.length })}
                     </Typography>
                   </Box>
                   <Button
@@ -231,7 +243,7 @@ export default function ConnectAddonGroupDialog({
                         : {}
                     }
                   >
-                    {isSelected ? "Disconnect" : "Connect"}
+                    {isSelected ? t("disconnect") : t("connect")}
                   </Button>
                 </Box>
               );
@@ -242,7 +254,7 @@ export default function ConnectAddonGroupDialog({
         <Divider sx={{ mb: 2.5 }} />
 
         <Typography variant="body2" sx={{ mb: 2 }}>
-          Or Create Custom Add-On Option
+          {t("orCreate")}
         </Typography>
 
         <Stack spacing={3}>
@@ -274,7 +286,7 @@ export default function ConnectAddonGroupDialog({
           onClick={onClose}
           sx={{ borderRadius: 2.5, px: 3 }}
         >
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button
           variant="contained"
@@ -282,7 +294,7 @@ export default function ConnectAddonGroupDialog({
           disabled={isSaving}
           sx={{ borderRadius: 2.5, px: 3 }}
         >
-          {isSaving ? "Saving..." : "Save Add-on"}
+          {isSaving ? tCommon("saving") : t("save")}
         </Button>
       </Stack>
     </Dialog>

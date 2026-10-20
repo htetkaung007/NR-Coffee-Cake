@@ -1,10 +1,11 @@
 import { List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { useTranslations } from "next-intl";
 import { ALWAYS_ALLOWED, OWNER_ONLY } from "@/app/lib/access/permissions";
 
-/** A read-only list with a heading — the words come from the catalog;
- *  the icons are decorative (the heading says what the list means). */
+/** A read-only list with a heading — the words come from the catalog's
+ *  keys (bo.permissions); the icons are decorative (the heading says what the list means). */
 function RuleList({
   title,
   items,
@@ -34,22 +35,24 @@ function RuleList({
 }
 
 /** What every manager can do, with no ticks needed (ALWAYS_ALLOWED). */
-export function AlwaysAllowedList({ title = "Always allowed" }: { title?: string }) {
+export function AlwaysAllowedList({ title }: { title?: string }) {
+  const t = useTranslations("bo.permissions");
   return (
     <RuleList
-      title={title}
-      items={ALWAYS_ALLOWED}
+      title={title ?? t("alwaysAllowedTitle")}
+      items={ALWAYS_ALLOWED.map((key) => t(`alwaysAllowed.${key}`))}
       icon={<CheckCircleOutlinedIcon fontSize="small" />}
     />
   );
 }
 
 /** What no manager can ever do (OWNER_ONLY). */
-export function OwnerOnlyList({ title = "Owner only" }: { title?: string }) {
+export function OwnerOnlyList({ title }: { title?: string }) {
+  const t = useTranslations("bo.permissions");
   return (
     <RuleList
-      title={title}
-      items={OWNER_ONLY}
+      title={title ?? t("ownerOnlyTitle")}
+      items={OWNER_ONLY.map((key) => t(`ownerOnly.${key}`))}
       icon={<LockOutlinedIcon fontSize="small" />}
     />
   );

@@ -184,7 +184,7 @@ export class OrderPaymentService {
         (session) => session.status === "PAID" || session.billId !== null,
       );
       if (alreadyPaid) {
-        throw new ValidationError("This order has already been paid.");
+        throw new ValidationError("This order has already been paid.", "ALREADY_PAID");
       }
 
       const bill = await BillService.createForPaidSessions(tx, sessions);

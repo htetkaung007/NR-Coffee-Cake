@@ -4,14 +4,18 @@ import { approvalDeadline } from "@/app/lib/approval/approvalDeadline";
 import { requireBackofficeContext } from "@/app/lib/access/backofficeContext";
 import { buildEntryBillFromSessions } from "@/app/lib/order/orderTotals";
 import { mergeLinesForDisplay } from "@/app/lib/order/orderLineMerge";
-import { formatAddonSelections } from "@/app/lib/order/addonLabel";
+import { getLocale } from "next-intl/server";
+import {
+  formatAddonSelections,
+  localizeAddonSelections,
+} from "@/app/lib/order/addonLabel";
+import { localizedText } from "@/app/lib/i18n/localizedText";
 import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
 import {
   effectiveItemCount,
   effectiveQuantity,
   isVoidableRoundStatus,
   voidedByLabel,
-  voidReasonLabel,
 } from "@/app/lib/order/voids";
 import OrderDetailView from "./OrderDetailView";
 
@@ -54,7 +58,6 @@ export default async function OrderDetailPage({
   const { entryKey } = await params;
 
   const { context, fallback } = await requireBackofficeContext({
-    signedOut: "Please sign in to view orders.",
     access: "staff",
   });
   if (!context) return fallback;
@@ -68,6 +71,10 @@ export default async function OrderDetailPage({
   // Paid, rejected or expired since the card was opened — nothing left
   // to show, so go back to the list rather than an empty page.
   if (!entry) redirect("/backoffice/order");
+
+  // Shop data in the staff's language: the shop's Myanmar names in the
+  // Myanmar Backoffice (localizedText), else the English.
+  const locale = await getLocale();
 
   // Dates cross the Server→Client boundary as ISO strings.
   const rounds = orderRoundsForDisplay(entry.sessions).map((session) => ({
@@ -90,18 +97,23 @@ export default async function OrderDetailPage({
       remaining: effectiveQuantity(order),
       voids: order.voids.map((entry) => ({
         quantity: entry.quantity,
-        reason: voidReasonLabel(entry.reason),
+        reason: entry.reason,
         note: entry.note,
         at: entry.createdAt.toISOString(),
         by: voidedByLabel(entry),
       })),
-      menuName: order.menu.name,
+      menuName: localizedText(locale, order.menu.name, order.menu.nameMy),
       imageUrl: resolveAssetUrl(order.menu.assetUrl || null),
       addonsText: formatAddonSelections(
-        order.OrdersAddons.map((link) => ({
-          name: link.addon.name,
-          groupName: link.addon.addonCategory.name,
-        })),
+        localizeAddonSelections(
+          locale,
+          order.OrdersAddons.map((link) => ({
+            name: link.addon.name,
+            nameMy: link.addon.nameMy,
+            groupName: link.addon.addonCategory.name,
+            groupNameMy: link.addon.addonCategory.nameMy,
+          })),
+        ),
       ),
       note: order.note,
     })),

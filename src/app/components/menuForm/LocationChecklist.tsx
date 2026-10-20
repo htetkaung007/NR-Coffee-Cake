@@ -12,7 +12,7 @@ import {
   FormLabel,
   Stack,
 } from "@mui/material";
-import { NO_LOCATION_MESSAGE } from "@/app/lib/menu/menuLocations";
+import { useTranslations } from "next-intl";
 
 export interface LocationOption {
   locationId: number;
@@ -40,6 +40,8 @@ export default function LocationChecklist({
   selectedIds: readonly number[];
   onChange: (nextIds: number[]) => void;
 }) {
+  const t = useTranslations("bo.menuForm");
+  const tCommon = useTranslations("bo.common");
   const selected = new Set(selectedIds);
   const current = locations.find(
     (location) => location.locationId === currentLocationId,
@@ -71,7 +73,7 @@ export default function LocationChecklist({
         sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}
       >
         <FormLabel component="legend" sx={{ float: "left" }}>
-          Show at locations
+          {t("showAtLocations")}
         </FormLabel>
         {locations.length >= BULK_LINKS_FROM && (
           <Stack direction="row" spacing={1}>
@@ -80,10 +82,10 @@ export default function LocationChecklist({
               onClick={() => onChange(locations.map((location) => location.locationId))}
               sx={{ minHeight: 44 }}
             >
-              Select all
+              {tCommon("selectAll")}
             </Button>
             <Button size="small" onClick={() => onChange([])} sx={{ minHeight: 44 }}>
-              Clear
+              {tCommon("clear")}
             </Button>
           </Stack>
         )}
@@ -95,7 +97,7 @@ export default function LocationChecklist({
             key={location.locationId}
             label={
               location.locationId === currentLocationId
-                ? `${location.name} (current)`
+                ? t("currentLocation", { name: location.name })
                 : location.name
             }
             control={
@@ -109,11 +111,13 @@ export default function LocationChecklist({
         ))}
       </FormGroup>
 
-      {isNoneSelected && <FormHelperText>{NO_LOCATION_MESSAGE}</FormHelperText>}
+      {isNoneSelected && (
+        <FormHelperText>{t("problems.locationRequired")}</FormHelperText>
+      )}
       {!isNoneSelected && isCurrentUnticked && (
         <Box sx={{ mt: 1 }}>
           <Alert severity="warning">
-            This menu won&apos;t show at {current.name} (where you are now).
+            {t("notShownHere", { name: current.name })}
           </Alert>
         </Box>
       )}

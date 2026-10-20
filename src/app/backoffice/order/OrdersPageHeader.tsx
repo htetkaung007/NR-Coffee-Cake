@@ -1,6 +1,7 @@
 "use client";
 
 import { Stack, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 import OrderSectionNav from "./OrderSectionNav";
 
 /**
@@ -18,7 +19,7 @@ import OrderSectionNav from "./OrderSectionNav";
  */
 export default function OrdersPageHeader({
   actions,
-  title = "Orders",
+  title,
   showSectionNav = true,
   inlineActions = false,
 }: {
@@ -31,6 +32,7 @@ export default function OrdersPageHeader({
   /** Keep `actions` beside the title on phones too (never its own row). */
   inlineActions?: boolean;
 }) {
+  const t = useTranslations("bo.orders");
   return (
     <Stack
       direction="row"
@@ -56,7 +58,7 @@ export default function OrdersPageHeader({
         }}
       >
         <Typography component="h1" variant="h6">
-          {title}
+          {title ?? t("title")}
         </Typography>
         {showSectionNav && <OrderSectionNav />}
       </Stack>

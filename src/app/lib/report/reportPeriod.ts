@@ -13,23 +13,6 @@ export interface ReportPeriod {
   days: string[];
 }
 
-/** English month names — fixed, so a label never depends on the device's
- *  language. */
-export const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
 /** 0 = Sunday … 6 = Saturday — read off the calendar date itself, so no
  *  timezone is involved. */
 function weekdayOf(day: string) {
@@ -97,28 +80,6 @@ export function elapsedDays(period: ReportPeriod, today: string): number {
 export function firstDays(period: ReportPeriod, count: number): ReportPeriod {
   const days = period.days.slice(0, Math.min(Math.max(count, 1), period.days.length));
   return { ...period, days, endDay: days[days.length - 1] };
-}
-
-/** "Sep 28" — month name abbreviated, no year. */
-function shortDayLabel(day: string) {
-  const [, month, dayOfMonth] = day.split("-").map(Number);
-  return `${MONTH_NAMES[month - 1].slice(0, 3)} ${dayOfMonth}`;
-}
-
-/** "Sep 28 – Oct 4, 2026" for a week, "September 2026" for a month. English
- *  month names whatever the device's language (fixed names, not Intl). */
-export function periodLabel(period: ReportPeriod): string {
-  const startYear = period.startDay.slice(0, 4);
-  const endYear = period.endDay.slice(0, 4);
-  if (period.kind === "month") {
-    const month = Number(period.startDay.slice(5, 7));
-    return `${MONTH_NAMES[month - 1]} ${startYear}`;
-  }
-  const start = shortDayLabel(period.startDay);
-  const end = shortDayLabel(period.endDay);
-  return startYear === endYear
-    ? `${start} – ${end}, ${endYear}`
-    : `${start}, ${startYear} – ${end}, ${endYear}`;
 }
 
 /** [start, end) as UTC instants — from the first day's shop-midnight to

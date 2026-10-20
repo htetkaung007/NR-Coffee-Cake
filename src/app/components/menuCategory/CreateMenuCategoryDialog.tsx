@@ -14,11 +14,14 @@ import {
 import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { createMenuCategoryAction } from "@/app/backoffice/menu_categories/action";
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import MenuCategoryFields, { categoryNameError } from "./MenuCategoryFields";
 
 export interface CreatedMenuCategory {
   id: number;
   name: string;
+  nameMy?: string | null;
 }
 
 /**
@@ -38,6 +41,9 @@ export default function CreateMenuCategoryDialog({
   onClose: () => void;
   onCreated: (category: CreatedMenuCategory) => void;
 }) {
+  const t = useTranslations("bo.categoryFields");
+  const tCommon = useTranslations("bo.common");
+  const errorText = useStaffErrorMessage();
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
   const [name, setName] = useState("");
@@ -67,10 +73,10 @@ export default function CreateMenuCategoryDialog({
     setIsSaving(false);
 
     if (!result.success) {
-      setError(result.error.message);
+      setError(errorText(result.error));
       return;
     }
-    onCreated({ id: result.data.id, name: result.data.name });
+    onCreated({ id: result.data.id, name: result.data.name, nameMy: nameMy || null });
     onClose();
   }
 
@@ -92,10 +98,10 @@ export default function CreateMenuCategoryDialog({
           justifyContent: "space-between",
         }}
       >
-        New Menu Category
+        {t("newTitle")}
         <IconButton
           onClick={onClose}
-          aria-label="Close"
+          aria-label={tCommon("close")}
           sx={{ width: 44, height: 44 }}
         >
           <CloseIcon fontSize="small" />
@@ -128,14 +134,14 @@ export default function CreateMenuCategoryDialog({
         }}
       >
         <Button variant="outlined" color="inherit" onClick={onClose}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button
           type="submit"
           variant="contained"
           disabled={isSaving || !name.trim()}
         >
-          {isSaving ? "Creating..." : "Create Category"}
+          {isSaving ? tCommon("creating") : t("create")}
         </Button>
       </Stack>
     </Dialog>

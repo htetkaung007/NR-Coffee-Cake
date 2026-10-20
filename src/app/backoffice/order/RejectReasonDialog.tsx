@@ -14,11 +14,12 @@ import {
   Typography,
 } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
+import { useTranslations } from "next-intl";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
 import type { ActionResult } from "@/app/lib/actionResult";
 import {
   REJECT_NOTE_MAX_LENGTH,
   REJECT_REASONS,
-  rejectReasonLabel,
   type RejectReason,
 } from "@/app/lib/order/rejectReason";
 import { reducedMotionMedia } from "@/app/lib/theme/sharedThemeTokens";
@@ -48,6 +49,7 @@ interface RejectReasonDialogProps {
  *  comes back — and the last action's error, if any. `id` is the dialog's
  *  aria-describedby target. */
 function RejectIntro({ id, error }: { id: string; error: string | null }) {
+  const t = useTranslations("bo.reject");
   return (
     <>
       <Typography
@@ -56,8 +58,7 @@ function RejectIntro({ id, error }: { id: string; error: string | null }) {
         color="text.secondary"
         sx={{ mb: 2 }}
       >
-        The customer is told the order wasn&apos;t accepted (not why).
-        Stock is returned.
+        {t("intro")}
       </Typography>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -84,6 +85,10 @@ export default function RejectReasonDialog({
   onClose,
   onReject,
 }: RejectReasonDialogProps) {
+  const t = useTranslations("bo.reject");
+  const tCommon = useTranslations("bo.common");
+  const tReason = useTranslations("bo.rejectReason");
+  const errorText = useStaffErrorMessage();
   const titleId = useId();
   const descriptionId = useId();
   const [pendingReason, setPendingReason] = useState<RejectReason | null>(null);
@@ -113,7 +118,7 @@ export default function RejectReasonDialog({
       reset();
       onClose();
     } else {
-      setError(result.error.message);
+      setError(errorText(result.error));
     }
   }
 
@@ -134,7 +139,7 @@ export default function RejectReasonDialog({
       }}
     >
       <DialogTitle id={titleId}>
-        Why are you rejecting Order {orderNumber}?
+        {t("title", { number: orderNumber })}
       </DialogTitle>
 
       {isWritingNote ? (
@@ -157,8 +162,8 @@ export default function RejectReasonDialog({
           >
             <RejectIntro id={descriptionId} error={error} />
             <TextField
-              label="Note (optional)"
-              placeholder="e.g. coffee machine broken"
+              label={t("noteLabel")}
+              placeholder={t("notePlaceholder")}
               fullWidth
               autoFocus
               value={note}
@@ -173,7 +178,7 @@ export default function RejectReasonDialog({
                   component="span"
                   sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}
                 >
-                  <span>Don&apos;t include customer names or phone numbers.</span>
+                  <span>{t("noteHint")}</span>
                   <Box component="span" sx={{ flexShrink: 0 }}>
                     {note.length}/{REJECT_NOTE_MAX_LENGTH}
                   </Box>
@@ -190,7 +195,7 @@ export default function RejectReasonDialog({
               disabled={isPending}
               sx={{ minHeight: 44 }}
             >
-              Back
+              {tCommon("back")}
             </Button>
             <Button
               type="submit"
@@ -199,7 +204,7 @@ export default function RejectReasonDialog({
               disabled={isPending}
               sx={{ minHeight: 44 }}
             >
-              {isPending ? "Rejecting…" : "Reject"}
+              {isPending ? t("rejecting") : t("reject")}
             </Button>
           </DialogActions>
         </Box>
@@ -224,16 +229,14 @@ export default function RejectReasonDialog({
                   }}
                   sx={{ minHeight: 48, justifyContent: "flex-start" }}
                 >
-                  {pendingReason === reason
-                    ? "Rejecting…"
-                    : rejectReasonLabel(reason)}
+                  {pendingReason === reason ? t("rejecting") : tReason(reason)}
                 </Button>
               ))}
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={close} disabled={isPending} sx={{ minHeight: 44 }}>
-              Cancel
+              {tCommon("cancel")}
             </Button>
           </DialogActions>
         </>

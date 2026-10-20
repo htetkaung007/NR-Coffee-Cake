@@ -2,6 +2,8 @@
 
 import { Box, Stack, Switch, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { useTranslations } from "next-intl";
+import { ADDON_GROUP_NAME_MAX } from "@/app/lib/schemas/addonSchema";
 import LanguageTaggedField from "./LanguageTaggedField";
 
 interface GroupNameFieldsProps {
@@ -25,6 +27,7 @@ export default function GroupNameFields({
   isRequired,
   onRequiredChange,
 }: GroupNameFieldsProps) {
+  const t = useTranslations("bo.addonForm");
   return (
     <Box>
       <Stack
@@ -33,18 +36,18 @@ export default function GroupNameFields({
         sx={{ alignItems: "center", justifyContent: "space-between" }}
       >
         <Typography variant="subtitle2" component="h2">
-          Group name
+          {t("groupName")}
         </Typography>
         <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
           <Typography variant="caption" color="text.secondary">
-            Required
+            {t("required")}
           </Typography>
           <Switch
             size="small"
             checked={isRequired}
             onChange={(event) => onRequiredChange(event.target.checked)}
             slotProps={{
-              input: { "aria-label": "Make this group required" },
+              input: { "aria-label": t("makeRequired") },
             }}
           />
         </Stack>
@@ -55,26 +58,26 @@ export default function GroupNameFields({
         color="text.secondary"
         sx={{ mb: 2 }}
       >
-        The question customers answer, e.g. “Milk choice”. Write it once per
-        language.
+        {t("groupHint")}
       </Typography>
 
       <Stack spacing={1}>
         <LanguageTaggedField
           tag="en"
-          ariaLabel="Group name in English"
-          endText="Required"
+          ariaLabel={t("groupNameEn")}
+          endText={t("required")}
           required
-          placeholder="e.g. Milk choice"
+          placeholder={t("groupPlaceholder")}
+          maxLength={ADDON_GROUP_NAME_MAX}
           value={groupName}
           onChange={(event) => onGroupNameChange(event.target.value)}
         />
         <LanguageTaggedField
           tag="my"
           myanmar
-          ariaLabel="Group name in Myanmar"
-          endText="Optional"
-          maxLength={50}
+          ariaLabel={t("groupNameMy")}
+          endText={t("optional")}
+          maxLength={ADDON_GROUP_NAME_MAX}
           value={groupNameMy}
           onChange={(event) => onGroupNameMyChange(event.target.value)}
         />
@@ -91,8 +94,9 @@ export default function GroupNameFields({
           sx={{ color: "text.secondary" }}
         />
         <Typography variant="caption" color="text.secondary">
-          Leave <span lang="my">မြန်မာ</span> empty and customers who chose
-          Myanmar see the English name instead.
+          {t.rich("leaveEmpty", {
+            language: () => <span lang="my">မြန်မာ</span>,
+          })}
         </Typography>
       </Stack>
       <Typography
@@ -102,8 +106,8 @@ export default function GroupNameFields({
         sx={{ mt: 0.5 }}
       >
         {isRequired
-          ? "Customers must choose one option from this group before adding the item to cart."
-          : "Optional — customers can skip this group."}
+          ? t("requiredGroupHint")
+          : t("optionalGroupHint")}
       </Typography>
     </Box>
   );

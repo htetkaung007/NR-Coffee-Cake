@@ -1,5 +1,5 @@
 import { mergeLinesForDisplay } from "./orderLineMerge";
-import { formatAddonSelections } from "./addonLabel";
+import { formatAddonSelections, localizeAddonSelections } from "./addonLabel";
 import { effectiveQuantity } from "./voids";
 
 /** An Order row with what its price depends on — see orderLineTotal.
@@ -99,11 +99,15 @@ interface BillLine {
   quantity: number;
   unitPrice: number;
   note: string | null;
-  menu: { name: string };
+  menu: { name: string; nameMy?: string | null };
   OrdersAddons: {
     addonId: number;
     unitPrice: number;
-    addon: { name: string; addonCategory?: { name: string } | null };
+    addon: {
+      name: string;
+      nameMy?: string | null;
+      addonCategory?: { name: string; nameMy?: string | null } | null;
+    };
   }[];
   voids: readonly { quantity: number }[];
 }
@@ -115,6 +119,11 @@ interface BillLine {
 export interface BreakdownRow {
   kind: "item" | "addon";
   name: string;
+  /** The same name in Myanmar where the shop gave one (localizedText per
+   *  part: the menu, the add-on group and option) — set on bills built
+   *  from stored lines (buildEntryBill), for a Myanmar staff screen or
+   *  voucher. Display only. */
+  nameMy?: string | null;
   quantity: number;
   amount: number;
 }
@@ -150,6 +159,28 @@ export function lineBreakdown(line: BreakdownSource): BreakdownRow[] {
       amount: lineTotal(addon.unitPrice, [], line.quantity),
     })),
   ];
+}
+
+/** A line's rows (lineBreakdown, item then add-ons in order) with each
+ *  name's Myanmar rendering beside it (BreakdownRow.nameMy). */
+function withMyanmarNames(rows: BreakdownRow[], line: BillLine): BreakdownRow[] {
+  return rows.map((row, index) => {
+    if (row.kind === "item") return { ...row, nameMy: line.menu.nameMy ?? null };
+    const link = line.OrdersAddons[index - 1];
+    return {
+      ...row,
+      nameMy: formatAddonSelections(
+        localizeAddonSelections("my", [
+          {
+            name: link.addon.name,
+            nameMy: link.addon.nameMy,
+            groupName: link.addon.addonCategory?.name ?? null,
+            groupNameMy: link.addon.addonCategory?.nameMy,
+          },
+        ]),
+      ),
+    };
+  });
 }
 
 /** One round as the bill reads it — also the table occupancy rule's
@@ -213,16 +244,19 @@ export function buildEntryBill<Time>(rounds: BillSourceRound<Time>[]) {
             lineTotal: orderLineTotal(line),
             // Item, then one row per add-on — what BillLineRows renders —
             // for the units still charged.
-            breakdown: lineBreakdown({
-              name: line.menu.name,
-              quantity: effectiveQuantity(line),
-              unitPrice: line.unitPrice,
-              addons: line.OrdersAddons.map((link) => ({
-                name: link.addon.name,
-                groupName: link.addon.addonCategory?.name ?? null,
-                unitPrice: link.unitPrice,
-              })),
-            }),
+            breakdown: withMyanmarNames(
+              lineBreakdown({
+                name: line.menu.name,
+                quantity: effectiveQuantity(line),
+                unitPrice: line.unitPrice,
+                addons: line.OrdersAddons.map((link) => ({
+                  name: link.addon.name,
+                  groupName: link.addon.addonCategory?.name ?? null,
+                  unitPrice: link.unitPrice,
+                })),
+              }),
+              line,
+            ),
           })),
       }))
       .filter((round) => round.lines.length > 0),

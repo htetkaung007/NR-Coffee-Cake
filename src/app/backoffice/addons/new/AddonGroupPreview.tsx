@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Box, Card, Stack, Typography } from "@mui/material";
 import AddonCategorySection from "@/app/components/orderUI/menuDetail/AddonCategorySection";
@@ -56,6 +57,7 @@ export default function AddonGroupPreview({
   isRequired,
   options,
 }: AddonGroupPreviewProps) {
+  const t = useTranslations("bo.addonForm");
   const [previewLocale, setPreviewLocale] = useState<AppLocale>("my");
   const labels = usePreviewLabels(previewLocale);
 
@@ -84,22 +86,22 @@ export default function AddonGroupPreview({
         sx={{ alignItems: "center", justifyContent: "space-between", mb: 2 }}
       >
         <Typography variant="subtitle2" component="h2">
-          Customer sees
+          {t("customerSees")}
         </Typography>
         <NameLanguageToggle
           value={previewLocale}
           onChange={setPreviewLocale}
-          ariaLabel="Preview language"
+          ariaLabel={t("previewLanguage")}
         />
       </Stack>
 
       {isEmpty ? (
         <Typography variant="caption" component="p" color="text.secondary">
-          Type a group name and options to see the preview.
+          {t("previewEmpty")}
         </Typography>
       ) : (
         <>
-          <Box role="region" aria-label="Customer preview">
+          <Box role="region" aria-label={t("customerPreview")}>
             <SurfaceThemeScope surface="od">
               <OrderUiLabelsProvider value={labels}>
                 <Box
@@ -146,8 +148,7 @@ export default function AddonGroupPreview({
               color="text.secondary"
               sx={{ mt: 1 }}
             >
-              Dotted names have no Myanmar name yet, so customers see English
-              there.
+              {t("previewDotted")}
             </Typography>
           )}
         </>

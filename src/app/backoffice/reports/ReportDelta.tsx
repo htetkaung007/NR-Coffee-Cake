@@ -4,6 +4,7 @@ import { Box, Typography } from "@mui/material";
 import { formatDelta } from "@/app/lib/report/reportView";
 import type { ReportPeriodKind } from "@/app/lib/report/reportPeriod";
 import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
+import { useReportWords } from "./useReportWords";
 
 /** A change on the previous period: "▲ 12% vs last week" — an arrow AND
  *  words, never colour alone (DESIGN.md Rule 13) — or "—" when there is
@@ -19,7 +20,7 @@ export default function ReportDelta({
   kind: ReportPeriodKind;
   compact?: boolean;
 }) {
-  const delta = formatDelta(percent, kind);
+  const delta = formatDelta(percent, kind, useReportWords());
   const visible = compact
     ? delta.direction === "none"
       ? "—"

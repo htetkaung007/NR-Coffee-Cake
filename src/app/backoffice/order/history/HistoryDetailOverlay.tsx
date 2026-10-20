@@ -2,6 +2,7 @@
 
 import { Dialog, Drawer, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useTranslations } from "next-intl";
 
 const SIDE_DRAWER_WIDTH = 420;
 
@@ -21,6 +22,7 @@ export default function HistoryDetailOverlay({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("bo.history");
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -49,7 +51,7 @@ export default function HistoryDetailOverlay({
       slotProps={{
         paper: {
           role: "dialog",
-          "aria-label": "Details",
+          "aria-label": t("details"),
           sx: {
             display: "flex",
             flexDirection: "column",

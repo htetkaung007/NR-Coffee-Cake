@@ -77,9 +77,9 @@ export function resolveTarget(
   }
 }
 
-/** Said when an "Add items" link names an order that's no longer open. */
-export const CLOSED_LINK_NOTICE =
-  "That order is no longer open — starting a new takeaway instead.";
+/** Said when an "Add items" link names an order that's no longer open —
+ *  the bo.newOrder message key (the words are in messages/*.json). */
+export const CLOSED_LINK_NOTICE = "closedLink" as const;
 
 /** New Order opened from an order's "Add items" (?for=<entry key>): that
  *  order, if it can still be ordered for; otherwise a new takeaway, with
@@ -87,7 +87,7 @@ export const CLOSED_LINK_NOTICE =
 export function targetFromLink(
   forParam: string | null | undefined,
   options: TargetOptions,
-): { target: OrderTarget | null; notice: string | null } | null {
+): { target: OrderTarget | null; notice: typeof CLOSED_LINK_NOTICE | null } | null {
   if (!forParam) return null;
   const target = resolveTarget(parseTargetKey(forParam), options);
   if (target) return { target, notice: null };

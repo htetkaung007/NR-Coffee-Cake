@@ -1,4 +1,5 @@
 import { Chip, Typography } from "@mui/material";
+import { useTranslations } from "next-intl";
 
 /**
  * Required / Optional for an add-on group — the list card and the
@@ -17,6 +18,7 @@ export default function RequiredChip({
    *  step up from caption). */
   large?: boolean;
 }) {
+  const t = useTranslations("bo.addons");
   return (
     <Chip
       size={large ? "medium" : "small"}
@@ -25,7 +27,7 @@ export default function RequiredChip({
       sx={isRequired ? undefined : { color: "text.secondary" }}
       label={
         <Typography variant={large ? "body2" : "caption"} component="span">
-          {isRequired ? "Required" : "Optional"}
+          {isRequired ? t("required") : t("optional")}
         </Typography>
       }
     />

@@ -11,16 +11,23 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useTheme } from "@mui/material/styles";
+import { useTranslations } from "next-intl";
 import type { NewPendingRoundsEvent } from "../OrderAlertsProvider";
 
 export interface NewOrderNotice {
   /** Changes for every notice, so a new one restarts the toast's timer
    *  instead of inheriting the old one's remaining time. */
   id: number;
-  message: string;
+  /** bo.alerts.<key> with its values — translated when shown. */
+  message: NewOrderMessage;
   /** The entry's detail page when the notice is about a single entry. */
   href: string | null;
 }
+
+/** A toast's words, as a bo.alerts message key and its values. */
+type NewOrderMessage =
+  | { key: "newOrder" | "newRound"; values: { title: string } }
+  | { key: "manyNew"; values: { count: number } };
 
 const AUTO_HIDE_MS = 5000;
 
@@ -35,14 +42,14 @@ export function describeNewRounds(
     // A brand-new Counter bill is a new order; a Table entry, or a
     // Counter card that already existed ("Order More"), is a new round
     // on something the cashier already knows.
-    const message =
-      !entry.isTableGroup && entry.isNewEntry
-        ? `New order: ${entry.title}`
-        : `${entry.title} — new round`;
+    const message: NewOrderMessage = {
+      key: !entry.isTableGroup && entry.isNewEntry ? "newOrder" : "newRound",
+      values: { title: entry.title },
+    };
     return { message, href: `/backoffice/order/${entry.key}` };
   }
   return {
-    message: `${event.roundCount} new orders need approval`,
+    message: { key: "manyNew", values: { count: event.roundCount } },
     href: null,
   };
 }
@@ -60,6 +67,7 @@ export default function NewOrderToast({
   open,
   onClose,
 }: NewOrderToastProps) {
+  const t = useTranslations("bo.alerts");
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
@@ -105,11 +113,11 @@ export default function NewOrderToast({
                 onClick={onClose}
                 sx={{ minHeight: 44 }}
               >
-                View
+                {t("view")}
               </Button>
             )}
             <IconButton
-              aria-label="Close"
+              aria-label={t("close")}
               color="inherit"
               onClick={onClose}
               sx={{ width: 44, height: 44 }}
@@ -126,7 +134,7 @@ export default function NewOrderToast({
           "& .MuiAlert-icon": { color: "inherit" },
         }}
       >
-        {notice?.message}
+        {notice && t(notice.message.key, notice.message.values)}
       </Alert>
     </Snackbar>
   );

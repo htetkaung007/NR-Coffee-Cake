@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Box } from "@mui/material";
+import { useTranslations } from "next-intl";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import { useStickyScrollPadding } from "@/app/components/StickyPageHeader";
 import { topBarHeight } from "@/app/lib/theme/sharedThemeTokens";
@@ -49,6 +50,7 @@ export default function ReportsHeader({
   shopTimezone,
   onNavigate,
 }: ReportsHeaderProps) {
+  const t = useTranslations("bo.reports");
   const withParams = (changes: Partial<ReportParams>) =>
     reportHref({ ...params, ...changes });
   // Whichever is sticky at this width sets the page's scroll padding.
@@ -60,7 +62,7 @@ export default function ReportsHeader({
     <>
       <Box sx={{ px: { xs: 0, sm: 2, md: 3 }, pb: 1 }}>
         <OrdersPageHeader
-          title="Reports"
+          title={t("title")}
           showSectionNav={false}
           inlineActions
           // The printable report for the period on screen right now.
@@ -116,31 +118,31 @@ export default function ReportsHeader({
           }}
         >
           <SegmentedTabs
-            ariaLabel="Report period"
+            ariaLabel={t("periodTabs")}
             value={params.kind}
             onNavigate={onNavigate}
             sx={controlSx}
             items={[
-              { value: "week", label: "Week", href: withParams({ kind: "week" }) },
+              { value: "week", label: t("week"), href: withParams({ kind: "week" }) },
               {
                 value: "month",
-                label: "Month",
+                label: t("month"),
                 href: withParams({ kind: "month" }),
               },
             ]}
           />
           <SegmentedTabs
-            ariaLabel="Report sections"
+            ariaLabel={t("sectionTabs")}
             value={params.tab}
             onNavigate={onNavigate}
             sx={controlSx}
             items={[
               {
                 value: "overview",
-                label: "Overview",
+                label: t("overview"),
                 href: withParams({ tab: "overview" }),
               },
-              { value: "items", label: "Items", href: withParams({ tab: "items" }) },
+              { value: "items", label: t("items"), href: withParams({ tab: "items" }) },
             ]}
           />
         </Box>
