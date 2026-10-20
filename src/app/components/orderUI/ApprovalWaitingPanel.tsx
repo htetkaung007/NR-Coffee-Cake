@@ -24,6 +24,7 @@ import { useMonotonicElapsed } from "@/app/lib/hooks/useMonotonicElapsed";
 import {
   hoverCapableMedia,
   visuallyHiddenSx,
+  reducedMotionMedia,
 } from "@/app/lib/theme/sharedThemeTokens";
 
 const TICK_MS = 1000;
@@ -148,7 +149,7 @@ function CountdownDetails({
                   transformOrigin: "left",
                   transform: `scaleX(${fraction})`,
                   transition: `transform ${TICK_MS}ms linear`,
-                  "@media (prefers-reduced-motion: reduce)": {
+                  [reducedMotionMedia]: {
                     transition: "none",
                   },
                 }}

@@ -4,6 +4,7 @@ import NextLink from "next/link";
 import { Box, Button, Typography } from "@mui/material";
 import AuthCard from "../AuthCard";
 import { SIGNUP_CLOSED_MESSAGE } from "@/app/lib/access/signUp";
+import { authButtonSx } from "../authButtonSx";
 
 /** What /auth/signup shows instead of the form once the shop exists
  *  (single-shop mode). Display only — the sign-up action refuses on its
@@ -25,13 +26,8 @@ export function SignUpClosedNotice() {
         href="/auth/signIn"
         fullWidth
         variant="contained"
-        sx={{
-          py: 1.5,
-          borderRadius: 3,
-          textTransform: "none",
-          fontSize: "1rem",
-          fontWeight: "bold",
-        }}
+        size="large"
+        sx={authButtonSx}
       >
         Go to sign in
       </Button>

@@ -27,6 +27,13 @@ model User {
   createdAt          DateTime           @default(now())
   updateTime         DateTime           @updatedAt
   isArchived         Boolean            @default(false)
+  // Login rate limit (lib/access/loginThrottle): wrong passwords in the
+  // current 15-minute run, when that run started, and — after 5 — the
+  // lock's end. Reset by a successful sign-in. Written only by
+  // AppService.verifyCredentials.
+  failedLoginCount   Int                @default(0)
+  firstFailedLoginAt DateTime?
+  lockedUntil        DateTime?
   // What the owner has granted this MANAGER (see UserPermission). Never
   // read for an ADMIN.
   permissions        UserPermission[]   @relation("UserPermissions")

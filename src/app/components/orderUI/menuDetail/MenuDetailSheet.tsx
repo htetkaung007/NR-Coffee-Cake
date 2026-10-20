@@ -7,9 +7,10 @@ import { langAttr } from "@/app/lib/i18n/locale";
 
 /** Phone bottom sheet: full width, capped as a share of the viewport (dvh,
  *  so mobile browser bars don't cut it off) so the header and the sticky
- *  footer stay reachable and only the middle scrolls. The min values keep
- *  it from collapsing while the item is still loading. */
-const SHEET = { minWidth: 320, minHeight: 320, maxHeight: "90dvh" };
+ *  footer stay reachable and only the middle scrolls. The min height keeps
+ *  it from collapsing while the item is still loading (its width is the
+ *  page's — never under 375px). */
+const SHEET = { minHeight: 320, maxHeight: "90dvh" };
 
 interface MenuDetailSheetProps {
   open: boolean;
@@ -49,7 +50,6 @@ export default function MenuDetailSheet({
             display: "flex",
             flexDirection: "column",
             width: "100%",
-            minWidth: SHEET.minWidth,
             minHeight: SHEET.minHeight,
             maxHeight: SHEET.maxHeight,
             overflow: "hidden",

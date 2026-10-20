@@ -87,6 +87,10 @@ The global block lives in `src/app/globals.css` — don't remove it:
 }
 ```
 
+In components, never write the query out: sx keys use `reducedMotionMedia`
+(`{ [reducedMotionMedia]: { animation: "none" } }`) and JS uses
+`reducedMotionQuery` (`useMediaQuery` / `window.matchMedia`) — both from
+`src/app/lib/theme/sharedThemeTokens.ts`, next to `hoverCapableMedia`.
 For framer-motion use `useReducedMotion()`. Any motion-based cue must also
 have a static cue (badge, text) so nothing is lost with motion off.
 
@@ -505,7 +509,7 @@ double-taps), or an optimistic update. A disabled control shows WHY
 - **Customer top bar:** [shop icon + name][language switch][cart] — the
   cart and the switch never shrink; the shop name truncates first. The
   switch shows a globe + the OTHER language's short label ("EN" /
-  "မြန်မာ"), the globe alone below 360px (its accessible name stays).
+  "မြန်မာ") at every width (the page is never narrower than 375px).
 - **Customer bottom bar** (Menu / Cart / History) is a **floating pill**,
   mounted ONCE in the storefront layout (`OrderBotBar`) so it stays put
   between tabs: fixed 12px from the sides (16px from `sm`) and from the
@@ -770,7 +774,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-19: one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-10-19: reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

@@ -6,6 +6,7 @@ import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 import { config } from "@/app/utils/config";
 import { canActAtLocation } from "@/app/lib/access/ownership";
 import type { LocatedScope } from "@/app/lib/access/rolePolicy";
+import { cleanImageUpload } from "@/app/lib/storage/cleanImageUpload";
 
 // Name is fixed for the counter "table" row — it isn't a real seated
 // table a customer picks a name for, so locking it here (Service
@@ -251,7 +252,10 @@ export class TableService {
       table.isCounter === true,
       table.counterAccessKey,
     );
-    const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logoBuffer);
+    // An uploaded logo is checked by its content first (a non-image — or
+    // an SVG, which sharp would otherwise render — is a ValidationError).
+    const logo = logoBuffer ? (await cleanImageUpload(logoBuffer)).buffer : null;
+    const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logo);
 
     const storage = getFileStorageService();
     const { url } = await storage.upload(

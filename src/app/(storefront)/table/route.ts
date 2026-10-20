@@ -17,6 +17,7 @@ import {
   mintContributorToken,
   getTokenEpoch,
 } from "@/app/lib/storefront/contributorToken";
+import { readQrScanParams } from "@/app/lib/storefront/qrScanParams";
 
 /**
  * Table QR entry point (e.g. /table?locationId=1&tableId=5&key=xxx) —
@@ -39,14 +40,13 @@ import {
  * COUNTER_SESSION_COOKIE.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const locationId = Number(searchParams.get("locationId"));
-  const tableId = Number(searchParams.get("tableId"));
-  const key = searchParams.get("key");
+  const { locationId, tableId, key } = readQrScanParams(
+    request.nextUrl.searchParams,
+  );
 
   // Relative redirects only (lib/http/redirect): the phone keeps the
   // address it scanned (the LAN IP), never the server's own host.
-  const viewOnlyPath = relativePath("/menu", { locationId: locationId || null });
+  const viewOnlyPath = relativePath("/menu", { locationId });
 
   if (!locationId || !tableId || !key) {
     return redirectTo(viewOnlyPath);

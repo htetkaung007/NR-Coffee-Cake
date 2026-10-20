@@ -340,7 +340,19 @@ independently of the app config). Everything else still goes through
 
 ## 13. Known project gaps / TODOs
 
-- Login rate limiting / account lockout.
+- Login rate limiting / account lockout — IN PROGRESS (#97l): the rule
+  is `lib/access/loginThrottle.ts` (5 wrong passwords within 15 minutes
+  lock that EMAIL for 15 minutes; a successful sign-in resets it;
+  counted per email, never per IP — the shop shares one address). The
+  three User columns are in schema.prisma, waiting for their migration;
+  then AppService.verifyCredentials applies it. Already live: an unknown
+  email still runs one bcrypt compare (a dummy hash), so the response
+  time doesn't reveal which emails exist.
+- A full script/style Content-Security-Policy. Today next.config.ts
+  sends frame-ancestors 'none' (+ X-Frame-Options, nosniff,
+  Referrer-Policy, Permissions-Policy) on every route; script-src /
+  style-src would need nonces for MUI / Emotion's styles and the
+  Backoffice's inline sidebar script (lib/backofficeSidebar).
 - Forgot-password flow.
 - Order-app closure enforcement: when a Location is archived, the
   customer-facing order flow should show "We are closed" and block new
@@ -651,6 +663,13 @@ business reason?"
   name — this has caused a real fragile-import bug once already.
 - Don't leave empty/dead scratch files in the repo — delete them once
   done, don't commit them.
+- **localStorage only through `lib/hooks/useStoredValue.ts`** —
+  `readStorage`, `setStorageItem`, `removeStorageItem`, `storageKeys`
+  (silent; for stores that notify their own readers) and `writeStorage` +
+  `useStoredValue` (a write every useStoredValue re-reads). They never
+  throw (blocked / full storage); never touch `window.localStorage`
+  directly (the inline sidebar script in lib/backofficeSidebar, which
+  runs before React, is the one exception).
 - Before creating a new file with the same apparent purpose as an
   existing one (e.g. a second polling hook), search for an existing
   implementation first — a duplicate hook with two different

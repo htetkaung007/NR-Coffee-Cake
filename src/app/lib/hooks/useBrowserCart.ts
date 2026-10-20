@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { readStorage, setStorageItem } from "./useStoredValue";
 import {
   addLine,
   applyValidation,
@@ -45,15 +46,12 @@ const serverSnapshots = new Map<number, BrowserCart>();
 const nowIso = () => new Date().toISOString();
 
 function readStored(locationId: number): BrowserCart {
-  try {
-    // A day-old submission record is dropped as the cart is first read.
-    return pruneLastSubmitted(
-      parseCart(window.localStorage.getItem(storageKey(locationId)), locationId),
-      nowIso(),
-    );
-  } catch {
-    return emptyCart(locationId);
-  }
+  // A day-old submission record is dropped as the cart is first read.
+  // Blocked storage reads as null → an empty cart.
+  return pruneLastSubmitted(
+    parseCart(readStorage(storageKey(locationId)), locationId),
+    nowIso(),
+  );
 }
 
 function getCart(locationId: number): BrowserCart {
@@ -76,11 +74,8 @@ function getServerCart(locationId: number): BrowserCart {
 
 function writeCart(locationId: number, cart: BrowserCart) {
   current.set(locationId, cart);
-  try {
-    window.localStorage.setItem(storageKey(locationId), JSON.stringify(cart));
-  } catch {
-    // Storage blocked or full — the in-memory copy keeps this tab going.
-  }
+  // Storage blocked or full — the in-memory copy keeps this tab going.
+  setStorageItem(storageKey(locationId), JSON.stringify(cart));
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 

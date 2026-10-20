@@ -23,6 +23,7 @@ import {
   touchTabletMedia,
   touchTabletPortraitMedia,
   touchTabletQuery,
+  reducedMotionQuery,
 } from "@/app/lib/theme/sharedThemeTokens";
 import { menuCardLabels } from "@/app/lib/i18n/customerLabels";
 import type { MenuDetail } from "./menuDetail/types";
@@ -174,7 +175,7 @@ export default function MenuBrowser({
   const theme = useTheme();
   const isWholeBlockPinned = useMediaQuery(theme.breakpoints.up("sm"));
   const isTouchTablet = useMediaQuery(touchTabletQuery);
-  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduceMotion = useMediaQuery(reducedMotionQuery);
   const filterRowRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -373,7 +374,7 @@ export default function MenuBrowser({
         ref={gridRef}
         sx={{
           // No min width of its own: the grid fits whatever the page's
-          // content column is (288px at a 320px screen).
+          // content column is (343px at a 375px screen).
           minWidth: 0,
           // Don't let cards balloon on very wide screens.
           maxWidth: 1400,

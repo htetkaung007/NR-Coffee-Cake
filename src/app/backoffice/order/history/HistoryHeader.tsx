@@ -3,14 +3,11 @@
 import {
   Box,
   IconButton,
-  InputAdornment,
   Stack,
-  TextField,
 } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
-import ClearIcon from "@mui/icons-material/Clear";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import SearchIcon from "@mui/icons-material/Search";
+import SearchField from "@/app/components/SearchField";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import StickyPageHeader from "@/app/components/StickyPageHeader";
 import DayNavigator from "./DayNavigator";
@@ -129,32 +126,11 @@ export default function HistoryHeader({
           sx={{ ml: "auto", display: { xs: "inline-flex", sm: "none" } }}
         />
 
-        <TextField
-          size="small"
+        <SearchField
           label="Table or order #"
           value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
+          onChange={onSearchChange}
           sx={{ width: { xs: "100%", sm: 260 }, ml: { sm: "auto" } }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: search && (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="Clear search"
-                    size="small"
-                    onClick={() => onSearchChange("")}
-                  >
-                    <ClearIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
-          }}
         />
 
         <RefreshButton

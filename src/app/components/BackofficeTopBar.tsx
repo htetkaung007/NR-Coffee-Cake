@@ -149,7 +149,8 @@ function AccountMenu() {
             width: 32,
             height: 32,
             bgcolor: "primary.main",
-            fontSize: 14,
+            // The initial: the theme's subtitle2 (14px).
+            typography: "subtitle2",
           }}
         >
           {session?.user?.name?.[0]?.toUpperCase() ?? "?"}

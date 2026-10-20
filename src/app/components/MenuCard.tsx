@@ -341,7 +341,7 @@ export default function MenuCard({
         )}
 
         {/* Price + Add: side by side, and when they don't fit (Myanmar
-           on a 320px screen) the Add square wraps under the price — the
+           on a 375px screen) the Add square wraps under the price — the
            price itself never wraps. */}
         <Box
           component="span"

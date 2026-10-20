@@ -5,6 +5,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import type { PaletteMode } from "@mui/material";
 import { getBoTheme } from "./theme";
 import { getOdTheme } from "./odTheme";
+import { readStorage, setStorageItem } from "../hooks/useStoredValue";
 
 type ThemeModeContextValue = {
   mode: PaletteMode;
@@ -33,7 +34,7 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
       return "light";
     }
 
-    const saved = window.localStorage.getItem(STORAGE_KEY);
+    const saved = readStorage(STORAGE_KEY);
     if (saved === "light" || saved === "dark") {
       return saved;
     }
@@ -44,7 +45,7 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
   const toggleMode = () => {
     setMode((prev) => {
       const next = prev === "light" ? "dark" : "light";
-      window.localStorage.setItem(STORAGE_KEY, next);
+      setStorageItem(STORAGE_KEY, next);
       return next;
     });
   };

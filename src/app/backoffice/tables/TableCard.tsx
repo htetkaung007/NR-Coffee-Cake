@@ -288,13 +288,12 @@ export default function TableCard({ table }: TableCardProps) {
         <NewQrCodeMenu tableId={table.id} tableName={table.name} />
       </Stack>
 
-      {/* An equal-width pair; one per row only below 340px. */}
+      {/* An equal-width pair. */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gap: 1,
-          "@media (max-width: 339.95px)": { gridTemplateColumns: "1fr" },
         }}
       >
         <QrActionButton

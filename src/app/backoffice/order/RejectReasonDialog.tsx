@@ -21,6 +21,7 @@ import {
   rejectReasonLabel,
   type RejectReason,
 } from "@/app/lib/order/rejectReason";
+import { reducedMotionMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 // The "Other" note step appears in place: a short fade + lift,
 // transform/opacity only (DESIGN.md Rule 2), none under reduced motion.
@@ -41,6 +42,30 @@ interface RejectReasonDialogProps {
     reason: RejectReason,
     note?: string,
   ) => Promise<ActionResult<unknown>>;
+}
+
+/** What both steps say first — what the customer is told, and that stock
+ *  comes back — and the last action's error, if any. `id` is the dialog's
+ *  aria-describedby target. */
+function RejectIntro({ id, error }: { id: string; error: string | null }) {
+  return (
+    <>
+      <Typography
+        id={id}
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 2 }}
+      >
+        The customer is told the order wasn&apos;t accepted (not why).
+        Stock is returned.
+      </Typography>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+    </>
+  );
 }
 
 /**
@@ -127,23 +152,10 @@ export default function RejectReasonDialog({
           <DialogContent
             sx={{
               animation: `${reveal} ${REVEAL_MS}ms ease-out`,
-              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+              [reducedMotionMedia]: { animation: "none" },
             }}
           >
-            <Typography
-              id={descriptionId}
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
-              The customer is told the order wasn&apos;t accepted (not why).
-              Stock is returned.
-            </Typography>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+            <RejectIntro id={descriptionId} error={error} />
             <TextField
               label="Note (optional)"
               placeholder="e.g. coffee machine broken"
@@ -194,20 +206,7 @@ export default function RejectReasonDialog({
       ) : (
         <>
           <DialogContent>
-            <Typography
-              id={descriptionId}
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 2 }}
-            >
-              The customer is told the order wasn&apos;t accepted (not why).
-              Stock is returned.
-            </Typography>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+            <RejectIntro id={descriptionId} error={error} />
             <Stack spacing={1}>
               {REJECT_REASONS.map((reason) => (
                 <Button

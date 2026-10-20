@@ -13,6 +13,7 @@ import {
 } from "./menuLocation.service";
 import { firstUnownedId } from "../lib/access/ownership";
 import { resolveAssetUrl } from "../lib/storage/assetUrl";
+import { cleanImageUpload } from "@/app/lib/storage/cleanImageUpload";
 
 type Tx = Prisma.TransactionClient;
 
@@ -185,13 +186,13 @@ export class MenuService {
    *  upload, so nothing is stored for someone else's menu). */
   static async saveMenuImage(menuId: number, companyId: number, image: File) {
     await MenuService.getCompanyMenu(menuId, companyId);
-    const storage = getFileStorageService();
-    const { url } = await storage.upload(
+    // Checked by its content, re-encoded clean (never the browser's
+    // `image.type`) — a non-image is a ValidationError, nothing stored.
+    const { buffer, contentType } = await cleanImageUpload(
       Buffer.from(await image.arrayBuffer()),
-      image.type,
-      "menu",
-      menuId,
     );
+    const storage = getFileStorageService();
+    const { url } = await storage.upload(buffer, contentType, "menu", menuId);
     await MenuService.setMenuAsset(menuId, url);
   }
 

@@ -44,6 +44,8 @@ import EditMenuCategoryDialog, {
 import {
   hoverCapableMedia,
   topBarHeight,
+  reducedMotionQuery,
+  visuallyHiddenSx,
 } from "@/app/lib/theme/sharedThemeTokens";
 import {
   reorderMenuCategoriesAction,
@@ -55,7 +57,6 @@ import SortableCategoryRow, {
 } from "./SortableCategoryRow";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import CategoryTabsPreview from "./CategoryTabsPreview";
-import { visuallyHiddenSx } from "@/app/lib/theme/sharedThemeTokens";
 
 interface MenuCategoryOrderViewProps {
   /** Visible at the selected location, in the company order. */
@@ -88,7 +89,7 @@ export default function MenuCategoryOrderView({
   const router = useRouter();
   const dndId = useId();
   const hiddenListId = useId();
-  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduceMotion = useMediaQuery(reducedMotionQuery);
 
   const [items, setItems] = useState(categories);
   // Fresh server data (after a save revalidates, or an edit refreshes)

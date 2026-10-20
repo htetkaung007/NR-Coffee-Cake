@@ -13,8 +13,8 @@ import {
 } from "@/app/lib/i18n/locale";
 
 /** Switches to the OTHER language — a globe and that language's short
- *  label ("EN" while the page is Myanmar, "မြန်မာ" while it's English);
- *  below 360px the globe alone (the accessible name stays). Sets the
+ *  label ("EN" while the page is Myanmar, "မြန်မာ" while it's English),
+ *  at every width (the page is never narrower than 375px). Sets the
  *  cookie, then refreshes so the server renders the page in it. Never
  *  shrinks — the shop name gives way instead. The customer top bar
  *  (OrderTopBar) and the landing page (`/`) share it. */
@@ -47,14 +47,7 @@ export default function LanguageSwitch() {
       }}
     >
       <LanguageOutlinedIcon aria-hidden fontSize="small" />
-      <Box
-        component="span"
-        lang={other}
-        sx={(theme) => ({
-          display: "none",
-          [theme.breakpoints.up(360)]: { display: "inline" },
-        })}
-      >
+      <Box component="span" lang={other}>
         {SHORT_LANGUAGE_NAMES[other]}
       </Box>
     </Button>

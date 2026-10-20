@@ -298,10 +298,8 @@ export default function MenuForm({
           // The page's top padding is above PageHeader.
           px: { xs: 2, sm: 3, md: 4 },
           pb: { xs: 2, sm: 3, md: 4 },
-          "& .MuiButton-root": {
-            fontSize: { xs: "0.72rem", sm: "0.8rem" },
-            minHeight: { xs: 34, sm: 36 },
-          },
+          // Compact buttons; their text is the theme's button variant.
+          "& .MuiButton-root": { minHeight: { xs: 34, sm: 36 } },
         }}
       >
         <FormCard

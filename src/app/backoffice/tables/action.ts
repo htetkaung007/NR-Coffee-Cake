@@ -31,9 +31,10 @@ const safeCreateTable = toSafeResult(async (input: CreateTableInput) => {
     input.isCounter,
   );
 
-  // input.logo is already validated by createTableSchema (size + mime
-  // type) before this ever runs. Passing null when no logo was given
-  // lets generateQrCodeWithLogo fall back to the default table icon.
+  // input.logo passed createTableSchema (size + the browser's type);
+  // TableService.regenerateQrImage checks its real content. Passing null
+  // when no logo was given lets generateQrCodeWithLogo fall back to the
+  // default table icon.
   const logoBuffer = input.logo
     ? Buffer.from(await input.logo.arrayBuffer())
     : null;

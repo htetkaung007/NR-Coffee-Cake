@@ -5,17 +5,13 @@ import {
   Box,
   Card,
   Chip,
-  IconButton,
-  InputAdornment,
   Skeleton,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import ClearIcon from "@mui/icons-material/Clear";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import SearchIcon from "@mui/icons-material/Search";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
+import SearchField from "@/app/components/SearchField";
 import EmptyState from "@/app/components/EmptyState";
 import SegmentedTabs from "@/app/components/SegmentedTabs";
 import { useDebouncedValue } from "@/app/lib/hooks/useDebouncedValue";
@@ -175,33 +171,11 @@ export default function ItemsTab({
           )}
         </Stack>
 
-        <TextField
-          size="small"
+        <SearchField
           label="Search menu"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={setSearch}
           sx={{ width: { xs: "100%", sm: 320 } }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: search && (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="Clear search"
-                    size="small"
-                    onClick={() => setSearch("")}
-                    sx={{ width: 44, height: 44 }}
-                  >
-                    <ClearIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
-          }}
         />
       </Stack>
 

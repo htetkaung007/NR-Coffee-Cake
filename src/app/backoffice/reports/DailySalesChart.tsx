@@ -37,6 +37,7 @@ import {
 import {
   hoverCapableMedia,
   visuallyHiddenSx,
+  reducedMotionMedia,
 } from "@/app/lib/theme/sharedThemeTokens";
 import type { ReportOverview } from "./action";
 import {
@@ -208,7 +209,7 @@ export default function DailySalesChart({
             // Room above the tallest bar for its value label.
             mt: isWeek ? 2 : 0,
             animation: `${fadeIn} ${CROSSFADE_MS}ms ease-out`,
-            "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+            [reducedMotionMedia]: { animation: "none" },
           }}
         >
           <Box aria-hidden>
@@ -356,7 +357,7 @@ export default function DailySalesChart({
                           ...(isFirstDraw && {
                             animation: `${drawBar} ${DRAW_MS}ms ease-out both`,
                             animationDelay: `${index * stagger}ms`,
-                            "@media (prefers-reduced-motion: reduce)": {
+                            [reducedMotionMedia]: {
                               animation: "none",
                             },
                           }),
@@ -387,7 +388,7 @@ export default function DailySalesChart({
                             ...(isFirstDraw && {
                               animation: `${fadeIn} ${CROSSFADE_MS}ms ease-out both`,
                               animationDelay: `${index * stagger + DRAW_MS}ms`,
-                              "@media (prefers-reduced-motion: reduce)": {
+                              [reducedMotionMedia]: {
                                 animation: "none",
                               },
                             }),

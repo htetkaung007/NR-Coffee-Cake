@@ -64,7 +64,7 @@ const OPTIONS: {
  * cookie (setLocaleAction), refreshes so the page renders in it, and
  * closes. Closing any other way (×, Escape, a tap outside) keeps Myanmar,
  * the default — and still sets the cookie, so it never asks again. Fits
- * a 320×568 screen without scrolling.
+ * a 375×667 screen without scrolling (the page is never narrower).
  */
 export default function LanguageCard({
   hasChosenLanguage,

@@ -132,7 +132,7 @@ export default function AddonGroupPanel({
       {/* Row 1: the title (wraps, takes the free width) + Edit (inline
           panel) or the sheet's × (its Edit is in the footer). Row 2:
           Required / Optional + the names' EN | မြန်မာ — so the toggle
-          never squeezes the title. Both rows fit the 320px bottom sheet. */}
+          never squeezes the title. Both rows fit the 375px bottom sheet. */}
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
         <Typography
           variant={text.title}

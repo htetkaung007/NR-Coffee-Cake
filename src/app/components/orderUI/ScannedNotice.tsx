@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Alert, IconButton, useMediaQuery } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { reducedMotionQuery } from "@/app/lib/theme/sharedThemeTokens";
 
 /** How long the note stays before it fades out on its own. */
 const SHOW_MS = 4000;
@@ -26,20 +27,20 @@ export default function ScannedNotice({
   /** "info" for a pointer rather than a success (OpenPlaceNotice). */
   severity?: "success" | "info";
 }) {
-  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduceMotion = useMediaQuery(reducedMotionQuery);
   const [phase, setPhase] = useState<"shown" | "fading" | "gone">("shown");
 
+  // Hidden = straight gone under reduced motion, else a fade first.
+  const hiddenPhase = reduceMotion ? "gone" : "fading";
   function hide() {
-    setPhase(reduceMotion ? "gone" : "fading");
+    setPhase(hiddenPhase);
   }
 
   useEffect(() => {
     if (phase !== "shown") return;
-    const timer = window.setTimeout(hide, SHOW_MS);
+    const timer = window.setTimeout(() => setPhase(hiddenPhase), SHOW_MS);
     return () => window.clearTimeout(timer);
-    // hide only reads reduceMotion, which the effect re-runs on.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, reduceMotion]);
+  }, [phase, hiddenPhase]);
 
   if (phase === "gone") return null;
 

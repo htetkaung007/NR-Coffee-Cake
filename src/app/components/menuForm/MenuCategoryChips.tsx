@@ -70,10 +70,8 @@ export default function MenuCategoryChips({
           const selected = selectedCategoryIds.includes(category.id);
           return (
             <Chip
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "0.72rem", sm: "0.8rem" },
-              }}
+              // The label's size is its caption Typography's.
+              sx={{ fontWeight: 700 }}
               key={category.id}
               label={
                 <Typography variant="caption" component="span">

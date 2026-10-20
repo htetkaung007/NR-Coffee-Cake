@@ -4,7 +4,6 @@ import { useCustomerPrice } from "@/app/lib/hooks/useCustomerPrice";
 import { forwardRef, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedText } from "@/app/lib/i18n/localizedText";
-import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 import {
   ButtonBase,
   Box,
@@ -18,6 +17,7 @@ import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 
 import QuantityStepper from "@/app/components/orderUI/menuDetail/QuantityStepper";
 import MenuThumb from "@/app/components/MenuThumb";
+import RemovedByStaffNote from "@/app/components/orderUI/RemovedByStaffNote";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import { cartLineTotal, type LineAddon } from "@/app/lib/order/orderTotals";
 import type { ContributorLabel } from "@/app/lib/order/contributors";
@@ -119,9 +119,7 @@ export function CartLineRow({
   // Staff took every unit back: still shown, dimmed and struck through,
   // with the words saying why (DESIGN.md Rule 26).
   const t = useTranslations("common");
-  const tReceipt = useTranslations("receipt");
   const tNotice = useTranslations("lineNotice");
-  const labels = useCustomerLabels();
   const { price } = useCustomerPrice();
   const locale = useLocale();
   // Shop data in the customer's language (English when no Myanmar name).
@@ -240,14 +238,11 @@ export function CartLineRow({
         </Box>
 
         {removed && (
-          <Typography variant="body2" sx={[{ display: "block" }, mutedTextSx]}>
-            {isFullyRemoved
-              ? tReceipt("removedAll", { reasons: labels.voidReasons(removed.reasons) })
-              : tReceipt("removedSome", {
-                  count: removed.quantity,
-                  reasons: labels.voidReasons(removed.reasons),
-                })}
-          </Typography>
+          <RemovedByStaffNote
+            removed={removed}
+            isFullyRemoved={isFullyRemoved}
+            sx={mutedTextSx}
+          />
         )}
 
         {shortage && (

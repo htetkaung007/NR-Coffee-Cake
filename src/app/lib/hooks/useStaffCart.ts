@@ -27,6 +27,8 @@ import type { OrderTarget } from "@/app/lib/order/orderTarget";
 import { newRequestId } from "@/app/lib/hooks/useBrowserCart";
 import {
   readStorage,
+  removeStorageItem,
+  storageKeys,
   useStoredValue,
   writeStorage,
 } from "@/app/lib/hooks/useStoredValue";
@@ -74,16 +76,10 @@ export function clearStaffCarts(userId: number | null) {
       memoryOnly.delete(key);
     }
   }
-  try {
-    const keys: string[] = [];
-    for (let i = 0; i < window.localStorage.length; i += 1) {
-      const key = window.localStorage.key(i);
-      if (key !== null && isStaffCartKeyOf(key, userId)) keys.push(key);
-    }
-    keys.forEach((key) => window.localStorage.removeItem(key));
-  } catch {
-    // Storage blocked — nothing was stored there to clear.
-  }
+  // Blocked storage lists no keys — nothing was stored there to clear.
+  storageKeys()
+    .filter((key) => isStaffCartKeyOf(key, userId))
+    .forEach(removeStorageItem);
 }
 
 export function useStaffCart(

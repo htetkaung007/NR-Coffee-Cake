@@ -80,6 +80,13 @@ const BREAKPOINTS = { sm: 600, md: 900, lg: 1200 };
 // after a tap.
 export const hoverCapableMedia = "@media (hover: hover) and (pointer: fine)";
 
+// The user asked for less motion (DESIGN.md Rule 6): sx keys use
+// reducedMotionMedia ({ [reducedMotionMedia]: { animation: "none" } }),
+// JS uses reducedMotionQuery (useMediaQuery / window.matchMedia). The
+// global block in globals.css covers CSS animations and transitions.
+export const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
+export const reducedMotionMedia = `@media ${reducedMotionQuery}`;
+
 // A TOUCH SCREEN of any width — phones and touch tablets (the same
 // pointer test as touchTabletMedia, without its width). Laptops and
 // desktops never match. For touch-only sizing (e.g. bigger panel text).
@@ -304,6 +311,12 @@ export const sharedThemeOptions: ThemeOptions = {
         },
       },
       variants: [
+        {
+          // size="large": the sign-in / sign-up pages' big full-width
+          // actions (app/auth) — 1rem text instead of MUI's 15px.
+          props: { size: "large" },
+          style: { fontSize: "1rem" },
+        },
         {
           // A filled success button (Order List "Paid", the Mark-as-paid
           // dialog's confirm): success.main is too light for any text on

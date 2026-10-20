@@ -59,6 +59,7 @@ import {
   CartTotalRow,
 } from "./CartPageParts";
 import CounterQrScannerDialog from "./CounterQrScannerDialog";
+import { useDropScannedMarker } from "@/app/lib/hooks/useDropScannedMarker";
 
 interface CartPageClientProps {
   locationId: number;
@@ -273,14 +274,8 @@ export default function CartPageClient({
     };
   }, [lastRequestId, isWaiting]);
 
-  // The "scanned" marker is one-time: drop it from the address so a
-  // reload or Back doesn't show the banner again.
-  useEffect(() => {
-    if (!justScanned) return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete("scanned");
-    window.history.replaceState(null, "", url);
-  }, [justScanned]);
+  // The "scanned" marker is one-time (lib/hooks/useDropScannedMarker).
+  useDropScannedMarker(justScanned);
 
   /** Opens the in-app counter-QR scanner. It loads the camera library
    *  only now, and falls back to explaining the phone's own camera

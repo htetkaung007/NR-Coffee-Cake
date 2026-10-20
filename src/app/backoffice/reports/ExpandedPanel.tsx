@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Box } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { reducedMotionMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 // Opening a row: the panel fades in with a 4px slide — transform and
 // opacity only, no height animation (DESIGN.md Rule 2); ≤200ms, ease-out.
@@ -36,7 +37,7 @@ export default function ExpandedPanel({
         px: { xs: 1.5, sm: 2 },
         py: 1.5,
         animation: `${panelIn} ${OPEN_MS}ms ease-out`,
-        "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+        [reducedMotionMedia]: { animation: "none" },
       }}
     >
       {children}
@@ -55,7 +56,7 @@ export function RowChevron({ expanded }: { expanded: boolean }) {
         color: "text.secondary",
         transform: expanded ? "rotate(180deg)" : "none",
         transition: "transform 150ms ease-out",
-        "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+        [reducedMotionMedia]: { transition: "none" },
       }}
     />
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Snackbar, useTheme } from "@mui/material";
 
@@ -21,6 +21,7 @@ import { usePollOrderStatus } from "@/app/lib/hooks/usePollOrderStatus";
 import {
   getOrderPageBackground,
 } from "@/app/lib/theme/orderPageBackground";
+import { useDropScannedMarker } from "@/app/lib/hooks/useDropScannedMarker";
 
 interface CounterOrderClientProps {
   hasSession: boolean;
@@ -91,14 +92,8 @@ export default function CounterOrderClient({
   // poll for. Post-submit status polling lives on /cart instead (see
   // CartPageClient).
 
-  // One-time, like the cart page's "Scanned" banner: drop the marker so
-  // a reload doesn't show the note again.
-  useEffect(() => {
-    if (!justScanned) return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete("scanned");
-    window.history.replaceState(null, "", url);
-  }, [justScanned]);
+  // One-time, like the cart page's "Scanned" banner.
+  useDropScannedMarker(justScanned);
 
   // Every Add goes through MenuDetailDialog, which has already checked
   // the required add-ons; the line keeps what the dialog showed (name,

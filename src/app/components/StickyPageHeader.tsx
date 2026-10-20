@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { Box } from "@mui/material";
 import {
   backofficePageTop,
@@ -78,10 +84,15 @@ export default function StickyPageHeader({
 export function useStickyScrollPadding(
   candidates: RefObject<HTMLElement | null>[],
 ) {
-  useEffect(() => {
-    const elements = candidates
+  // An Effect Event: the caller passes a fresh array of (stable) refs every
+  // render; their elements are read once, when the effect mounts.
+  const readElements = useEffectEvent(() =>
+    candidates
       .map((candidate) => candidate.current)
-      .filter((element): element is HTMLElement => element !== null);
+      .filter((element): element is HTMLElement => element !== null),
+  );
+  useEffect(() => {
+    const elements = readElements();
     if (elements.length === 0) return;
     const root = document.documentElement;
     const update = () => {
@@ -102,7 +113,5 @@ export function useStickyScrollPadding(
       observer.disconnect();
       root.style.scrollPaddingTop = "";
     };
-    // The refs are stable objects; their elements are read once mounted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }

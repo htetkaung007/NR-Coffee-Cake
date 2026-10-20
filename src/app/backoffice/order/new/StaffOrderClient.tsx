@@ -14,7 +14,10 @@ import {
 import { alpha, keyframes, useTheme } from "@mui/material/styles";
 import { cartLinesTotal, sumQuantities } from "@/app/lib/order/orderTotals";
 import { countLabel, formatAmount } from "@/app/lib/orderFormat";
-import { touchTabletLandscapeMedia } from "@/app/lib/theme/sharedThemeTokens";
+import {
+  touchTabletLandscapeMedia,
+  reducedMotionQuery,
+} from "@/app/lib/theme/sharedThemeTokens";
 import {
   quantityThatFits,
   toBrowserCartLine,
@@ -282,9 +285,7 @@ export default function StaffOrderClient({
     setTablePrompt(true);
     const picker = pickerRef.current;
     if (!picker) return;
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reduceMotion = window.matchMedia(reducedMotionQuery).matches;
     picker.scrollIntoView({
       block: "center",
       behavior: reduceMotion ? "auto" : "smooth",

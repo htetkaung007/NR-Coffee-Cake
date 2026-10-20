@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 import { Box, Button, Skeleton, Stack, Typography } from "@mui/material";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
@@ -92,12 +98,13 @@ export default function HistoryList({
   // it arrived via seed data (synchronously) or a fetch (later) — see
   // HistoryListProps.onLoaded's own comment.
   const hasReportedRef = useRef(false);
+  // Reads the current items / onLoaded when the status settles.
+  const reportFirstRow = useEffectEvent(() => onLoaded?.(items[0] ?? null));
   useEffect(() => {
     if (hasReportedRef.current) return;
     if (status !== "idle") return;
     hasReportedRef.current = true;
-    onLoaded?.(items[0] ?? null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reportFirstRow();
   }, [status]);
 
   const loadFirstPage = useCallback(async () => {
@@ -116,8 +123,8 @@ export default function HistoryList({
     setItems(result.data.items);
     setNextCursor(result.data.nextCursor);
     setStatus("idle");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // tab / day / search are fixed per mount (a change remounts this).
+  }, [tab, day, search]);
 
   const loadMore = useCallback(async () => {
     if (inFlightRef.current || !nextCursor) return;
@@ -139,8 +146,7 @@ export default function HistoryList({
     setItems((current) => [...current, ...result.data.items]);
     setNextCursor(result.data.nextCursor);
     setStatus("idle");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nextCursor]);
+  }, [tab, day, search, nextCursor]);
 
   // This instance is remounted (fresh key) whenever tab/day/search
   // change, so an empty dependency array really does mean "once per
@@ -168,8 +174,8 @@ export default function HistoryList({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // All fixed per mount (see above), so this runs once per mount.
+  }, [seedItems, tab, day, search]);
 
   // The IntersectionObserver callback always calls the LATEST loadMore
   // (which closes over the current nextCursor) via a ref, same pattern

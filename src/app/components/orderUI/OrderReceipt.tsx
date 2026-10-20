@@ -10,6 +10,7 @@ import type { ContributorWho } from "@/app/lib/order/contributors";
 import { useCustomerLabels } from "@/app/lib/hooks/useCustomerLabels";
 
 import BackCircleButton from "./BackCircleButton";
+import RemovedByStaffNote from "./RemovedByStaffNote";
 import { HideBottomBar } from "./OrderBotBar";
 
 export interface ReceiptLine {
@@ -57,7 +58,6 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
   const t = useTranslations("common");
   const tReceipt = useTranslations("receipt");
   const { price } = useCustomerPrice();
-  const labels = useCustomerLabels();
   const removed = line.removedByStaff;
   // Every unit taken back: still listed, dimmed and struck through, with
   // the words saying why (DESIGN.md Rule 26). Never in the total.
@@ -124,18 +124,11 @@ function ReceiptLineRow({ line }: { line: ReceiptLine }) {
           {t("qty", { quantity: isFullyRemoved ? removed.quantity : line.quantity })}
         </Typography>
         {removed && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ display: "block", mt: 0.25 }}
-          >
-            {isFullyRemoved
-              ? tReceipt("removedAll", { reasons: labels.voidReasons(removed.reasons) })
-              : tReceipt("removedSome", {
-                  count: removed.quantity,
-                  reasons: labels.voidReasons(removed.reasons),
-                })}
-          </Typography>
+          <RemovedByStaffNote
+            removed={removed}
+            isFullyRemoved={isFullyRemoved}
+            sx={{ color: "text.secondary", mt: 0.25 }}
+          />
         )}
       </Box>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { getMenuDetailAction } from "@/app/(storefront)/menu/action";
 import { lineTotal } from "@/app/lib/order/orderTotals";
@@ -18,6 +18,7 @@ import {
   choiceSummary,
   missingRequiredGroups,
 } from "@/app/lib/menu/menuDetailChoice";
+import { reducedMotionQuery } from "@/app/lib/theme/sharedThemeTokens";
 
 /** Pre-fills the dialog for editing an already-added line — see
  *  DraftList's Edit button. Presence of this prop (vs undefined) is
@@ -113,39 +114,42 @@ export default function MenuDetailDialog({
   // Phones get the bottom sheet; anything wider keeps the centered dialog.
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
 
+  // Fills the form once a menu's detail arrives: from the line being
+  // edited, or empty. An Effect Event, so it reads the current `editing`
+  // (a fresh object every render from most callers) without making it a
+  // dependency — the effect below re-runs per dialog open (open /
+  // menuId), the only time re-initializing should happen.
+  const applyLoadedDetail = useEffectEvent((result: MenuDetail | null) => {
+    if (editing) {
+      // Pre-fill from the existing line's own selection — addonIds
+      // is flat (not grouped by category), so it's re-grouped here
+      // the same way the server re-derives grouping from
+      // MenuAddonCategories (see validateAddonSelection's comment).
+      const grouped: Record<number, number[]> = {};
+      for (const category of result?.addonCategories ?? []) {
+        const picked = category.addons
+          .map((addon) => addon.id)
+          .filter((id) => editing.addonIds.includes(id));
+        if (picked.length > 0) grouped[category.id] = picked;
+      }
+      setSelected(grouped);
+      setQuantity(editing.quantity);
+      setNote(editing.note ?? "");
+    } else {
+      setSelected({});
+      setQuantity(1);
+      setNote("");
+    }
+  });
+
   useEffect(() => {
     if (!open || menuId === null) return;
 
     loadDetail(menuId, locationId).then((result) => {
       setDetail(result);
       setFetchedForMenuId(menuId);
-      if (editing) {
-        // Pre-fill from the existing line's own selection — addonIds
-        // is flat (not grouped by category), so it's re-grouped here
-        // the same way the server re-derives grouping from
-        // MenuAddonCategories (see validateAddonSelection's comment).
-        const grouped: Record<number, number[]> = {};
-        for (const category of result?.addonCategories ?? []) {
-          const picked = category.addons
-            .map((addon) => addon.id)
-            .filter((id) => editing.addonIds.includes(id));
-          if (picked.length > 0) grouped[category.id] = picked;
-        }
-        setSelected(grouped);
-        setQuantity(editing.quantity);
-        setNote(editing.note ?? "");
-      } else {
-        setSelected({});
-        setQuantity(1);
-        setNote("");
-      }
+      applyLoadedDetail(result);
     });
-    // editing is a fresh object every render from most callers — only
-    // its identity-independent contents matter for re-initializing,
-    // so it's read inside the effect but deliberately left out of the
-    // dependency array (open/menuId already re-run this per dialog
-    // open, which is the only time re-initializing should happen).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, menuId, locationId, loadDetail]);
 
   function selectRequired(categoryId: number, addonId: number) {
@@ -229,9 +233,7 @@ export default function MenuDetailDialog({
     const first = missingGroups[0];
     const element = first && groupElements.current.get(first.id);
     if (!element) return;
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reduceMotion = window.matchMedia(reducedMotionQuery).matches;
     element.scrollIntoView({
       behavior: reduceMotion ? "auto" : "smooth",
       block: "start",

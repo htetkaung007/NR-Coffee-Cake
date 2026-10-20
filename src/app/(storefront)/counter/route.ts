@@ -12,6 +12,7 @@ import {
 } from "@/app/lib/storefront/openOrderPlace";
 import { isSecureRequest } from "@/app/lib/http/secureCookie";
 import { redirectTo, relativePath } from "@/app/lib/http/redirect";
+import { readQrScanParams } from "@/app/lib/storefront/qrScanParams";
 
 /**
  * Design doc "Step 1: QR Scan & URL Validation". A GET here is the
@@ -23,10 +24,9 @@ import { redirectTo, relativePath } from "@/app/lib/http/redirect";
  * history: the address bar only ever shows the post-redirect URL.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const locationId = Number(searchParams.get("locationId"));
-  const tableId = Number(searchParams.get("tableId"));
-  const key = searchParams.get("key");
+  const { locationId, tableId, key } = readQrScanParams(
+    request.nextUrl.searchParams,
+  );
 
   // Relative redirects only (lib/http/redirect): the phone keeps the
   // address it scanned (the LAN IP), never the server's own host.

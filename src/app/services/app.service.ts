@@ -4,6 +4,12 @@ import { prisma } from "../utils/prisma";
 import { AppError, ValidationError } from "../lib/errors";
 import { SIGNUP_CLOSED_MESSAGE } from "../lib/access/signUp";
 
+/** A bcrypt hash (cost 10, as every stored password) of a random string
+ *  nobody knows — compared against when an email has no password, so a
+ *  sign-in for an unknown email takes as long as a wrong password. */
+const NO_ACCOUNT_HASH =
+  "$2b$10$B8yty1tw/hpin8QPm/qZGeFst4mmrR9.ytXyeO.v5lKGqe38.6EJ.";
+
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
 
@@ -132,10 +138,14 @@ export class AppService {
 
   static async verifyCredentials(email: string, password: string) {
     const user = await AppService.getUserByEmail(email);
-    if (!user || !user.password) return null; // no account, or Google-only account (no password set)
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) return null;
+    // No account, or a Google-only one (no password set): still run one
+    // bcrypt compare (against a hash nothing matches) so the response
+    // time doesn't tell which emails exist (OWASP WSTG-ATHN).
+    const isValidPassword = await bcrypt.compare(
+      password,
+      user?.password ?? NO_ACCOUNT_HASH,
+    );
+    if (!user || !user.password || !isValidPassword) return null;
 
     return user;
   }

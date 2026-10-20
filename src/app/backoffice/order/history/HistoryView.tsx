@@ -22,6 +22,7 @@ import HistoryDetail from "./HistoryDetail";
 import HistoryDetailPanel from "./HistoryDetailPanel";
 import HistoryDetailOverlay from "./HistoryDetailOverlay";
 import { useDebouncedValue } from "@/app/lib/hooks/useDebouncedValue";
+import { reducedMotionQuery } from "@/app/lib/theme/sharedThemeTokens";
 
 type Summary = {
   paid: { bills: number; revenue: number; avgBill: number };
@@ -211,9 +212,7 @@ export default function HistoryView({
       if (result.success) setSummary(result.data);
     });
     setRefreshKey((key) => key + 1);
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const prefersReducedMotion = window.matchMedia(reducedMotionQuery).matches;
     window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
   }
 
@@ -301,9 +300,7 @@ export default function HistoryView({
             size="medium"
             color="primary"
             onClick={() => {
-              const prefersReducedMotion = window.matchMedia(
-                "(prefers-reduced-motion: reduce)",
-              ).matches;
+              const prefersReducedMotion = window.matchMedia(reducedMotionQuery).matches;
               window.scrollTo({
                 top: 0,
                 behavior: prefersReducedMotion ? "auto" : "smooth",

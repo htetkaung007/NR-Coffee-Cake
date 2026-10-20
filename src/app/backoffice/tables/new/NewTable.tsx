@@ -110,7 +110,6 @@ export default function NewTable() {
               component="label"
               variant="outlined"
               startIcon={<UploadOutlinedIcon />}
-              sx={{ fontSize: "0.8rem" }}
             >
               {logo ? "Change Logo" : "Upload Logo (optional)"}
               <input

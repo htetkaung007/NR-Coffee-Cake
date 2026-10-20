@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { readStorage, setStorageItem } from "./useStoredValue";
 import type { AppLocale } from "@/app/lib/i18n/locale";
 import {
   STAFF_MENU_LANGUAGE_KEY,
@@ -31,14 +32,8 @@ function subscribe(onChange: () => void) {
 
 function readStored(): AppLocale {
   if (chosen !== null) return chosen;
-  try {
-    return parseStaffMenuLanguage(
-      window.localStorage.getItem(STAFF_MENU_LANGUAGE_KEY),
-    );
-  } catch {
-    // Storage blocked (private mode, policy) — English.
-    return "en";
-  }
+  // Storage blocked (private mode, policy) reads as null — English.
+  return parseStaffMenuLanguage(readStorage(STAFF_MENU_LANGUAGE_KEY));
 }
 
 /**
@@ -57,11 +52,9 @@ export function useStaffMenuLanguage(): [
   );
   const setLanguage = useCallback((next: AppLocale) => {
     chosen = next;
-    try {
-      window.localStorage.setItem(STAFF_MENU_LANGUAGE_KEY, next);
-    } catch {
-      // Not remembered — the switch still holds for this page load.
-    }
+    // Blocked storage: not remembered — the switch still holds for this
+    // page load.
+    setStorageItem(STAFF_MENU_LANGUAGE_KEY, next);
     listeners.forEach((listener) => listener());
   }, []);
   return [language, setLanguage];

@@ -9,7 +9,6 @@ import {
   Typography,
   Divider,
   Alert,
-  CircularProgress,
   Link,
 } from "@mui/material";
 import AuthCard from "../AuthCard";
@@ -21,6 +20,9 @@ import {
 } from "@/app/lib/access/signUp";
 import AuthCredentialFields from "../AuthCredentialFields";
 import { isAppPath } from "@/app/lib/http/appPath";
+import { authButtonSx } from "../authButtonSx";
+import AuthHeading from "../AuthHeading";
+import AuthSubmitButton from "../AuthSubmitButton";
 
 export default function SignInForm({
   isSignUpOpen,
@@ -87,24 +89,11 @@ export default function SignInForm({
 
   return (
     <AuthCard>
-      <Box sx={{ mb: 4, textAlign: "center" }}>
-        <Typography
-          variant="overline"
-          sx={{ letterSpacing: 4, fontWeight: "bold", color: "primary.main" }}
-        >
-          Welcome Back
-        </Typography>
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ mt: 1, fontWeight: 600 }}
-        >
-          Sign In
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          We are glad to see you again! Please sign in to continue.
-        </Typography>
-      </Box>
+      <AuthHeading
+        eyebrow="Welcome Back"
+        title="Sign In"
+        intro="We are glad to see you again! Please sign in to continue."
+      />
 
       {isSignUpClosedRedirect && (
         <Alert
@@ -121,13 +110,8 @@ export default function SignInForm({
         variant="outlined"
         startIcon={<GoogleIcon />}
         onClick={handleGoogleSignIn}
-        sx={{
-          py: 1.5,
-          borderRadius: 3,
-          textTransform: "none",
-          fontSize: "1rem",
-          mb: 3,
-        }}
+        size="large"
+        sx={{ ...authButtonSx, mb: 3 }}
       >
         Continue with Google
       </Button>
@@ -156,26 +140,7 @@ export default function SignInForm({
           </Alert>
         )}
 
-        <Button
-          type="submit"
-          fullWidth
-          variant="contained"
-          disabled={loading}
-          sx={{
-            mt: 4,
-            py: 1.5,
-            borderRadius: 3,
-            textTransform: "none",
-            fontSize: "1rem",
-            fontWeight: "bold",
-          }}
-        >
-          {loading ? (
-            <CircularProgress size={24} color="inherit" />
-          ) : (
-            "Sign In"
-          )}
-        </Button>
+        <AuthSubmitButton isBusy={loading}>Sign In</AuthSubmitButton>
 
         {isSignUpOpen && (
           <Box sx={{ mt: 3, textAlign: "center" }}>

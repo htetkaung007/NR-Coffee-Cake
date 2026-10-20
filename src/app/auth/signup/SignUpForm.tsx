@@ -10,7 +10,6 @@ import {
   TextField,
   Typography,
   Alert,
-  CircularProgress,
   Link,
   Divider,
 } from "@mui/material";
@@ -19,6 +18,9 @@ import GoogleIcon from "@mui/icons-material/Google";
 import NextLink from "next/link";
 import { registerAction } from "./action";
 import AuthCredentialFields from "../AuthCredentialFields";
+import { authButtonSx } from "../authButtonSx";
+import AuthHeading from "../AuthHeading";
+import AuthSubmitButton from "../AuthSubmitButton";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -75,25 +77,11 @@ export function SignUpForm() {
 
   return (
     <AuthCard>
-      {/* Header Section */}
-      <Box sx={{ mb: 4, textAlign: "center" }}>
-        <Typography
-          variant="overline"
-          sx={{ letterSpacing: 4, fontWeight: "bold", color: "primary.main" }}
-        >
-          Start Your Journey
-        </Typography>
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ mt: 1, fontWeight: 600 }}
-        >
-          Create Account
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Join us today and experience the best cafe management system.
-        </Typography>
-      </Box>
+      <AuthHeading
+        eyebrow="Start Your Journey"
+        title="Create Account"
+        intro="Join us today and experience the best cafe management system."
+      />
 
       {/* Google Sign Up Button */}
       <Button
@@ -101,13 +89,8 @@ export function SignUpForm() {
         variant="outlined"
         startIcon={<GoogleIcon />}
         onClick={handleGoogleSignUp}
-        sx={{
-          py: 1.5,
-          borderRadius: 3,
-          textTransform: "none",
-          fontSize: "1rem",
-          mb: 3,
-        }}
+        size="large"
+        sx={{ ...authButtonSx, mb: 3 }}
       >
         Sign Up with Google
       </Button>
@@ -142,26 +125,7 @@ export function SignUpForm() {
           </Alert>
         )}
 
-        <Button
-          type="submit"
-          fullWidth
-          variant="contained"
-          disabled={isSaving}
-          sx={{
-            mt: 4,
-            py: 1.5,
-            borderRadius: 3,
-            textTransform: "none",
-            fontSize: "1rem",
-            fontWeight: "bold",
-          }}
-        >
-          {isSaving ? (
-            <CircularProgress size={24} color="inherit" />
-          ) : (
-            "Sign Up"
-          )}
-        </Button>
+        <AuthSubmitButton isBusy={isSaving}>Sign Up</AuthSubmitButton>
 
         {/* Footer Link */}
         <Box sx={{ mt: 3, textAlign: "center" }}>

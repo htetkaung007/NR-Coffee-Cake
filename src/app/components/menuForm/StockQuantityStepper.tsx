@@ -40,7 +40,7 @@ export default function StockQuantityStepper({
         py: 1,
       }}
     >
-      <Typography variant="body2" sx={{ fontSize: "0.8rem", fontWeight: 700 }}>
+      <Typography variant="body2" sx={{ fontWeight: 700 }}>
         <Inventory2OutlinedIcon
           sx={{ verticalAlign: "text-bottom", mr: 0.5 }}
         />
