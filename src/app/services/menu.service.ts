@@ -7,6 +7,7 @@ import {
 import { NotFoundError } from "../lib/errors";
 import { getFileStorageService } from "../lib/storage/getFileStorageService";
 import { isMenuListed } from "../lib/menu/menuOrderability";
+import { menuDeletionMode, type MenuDeletionMode } from "../lib/menu/menuDeletion";
 import {
   companyMenuWhere,
   MenuLocationService,
@@ -389,6 +390,61 @@ export class MenuService {
           })),
         })),
     };
+  }
+
+  /**
+   * The owner's "Delete menu" (lib/menu/menuDeletion): a menu no Order
+   * row references is deleted for good — its category, add-on group,
+   * hidden-at and stock rows (archived ones too), then the menu, in ONE
+   * transaction; one that was ever ordered is only archived (isArchived:
+   * every live list leaves it out, old orders keep its name), its links
+   * and stock rows left as they are.
+   *
+   * Race guard: the menu's row is locked (SELECT … FOR UPDATE) before the
+   * Order rows are counted. An order line being written at that moment
+   * holds a key-share lock on the menu row (its foreign key) until it
+   * commits, so the lock waits for it and the count sees it; one written
+   * after the lock waits for this transaction — and after a delete its
+   * foreign key fails, so no order can point at a deleted menu.
+   *
+   * The photo is deleted only after the transaction commits (CLAUDE.md
+   * Rule 7 — storage can't roll back); if that fails it's logged and the
+   * delete still succeeds: the menu row is already gone.
+   */
+  static async deleteMenu(
+    menuId: number,
+    companyId: number,
+  ): Promise<{ mode: MenuDeletionMode }> {
+    const { mode, assetUrl } = await prisma.$transaction(async (tx: Tx) => {
+      await MenuService.findCompanyMenu(tx, menuId, companyId);
+      await tx.$queryRaw`SELECT id FROM "Menu" WHERE id = ${menuId} FOR UPDATE`;
+
+      const orderCount = await tx.order.count({ where: { menuId } });
+      const mode = menuDeletionMode(orderCount);
+      if (mode === "archive") {
+        await tx.menu.update({ where: { id: menuId }, data: { isArchived: true } });
+        return { mode, assetUrl: null };
+      }
+
+      await tx.menuMenuCategory.deleteMany({ where: { menuId } });
+      await tx.menuAddonCategories.deleteMany({ where: { menuId } });
+      await tx.disableLocationMenus.deleteMany({ where: { menuId } });
+      await tx.menuStock.deleteMany({ where: { menuId } });
+      const deleted = await tx.menu.delete({
+        where: { id: menuId },
+        select: { assetUrl: true },
+      });
+      return { mode, assetUrl: deleted.assetUrl };
+    });
+
+    if (assetUrl) {
+      try {
+        await getFileStorageService().delete(assetUrl);
+      } catch (error) {
+        console.error("[MenuService.deleteMenu] Image delete failed:", error);
+      }
+    }
+    return { mode };
   }
 
   /** Chain lookup — the menu, if it belongs to this company (scoped

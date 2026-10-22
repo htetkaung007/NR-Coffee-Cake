@@ -7,6 +7,8 @@ import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 
 export type CartButtonStatus =
   | "CART"
+  /** The tap's request is on its way: MUI's spinner + "Sending…". */
+  | "SENDING"
   | "PENDING_APPROVAL"
   | "PENDING"
   | "COOKING";
@@ -36,6 +38,22 @@ export default function CartButton({
   submitLabel,
 }: CartButtonProps) {
   const t = useTranslations("cart");
+  if (status === "SENDING") {
+    return (
+      <Button
+        variant="contained"
+        fullWidth
+        loading
+        loadingPosition="start"
+        sx={{ whiteSpace: "nowrap" }}
+      >
+        <Typography component="span" sx={{ fontWeight: 700 }}>
+          {t("sending")}
+        </Typography>
+      </Button>
+    );
+  }
+
   if (status === "PENDING_APPROVAL") {
     return (
       <Button variant="contained" fullWidth disabled sx={{ opacity: 1 }}>

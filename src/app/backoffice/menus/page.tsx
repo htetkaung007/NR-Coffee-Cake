@@ -7,8 +7,21 @@ import { touchTabletMedia } from "@/app/lib/theme/sharedThemeTokens";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import NewItemFab, { NewItemFabSpacer } from "@/app/components/NewItemFab";
 import MenuGrid from "./MenuGrid";
+import MenuStatusChips from "./MenuStatusChips";
+import {
+  countMenusByStatus,
+  filterMenusByStatus,
+  parseMenuStatusFilter,
+} from "@/app/lib/menu/menuStatusFilter";
 
-export default async function MenusPage() {
+export default async function MenusPage({
+  searchParams,
+}: {
+  /** ?status=soldOut | unavailable — the chips' filter (untrusted:
+   *  anything else is "all"). */
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const filter = parseMenuStatusFilter((await searchParams).status);
   const { context, fallback } = await requireBackofficeContext({
     // Managers see the list (they'll turn menus on/off here); creating
     // and editing are the owner's (menus/new, menus/[id]).
@@ -29,6 +42,9 @@ export default async function MenusPage() {
   // Display only — setMenuAvailableAction checks the permission itself.
   const canToggle = hasPermission(role, granted, "MENU_AVAILABILITY");
   const locationName = locationRow?.name ?? t("thisLocation");
+  // The chips filter, never reorder: the cards keep their usual order.
+  const counts = countMenusByStatus(menus);
+  const shownMenus = filterMenusByStatus(menus, filter);
 
   return (
     // The same page padding and header spacing as the Tables page.
@@ -81,14 +97,24 @@ export default async function MenusPage() {
       {menus.length === 0 ? (
         <Typography color="text.secondary">{t("noMenus")}</Typography>
       ) : (
-        <MenuGrid
-          menus={menus.map((menu) => ({
-            ...menu,
-            description: menu.description ?? undefined,
-          }))}
-          canToggle={canToggle}
-          locationName={locationName}
-        />
+        <>
+          <MenuStatusChips selected={filter} counts={counts} />
+          {shownMenus.length === 0 ? (
+            // The chips stay; one muted line says the filter is empty.
+            <Typography variant="body2" color="text.secondary">
+              {filter === "soldOut" ? t("emptySoldOut") : t("emptyOff")}
+            </Typography>
+          ) : (
+            <MenuGrid
+              menus={shownMenus.map((menu) => ({
+                ...menu,
+                description: menu.description ?? undefined,
+              }))}
+              canToggle={canToggle}
+              locationName={locationName}
+            />
+          )}
+        </>
       )}
 
       {/* Below lg: the floating "+" (and room for it under the grid). */}

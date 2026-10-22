@@ -80,6 +80,8 @@ export function orderUiLabels(
     menuDetail: {
       addToCart: tDetail("addToCart"),
       saveChanges: tDetail("saveChanges"),
+      adding: tDetail("adding"),
+      saving: tDetail("saving"),
       quantity: tDetail("quantity"),
       decrease: tDetail("decrease"),
       increase: tDetail("increase"),

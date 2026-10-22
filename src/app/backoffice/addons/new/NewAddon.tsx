@@ -6,6 +6,7 @@ import { Alert, Box, Button, Stack } from "@mui/material";
 import { useTranslations } from "next-intl";
 import { createAddonGroupAction, updateAddonGroupAction } from "../action";
 import { SuccessSnackbar } from "@/app/components/FormCard";
+import SubmitButton from "@/app/components/SubmitButton";
 import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import MenuMultiSelect, { MenuOption } from "../MenuMultiSelect";
@@ -40,7 +41,7 @@ interface NewAddonProps {
 export default function NewAddon({ menus, initialData }: NewAddonProps) {
   const t = useTranslations("bo.addonForm");
   const tCommon = useTranslations("bo.common");
-  const { error, setError, isPending, showSuccess, closeSuccess, save } =
+  const { error, setError, status, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const isEditMode = Boolean(initialData);
 
@@ -181,18 +182,17 @@ export default function NewAddon({ menus, initialData }: NewAddonProps) {
                 >
                   {tCommon("cancel")}
                 </Button>
-                <Button
+                <SubmitButton
                   type="submit"
                   variant="contained"
-                  disabled={isPending || !groupName.trim()}
+                  status={status}
+                  busyLabel={isEditMode ? tCommon("saving") : t("creating")}
+                  doneLabel={isEditMode ? tCommon("saved") : tCommon("created")}
+                  disabled={!groupName.trim()}
                   sx={{ borderRadius: 2.5, px: 3 }}
                 >
-                  {isPending
-                    ? tCommon("saving")
-                    : isEditMode
-                      ? t("update")
-                      : t("save")}
-                </Button>
+                  {isEditMode ? t("update") : t("save")}
+                </SubmitButton>
               </Stack>
             </Box>
           </Stack>

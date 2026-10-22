@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStaffErrorMessage } from "./useStaffWords";
+import { useSubmitLock } from "./useSubmitLock";
 
 type SaveResult =
   | { success: true }
@@ -12,26 +13,30 @@ type SaveResult =
     };
 
 /**
- * The Backoffice create/edit pages' submit: run the Server Action in a
- * transition (isPending disables the button), show its safe error
- * inline (in the staff's language — useStaffErrorMessage), or on success show the success toast for a beat and then go
- * to `href` (router.push — redirect() only works on the server).
+ * The Backoffice create/edit pages' submit: run the Server Action under
+ * the submit lock (useSubmitLock — a second tap is ignored from the very
+ * first one), show its safe error inline (in the staff's language —
+ * useStaffErrorMessage) and unlock, or on success show the success toast
+ * for a beat and then go to `href` (router.push — redirect() only works
+ * on the server). After success it stays locked (`status` "done") until
+ * the page leaves, so the button can't send again during the toast.
  */
 export function useSaveThenNavigate() {
   const router = useRouter();
   const errorText = useStaffErrorMessage();
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const lock = useSubmitLock();
 
   function save(run: () => Promise<SaveResult>, href: string) {
-    setError(null);
-    startTransition(async () => {
+    void lock.run(async () => {
+      setError(null);
       const result = await run();
       if (!result.success) {
         setError(errorText(result.error));
         return;
       }
+      lock.keepLocked();
       setShowSuccess(true);
       setTimeout(() => {
         router.push(href);
@@ -42,7 +47,10 @@ export function useSaveThenNavigate() {
   return {
     error,
     setError,
-    isPending,
+    /** Sending, or sent and about to leave — the submit stays disabled. */
+    isBusy: lock.isLocked,
+    /** For SubmitButton: idle → busy → done ("Created ✓"). */
+    status: lock.status,
     showSuccess,
     closeSuccess: () => setShowSuccess(false),
     save,

@@ -23,6 +23,8 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import { useTranslations } from "next-intl";
 import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
+import SubmitButton from "@/app/components/SubmitButton";
 import RemoveIcon from "@mui/icons-material/Remove";
 import type { ActionResult } from "@/app/lib/actionResult";
 import {
@@ -82,13 +84,17 @@ export default function VoidItemDialog({
   const [note, setNote] = useState("");
   const [returnToStock, setReturnToStock] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
+  // Locked from the first tap — a double tap must not void twice.
+  const submitLock = useSubmitLock();
+  const isPending = submitLock.isLocked;
 
   // A fresh form each time it opens.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
+      // The last void's lock (kept while the dialog closed) opens again.
+      submitLock.unlock();
       setQuantity(1);
       setReason(null);
       setNote("");
@@ -101,19 +107,24 @@ export default function VoidItemDialog({
     if (!isPending) onClose();
   }
 
-  async function submit() {
-    if (!reason || isPending) return;
-    setError(null);
-    setIsPending(true);
-    const result = await onVoid({
-      quantity,
-      reason,
-      note: reason === "OTHER" ? note : null,
-      returnToStock,
+  function submit() {
+    if (!reason) return;
+    void submitLock.run(async () => {
+      setError(null);
+      const result = await onVoid({
+        quantity,
+        reason,
+        note: reason === "OTHER" ? note : null,
+        returnToStock,
+      });
+      if (!result.success) {
+        setError(errorText(result.error));
+        return;
+      }
+      // Stays "Voiding…" (disabled) while the dialog closes.
+      submitLock.keepLocked();
+      onClose();
     });
-    setIsPending(false);
-    if (result.success) onClose();
-    else setError(errorText(result.error));
   }
 
   return (
@@ -134,7 +145,7 @@ export default function VoidItemDialog({
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          void submit();
+          submit();
         }}
         sx={{ display: "flex", flexDirection: "column", minHeight: 0 }}
       >
@@ -242,15 +253,17 @@ export default function VoidItemDialog({
           <Button onClick={close} disabled={isPending} sx={{ minHeight: 44 }}>
             {tCommon("cancel")}
           </Button>
-          <Button
+          <SubmitButton
             type="submit"
             variant="contained"
             color="error"
-            disabled={isPending || reason === null}
+            status={submitLock.status}
+            busyLabel={t("voiding")}
+            disabled={reason === null}
             sx={{ minHeight: 44 }}
           >
-            {isPending ? t("voiding") : t("confirm")}
-          </Button>
+            {t("confirm")}
+          </SubmitButton>
         </DialogActions>
       </Box>
     </Dialog>

@@ -9,6 +9,7 @@ import {
 import { requireOwner, requirePermission } from "@/app/lib/access/roleGuard";
 import {
   createMenuSchema,
+  deleteMenuSchema,
   setMenuAvailableSchema,
   type CreateMenuInput,
   type SetMenuAvailableInput,
@@ -128,5 +129,30 @@ export async function setMenuAvailableAction(input: {
   const actionResult = toActionResult(result);
   if (actionResult.success) revalidatePath("/backoffice/menus");
 
+  return actionResult;
+}
+
+const safeRequireOwner = toSafeResult(() => requireOwner());
+
+const safeDeleteMenu = toSafeResult(
+  (input: { menuId: number; companyId: number }) =>
+    MenuService.deleteMenu(input.menuId, input.companyId),
+);
+
+/** The edit page's "Delete menu": the owner only — guard FIRST, then the
+ *  id, then MenuService.deleteMenu (deleted for good if never ordered,
+ *  else archived). The company comes from the session, never the client. */
+export async function deleteMenuAction(menuId: number) {
+  const result = await safeRequireOwner()
+    .andThen(({ companyId }) =>
+      validateWith(deleteMenuSchema, { menuId }).map((data) => ({
+        ...data,
+        companyId,
+      })),
+    )
+    .andThen(safeDeleteMenu);
+
+  const actionResult = toActionResult(result);
+  if (actionResult.success) revalidatePath("/backoffice/menus");
   return actionResult;
 }

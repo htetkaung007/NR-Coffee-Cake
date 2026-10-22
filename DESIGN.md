@@ -278,6 +278,17 @@ Visible response within ~100ms: pressed state (`:active` →
 double-taps), or an optimistic update. A disabled control shows WHY
 ("Accept or reject order #1047 first", "Nothing to print yet").
 
+- A submit button locks on the first tap (useSubmitLock — a ref, not
+  only state) and stays locked until the page leaves after success; it
+  unlocks only on an error.
+- Busy buttons show MUI's `loading` spinner + a '…ing' label, then
+  '✓ done' until the page leaves (`components/SubmitButton`): "Create
+  Menu" → "Creating menu…" → "Created ✓" — never back to the idle label
+  during the success toast; an error brings the idle label back with
+  the error shown as before. Words come from the surface's own messages
+  (Backoffice `bo.*`, customers' storefront keys). Under reduced motion
+  the spinner slows down; the "…ing" label is the static cue.
+
 ## 16. Forms and inputs
 
 - Real labels, not placeholder-only.
@@ -354,6 +365,11 @@ double-taps), or an optimistic update. A disabled control shows WHY
 - **Centred Backoffice pages**: New / Edit Location and Table and
   Settings share ONE column — `components/CenteredPage` (max 480px,
   centred, page padding); a PageHeader's back link stays on its left.
+  Settings: fluid up to 960px, centred; inner forms 2 columns from md
+  (CenteredPage's `maxWidth` = `SETTINGS_PAGE_MAX_WIDTH`; the company
+  name field ≤ 480px beside Save; Add a manager: Email | Password,
+  Location | —, the permission checklist in 2 columns; one column below
+  md).
 - **Customer menu grid:** 2 columns <600 · 3 at ≥600 · 4 at ≥900 (max 4),
   grid capped at ~1400px and centered, equal-height rows. **Touch
   tablets:** compact cards, MIN 212px (`TOUCH_CARD_MIN_PX`) with 16px
@@ -397,7 +413,11 @@ double-taps), or an optimistic update. A disabled control shows WHY
   and up; below `lg`, a bottom bar (total + action) that opens a right
   Drawer on tablets and a bottom sheet / full-screen Dialog on phones.
 - **New Order:** "Order for" picker above the menus below `lg` (its own
-  card above Current order from `lg`); Current order is a bottom sheet
+  card above Current order from `lg`); Current order (lg+) keeps to its
+  content, capped at the viewport; only its lines scroll (Total + Send
+  to kitchen stay pinned at its bottom; the empty state is icon + "No
+  items yet" + "Tap a menu to add it", 24px above and below). Current
+  order is a bottom sheet
   below `lg` on all sizes (centred, max ~640px from `sm`), opened from
   the bottom bar ("<target> · N items" + View order) — PINNED to the
   screen's bottom edge whatever the content height (OrderBottomBar
@@ -471,6 +491,20 @@ double-taps), or an optimistic update. A disabled control shows WHY
   the rail on an 800px screen); the photo capped at
   112px, page top / header gap 16px / 16px. On those cards the price
   wraps under the name when the name would get < 80px.
+- **Backoffice Menus status chips**: one row under the page header,
+  above the grid — [All (12)] [Sold out (3)] [Off (1)] — links that keep
+  the filter in the URL (`?status=soldOut | unavailable`, no param =
+  All; anything else reads as All). The selected chip is filled primary
+  with aria-current="page", the others outlined; the count is part of
+  the label (and its name) and shows at 0 too; ≥ 44px tall, 8px apart;
+  the row scrolls sideways inside itself when it's wider than the
+  screen. Filtering never reorders: the cards keep their usual order
+  (`lib/menu/menuStatusFilter`, by menuCardStatus — a switched-off menu
+  with no stock is "Off" only). An empty filter keeps the chips plus one
+  muted line ("No sold-out menus" / "No menus are switched off"); a
+  company with no menus at all shows only "No menu items yet." (no
+  chips). After an on/off switch the refresh updates the counts, and a
+  card that no longer matches leaves the filtered list.
 - **Backoffice menu card states** (one status rule,
   `lib/menu/menuCardStatus.ts`; stock words from `lib/menu/stockLevel.ts`, shared
   with the customer card's "low" threshold):
@@ -679,6 +713,17 @@ Confirm what's hard to undo (Mark as paid, cancel a submitted order,
 delete a menu item). Don't confirm cheap, reversible actions (quantity +/-,
 toggling an add-on). Printing never blocks or changes payment.
 
+**"Delete menu"** (the menu edit page — an outlined error-colour button
+at the bottom, under a rule, away from Save) asks first: Delete
+"<name>"? — "If this menu was never ordered, it is deleted for good. If
+it was ordered before, it is hidden everywhere, but old orders, History
+and Reports keep showing it." [Cancel] [Delete] (destructive, focus on
+Cancel; both disabled while it runs; an error shows inside the dialog).
+Then back to Menus with "Menu deleted" / "Menu hidden — kept for order
+history". The edit form's English name field says "Change the name only
+to fix a typo. A different item → create a new menu." beside its
+character counter (old orders show the menu's current name).
+
 **"New QR code"** (Backoffice table cards — every table and the Counter,
 in the card's ⋯ menu) rotates the table's access key and renders a new
 QR image: use it when a QR is misused or the shop's address / IP
@@ -810,7 +855,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-20 (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-10-21 (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

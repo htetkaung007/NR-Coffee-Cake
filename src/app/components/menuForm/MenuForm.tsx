@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Alert,
   AlertTitle,
@@ -17,7 +18,11 @@ import AdjustIcon from "@mui/icons-material/Adjust";
 import {
   updateMenuAction,
   createMenuAction,
+  deleteMenuAction,
 } from "@/app/backoffice/menus/action";
+import ConfirmDialog from "../ConfirmDialog";
+import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import type { MenuDeletionMode } from "@/app/lib/menu/menuDeletion";
 import { AddonGroupOption } from "../ConnectAddonGroupDialog";
 import MenuCard, { MenuCardData } from "../MenuCard";
 import { SurfaceThemeScope } from "@/app/lib/theme/ThemeModeProvider";
@@ -33,6 +38,7 @@ import StatusSnackbar, { type StatusMessage } from "../StatusSnackbar";
 import FormCard, { SuccessSnackbar } from "../FormCard";
 import PageHeader from "../PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
+import SubmitButton from "@/app/components/SubmitButton";
 import { useLocale, useTranslations } from "next-intl";
 import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { localizedText } from "@/app/lib/i18n/localizedText";
@@ -90,9 +96,34 @@ export default function MenuForm({
   const tCommon = useTranslations("bo.common");
   const locale = useLocale();
   const money = useStaffMoney();
-  const { error, setError, isPending, showSuccess, closeSuccess, save } =
+  const { error, setError, status, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const isEditMode = Boolean(initialData);
+  const router = useRouter();
+  const errorText = useStaffErrorMessage();
+  // "Delete menu" (edit only): deleted for good if never ordered, else
+  // hidden (archived) — MenuService.deleteMenu says which.
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletedMode, setDeletedMode] = useState<MenuDeletionMode | null>(null);
+  const [isDeleting, startDeleting] = useTransition();
+
+  function handleDelete() {
+    if (!initialData) return;
+    const menuId = initialData.id;
+    setDeleteError(null);
+    startDeleting(async () => {
+      const result = await deleteMenuAction(menuId);
+      if (!result.success) {
+        setDeleteError(errorText(result.error));
+        return;
+      }
+      setIsDeleteOpen(false);
+      // The outcome for a beat, then back to the list (as a save does).
+      setDeletedMode(result.data.mode);
+      setTimeout(() => router.push("/backoffice/menus"), 1000);
+    });
+  }
   // One active location: no choice to make — it shows there (as before
   // locations could be picked), and the section is hidden.
   const hasLocationChoice = locations.length > 1;
@@ -338,11 +369,19 @@ export default function MenuForm({
             inputRef={nameInputRef}
             slotProps={{
               htmlInput: { maxLength: MENU_NAME_MAX },
+              formHelperText: { component: "div" },
             }}
             error={Boolean(problemFor("name"))}
             helperText={
-              problemFor("name") ??
-              tCommon("characters", { count: name.length, max: MENU_NAME_MAX })
+              problemFor("name") ?? (
+                // Editing: a rename is for typos only — old orders show
+                // the menu by its current name (it isn't snapshotted).
+                <CharacterCount
+                  count={name.length}
+                  max={MENU_NAME_MAX}
+                  hint={isEditMode ? t("renameHint") : undefined}
+                />
+              )
             }
           />
           <TextField
@@ -525,20 +564,34 @@ export default function MenuForm({
             </Alert>
           )}
 
-          <Button
+          <SubmitButton
             type="submit"
             variant="contained"
-            disabled={isPending}
+            status={status}
+            busyLabel={isEditMode ? tCommon("saving") : t("creating")}
+            doneLabel={isEditMode ? tCommon("saved") : tCommon("created")}
             sx={{ alignSelf: "flex-start", px: 3 }}
           >
-            {isPending
-              ? isEditMode
-                ? tCommon("saving")
-                : tCommon("creating")
-              : isEditMode
-                ? tCommon("saveChanges")
-                : t("create")}
-          </Button>
+            {isEditMode ? tCommon("saveChanges") : t("create")}
+          </SubmitButton>
+
+          {/* Away from Save, under a rule: the one destructive action. */}
+          {isEditMode && (
+            <>
+              <Divider />
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => {
+                  setDeleteError(null);
+                  setIsDeleteOpen(true);
+                }}
+                sx={{ alignSelf: "flex-start" }}
+              >
+                {t("deleteMenu")}
+              </Button>
+            </>
+          )}
         </FormCard>
 
         <Box
@@ -579,6 +632,36 @@ export default function MenuForm({
         message={
           isEditMode ? t("updated") : t("created")
         }
+      />
+
+      {initialData && (
+        <ConfirmDialog
+          open={isDeleteOpen}
+          title={t("deleteTitle", { name: initialData.name })}
+          message={
+            <>
+              {t("deleteBody")}
+              {deleteError && (
+                <Box component="span" sx={{ display: "block", mt: 1 }}>
+                  <Typography variant="body2" component="span" color="error" role="alert">
+                    {deleteError}
+                  </Typography>
+                </Box>
+              )}
+            </>
+          }
+          confirmLabel={tCommon("delete")}
+          cancelLabel={tCommon("cancel")}
+          destructive
+          pending={isDeleting}
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteOpen(false)}
+        />
+      )}
+      <SuccessSnackbar
+        open={deletedMode !== null}
+        onClose={() => {}}
+        message={deletedMode === "archive" ? t("archived") : t("deleted")}
       />
 
       <CreateMenuCategoryDialog

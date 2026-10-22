@@ -168,6 +168,8 @@ left in a broken/inconsistent state?"
   on every line it prices, so a query that forgets them fails tsc.
   Customers see only "Removed by staff" + the reason — never the note
   or who (ORDER_LINE_INCLUDE's void select carries neither).
+- Deleting a menu: hard delete only when no Order row references it,
+  else isArchived; the image goes after the transaction.
 - **The cancellation `note` is staff-typed free text** (Other only,
   ≤ 120 characters, normalised by `rejectRoundSchema`). Never put it in a
   URL (query string, path, redirect).
@@ -360,8 +362,19 @@ independently of the app config). Everything else still goes through
   Server Action, not just hide UI client-side) — not yet wired up.
 - Add-on groups are global (no companyId) — fine in single-shop mode;
   must get a companyId before more than one company can exist.
-- Menu hard-delete (soft-delete via isArchived exists; permanent
-  delete is not yet built). Locations have no grace period any more:
+- Menu delete is built (the edit page's "Delete menu" →
+  `deleteMenuAction`, owner only → `MenuService.deleteMenu`; the rule is
+  `lib/menu/menuDeletion.ts`): a menu no Order row references (table
+  drafts, archived, cancelled and voided lines counted too) is deleted
+  for good with its category / add-on group / hidden-at / stock rows in
+  ONE transaction; one that was ever ordered is only archived
+  (isArchived) — gone from every live list (Backoffice Menus, /menu,
+  New Order, details, category lists, carts and drafts), still named in
+  the Order List, History, receipts, print, Reports and CSV, which read
+  by menuId with no isArchived filter (never add one). The menu row is
+  locked (SELECT … FOR UPDATE) before the count. Order lines snapshot
+  only the price, never the name — so a rename is for typos only (the
+  edit form says so). Locations have no grace period any more:
   one with no sales history and no managers is deleted at once, one
   with sales can only be archived (lib/location/locationDeletion.ts).
 
@@ -713,6 +726,10 @@ business reason?"
   name — this has caused a real fragile-import bug once already.
 - Don't leave empty/dead scratch files in the repo — delete them once
   done, don't commit them.
+- Submit handlers that call a Server Action use useSubmitLock (or
+  useSaveThenNavigate, which uses it) — `lib/hooks/useSubmitLock.ts`,
+  the pure rule in `lib/hooks/submitLock.ts`; the button is
+  `components/SubmitButton` (busy / done labels, DESIGN.md §15).
 - **localStorage only through `lib/hooks/useStoredValue.ts`** —
   `readStorage`, `setStorageItem`, `removeStorageItem`, `storageKeys`
   (silent; for stores that notify their own readers) and `writeStorage` +

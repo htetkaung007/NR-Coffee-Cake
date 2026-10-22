@@ -1,7 +1,8 @@
 "use client";
 
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 
+import SubmitButton, { type SubmitStatus } from "@/app/components/SubmitButton";
 import QuantityStepper, { type QuantityControl } from "./QuantityStepper";
 import type { MenuDetailVariant } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
@@ -11,10 +12,13 @@ interface MenuDetailFooterProps {
   totalPrice: number;
   quantity: QuantityControl;
   isSoldOut: boolean;
-  /** Add-to-cart / Save button disabled (required addon missing,
-   *  submitting, or sold out). */
+  /** Add-to-cart / Save button disabled (required addon missing, or
+   *  sold out). While it sends, `submitStatus` disables it too. */
   submitDisabled: boolean;
   submitLabel: string;
+  /** busy → the spinner + "Adding…" / "Saving…" (submitBusyLabel). */
+  submitStatus: SubmitStatus;
+  submitBusyLabel: string;
   onSubmit: () => void;
   /** Above the button: why it's off (MissingChoiceNotice), if anything. */
   notice?: React.ReactNode;
@@ -34,6 +38,8 @@ export default function MenuDetailFooter({
   isSoldOut,
   submitDisabled,
   submitLabel,
+  submitStatus,
+  submitBusyLabel,
   onSubmit,
   notice,
 }: MenuDetailFooterProps) {
@@ -65,9 +71,11 @@ export default function MenuDetailFooter({
         {onlyLeft}
         <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           {!isSoldOut && <QuantityStepper quantity={quantity} variant="pill" />}
-          <Button
+          <SubmitButton
             variant="contained"
             fullWidth
+            status={submitStatus}
+            busyLabel={submitBusyLabel}
             disabled={submitDisabled}
             onClick={onSubmit}
             sx={{
@@ -78,7 +86,7 @@ export default function MenuDetailFooter({
           >
             {submitLabel}
             {!isSoldOut && ` · ${price(totalPrice)}`}
-          </Button>
+          </SubmitButton>
         </Stack>
       </Box>
     );
@@ -129,8 +137,10 @@ export default function MenuDetailFooter({
               {price(totalPrice)}
             </Typography>
           )}
-          <Button
+          <SubmitButton
             variant="contained"
+            status={submitStatus}
+            busyLabel={submitBusyLabel}
             disabled={submitDisabled}
             onClick={onSubmit}
             // A long label (Myanmar) wraps inside a narrow column rather
@@ -138,7 +148,7 @@ export default function MenuDetailFooter({
             sx={{ minHeight: 44, px: 3, maxWidth: "100%" }}
           >
             {submitLabel}
-          </Button>
+          </SubmitButton>
         </Stack>
       </Stack>
     </Box>

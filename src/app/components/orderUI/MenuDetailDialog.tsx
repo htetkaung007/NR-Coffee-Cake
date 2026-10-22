@@ -19,6 +19,7 @@ import {
   missingRequiredGroups,
 } from "@/app/lib/menu/menuDetailChoice";
 import { reducedMotionQuery } from "@/app/lib/theme/sharedThemeTokens";
+import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 
 /** Pre-fills the dialog for editing an already-added line — see
  *  DraftList's Edit button. Presence of this prop (vs undefined) is
@@ -102,7 +103,9 @@ export default function MenuDetailDialog({
   const [selected, setSelected] = useState<Record<number, number[]>>({});
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  // A double tap on Add must not add the quantity twice (a Table draft
+  // is saved on the server): the lock refuses the second tap at once.
+  const submitLock = useSubmitLock();
   const [error, setError] = useState<string | null>(null);
   // Derived, not a separate state field set inside the effect below —
   // "loading" just means "open, with a menuId the last fetch hasn't
@@ -120,6 +123,9 @@ export default function MenuDetailDialog({
   // dependency — the effect below re-runs per dialog open (open /
   // menuId), the only time re-initializing should happen.
   const applyLoadedDetail = useEffectEvent((result: MenuDetail | null) => {
+    // A fresh open: the last Add's lock (kept while the dialog closed)
+    // opens again.
+    submitLock.unlock();
     if (editing) {
       // Pre-fill from the existing line's own selection — addonIds
       // is flat (not grouped by category), so it's re-grouped here
@@ -188,24 +194,27 @@ export default function MenuDetailDialog({
     quantity,
   );
 
-  async function handleSubmit() {
+  function handleSubmit() {
     if (!detail) return;
-    setSubmitting(true);
-    setError(null);
-    const addonIds = Object.values(selected).flat();
-    const errorMessage = await onSubmit(
-      detail.id,
-      quantity,
-      addonIds,
-      note.trim(),
-      detail,
-    );
-    setSubmitting(false);
-    if (errorMessage) {
-      setError(errorMessage);
-      return;
-    }
-    onClose();
+    void submitLock.run(async () => {
+      setError(null);
+      const addonIds = Object.values(selected).flat();
+      const errorMessage = await onSubmit(
+        detail.id,
+        quantity,
+        addonIds,
+        note.trim(),
+        detail,
+      );
+      if (errorMessage) {
+        setError(errorMessage);
+        return;
+      }
+      // Stays "Adding…" (disabled) while the dialog closes — never back
+      // to "Add to Cart"; the next open unlocks it.
+      submitLock.keepLocked();
+      onClose();
+    });
   }
 
   // Required groups first — the customer has to answer them before Add to
@@ -283,8 +292,10 @@ export default function MenuDetailDialog({
             totalPrice={totalPrice}
             quantity={quantityControl}
             isSoldOut={isSoldOut}
-            submitDisabled={missingRequired || submitting || isSoldOut}
+            submitDisabled={missingRequired || isSoldOut}
             submitLabel={editing ? labels.saveChanges : labels.addToCart}
+            submitStatus={submitLock.status}
+            submitBusyLabel={editing ? labels.saving : labels.adding}
             onSubmit={handleSubmit}
           />
         ) : null

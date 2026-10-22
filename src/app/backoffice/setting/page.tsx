@@ -10,6 +10,10 @@ import AddManagerForm from "./AddManagerForm";
 import CompanyNameForm from "./CompanyNameForm";
 import ManagersSection from "./ManagersSection";
 
+/** Settings is wider than the other centred pages: its cards hold a
+ *  two-column form from md (DESIGN.md §18). */
+const SETTINGS_PAGE_MAX_WIDTH = 960;
+
 /** One Settings section: a card with a heading and a one-line
  *  description, then its form. */
 function SettingsSection({
@@ -64,7 +68,7 @@ export default async function SettingsPage({
     manager && /^\d+$/.test(manager) ? Number(manager) : null;
 
   return (
-    <CenteredPage>
+    <CenteredPage maxWidth={SETTINGS_PAGE_MAX_WIDTH}>
       <Box sx={{ pb: 2 }}>
         <OrdersPageHeader title={t("title")} showSectionNav={false} />
       </Box>

@@ -24,6 +24,9 @@ export interface OrderUiLabels {
   menuDetail: {
     addToCart: string;
     saveChanges: string;
+    /** The Add / Save button while it sends (with the spinner). */
+    adding: string;
+    saving: string;
     quantity: string;
     decrease: string;
     increase: string;
@@ -67,6 +70,8 @@ const ENGLISH: OrderUiLabels = {
   menuDetail: {
     addToCart: "Add to Cart",
     saveChanges: "Save Changes",
+    adding: "Adding…",
+    saving: "Saving…",
     quantity: "Quantity",
     decrease: "Decrease quantity",
     increase: "Increase quantity",

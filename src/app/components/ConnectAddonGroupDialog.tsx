@@ -26,6 +26,8 @@ import OptionRowsEditor from "./addonForm/OptionRowsEditor";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
+import SubmitButton from "./SubmitButton";
 
 export interface AddonGroupOption {
   id: number;
@@ -63,7 +65,7 @@ export default function ConnectAddonGroupDialog({
   const { options, setOptions, updateOption, addOption, removeOption } =
     useOptionRows([emptyOptionRow(), emptyOptionRow()]);
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const submitLock = useSubmitLock();
 
   const [prevOpen, setPrevOpen] = useState(open);
 
@@ -75,6 +77,8 @@ export default function ConnectAddonGroupDialog({
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
+      // The last create's lock (kept while the dialog closed) opens again.
+      submitLock.unlock();
       setDraftIds(selectedIds);
       setSearch("");
       setGroupName("");
@@ -101,7 +105,13 @@ export default function ConnectAddonGroupDialog({
       (category.nameMy ?? "").toLowerCase().includes(term),
   );
 
-  async function handleSave() {
+  function handleSave() {
+    // Locked from the first tap: a double tap must not create the custom
+    // group twice.
+    void submitLock.run(saveDraft);
+  }
+
+  async function saveDraft() {
     setError(null);
     const hasCustomGroup =
       groupName.trim() !== "" && options.some((row) => row.name.trim() !== "");
@@ -109,7 +119,6 @@ export default function ConnectAddonGroupDialog({
     let finalIds = draftIds;
 
     if (hasCustomGroup) {
-      setIsSaving(true);
       const result = await createAddonGroupAction({
         groupName,
         groupNameMy,
@@ -122,7 +131,6 @@ export default function ConnectAddonGroupDialog({
             price: row.price,
           })),
       });
-      setIsSaving(false);
 
       if (!result.success) {
         setError(errorText(result.error));
@@ -134,6 +142,8 @@ export default function ConnectAddonGroupDialog({
       // prop came from the server at page-load time) — refresh so the
       // parent Server Component re-fetches it and it shows up connected.
       router.refresh();
+      // "Created ✓" (disabled) while the dialog closes.
+      submitLock.keepLocked();
     }
 
     onChangeSelectedIds(finalIds);
@@ -288,14 +298,16 @@ export default function ConnectAddonGroupDialog({
         >
           {tCommon("cancel")}
         </Button>
-        <Button
+        <SubmitButton
           variant="contained"
           onClick={handleSave}
-          disabled={isSaving}
+          status={submitLock.status}
+          busyLabel={t("creating")}
+          doneLabel={tCommon("created")}
           sx={{ borderRadius: 2.5, px: 3 }}
         >
-          {isSaving ? tCommon("saving") : t("save")}
-        </Button>
+          {t("save")}
+        </SubmitButton>
       </Stack>
     </Dialog>
   );

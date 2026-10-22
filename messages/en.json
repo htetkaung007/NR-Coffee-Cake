@@ -94,7 +94,8 @@
     "tableRejectedNextStep": "You can add items and send again.",
     "tableCancelConfirm": "This cancels the order for everyone at {table}.",
     "sentToKitchen": "Sent to kitchen · {number}",
-    "shortage": "Some items ran out — remove or reduce them before sending to the kitchen."
+    "shortage": "Some items ran out — remove or reduce them before sending to the kitchen.",
+    "sending": "Sending…"
   },
   "nav": {
     "label": "Order navigation",
@@ -211,7 +212,9 @@
     "optional": "Optional",
     "done": "✓ Done",
     "pleaseChoose": "Please choose: {groups}",
-    "yourChoice": "Your choice: {choices}"
+    "yourChoice": "Your choice: {choices}",
+    "adding": "Adding…",
+    "saving": "Saving…"
   },
   "lineNotice": {
     "priceUpdated": "Price updated:",
@@ -473,7 +476,9 @@
       "replace": "Replace",
       "selectAll": "Select all",
       "clear": "Clear",
-      "clearSearch": "Clear search"
+      "clearSearch": "Clear search",
+      "created": "Created ✓",
+      "saved": "Saved ✓"
     },
     "orders": {
       "title": "Orders",
@@ -886,7 +891,8 @@
       "deleteHint": "Removes this table and its QR code permanently. This cannot be undone.",
       "deleteConfirmTitle": "Delete this table?",
       "deleteConfirmMessage": "Are you sure want to delete this table? This removes the table and its QR code from the database and storage permanently. This action cannot be undone.",
-      "notFound": "Table not found."
+      "notFound": "Table not found.",
+      "creating": "Creating table…"
     },
     "menus": {
       "title": "Menus",
@@ -907,7 +913,13 @@
       "availableAt": "{name} available at {location}",
       "editMenu": "Edit {name}",
       "edit": "Edit",
-      "notFound": "Menu not found."
+      "notFound": "Menu not found.",
+      "filterLabel": "Show menus",
+      "filterAll": "All",
+      "filterOff": "Off",
+      "filterChip": "{label} ({count})",
+      "emptySoldOut": "No sold-out menus",
+      "emptyOff": "No menus are switched off"
     },
     "menuForm": {
       "editTitle": "Edit Menu Item",
@@ -963,7 +975,14 @@
       "optionWithPrice": "{name} ({price})",
       "showLess": "Show Less",
       "showMore": "Show More ({count})",
-      "categoryCreated": "{name} created and selected"
+      "categoryCreated": "{name} created and selected",
+      "deleteMenu": "Delete menu",
+      "deleteTitle": "Delete \"{name}\"?",
+      "deleteBody": "If this menu was never ordered, it is deleted for good. If it was ordered before, it is hidden everywhere, but old orders, History and Reports keep showing it.",
+      "deleted": "Menu deleted",
+      "archived": "Menu hidden — kept for order history",
+      "renameHint": "Change the name only to fix a typo. A different item → create a new menu.",
+      "creating": "Creating menu…"
     },
     "categoryFields": {
       "name": "Category Name",
@@ -974,7 +993,8 @@
       "hiddenHint": "Hidden from customers at this location.",
       "showHereLabel": "Show category at this location",
       "newTitle": "New Menu Category",
-      "create": "Create Category"
+      "create": "Create Category",
+      "creating": "Creating category…"
     },
     "connectAddon": {
       "title": "Connect Add-On Group",
@@ -987,7 +1007,8 @@
       "disconnect": "Disconnect",
       "connect": "Connect",
       "orCreate": "Or Create Custom Add-On Option",
-      "save": "Save Add-on"
+      "save": "Save Add-on",
+      "creating": "Creating group…"
     },
     "categories": {
       "itemCount": "{count, plural, one {# item} other {# items}}",
@@ -1125,7 +1146,8 @@
       "searchMenus": "Search menu items...",
       "noMenus": "No menu items yet.",
       "noMenuMatch": "No menu items match your search.",
-      "connectedTo": "Connected to {count, plural, one {# menu item} other {# menu items}}"
+      "connectedTo": "Connected to {count, plural, one {# menu item} other {# menu items}}",
+      "creating": "Creating group…"
     },
     "locations": {
       "title": "Locations",
@@ -1174,7 +1196,8 @@
       "startEmptyHint": "Nothing shows yet. Turn menus on for this location from each menu's form.",
       "startingMenus": "Starting menus",
       "create": "Create Location",
-      "created": "Location created successfully!"
+      "created": "Location created successfully!",
+      "creating": "Creating location…"
     },
     "settings": {
       "title": "Settings",
@@ -1194,7 +1217,7 @@
       "passwordHint": "At least 8 characters.",
       "location": "Location",
       "whatCanDo": "What this manager can do",
-      "adding": "Adding…",
+      "adding": "Adding manager…",
       "addManager": "Add Manager",
       "managerCreated": "Manager account created!",
       "rulesToggle": "What managers can always do / what only you can do",
@@ -1245,7 +1268,9 @@
       "signUpIntro": "Join us today and experience the best cafe management system.",
       "signUpGoogle": "Sign Up with Google",
       "fullName": "Full Name",
-      "haveAccount": "Already have an account?"
+      "haveAccount": "Already have an account?",
+      "creatingAccount": "Creating account…",
+      "accountCreated": "Account created ✓"
     }
   }
 }

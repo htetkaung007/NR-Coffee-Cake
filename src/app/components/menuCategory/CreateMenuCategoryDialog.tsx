@@ -16,6 +16,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { createMenuCategoryAction } from "@/app/backoffice/menu_categories/action";
 import { useTranslations } from "next-intl";
 import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
+import SubmitButton from "@/app/components/SubmitButton";
 import MenuCategoryFields, { categoryNameError } from "./MenuCategoryFields";
 
 export interface CreatedMenuCategory {
@@ -50,13 +52,15 @@ export default function CreateMenuCategoryDialog({
   const [nameMy, setNameMy] = useState("");
   const [isEnabled, setIsEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const submitLock = useSubmitLock();
 
   // Start blank each time it opens.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
+      // The last create's lock (kept while the dialog closed) opens again.
+      submitLock.unlock();
       setName("");
       setNameMy("");
       setIsEnabled(true);
@@ -64,21 +68,23 @@ export default function CreateMenuCategoryDialog({
     }
   }
 
-  async function handleCreate(event: { preventDefault: () => void }) {
+  function handleCreate(event: { preventDefault: () => void }) {
     event.preventDefault();
     if (categoryNameError(name)) return;
-    setError(null);
-    setIsSaving(true);
-    const result = await createMenuCategoryAction({ name, nameMy, isEnabled });
-    setIsSaving(false);
-
-    if (!result.success) {
-      setError(errorText(result.error));
-      return;
-    }
-    onCreated({ id: result.data.id, name: result.data.name, nameMy: nameMy || null });
-    onClose();
+    void submitLock.run(async () => {
+      setError(null);
+      const result = await createMenuCategoryAction({ name, nameMy, isEnabled });
+      if (!result.success) {
+        setError(errorText(result.error));
+        return;
+      }
+      // "Created ✓" (disabled) while the dialog closes.
+      submitLock.keepLocked();
+      onCreated({ id: result.data.id, name: result.data.name, nameMy: nameMy || null });
+      onClose();
+    });
   }
+  const isSaving = submitLock.status === "busy";
 
   return (
     <Dialog
@@ -136,13 +142,16 @@ export default function CreateMenuCategoryDialog({
         <Button variant="outlined" color="inherit" onClick={onClose}>
           {tCommon("cancel")}
         </Button>
-        <Button
+        <SubmitButton
           type="submit"
           variant="contained"
-          disabled={isSaving || !name.trim()}
+          status={submitLock.status}
+          busyLabel={t("creating")}
+          doneLabel={tCommon("created")}
+          disabled={!name.trim()}
         >
-          {isSaving ? tCommon("creating") : t("create")}
-        </Button>
+          {t("create")}
+        </SubmitButton>
       </Stack>
     </Dialog>
   );

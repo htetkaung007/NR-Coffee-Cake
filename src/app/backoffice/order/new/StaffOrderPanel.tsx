@@ -274,7 +274,11 @@ export default function StaffOrderPanel({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+    // "1 1 auto": as tall as its content in the lg+ card (capped at the
+    // viewport by OrderSidePanel), filling the sheet below lg.
+    <Box
+      sx={{ display: "flex", flexDirection: "column", flex: "1 1 auto", minHeight: 0 }}
+    >
       <Box sx={{ px: 2, pt: 2 }}>
         <Stack
           direction="row"
@@ -329,11 +333,11 @@ export default function StaffOrderPanel({
         )}
       </Box>
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, mt: 1 }}>
+      <Box sx={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto", px: 2, mt: 1 }}>
         {lines.length === 0 ? (
           <Stack
             spacing={1}
-            sx={{ alignItems: "center", textAlign: "center", py: 6 }}
+            sx={{ alignItems: "center", textAlign: "center", py: 3 }}
           >
             <ReceiptLongOutlinedIcon
               fontSize="large"
@@ -365,7 +369,7 @@ export default function StaffOrderPanel({
         )}
       </Box>
 
-      <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
+      <Box sx={{ flexShrink: 0, p: 2, borderTop: 1, borderColor: "divider" }}>
         <BillTotal
           label={t("total")}
           amount={total}

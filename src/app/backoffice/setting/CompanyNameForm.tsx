@@ -70,6 +70,8 @@ export default function CompanyNameForm({ initialName }: { initialName: string }
           label={t("companyName")}
           name="name"
           fullWidth
+          // A readable field beside Save on wide screens.
+          sx={{ maxWidth: { sm: 480 } }}
           value={value}
           onChange={(event) => {
             setValue(event.target.value);

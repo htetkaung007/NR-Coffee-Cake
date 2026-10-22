@@ -426,43 +426,51 @@ export class TableDraftService {
    * is no separate startNextRound-style method for Table QR anymore
    * (Counter QR still has its own — see OrderSessionService.
    * startNextRound — since Counter never had drafts to begin with).
+   *
+   * Race guard (two phones at one table, or a double tap): the table's
+   * row is locked (SELECT … FOR UPDATE) first, and only then are the
+   * drafts read — inside the same transaction. A second Send waits for
+   * the first to commit, then finds no drafts left (NOTHING_TO_SUBMIT):
+   * never a second round, never the same lines (or stock) twice.
    */
   static async submitDraft(
     tableId: number,
     locationId: number,
     isCounter: boolean,
   ) {
-    const draftItems = await prisma.order.findMany({
-      where: { tableId, orderSessionId: null, isArchived: false },
-      include: { OrdersAddons: true, menu: true },
-    });
-    if (draftItems.length === 0) {
-      throw new ValidationError("Nothing to submit yet.", "NOTHING_TO_SUBMIT");
-    }
-    // A draft picked before its menu was hidden here can't be sent.
-    await CartValidationService.assertMenusListed(
-      locationId,
-      draftItems.map((item) => item.menuId),
-    );
-
-    const { lines, stockByMenu } = groupDraftsForSubmit(
-      draftItems.map((item) => ({
-        contributorToken: item.contributorToken,
-        menuId: item.menuId,
-        menuName: item.menu.name,
-        quantity: item.quantity,
-        // Each draft's OWN already-snapshotted prices — never re-read
-        // from Menu/Addon: a merge at submit must not repaint a price.
-        unitPrice: item.unitPrice,
-        addons: item.OrdersAddons.map((link) => ({
-          addonId: link.addonId,
-          unitPrice: link.unitPrice,
-        })),
-        note: item.note,
-      })),
-    );
-
     return prisma.$transaction(async (tx: Tx) => {
+      await tx.$queryRaw`SELECT id FROM "tables" WHERE id = ${tableId} FOR UPDATE`;
+
+      const draftItems = await tx.order.findMany({
+        where: { tableId, orderSessionId: null, isArchived: false },
+        include: { OrdersAddons: true, menu: true },
+      });
+      if (draftItems.length === 0) {
+        throw new ValidationError("Nothing to submit yet.", "NOTHING_TO_SUBMIT");
+      }
+      // A draft picked before its menu was hidden here can't be sent.
+      await CartValidationService.assertMenusListed(
+        locationId,
+        draftItems.map((item) => item.menuId),
+      );
+
+      const { lines, stockByMenu } = groupDraftsForSubmit(
+        draftItems.map((item) => ({
+          contributorToken: item.contributorToken,
+          menuId: item.menuId,
+          menuName: item.menu.name,
+          quantity: item.quantity,
+          // Each draft's OWN already-snapshotted prices — never re-read
+          // from Menu/Addon: a merge at submit must not repaint a price.
+          unitPrice: item.unitPrice,
+          addons: item.OrdersAddons.map((link) => ({
+            addonId: link.addonId,
+            unitPrice: link.unitPrice,
+          })),
+          note: item.note,
+        })),
+      );
+
       // approvalExpiresAt stays NULL on purpose — never set it here.
       // expireStaleApprovals cancels ANY waiting round whose
       // approvalExpiresAt has passed (it doesn't check isCounter), and a

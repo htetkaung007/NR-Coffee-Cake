@@ -4,7 +4,6 @@ import CenteredPage from "@/app/components/CenteredPage";
 import { useState } from "react";
 import {
   Box,
-  Button,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -14,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import FormCard, { SuccessSnackbar } from "@/app/components/FormCard";
+import SubmitButton from "@/app/components/SubmitButton";
 import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import { useTranslations } from "next-intl";
@@ -31,7 +31,7 @@ const STARTING_MENU_OPTIONS = [
 export default function NewLocation() {
   const t = useTranslations("bo.locations");
   const tCommon = useTranslations("bo.common");
-  const { error, setError, isPending, showSuccess, closeSuccess, save } =
+  const { error, setError, status, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const [name, setName] = useState("");
   const [startingMenus, setStartingMenus] = useState<StartingMenus>("ALL");
@@ -93,14 +93,17 @@ export default function NewLocation() {
             </RadioGroup>
           </FormControl>
 
-          <Button
+          <SubmitButton
             type="submit"
             variant="contained"
-            disabled={isPending || !name.trim()}
+            status={status}
+            busyLabel={t("creating")}
+            doneLabel={tCommon("created")}
+            disabled={!name.trim()}
             sx={{ alignSelf: "flex-start", px: 3 }}
           >
-            {isPending ? tCommon("creating") : t("create")}
-          </Button>
+            {t("create")}
+          </SubmitButton>
         </FormCard>
       </CenteredPage>
 

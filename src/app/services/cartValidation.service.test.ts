@@ -6,6 +6,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // (shown) and Mocha, hidden at location 10 by an active
 // DisableLocationMenus row. Only the reads these paths make are faked;
 // any write goes through $transaction, which records that it ran.
+// (Send to Kitchen reads its drafts INSIDE its transaction, after locking
+// the table — its test runs the callback with a read-only `tx`.)
 type Where = { id?: number | { in: number[] }; menuId?: number | { in: number[] } };
 const ids = (filter: Where["id"]) =>
   filter === undefined ? null : typeof filter === "number" ? [filter] : filter.in;
@@ -19,7 +21,7 @@ const db = {
   stocks: [{ menuId: 1, quantity: 0, isManuallyDisabled: true }],
   orders: [] as { menuId: number }[],
 };
-const transaction = vi.fn(async () => "written");
+const transaction = vi.fn<(run?: unknown) => Promise<string>>(async () => "written");
 
 vi.mock("@/app/utils/prisma", () => ({
   prisma: {
@@ -68,7 +70,7 @@ vi.mock("@/app/utils/prisma", () => ({
     },
     addon: { findMany: async () => [] },
     menuAddonCategories: { findMany: async () => [] },
-    $transaction: () => transaction(),
+    $transaction: (run: unknown) => transaction(run),
   },
 }));
 
@@ -127,10 +129,26 @@ describe("adding a menu hidden at the location is refused on the server", () => 
 describe("sending a menu hidden at the location is refused on the server", () => {
   it("Table QR: Send to Kitchen refuses a draft picked before the menu was hidden", async () => {
     db.orders = [{ menuId: 1 }, { menuId: 2 }];
+    const { prisma } = await import("@/app/utils/prisma");
+    // The table lock and the draft read are all this transaction may do:
+    // any write would throw "wrote" instead of the hidden-menu error.
+    const wrote = () => {
+      throw new Error("wrote");
+    };
+    const readOnlyTx = {
+      $queryRaw: async () => [],
+      order: { findMany: prisma.order.findMany, create: wrote, deleteMany: wrote },
+      ordersAddon: { deleteMany: wrote, createMany: wrote },
+      orderSession: { create: wrote, update: wrote },
+      menuStock: { updateMany: wrote },
+      table: { update: wrote },
+    };
+    transaction.mockImplementationOnce(async (run) =>
+      (run as (tx: typeof readOnlyTx) => Promise<string>)(readOnlyTx),
+    );
     await expect(TableDraftService.submitDraft(3, 10, false)).rejects.toMatchObject({
       message: HIDDEN_MESSAGE,
     });
-    expect(transaction).not.toHaveBeenCalled();
   });
 
   it("staff POS: Send to kitchen returns a hidden menu's line as unavailable, writing nothing", async () => {

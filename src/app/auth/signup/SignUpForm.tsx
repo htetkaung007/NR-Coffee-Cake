@@ -22,7 +22,8 @@ import { registerAction } from "./action";
 import AuthCredentialFields from "../AuthCredentialFields";
 import { authButtonSx } from "../authButtonSx";
 import AuthHeading from "../AuthHeading";
-import AuthSubmitButton from "../AuthSubmitButton";
+import SubmitButton from "@/app/components/SubmitButton";
+import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 
 export function SignUpForm() {
   const t = useTranslations("bo.auth");
@@ -32,40 +33,43 @@ export function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  // Locked from the first tap (a double tap must not register twice) and
+  // kept locked once registered, while router.push leaves the page.
+  const submitLock = useSubmitLock();
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); // Form submission logic
-    setIsSaving(true);
-    setErrorMessage(null);
+    void submitLock.run(async () => {
+      setErrorMessage(null);
 
-    const result = await registerAction({ name, email, password });
+      const result = await registerAction({ name, email, password });
 
-    if (!result.success) {
-      setErrorMessage(errorText(result.error));
-      setIsSaving(false);
-      return;
-    }
+      if (!result.success) {
+        setErrorMessage(errorText(result.error));
+        return;
+      }
 
-    // Registered: sign in straight away (a Server Action can't set the
-    // session cookie — CLAUDE.md §9).
-    const signInResult = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+      // Registered — the account exists, so nothing may send again.
+      submitLock.keepLocked();
+
+      // Sign in straight away (a Server Action can't set the session
+      // cookie — CLAUDE.md §9).
+      const signInResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        // Rare: registered, but the automatic sign-in failed — send them
+        // to the sign-in page rather than into the Backoffice.
+        setErrorMessage(t("autoSignInFailed"));
+        router.push("/auth/signIn");
+        return;
+      }
+
+      router.push("/backoffice");
     });
-
-    setIsSaving(false);
-
-    if (signInResult?.error) {
-      // Rare: registered, but the automatic sign-in failed — send them to
-      // the sign-in page rather than into the Backoffice.
-      setErrorMessage(t("autoSignInFailed"));
-      router.push("/auth/signIn");
-      return;
-    }
-
-    router.push("/backoffice");
   }
 
   const handleGoogleSignUp = async () => {
@@ -127,7 +131,18 @@ export function SignUpForm() {
           </Alert>
         )}
 
-        <AuthSubmitButton isBusy={isSaving}>{t("signUp")}</AuthSubmitButton>
+        <SubmitButton
+          type="submit"
+          fullWidth
+          variant="contained"
+          size="large"
+          status={submitLock.status}
+          busyLabel={t("creatingAccount")}
+          doneLabel={t("accountCreated")}
+          sx={{ ...authButtonSx, mt: 4 }}
+        >
+          {t("signUp")}
+        </SubmitButton>
 
         {/* Footer Link */}
         <Box sx={{ mt: 3, textAlign: "center" }}>

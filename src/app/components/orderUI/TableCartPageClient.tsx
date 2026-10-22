@@ -18,6 +18,7 @@ import OrderConfirmedScreen from "./OrderConfirmedScreen";
 import OrderRejectedScreen from "./OrderRejectedScreen";
 import EmptyCartState from "./EmptyCartState";
 import { usePolling } from "@/app/lib/hooks/usePolling";
+import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 import {
   dismissConfirmedRound,
   dismissRejectedRound,
@@ -119,10 +120,12 @@ export default function TableCartPageClient({
     tableId,
     rejectedRound?.id,
   );
-  // True from the tap on Send to Kitchen until the new round's state has
-  // been applied — drives the button's "Waiting counter approval" look
-  // right away, without the list going anywhere.
-  const [isSending, setIsSending] = useState(false);
+  // Locked from the tap on Send to Kitchen (synchronously — a double tap
+  // never sends twice) until the new round's state has been applied;
+  // the button shows "Sending…" meanwhile, without the list going
+  // anywhere.
+  const sendLock = useSubmitLock();
+  const isSending = sendLock.isLocked;
   const [shortages, setShortages] = useState(initialShortages);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -158,7 +161,7 @@ export default function TableCartPageClient({
   const buttonStatus: CartButtonStatus = showingRound
     ? ((activeRound?.status ?? "PENDING_APPROVAL") as CartButtonStatus)
     : isSending
-      ? "PENDING_APPROVAL"
+      ? "SENDING"
       : "CART";
 
   const draftTotal = useMemo(() => cartLinesTotal(draftItems), [draftItems]);
@@ -201,22 +204,20 @@ export default function TableCartPageClient({
   }
 
   function handleSendToKitchen() {
-    setError(null);
-    setIsSending(true);
-    startTransition(async () => {
+    void sendLock.run(async () => {
+      setError(null);
       const result = await submitDraftAction(tableId, locationId);
       if (!result.success) {
         setError(errorMessage(result.error));
-        setIsSending(false);
         return;
       }
       // The draft is now a round (merged server-side). Pull the real
       // state right away instead of waiting up to a poll tick — and
       // instead of clearing the list locally, which is what used to
       // leave the page empty apart from the status chip. Table stays
-      // open for drafting a next round.
+      // open for drafting a next round. The lock opens after it, when
+      // the button already shows the round's status.
       await refreshNow();
-      setIsSending(false);
     });
   }
 

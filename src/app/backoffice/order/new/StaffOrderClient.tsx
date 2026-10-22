@@ -726,7 +726,6 @@ export default function StaffOrderClient({
           label={t("currentOrder")}
           showFrom="lg"
           width={400}
-          fullHeight
           above={isDesktop ? picker : undefined}
         >
           {renderPanel(false)}

@@ -26,10 +26,14 @@ export default function PermissionChecklist({
   value,
   onChange,
   disabled = false,
+  twoColumnsFromMd = false,
 }: {
   value: readonly PermissionKey[];
   onChange: (next: PermissionKey[]) => void;
   disabled?: boolean;
+  /** Each group's boxes in 2 columns from md (the wide "Add a manager"
+   *  card); one column below md, and always in the access editor. */
+  twoColumnsFromMd?: boolean;
 }) {
   const t = useTranslations("bo.permissions");
   function toggle(key: PermissionKey, checked: boolean) {
@@ -57,7 +61,17 @@ export default function PermissionChecklist({
           >
             {t(`groups.${group}`)}
           </Typography>
-          <Stack spacing={0.5}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "minmax(0, 1fr)",
+                md: twoColumnsFromMd ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
+              },
+              columnGap: 2,
+              rowGap: 0.5,
+            }}
+          >
             {entriesIn(group).map((entry) => (
               <FormControlLabel
                 key={entry.key}
@@ -86,7 +100,7 @@ export default function PermissionChecklist({
                 sx={{ alignItems: "flex-start", minHeight: 44, mx: 0 }}
               />
             ))}
-          </Stack>
+          </Box>
         </Box>
       ))}
     </Stack>

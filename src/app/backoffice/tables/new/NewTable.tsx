@@ -14,6 +14,7 @@ import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
 import UploadOutlinedIcon from "@mui/icons-material/UploadOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FormCard, { SuccessSnackbar } from "@/app/components/FormCard";
+import SubmitButton from "@/app/components/SubmitButton";
 import PageHeader from "@/app/components/PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import { useTranslations } from "next-intl";
@@ -26,7 +27,7 @@ const COUNTER_NAME = "Counter QR code";
 export default function NewTable() {
   const t = useTranslations("bo.tables");
   const tCommon = useTranslations("bo.common");
-  const { error, setError, isPending, showSuccess, closeSuccess, save } =
+  const { error, setError, status, showSuccess, closeSuccess, save } =
     useSaveThenNavigate();
   const [name, setName] = useState("");
   const [isCounter, setIsCounter] = useState(false);
@@ -148,14 +149,17 @@ export default function NewTable() {
             )}
           </Box>
 
-          <Button
+          <SubmitButton
             type="submit"
             variant="contained"
-            disabled={isPending || (!isCounter && !name.trim())}
+            status={status}
+            busyLabel={t("creating")}
+            doneLabel={tCommon("created")}
+            disabled={!isCounter && !name.trim()}
             sx={{ alignSelf: "flex-start", px: 3 }}
           >
-            {isPending ? tCommon("creating") : t("createTable")}
-          </Button>
+            {t("createTable")}
+          </SubmitButton>
         </FormCard>
       </CenteredPage>
 
