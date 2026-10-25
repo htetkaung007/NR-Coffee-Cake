@@ -124,6 +124,8 @@ model Location {
   disableLocationMenuCategories DisableLocationMenuCategories[]
   orderSessions                  OrderSession[]
   bills                          Bill[]
+  // Per-day menu view totals at this location (Reports).
+  menuViewDailies                MenuViewDaily[]
 }
 
 model SelectedLocation {
@@ -154,6 +156,10 @@ model Menu {
   disableLocationMenus DisableLocationMenus[]
   menuStocks           MenuStock[]
   orders               Order[]
+  // How many customers opened this menu's detail, per day and location
+  // (MenuViewDaily), and the dedupe rows behind it (MenuViewSeen).
+  menuViewDailies      MenuViewDaily[]
+  menuViewSeens        MenuViewSeen[]
   createdAt            DateTime               @default(now())
   updateTime           DateTime               @updatedAt
   isArchived           Boolean                @default(false)
@@ -405,6 +411,11 @@ model OrderSession {
   // @unique allows many NULLs in PostgreSQL, so older rows need no
   // backfill.
   clientRequestId String? @unique
+  // Who sent this round. CUSTOMER = a QR phone (Counter cart, Table
+  // draft); STAFF = the Backoffice New Order screen. Rounds from before
+  // this column read CUSTOMER (owner's decision) — the default fills
+  // them in, so the migration needs no backfill.
+  placedBy      PlacedBy    @default(CUSTOMER)
   // The cancellation record of a submitted round that ended REJECTED or
   // EXPIRED (see OrderCancellation). Relation field only — no column.
   cancellation  OrderCancellation?
@@ -535,6 +546,66 @@ model OrderVoid {
   // auto-index foreign keys.
   @@index([orderId])
   @@index([voidedById])
+}
+
+// Who sent a round — OrderSession.placedBy.
+enum PlacedBy {
+  CUSTOMER // A QR phone: the Counter cart or a Table draft.
+  STAFF // The Backoffice New Order screen.
+}
+
+/**
+ * How many customers opened a menu's detail, per shop day and location —
+ * the totals Reports reads, so it never has to count raw view rows. One
+ * row per (menu, location, day); `viewers` goes up by one the first time
+ * a customer views that menu that day (MenuViewSeen decides "first").
+ * `day` is a shop day string, not a timestamp, so a day is the shop's
+ * day (Asia/Yangon) and never shifts with the server's clock.
+ */
+model MenuViewDaily {
+  id         Int      @id @default(autoincrement())
+  menu       Menu     @relation(fields: [menuId], references: [id])
+  menuId     Int
+  location   Location @relation(fields: [locationId], references: [id])
+  locationId Int
+  // Shop day "YYYY-MM-DD" (lib/shopDay, Asia/Yangon).
+  day        String
+  viewers    Int      @default(0)
+
+  // One counter per menu, location and day — the upsert target.
+  @@unique([menuId, locationId, day])
+  // Reports read a location's days ("this week at this shop").
+  @@index([locationId, day])
+}
+
+/**
+ * "This customer already viewed this menu today" — the dedupe behind
+ * MenuViewDaily.viewers, so opening the same menu ten times counts once.
+ * `viewerKey` is a sha256 hex of the customer key — the Table
+ * contributorToken or the Counter bill root (billSessionId ?? id) —
+ * NEVER the raw token, so a leaked row can't be used as a session.
+ * It holds no IP, device or personal data. Rows older than 90 days are
+ * deleted (only today's rows matter for dedupe; the totals live on in
+ * MenuViewDaily).
+ */
+model MenuViewSeen {
+  id         Int      @id @default(autoincrement())
+  // sha256 hex of the customer key, NEVER the raw token.
+  viewerKey  String
+  menu       Menu     @relation(fields: [menuId], references: [id])
+  menuId     Int
+  // Plain scalar, no relation: kept only to say which location's
+  // counter the view went to — never joined, and pruned after 90 days.
+  locationId Int
+  // Shop day "YYYY-MM-DD" (lib/shopDay, Asia/Yangon).
+  day        String
+  createdAt  DateTime @default(now())
+
+  // One row per customer, menu and day — a second view hits this and
+  // counts nothing.
+  @@unique([viewerKey, menuId, day])
+  // The 90-day clean-up deletes by day.
+  @@index([day])
 }
 
 enum ORDERSTATUS {

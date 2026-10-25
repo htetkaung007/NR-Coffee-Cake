@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError } from "@/app/lib/hooks/useStaffWords";
 import { useState } from "react";
 import {
   Alert,
@@ -46,6 +46,7 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
   const isPending = submitLock.isLocked;
   const t = useTranslations("bo.settings");
   const errorText = useStaffErrorMessage();
+  const genericError = useStaffGenericError();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,7 +69,7 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
       setPassword("");
       setLocationId("");
       setPermissions([...DEFAULT_MANAGER_PERMISSIONS]);
-    });
+    }, () => setError(genericError));
   }
 
   return (

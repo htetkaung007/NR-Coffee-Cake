@@ -214,7 +214,7 @@ export default function MenuDetailDialog({
       // to "Add to Cart"; the next open unlocks it.
       submitLock.keepLocked();
       onClose();
-    });
+    }, () => setError(labels.genericError));
   }
 
   // Required groups first — the customer has to answer them before Add to

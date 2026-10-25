@@ -25,7 +25,7 @@ import GroupNameFields from "./addonForm/GroupNameFields";
 import OptionRowsEditor from "./addonForm/OptionRowsEditor";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedText } from "@/app/lib/i18n/localizedText";
-import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError } from "@/app/lib/hooks/useStaffWords";
 import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 import SubmitButton from "./SubmitButton";
 
@@ -56,6 +56,7 @@ export default function ConnectAddonGroupDialog({
   const tCommon = useTranslations("bo.common");
   const locale = useLocale();
   const errorText = useStaffErrorMessage();
+  const genericError = useStaffGenericError();
   const router = useRouter();
   const [draftIds, setDraftIds] = useState<number[]>(selectedIds);
   const [search, setSearch] = useState("");
@@ -108,7 +109,7 @@ export default function ConnectAddonGroupDialog({
   function handleSave() {
     // Locked from the first tap: a double tap must not create the custom
     // group twice.
-    void submitLock.run(saveDraft);
+    void submitLock.run(saveDraft, () => setError(genericError));
   }
 
   async function saveDraft() {

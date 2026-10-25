@@ -87,17 +87,26 @@ export default async function MenuPage({
     if ((await checkMenuAccess(locationId)) === "unavailable") {
       return <ShopUnavailable />;
     }
-    const [menuData, shopName, draftItems, activeRound, labels, tableName] =
-      await Promise.all([
-        MenuService.getMenusForLocation(locationId),
-        LocationService.getShopNameForLocation(locationId),
-        TableDraftService.getDraftItemsForTable(tableId),
-        TableSessionService.getActiveRoundForTable(tableId),
-        // Who's who as labels — the tokens stay on the server.
-        TableDraftService.getContributorLabels(tableId, contributorToken),
-        // For the "where am I" line — the name only.
-        TableSessionService.getTableName(tableId, locationId),
-      ]);
+    const [
+      menuData,
+      popularMenuIds,
+      shopName,
+      draftItems,
+      activeRound,
+      labels,
+      tableName,
+    ] = await Promise.all([
+      MenuService.getMenusForLocation(locationId),
+      // The "Popular" badge's menus — ids only, no counts.
+      MenuService.getPopularMenuIds(locationId),
+      LocationService.getShopNameForLocation(locationId),
+      TableDraftService.getDraftItemsForTable(tableId),
+      TableSessionService.getActiveRoundForTable(tableId),
+      // Who's who as labels — the tokens stay on the server.
+      TableDraftService.getContributorLabels(tableId, contributorToken),
+      // For the "where am I" line — the name only.
+      TableSessionService.getTableName(tableId, locationId),
+    ]);
 
     return (
       <TableOrderClient
@@ -109,6 +118,7 @@ export default async function MenuPage({
         initialAwaitingApproval={activeRound?.status === "PENDING_APPROVAL"}
         activeRoundId={activeRound?.id ?? null}
         menus={buildMenuOptions(menuData.menus)}
+        popularMenuIds={popularMenuIds}
         categories={menuData.categories.map((category) => ({
           name: category.name,
           nameMy: category.nameMy,
@@ -139,8 +149,9 @@ export default async function MenuPage({
     return <ShopUnavailable />;
   }
 
-  const [menuData, shopName, bill] = await Promise.all([
+  const [menuData, popularMenuIds, shopName, bill] = await Promise.all([
     MenuService.getMenusForLocation(effectiveLocationId),
+    MenuService.getPopularMenuIds(effectiveLocationId),
     LocationService.getShopNameForLocation(effectiveLocationId),
     // "Order More" can split one bill into several rounds — the
     // header shows the BILL's number (matches the cashier's Order
@@ -161,6 +172,7 @@ export default async function MenuPage({
         openPlaceNotice === "atCounter" && bill ? openPlaceNotice : null
       }
       menus={buildMenuOptions(menuData.menus)}
+      popularMenuIds={popularMenuIds}
       categories={menuData.categories.map((category) => ({
         name: category.name,
         nameMy: category.nameMy,

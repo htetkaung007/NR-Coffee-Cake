@@ -44,3 +44,4 @@ next-env.d.ts
 
 # accidental nested clone (was tracked as a gitlink)
 /NR-Coffee-Cake/
+.claude/settings.local.json

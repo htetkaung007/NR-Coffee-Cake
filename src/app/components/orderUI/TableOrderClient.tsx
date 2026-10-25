@@ -41,6 +41,9 @@ interface TableOrderClientProps {
    *  next order dismisses that round's "Order confirmed" screen. */
   activeRoundId: number | null;
   menus: MenuOption[];
+  /** The menus with the "Popular" badge (MenuService.getPopularMenuIds)
+   *  — ids only, never the counts. */
+  popularMenuIds: number[];
   /** The category tabs, in the server's order (see
    *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
   categories: CategoryTab[];
@@ -78,6 +81,7 @@ export default function TableOrderClient({
   initialAwaitingApproval,
   activeRoundId,
   menus,
+  popularMenuIds,
   categories,
   openPlaceNotice = null,
 }: TableOrderClientProps) {
@@ -188,6 +192,7 @@ export default function TableOrderClient({
 
       <MenuBrowser
         menus={menus}
+        popularMenuIds={popularMenuIds}
         categories={categories}
         locationId={locationId}
         canOrder

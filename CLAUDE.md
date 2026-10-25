@@ -366,7 +366,7 @@ independently of the app config). Everything else still goes through
   `deleteMenuAction`, owner only → `MenuService.deleteMenu`; the rule is
   `lib/menu/menuDeletion.ts`): a menu no Order row references (table
   drafts, archived, cancelled and voided lines counted too) is deleted
-  for good with its category / add-on group / hidden-at / stock rows in
+  for good with its category / add-on group / hidden-at / stock / menu-view rows in
   ONE transaction; one that was ever ordered is only archived
   (isArchived) — gone from every live list (Backoffice Menus, /menu,
   New Order, details, category lists, carts and drafts), still named in
@@ -430,6 +430,11 @@ independently of the app config). Everything else still goes through
   the QR Route Handlers gather the facts server-side, before any session
   starts or token is minted. Limitation: per browser (its cookies) —
   another browser or a cleared cookie is a new customer.
+- **"Popular" badge** (customer /menu only): the rule is
+  `lib/menu/popularMenus.ts` (top 3 of the last 7 shop days, ≥ 5 sold);
+  the sales come from `ReportService.getMenuQuantitiesSold` — the SAME
+  item sales rule Reports uses (loadLines + aggregateItems), never a
+  copy — via `MenuService.getPopularMenuIds`. Only ids reach the client.
 - **Ordering is always QR-only**, ON or OFF: sending the cart and every
   order action still need the QR session from scanning in the shop.
 - The link Settings shows is `config.publicBaseUrl` (PUBLIC_BASE_URL,
@@ -580,6 +585,42 @@ independently of the app config). Everything else still goes through
   config) — never the phone's. Send ISO times to the client, not
   server-formatted strings. Numbers and prices keep `formatAmount`.
 
+## 13d. Menu views and orderers (Reports → Items)
+
+- **Who placed a round — `OrderSession.placedBy`:** STAFF is written by
+  ONE place, `StaffOrderService.submitStaffOrder` (New Order — also a
+  round added onto a customer's Counter bill with "Add items"). Every
+  customer path (Counter session / "Order More" round, Table draft
+  submit) leaves the CUSTOMER default. Rounds from before the column
+  read CUSTOMER (owner's decision).
+- **Views — `MenuViewService.recordView`** (one transaction: the
+  MenuViewSeen insert skips a duplicate; only a new row adds 1 to
+  MenuViewDaily via INSERT … ON CONFLICT). Called ONLY by the customer
+  `getMenuDetailAction`, inside next/server's `after()` (after the
+  response; errors logged, never thrown) — never by
+  getStaffMenuDetailAction.
+- **The viewer key** (`lib/menu/menuViews` pure, `lib/storefront/
+  menuViewer` server lookup): a QR session at the location only — the
+  Table contributorToken ("table:<token>") or the Counter bill root
+  ("bill:<billSessionId ?? id>"), stored as its sha256 hex. No QR
+  session (online visitor) → no key → not counted. One per customer per
+  menu per shop day.
+- **Orderers** (`ReportService.loadOrderersByMenu`, one SQL count —
+  nothing new stored): distinct (customer, shop day) pairs over the
+  lines Reports counts as sold (PAID rounds of bills paid in the period,
+  voids taken off), placedBy CUSTOMER only; the customer is the same key
+  as views (Table token, Counter bill root). The tokens stay in SQL;
+  only menuId + a count come back.
+- **The funnel** (`lib/report/viewFunnel`): viewed-not-ordered =
+  max(0, viewers − orderers); rate only from 10 viewers (capped at 100%);
+  a period with no MenuViewDaily row at the location → every column "—",
+  never 0.
+- **Privacy:** no raw token, IP or device is stored, logged or exported —
+  only the hash; screens show totals only. MenuViewSeen rows older than
+  90 shop days are deleted (at most once a day per server process, on a
+  recorded view); MenuViewDaily is kept. A menu's hard delete removes
+  both; archiving keeps them. CSV exports don't include views (yet).
+
 ## 14. Service imports — always via the barrel file, never the concrete path
 
 ```typescript
@@ -623,6 +664,8 @@ business reason?"
   setManagerPermissions, moveManager, removeManager);
   **PermissionService** keeps only the per-request checks the guards
   call (getGrantedPermissions, userExistsInCompany).
+  **MenuViewService** owns menu-view counting and the per-day totals
+  (§13d).
   **CompanyService** owns company reads/renames (getName,
   getByUserEmail, updateName); **AppService** is sign-up/onboarding
   only (registerUser, createDefaultSetup and its helpers,

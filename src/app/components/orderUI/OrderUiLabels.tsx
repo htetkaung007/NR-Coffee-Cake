@@ -47,6 +47,8 @@ export interface OrderUiLabels {
     noteWords: (count: number, max: number) => string;
     couldNotLoad: string;
     justSoldOut: string;
+    /** Add / Save threw (a network drop): the generic error. */
+    genericError: string;
     close: string;
   };
   lineNotice: {
@@ -88,6 +90,7 @@ const ENGLISH: OrderUiLabels = {
     noteWords: (count, max) => `${count}/${max} words`,
     couldNotLoad: "This item couldn't be loaded.",
     justSoldOut: "This item just sold out.",
+    genericError: "Something went wrong. Please try again.",
     close: "Close",
   },
   lineNotice: {

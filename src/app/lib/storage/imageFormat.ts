@@ -4,7 +4,7 @@
  * cleanImageUpload), never from the browser-sent `file.type`. Pure.
  */
 
-export const UPLOAD_IMAGE_FORMATS = ["jpeg", "png", "webp"] as const;
+const UPLOAD_IMAGE_FORMATS = ["jpeg", "png", "webp"] as const;
 export type UploadImageFormat = (typeof UPLOAD_IMAGE_FORMATS)[number];
 
 export const UPLOAD_IMAGE_ERROR = "Image must be a PNG, JPEG, or WEBP file.";

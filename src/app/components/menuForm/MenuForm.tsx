@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -21,7 +21,8 @@ import {
   deleteMenuAction,
 } from "@/app/backoffice/menus/action";
 import ConfirmDialog from "../ConfirmDialog";
-import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError, useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 import type { MenuDeletionMode } from "@/app/lib/menu/menuDeletion";
 import { AddonGroupOption } from "../ConnectAddonGroupDialog";
 import MenuCard, { MenuCardData } from "../MenuCard";
@@ -40,7 +41,6 @@ import PageHeader from "../PageHeader";
 import { useSaveThenNavigate } from "@/app/lib/hooks/useSaveThenNavigate";
 import SubmitButton from "@/app/components/SubmitButton";
 import { useLocale, useTranslations } from "next-intl";
-import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import { langAttr } from "@/app/lib/i18n/locale";
 import { myanmarWordsOrNull } from "@/app/lib/i18n/customerWords";
@@ -101,28 +101,35 @@ export default function MenuForm({
   const isEditMode = Boolean(initialData);
   const router = useRouter();
   const errorText = useStaffErrorMessage();
+  const genericError = useStaffGenericError();
   // "Delete menu" (edit only): deleted for good if never ordered, else
   // hidden (archived) — MenuService.deleteMenu says which.
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletedMode, setDeletedMode] = useState<MenuDeletionMode | null>(null);
-  const [isDeleting, startDeleting] = useTransition();
+  // Locked from the first tap, and kept locked once deleted until the
+  // page leaves — nothing may be sent for a menu that is gone.
+  const deleteLock = useSubmitLock();
+  const isDeleting = deleteLock.isLocked;
+  // Saving or saved: the menu is about to change or the page to leave.
+  const isSaving = status !== "idle";
 
   function handleDelete() {
-    if (!initialData) return;
+    if (!initialData || isSaving) return;
     const menuId = initialData.id;
-    setDeleteError(null);
-    startDeleting(async () => {
+    void deleteLock.run(async () => {
+      setDeleteError(null);
       const result = await deleteMenuAction(menuId);
       if (!result.success) {
         setDeleteError(errorText(result.error));
         return;
       }
+      deleteLock.keepLocked();
       setIsDeleteOpen(false);
       // The outcome for a beat, then back to the list (as a save does).
       setDeletedMode(result.data.mode);
       setTimeout(() => router.push("/backoffice/menus"), 1000);
-    });
+    }, () => setDeleteError(genericError));
   }
   // One active location: no choice to make — it shows there (as before
   // locations could be picked), and the section is hidden.
@@ -273,6 +280,7 @@ export default function MenuForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isDeleting) return;
     setError(null);
     if (problems.length > 0) {
       setHasTriedSubmit(true);
@@ -568,6 +576,7 @@ export default function MenuForm({
             type="submit"
             variant="contained"
             status={status}
+            disabled={isDeleting}
             busyLabel={isEditMode ? tCommon("saving") : t("creating")}
             doneLabel={isEditMode ? tCommon("saved") : tCommon("created")}
             sx={{ alignSelf: "flex-start", px: 3 }}
@@ -582,6 +591,7 @@ export default function MenuForm({
               <Button
                 variant="outlined"
                 color="error"
+                disabled={isDeleting || isSaving}
                 onClick={() => {
                   setDeleteError(null);
                   setIsDeleteOpen(true);

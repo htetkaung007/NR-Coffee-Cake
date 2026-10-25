@@ -22,7 +22,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useTranslations } from "next-intl";
-import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError } from "@/app/lib/hooks/useStaffWords";
 import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 import SubmitButton from "@/app/components/SubmitButton";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -77,6 +77,7 @@ export default function VoidItemDialog({
   const tCommon = useTranslations("bo.common");
   const tReason = useTranslations("bo.voidReason");
   const errorText = useStaffErrorMessage();
+  const genericError = useStaffGenericError();
   const titleId = useId();
   const reasonLabelId = useId();
   const [quantity, setQuantity] = useState(1);
@@ -124,7 +125,7 @@ export default function VoidItemDialog({
       // Stays "Voiding…" (disabled) while the dialog closes.
       submitLock.keepLocked();
       onClose();
-    });
+    }, () => setError(genericError));
   }
 
   return (

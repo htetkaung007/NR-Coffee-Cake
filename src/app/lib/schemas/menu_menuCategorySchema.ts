@@ -95,7 +95,6 @@ export type SetMenuAvailableInput = z.infer<typeof setMenuAvailableSchema>;
 
 /** The owner's "Delete menu" (MenuService.deleteMenu). */
 export const deleteMenuSchema = z.object({ menuId: idSchema });
-export type DeleteMenuInput = z.infer<typeof deleteMenuSchema>;
 
 export const createMenuCategorySchema = z.object({
   name: z.string().trim().min(1, "Category name is required.").max(CATEGORY_NAME_MAX),

@@ -9,7 +9,7 @@
  */
 
 export const MAX_FAILED_LOGINS = 5;
-export const FAILURE_WINDOW_MS = 15 * 60_000;
+const FAILURE_WINDOW_MS = 15 * 60_000;
 export const LOCKOUT_MS = 15 * 60_000;
 
 /** What's stored per user (User.failedLoginCount / firstFailedLoginAt /

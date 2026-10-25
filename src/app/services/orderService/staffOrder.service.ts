@@ -119,6 +119,9 @@ export class StaffOrderService {
             status: "PENDING",
             orderNumber: "",
             clientRequestId: input.clientRequestId,
+            // Sent from New Order — STAFF, even onto a customer's Counter
+            // bill ("Add items"): Reports' orderers count customers only.
+            placedBy: "STAFF",
           },
         });
         const merged = await CartSubmitService.priceAndMergeLines(

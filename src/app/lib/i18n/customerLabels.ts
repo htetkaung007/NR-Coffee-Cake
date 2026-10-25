@@ -44,6 +44,7 @@ export function menuCardLabels(
     price: customerPrices(locale, messages).price,
     // Myanmar: the words "ထည့်မယ်"; English: the + icon.
     addText: locale === "my" ? t("addShort") : null,
+    popular: t("popular"),
   };
 }
 
@@ -98,6 +99,7 @@ export function orderUiLabels(
       noteWords: (count, max) => tDetail("noteWords", { count, max }),
       couldNotLoad: tDetail("couldNotLoad"),
       justSoldOut: tDetail("justSoldOut"),
+      genericError: createTranslator({ locale, messages, namespace: "errors" })("generic"),
       close: tCommon("close"),
     },
     lineNotice: {

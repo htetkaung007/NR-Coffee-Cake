@@ -59,6 +59,9 @@ const ALL_CATEGORIES = "All";
 
 interface MenuBrowserProps {
   menus: MenuOption[];
+  /** The menus with the "Popular" badge (MenuService.getPopularMenuIds)
+   *  — ids only, never the counts. */
+  popularMenuIds: number[];
   /** The category tabs after "All", in the server's order — the visible
    *  categories that hold at least one of `menus` (see
    *  MenuService.getMenusForLocation). Rendered as-is, never re-sorted.
@@ -126,6 +129,7 @@ const portraitColumns = (gap: string) =>
  */
 export default function MenuBrowser({
   menus,
+  popularMenuIds,
   categories: categoryNames,
   locationId,
   canOrder,
@@ -146,6 +150,7 @@ export default function MenuBrowser({
     () => menuCardLabels(locale, messages),
     [locale, messages],
   );
+  const popularIds = useMemo(() => new Set(popularMenuIds), [popularMenuIds]);
 
   // Each tab: its key (the English name, what menus are filtered by)
   // and its label in the customer's language.
@@ -428,6 +433,7 @@ export default function MenuBrowser({
               isAvailable: menu.isAvailable,
             }}
             onAddToCart={() => setDetailMenuId(menu.id)}
+            isPopular={popularIds.has(menu.id)}
             compact
             labels={cardLabels}
           />

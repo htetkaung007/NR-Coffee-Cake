@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useStaffErrorMessage } from "./useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError } from "./useStaffWords";
 import { useSubmitLock } from "./useSubmitLock";
 
 type SaveResult =
@@ -24,6 +24,7 @@ type SaveResult =
 export function useSaveThenNavigate() {
   const router = useRouter();
   const errorText = useStaffErrorMessage();
+  const genericError = useStaffGenericError();
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const lock = useSubmitLock();
@@ -41,7 +42,7 @@ export function useSaveThenNavigate() {
       setTimeout(() => {
         router.push(href);
       }, 1000);
-    });
+    }, () => setError(genericError));
   }
 
   return {

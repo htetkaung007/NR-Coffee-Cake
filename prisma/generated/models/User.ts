@@ -30,12 +30,14 @@ export type UserAvgAggregateOutputType = {
   id: number | null
   companyId: number | null
   locationId: number | null
+  failedLoginCount: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
   companyId: number | null
   locationId: number | null
+  failedLoginCount: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -49,6 +51,9 @@ export type UserMinAggregateOutputType = {
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
+  failedLoginCount: number | null
+  firstFailedLoginAt: Date | null
+  lockedUntil: Date | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -62,6 +67,9 @@ export type UserMaxAggregateOutputType = {
   createdAt: Date | null
   updateTime: Date | null
   isArchived: boolean | null
+  failedLoginCount: number | null
+  firstFailedLoginAt: Date | null
+  lockedUntil: Date | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -75,6 +83,9 @@ export type UserCountAggregateOutputType = {
   createdAt: number
   updateTime: number
   isArchived: number
+  failedLoginCount: number
+  firstFailedLoginAt: number
+  lockedUntil: number
   _all: number
 }
 
@@ -83,12 +94,14 @@ export type UserAvgAggregateInputType = {
   id?: true
   companyId?: true
   locationId?: true
+  failedLoginCount?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
   companyId?: true
   locationId?: true
+  failedLoginCount?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -102,6 +115,9 @@ export type UserMinAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  failedLoginCount?: true
+  firstFailedLoginAt?: true
+  lockedUntil?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -115,6 +131,9 @@ export type UserMaxAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  failedLoginCount?: true
+  firstFailedLoginAt?: true
+  lockedUntil?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -128,6 +147,9 @@ export type UserCountAggregateInputType = {
   createdAt?: true
   updateTime?: true
   isArchived?: true
+  failedLoginCount?: true
+  firstFailedLoginAt?: true
+  lockedUntil?: true
   _all?: true
 }
 
@@ -228,6 +250,9 @@ export type UserGroupByOutputType = {
   createdAt: Date
   updateTime: Date
   isArchived: boolean
+  failedLoginCount: number
+  firstFailedLoginAt: Date | null
+  lockedUntil: Date | null
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -264,6 +289,9 @@ export type UserWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"User"> | Date | string
   isArchived?: Prisma.BoolFilter<"User"> | boolean
+  failedLoginCount?: Prisma.IntFilter<"User"> | number
+  firstFailedLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
   location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
@@ -283,6 +311,9 @@ export type UserOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  failedLoginCount?: Prisma.SortOrder
+  firstFailedLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   selectedLocations?: Prisma.SelectedLocationOrderByRelationAggregateInput
   location?: Prisma.LocationOrderByWithRelationInput
@@ -305,6 +336,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"User"> | Date | string
   isArchived?: Prisma.BoolFilter<"User"> | boolean
+  failedLoginCount?: Prisma.IntFilter<"User"> | number
+  firstFailedLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   selectedLocations?: Prisma.SelectedLocationListRelationFilter
   location?: Prisma.XOR<Prisma.LocationNullableScalarRelationFilter, Prisma.LocationWhereInput> | null
@@ -324,6 +358,9 @@ export type UserOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  failedLoginCount?: Prisma.SortOrder
+  firstFailedLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -345,6 +382,9 @@ export type UserScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   isArchived?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  failedLoginCount?: Prisma.IntWithAggregatesFilter<"User"> | number
+  firstFailedLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  lockedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
 }
 
 export type UserCreateInput = {
@@ -355,6 +395,9 @@ export type UserCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
@@ -374,6 +417,9 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
@@ -388,6 +434,9 @@ export type UserUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
@@ -407,6 +456,9 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
@@ -424,6 +476,9 @@ export type UserCreateManyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
 }
 
 export type UserUpdateManyMutationInput = {
@@ -434,6 +489,9 @@ export type UserUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -447,6 +505,9 @@ export type UserUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -460,12 +521,16 @@ export type UserCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  failedLoginCount?: Prisma.SortOrder
+  firstFailedLoginAt?: Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
+  failedLoginCount?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -479,6 +544,9 @@ export type UserMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  failedLoginCount?: Prisma.SortOrder
+  firstFailedLoginAt?: Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -492,12 +560,16 @@ export type UserMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updateTime?: Prisma.SortOrder
   isArchived?: Prisma.SortOrder
+  failedLoginCount?: Prisma.SortOrder
+  firstFailedLoginAt?: Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
+  failedLoginCount?: Prisma.SortOrder
 }
 
 export type UserListRelationFilter = {
@@ -546,6 +618,10 @@ export type IntFieldUpdateOperationsInput = {
   decrement?: number
   multiply?: number
   divide?: number
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type NullableIntFieldUpdateOperationsInput = {
@@ -708,6 +784,9 @@ export type UserCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
@@ -725,6 +804,9 @@ export type UserUncheckedCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
@@ -771,6 +853,9 @@ export type UserScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updateTime?: Prisma.DateTimeFilter<"User"> | Date | string
   isArchived?: Prisma.BoolFilter<"User"> | boolean
+  failedLoginCount?: Prisma.IntFilter<"User"> | number
+  firstFailedLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
 }
 
 export type UserCreateWithoutLocationInput = {
@@ -781,6 +866,9 @@ export type UserCreateWithoutLocationInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
@@ -798,6 +886,9 @@ export type UserUncheckedCreateWithoutLocationInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
@@ -838,6 +929,9 @@ export type UserCreateWithoutSelectedLocationsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
   permissions?: Prisma.UserPermissionCreateNestedManyWithoutUserInput
@@ -856,6 +950,9 @@ export type UserUncheckedCreateWithoutSelectedLocationsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
   orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
@@ -885,6 +982,9 @@ export type UserUpdateWithoutSelectedLocationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
@@ -903,6 +1003,9 @@ export type UserUncheckedUpdateWithoutSelectedLocationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
   orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
@@ -916,6 +1019,9 @@ export type UserCreateWithoutOrderVoidsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
@@ -934,6 +1040,9 @@ export type UserUncheckedCreateWithoutOrderVoidsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
@@ -963,6 +1072,9 @@ export type UserUpdateWithoutOrderVoidsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
@@ -981,6 +1093,9 @@ export type UserUncheckedUpdateWithoutOrderVoidsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
@@ -994,6 +1109,9 @@ export type UserCreateWithoutPermissionsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
@@ -1012,6 +1130,9 @@ export type UserUncheckedCreateWithoutPermissionsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissionGrants?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutGrantedByInput
   orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
@@ -1030,6 +1151,9 @@ export type UserCreateWithoutPermissionGrantsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   selectedLocations?: Prisma.SelectedLocationCreateNestedManyWithoutUserInput
   location?: Prisma.LocationCreateNestedOneWithoutManagersInput
@@ -1048,6 +1172,9 @@ export type UserUncheckedCreateWithoutPermissionGrantsInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedCreateNestedManyWithoutUserInput
   permissions?: Prisma.UserPermissionUncheckedCreateNestedManyWithoutUserInput
   orderVoids?: Prisma.OrderVoidUncheckedCreateNestedManyWithoutVoidedByInput
@@ -1077,6 +1204,9 @@ export type UserUpdateWithoutPermissionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
@@ -1095,6 +1225,9 @@ export type UserUncheckedUpdateWithoutPermissionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
   orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
@@ -1119,6 +1252,9 @@ export type UserUpdateWithoutPermissionGrantsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
@@ -1137,6 +1273,9 @@ export type UserUncheckedUpdateWithoutPermissionGrantsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   orderVoids?: Prisma.OrderVoidUncheckedUpdateManyWithoutVoidedByNestedInput
@@ -1152,6 +1291,9 @@ export type UserCreateManyCompanyInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
 }
 
 export type UserUpdateWithoutCompanyInput = {
@@ -1162,6 +1304,9 @@ export type UserUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   location?: Prisma.LocationUpdateOneWithoutManagersNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
@@ -1179,6 +1324,9 @@ export type UserUncheckedUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
@@ -1195,6 +1343,9 @@ export type UserUncheckedUpdateManyWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserCreateManyLocationInput = {
@@ -1207,6 +1358,9 @@ export type UserCreateManyLocationInput = {
   createdAt?: Date | string
   updateTime?: Date | string
   isArchived?: boolean
+  failedLoginCount?: number
+  firstFailedLoginAt?: Date | string | null
+  lockedUntil?: Date | string | null
 }
 
 export type UserUpdateWithoutLocationInput = {
@@ -1217,6 +1371,9 @@ export type UserUpdateWithoutLocationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   selectedLocations?: Prisma.SelectedLocationUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUpdateManyWithoutUserNestedInput
@@ -1234,6 +1391,9 @@ export type UserUncheckedUpdateWithoutLocationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   selectedLocations?: Prisma.SelectedLocationUncheckedUpdateManyWithoutUserNestedInput
   permissions?: Prisma.UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   permissionGrants?: Prisma.UserPermissionUncheckedUpdateManyWithoutGrantedByNestedInput
@@ -1250,6 +1410,9 @@ export type UserUncheckedUpdateManyWithoutLocationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updateTime?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isArchived?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginCount?: Prisma.IntFieldUpdateOperationsInput | number
+  firstFailedLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -1321,6 +1484,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  failedLoginCount?: boolean
+  firstFailedLoginAt?: boolean
+  lockedUntil?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.User$selectedLocationsArgs<ExtArgs>
   location?: boolean | Prisma.User$locationArgs<ExtArgs>
@@ -1341,6 +1507,9 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  failedLoginCount?: boolean
+  firstFailedLoginAt?: boolean
+  lockedUntil?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   location?: boolean | Prisma.User$locationArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
@@ -1356,6 +1525,9 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  failedLoginCount?: boolean
+  firstFailedLoginAt?: boolean
+  lockedUntil?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   location?: boolean | Prisma.User$locationArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
@@ -1371,9 +1543,12 @@ export type UserSelectScalar = {
   createdAt?: boolean
   updateTime?: boolean
   isArchived?: boolean
+  failedLoginCount?: boolean
+  firstFailedLoginAt?: boolean
+  lockedUntil?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "companyId" | "locationId" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "password" | "role" | "companyId" | "locationId" | "createdAt" | "updateTime" | "isArchived" | "failedLoginCount" | "firstFailedLoginAt" | "lockedUntil", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   selectedLocations?: boolean | Prisma.User$selectedLocationsArgs<ExtArgs>
@@ -1413,6 +1588,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     createdAt: Date
     updateTime: Date
     isArchived: boolean
+    failedLoginCount: number
+    firstFailedLoginAt: Date | null
+    lockedUntil: Date | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1852,6 +2030,9 @@ export interface UserFieldRefs {
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updateTime: Prisma.FieldRef<"User", 'DateTime'>
   readonly isArchived: Prisma.FieldRef<"User", 'Boolean'>
+  readonly failedLoginCount: Prisma.FieldRef<"User", 'Int'>
+  readonly firstFailedLoginAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly lockedUntil: Prisma.FieldRef<"User", 'DateTime'>
 }
     
 

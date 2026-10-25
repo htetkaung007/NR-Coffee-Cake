@@ -35,7 +35,9 @@ import type {
   ExportCancelledRound,
   ExportLine,
 } from "../lib/report/exportLines";
+import { config } from "../utils/config";
 import { CartValidationService } from "./cartValidation.service";
+import { MenuViewService } from "./menuView.service";
 import { OrderHistoryService } from "./orderHistory.service";
 
 /** Which café the numbers are for. companyId is checked against the
@@ -202,8 +204,9 @@ export class ReportService {
    * (isMenuOrderable) — the same one the cart check uses. `categories`
    * are the categories visible here, in company order, for filter chips.
    *
-   * Queries: 12 — location check; then lines, previous lines, the bills'
-   * total and the 5 orderability queries together; then menu names,
+   * Queries: 14 — location check; then lines, previous lines, the bills'
+   * total, the 5 orderability queries, the viewers and the orderers
+   * together; then menu names,
    * menu→category links and add-on names together.
    */
   static async getItems({ companyId, locationId, kind, anchorDay }: PeriodArgs) {
@@ -214,15 +217,18 @@ export class ReportService {
       anchorDay,
     );
 
-    const [lines, previousLines, billsTotal, orderable] = await Promise.all([
-      ReportService.loadLines(locationId, range),
-      ReportService.loadLines(locationId, comparedRange),
-      prisma.bill.aggregate({
-        where: { locationId, paidAt: { gte: range.start, lt: range.end } },
-        _sum: { total: true },
-      }),
-      CartValidationService.getOrderableMenus(companyId, locationId),
-    ]);
+    const [lines, previousLines, billsTotal, orderable, viewersByMenu, orderersByMenu] =
+      await Promise.all([
+        ReportService.loadLines(locationId, range),
+        ReportService.loadLines(locationId, comparedRange),
+        prisma.bill.aggregate({
+          where: { locationId, paidAt: { gte: range.start, lt: range.end } },
+          _sum: { total: true },
+        }),
+        CartValidationService.getOrderableMenus(companyId, locationId),
+        MenuViewService.getViewersByMenu(locationId, period.startDay, period.endDay),
+        ReportService.loadOrderersByMenu(locationId, range),
+      ]);
 
     const current = aggregateItems(lines);
     const previous = aggregateItems(previousLines);
@@ -303,6 +309,13 @@ export class ReportService {
         name: category.name,
         nameMy: category.nameMy ?? null,
       })),
+      // Customers who opened / ordered each menu (totals only — no key
+      // or token ever leaves the server). `viewers` null: the period has
+      // no view data (lib/report/viewFunnel shows "—").
+      views: {
+        viewers: viewersByMenu ? Object.fromEntries(viewersByMenu) : null,
+        orderers: Object.fromEntries(orderersByMenu),
+      },
     };
   }
 
@@ -532,6 +545,25 @@ export class ReportService {
     };
   }
 
+  /**
+   * Quantity sold per menu at the location in a UTC range — EXACTLY the
+   * item sales rule getItems counts by (loadLines + aggregateItems: lines
+   * of bills paid in the range, voided units left out). Shared with the
+   * customer menu's "Popular" badge (MenuService.getPopularMenuIds), so
+   * the two can never disagree. Callers pass a location they've already
+   * checked. Queries: 1.
+   */
+  static async getMenuQuantitiesSold(
+    locationId: number,
+    range: Range,
+  ): Promise<{ menuId: number; quantity: number }[]> {
+    const lines = await ReportService.loadLines(locationId, range);
+    return aggregateItems(lines).menus.map(({ menuId, quantity }) => ({
+      menuId,
+      quantity,
+    }));
+  }
+
   /** The location must belong to the company — chain lookup, so it
    *  throws (Rule 6). Archived locations are fine: their past is still
    *  theirs to read. */
@@ -644,6 +676,51 @@ export class ReportService {
           isRequiredGroup: link.addon.addonCategory.isRequired,
         })),
       }));
+  }
+
+  /**
+   * One query: per menu, the customers who ordered it — distinct
+   * (customer, shop day) pairs — among the lines getItems counts as sold
+   * (loadLines' rule: PAID rounds of a bill paid in the range, neither
+   * round nor line archived, units left after voids), from rounds a
+   * customer placed (placedBy CUSTOMER — staff New Order rounds never
+   * count). The customer is the one MenuViewSeen keys views by: a Table
+   * line's contributorToken (a line without one is left out), a Counter
+   * round's bill root (billSessionId ?? id). The day is the line's
+   * createdAt in the shop's timezone. Counted in SQL: the tokens never
+   * reach app code — only menuId + a count come back.
+   */
+  private static async loadOrderersByMenu(
+    locationId: number,
+    range: Range,
+  ): Promise<Map<number, number>> {
+    const rows = await prisma.$queryRaw<{ menuId: number; orderers: number }[]>`
+      SELECT o."menuId" AS "menuId",
+        COUNT(DISTINCT
+          CASE WHEN s."isCounter"
+            THEN 'bill:' || COALESCE(s."billSessionId", s."id")::text
+            ELSE 'table:' || o."contributorToken"
+          END
+          || '|' ||
+          to_char((o."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${config.shopTimezone}, 'YYYY-MM-DD')
+        )::int AS "orderers"
+      FROM "orders" o
+      JOIN "OrderSession" s ON s."id" = o."orderSessionId"
+      JOIN "Bill" b ON b."id" = s."billId"
+      WHERE b."locationId" = ${locationId}
+        -- paidAt is a UTC timestamp without a zone (Prisma's DateTime):
+        -- compare it with the range as UTC, whatever the DB's TimeZone.
+        AND b."paidAt" >= (${range.start.toISOString()}::timestamptz AT TIME ZONE 'UTC')
+        AND b."paidAt" < (${range.end.toISOString()}::timestamptz AT TIME ZONE 'UTC')
+        AND s."status" = 'PAID'
+        AND s."placedBy" = 'CUSTOMER'
+        AND s."isArchived" = false
+        AND o."isArchived" = false
+        AND (s."isCounter" OR o."contributorToken" IS NOT NULL)
+        AND o."quantity" > COALESCE(
+          (SELECT SUM(v."quantity") FROM "OrderVoid" v WHERE v."orderId" = o."id"), 0)
+      GROUP BY o."menuId"`;
+    return new Map(rows.map((row) => [row.menuId, row.orderers]));
   }
 
   /** One query: every void on a line of the sessions whose bill was paid

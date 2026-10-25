@@ -1,11 +1,14 @@
 "use server";
 
-import { MenuService } from "@/app/services";
+import { after } from "next/server";
+import { MenuService, MenuViewService } from "@/app/services";
 import { menuDetailSchema } from "@/app/lib/schemas/customerOrderSchema";
 import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
+import { menuViewerKeyAt } from "@/app/lib/storefront/menuViewer";
 
-/** Shared by both customer flows (Counter and Table QR) and the staff
- *  New Order page, via MenuDetailDialog.
+/** The customer menu detail — both customer flows (Counter and Table QR)
+ *  and online browsing, via MenuDetailDialog. Staff New Order reads its
+ *  own getStaffMenuDetailAction, which never counts a view.
  *
  *  No session required — but the menu-access rule is
  *  (lib/storefront/menuAccess): without a QR session at this location
@@ -21,8 +24,25 @@ export async function getMenuDetailAction(menuId: number, locationId: number) {
   if ((await checkMenuAccess(parsed.data.locationId)) === "unavailable") {
     return null;
   }
-  return MenuService.getMenuDetailForCustomer(
+  const detail = await MenuService.getMenuDetailForCustomer(
     parsed.data.menuId,
     parsed.data.locationId,
   );
+  // A QR customer opened this menu: count the view (one per customer per
+  // day — MenuViewService) AFTER the response has gone (next/server's
+  // after), so it can never slow the detail down, and never let it
+  // throw at the customer. Online visitors have no key — not counted.
+  if (detail) {
+    after(async () => {
+      try {
+        const viewerKey = await menuViewerKeyAt(parsed.data.locationId);
+        if (viewerKey) {
+          await MenuViewService.recordView({ viewerKey, ...parsed.data });
+        }
+      } catch (error) {
+        console.error("[getMenuDetailAction] couldn't record the menu view:", error);
+      }
+    });
+  }
+  return detail;
 }

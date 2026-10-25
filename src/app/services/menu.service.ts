@@ -15,6 +15,9 @@ import {
 import { firstUnownedId } from "../lib/access/ownership";
 import { resolveAssetUrl } from "../lib/storage/assetUrl";
 import { cleanImageUpload } from "@/app/lib/storage/cleanImageUpload";
+import { popularMenuIds, popularSalesRange } from "../lib/menu/popularMenus";
+import { todayInShop } from "../lib/shopDay";
+import { ReportService } from "./report.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -316,6 +319,20 @@ export class MenuService {
   }
 
 
+  /** The customer menu's "Popular" menus at this location: the
+   *  best-sellers of the last POPULAR_DAYS shop days (lib/menu/
+   *  popularMenus), counted by Reports' own item sales rule
+   *  (ReportService.getMenuQuantitiesSold). Ids only — the counts never
+   *  leave the server. The caller has already checked the location
+   *  (checkMenuAccess). */
+  static async getPopularMenuIds(locationId: number): Promise<number[]> {
+    const sales = await ReportService.getMenuQuantitiesSold(
+      locationId,
+      popularSalesRange(todayInShop()),
+    );
+    return popularMenuIds(sales);
+  }
+
   /** A menu's own fields + its stock at one location, as both detail
    *  reads return them (the customer / staff detail and the edit form):
    *  no stock row yet → 0 and available. */
@@ -395,10 +412,10 @@ export class MenuService {
   /**
    * The owner's "Delete menu" (lib/menu/menuDeletion): a menu no Order
    * row references is deleted for good — its category, add-on group,
-   * hidden-at and stock rows (archived ones too), then the menu, in ONE
-   * transaction; one that was ever ordered is only archived (isArchived:
-   * every live list leaves it out, old orders keep its name), its links
-   * and stock rows left as they are.
+   * hidden-at, stock and menu-view rows (archived ones too), then the
+   * menu, in ONE transaction; one that was ever ordered is only archived
+   * (isArchived: every live list leaves it out, old orders keep its
+   * name), its links, stock and view rows left as they are.
    *
    * Race guard: the menu's row is locked (SELECT … FOR UPDATE) before the
    * Order rows are counted. An order line being written at that moment
@@ -430,6 +447,10 @@ export class MenuService {
       await tx.menuAddonCategories.deleteMany({ where: { menuId } });
       await tx.disableLocationMenus.deleteMany({ where: { menuId } });
       await tx.menuStock.deleteMany({ where: { menuId } });
+      // Its view counts too (MenuViewService) — an archived menu keeps
+      // them, like its order history.
+      await tx.menuViewSeen.deleteMany({ where: { menuId } });
+      await tx.menuViewDaily.deleteMany({ where: { menuId } });
       const deleted = await tx.menu.delete({
         where: { id: menuId },
         select: { assetUrl: true },

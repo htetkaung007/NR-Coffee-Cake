@@ -404,6 +404,8 @@ export const ModelName = {
   Bill: 'Bill',
   OrderCancellation: 'OrderCancellation',
   OrderVoid: 'OrderVoid',
+  MenuViewDaily: 'MenuViewDaily',
+  MenuViewSeen: 'MenuViewSeen',
   UserPermission: 'UserPermission'
 } as const
 
@@ -420,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill" | "orderCancellation" | "orderVoid" | "userPermission"
+    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill" | "orderCancellation" | "orderVoid" | "menuViewDaily" | "menuViewSeen" | "userPermission"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1904,6 +1906,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MenuViewDaily: {
+      payload: Prisma.$MenuViewDailyPayload<ExtArgs>
+      fields: Prisma.MenuViewDailyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MenuViewDailyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MenuViewDailyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>
+        }
+        findFirst: {
+          args: Prisma.MenuViewDailyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MenuViewDailyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>
+        }
+        findMany: {
+          args: Prisma.MenuViewDailyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>[]
+        }
+        create: {
+          args: Prisma.MenuViewDailyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>
+        }
+        createMany: {
+          args: Prisma.MenuViewDailyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MenuViewDailyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>[]
+        }
+        delete: {
+          args: Prisma.MenuViewDailyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>
+        }
+        update: {
+          args: Prisma.MenuViewDailyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>
+        }
+        deleteMany: {
+          args: Prisma.MenuViewDailyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MenuViewDailyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MenuViewDailyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>[]
+        }
+        upsert: {
+          args: Prisma.MenuViewDailyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewDailyPayload>
+        }
+        aggregate: {
+          args: Prisma.MenuViewDailyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMenuViewDaily>
+        }
+        groupBy: {
+          args: Prisma.MenuViewDailyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MenuViewDailyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MenuViewDailyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MenuViewDailyCountAggregateOutputType> | number
+        }
+      }
+    }
+    MenuViewSeen: {
+      payload: Prisma.$MenuViewSeenPayload<ExtArgs>
+      fields: Prisma.MenuViewSeenFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MenuViewSeenFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MenuViewSeenFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>
+        }
+        findFirst: {
+          args: Prisma.MenuViewSeenFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MenuViewSeenFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>
+        }
+        findMany: {
+          args: Prisma.MenuViewSeenFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>[]
+        }
+        create: {
+          args: Prisma.MenuViewSeenCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>
+        }
+        createMany: {
+          args: Prisma.MenuViewSeenCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MenuViewSeenCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>[]
+        }
+        delete: {
+          args: Prisma.MenuViewSeenDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>
+        }
+        update: {
+          args: Prisma.MenuViewSeenUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>
+        }
+        deleteMany: {
+          args: Prisma.MenuViewSeenDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MenuViewSeenUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MenuViewSeenUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>[]
+        }
+        upsert: {
+          args: Prisma.MenuViewSeenUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuViewSeenPayload>
+        }
+        aggregate: {
+          args: Prisma.MenuViewSeenAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMenuViewSeen>
+        }
+        groupBy: {
+          args: Prisma.MenuViewSeenGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MenuViewSeenGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MenuViewSeenCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MenuViewSeenCountAggregateOutputType> | number
+        }
+      }
+    }
     UserPermission: {
       payload: Prisma.$UserPermissionPayload<ExtArgs>
       fields: Prisma.UserPermissionFieldRefs
@@ -2027,7 +2177,10 @@ export const UserScalarFieldEnum = {
   locationId: 'locationId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
-  isArchived: 'isArchived'
+  isArchived: 'isArchived',
+  failedLoginCount: 'failedLoginCount',
+  firstFailedLoginAt: 'firstFailedLoginAt',
+  lockedUntil: 'lockedUntil'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -2250,7 +2403,8 @@ export const OrderSessionScalarFieldEnum = {
   billSessionId: 'billSessionId',
   billId: 'billId',
   cancelReason: 'cancelReason',
-  clientRequestId: 'clientRequestId'
+  clientRequestId: 'clientRequestId',
+  placedBy: 'placedBy'
 } as const
 
 export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]
@@ -2294,6 +2448,29 @@ export const OrderVoidScalarFieldEnum = {
 } as const
 
 export type OrderVoidScalarFieldEnum = (typeof OrderVoidScalarFieldEnum)[keyof typeof OrderVoidScalarFieldEnum]
+
+
+export const MenuViewDailyScalarFieldEnum = {
+  id: 'id',
+  menuId: 'menuId',
+  locationId: 'locationId',
+  day: 'day',
+  viewers: 'viewers'
+} as const
+
+export type MenuViewDailyScalarFieldEnum = (typeof MenuViewDailyScalarFieldEnum)[keyof typeof MenuViewDailyScalarFieldEnum]
+
+
+export const MenuViewSeenScalarFieldEnum = {
+  id: 'id',
+  viewerKey: 'viewerKey',
+  menuId: 'menuId',
+  locationId: 'locationId',
+  day: 'day',
+  createdAt: 'createdAt'
+} as const
+
+export type MenuViewSeenScalarFieldEnum = (typeof MenuViewSeenScalarFieldEnum)[keyof typeof MenuViewSeenScalarFieldEnum]
 
 
 export const UserPermissionScalarFieldEnum = {
@@ -2425,6 +2602,20 @@ export type EnumCancelReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'CancelReason[]'
  */
 export type ListEnumCancelReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CancelReason[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PlacedBy'
+ */
+export type EnumPlacedByFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlacedBy'>
+    
+
+
+/**
+ * Reference to a field of type 'PlacedBy[]'
+ */
+export type ListEnumPlacedByFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlacedBy[]'>
     
 
 
@@ -2613,6 +2804,8 @@ export type GlobalOmitConfig = {
   bill?: Prisma.BillOmit
   orderCancellation?: Prisma.OrderCancellationOmit
   orderVoid?: Prisma.OrderVoidOmit
+  menuViewDaily?: Prisma.MenuViewDailyOmit
+  menuViewSeen?: Prisma.MenuViewSeenOmit
   userPermission?: Prisma.UserPermissionOmit
 }
 

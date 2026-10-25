@@ -7,6 +7,7 @@ import { localizedText } from "@/app/lib/i18n/localizedText";
 import { useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import type { ReportPeriodKind } from "@/app/lib/report/reportPeriod";
 import type { ItemListRow } from "@/app/lib/report/reportView";
+import type { ViewFunnel } from "@/app/lib/report/viewFunnel";
 import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 import ExpandedPanel, { RowChevron } from "./ExpandedPanel";
 import ReportDelta from "./ReportDelta";
@@ -15,7 +16,9 @@ import { entryTitleSx, moneyToneSx } from "../order/orderTypography";
 /** From sm: rank · item · sold · sales · share · change on one line. */
 const SM_COLUMNS = "32px minmax(0, 1fr) 88px 128px 148px 96px 24px";
 
-/** Phones: two lines — rank, name, sales; then sold · share · change. */
+/** Phones: rank, name, sales; then sold · share · change. Every width
+ *  ends with the view funnel's line (Viewers · Ordered · …), which wraps
+ *  inside the row — never sideways. */
 const ROW_GRID_SX = {
   display: "grid",
   alignItems: "center",
@@ -24,8 +27,8 @@ const ROW_GRID_SX = {
   px: { xs: 1.5, sm: 2 },
   gridTemplateColumns: { xs: "28px minmax(0, 1fr) auto 24px", sm: SM_COLUMNS },
   gridTemplateAreas: {
-    xs: '"rank name sales chev" ". meta meta chev"',
-    sm: '"rank name qty sales share delta chev"',
+    xs: '"rank name sales chev" ". meta meta chev" ". funnel funnel chev"',
+    sm: '"rank name qty sales share delta chev" ". funnel funnel funnel funnel funnel chev"',
   },
 } as const;
 
@@ -66,6 +69,10 @@ interface ItemRowProps {
   /** The largest share in the list — the longest share bar is this. */
   maxShare: number;
   kind: ReportPeriodKind;
+  /** Customers who opened / ordered this menu in the period
+   *  (lib/report/viewFunnel) — counts only, neutral, "—" when the period
+   *  has no view data. */
+  funnel?: ViewFunnel;
   /** The panel under the row (a menu's add-on pairing). With `onToggle`
    *  the whole row is a button — aria-expanded, a chevron — that opens it. */
   detail?: ReactNode;
@@ -83,6 +90,7 @@ export default function ItemRow({
   row,
   maxShare,
   kind,
+  funnel,
   detail,
   expanded = false,
   onToggle,
@@ -204,6 +212,7 @@ export default function ItemRow({
             {t("noSalesPeriod")}
           </Typography>
         )}
+        {funnel && <FunnelLine funnel={funnel} />}
         {onToggle && (
           <Box sx={{ gridArea: "chev", display: "flex", justifyContent: "flex-end" }}>
             <RowChevron expanded={expanded} />
@@ -216,6 +225,42 @@ export default function ItemRow({
           {detail}
         </ExpandedPanel>
       )}
+    </Box>
+  );
+}
+
+/** Viewers · Ordered · Viewed, not ordered · Rate — each value named in
+ *  words (no column titles), wrapping onto more lines when narrow. Counts
+ *  and percentages are neutral (text.primary), never the income tone. */
+function FunnelLine({ funnel }: { funnel: ViewFunnel }) {
+  const t = useTranslations("bo.reports");
+  const shown = (value: number | null, suffix = "") =>
+    value === null ? "—" : `${value}${suffix}`;
+  const items: [string, string][] = [
+    [t("viewers"), shown(funnel.viewers)],
+    [t("orderers"), shown(funnel.orderers)],
+    [t("viewedNotOrdered"), shown(funnel.viewedNotOrdered)],
+    [t("orderRate"), shown(funnel.rate, "%")],
+  ];
+  return (
+    <Box
+      sx={{
+        gridArea: "funnel",
+        display: "flex",
+        flexWrap: "wrap",
+        columnGap: 2,
+        rowGap: 0.5,
+        minWidth: 0,
+      }}
+    >
+      {items.map(([label, value]) => (
+        <Typography key={label} variant="body2" color="text.secondary">
+          {label}{" "}
+          <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>
+            {value}
+          </Box>
+        </Typography>
+      ))}
     </Box>
   );
 }

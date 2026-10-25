@@ -30,6 +30,12 @@ export function useStaffErrorMessage() {
   );
 }
 
+/** The staff's generic error — what a thrown Server Action (a network
+ *  drop, no Result at all) shows, in the staff's language. */
+export function useStaffGenericError() {
+  return useTranslations("bo.errors")("generic");
+}
+
 /** A time of day on staff screens — "11:20 AM" / Myanmar's own — in the
  *  SHOP timezone (next-intl's formatter: src/i18n/request.ts), never the
  *  device's; digits 0–9 in both languages, as money (numberingSystem

@@ -29,6 +29,9 @@ interface CounterOrderClientProps {
   orderNumber: string;
   initialStatus: string;
   menus: MenuOption[];
+  /** The menus with the "Popular" badge (MenuService.getPopularMenuIds)
+   *  — ids only, never the counts. */
+  popularMenuIds: number[];
   /** The category tabs, in the server's order (see
    *  MenuService.getMenusForLocation) — passed through, never re-sorted. */
   categories: CategoryTab[];
@@ -46,6 +49,7 @@ export default function CounterOrderClient({
   locationId,
   orderNumber,
   menus,
+  popularMenuIds,
   categories,
   shopName,
   initialStatus,
@@ -156,6 +160,7 @@ export default function CounterOrderClient({
 
       <MenuBrowser
         menus={menus}
+        popularMenuIds={popularMenuIds}
         categories={categories}
         locationId={locationId}
         // The cart lives in this browser, so it can be built before any

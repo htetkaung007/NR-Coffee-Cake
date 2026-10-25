@@ -12,8 +12,11 @@ import type { SubmitStatus } from "@/app/components/SubmitButton";
  * React re-renders is already refused; `isLocked` / `status` mirror it
  * as state so the button re-renders disabled with its busy label.
  *
- * - error / throw → unlocks by itself (try/finally); the caller shows
- *   the error and the button is back to its idle label.
+ * - error result → unlocks by itself; the caller shows the error and
+ *   the button is back to its idle label.
+ * - throw (a network drop) → unlocks, then `onError(error)`: REQUIRED,
+ *   so every caller shows its generic error in its own words and no
+ *   `void run(...)` leaves an unhandled rejection.
  * - success → call `keepLocked()` when the page (or dialog) is about to
  *   leave: it stays locked, `status` "done", until `unlock()` (a dialog
  *   calls it when it opens again).
@@ -36,7 +39,8 @@ export function useSubmitLock() {
       : "idle";
 
   return {
-    run: lock.run,
+    run: (task: () => Promise<void>, onError: (error: unknown) => void) =>
+      lock.run(task, onError),
     keepLocked: lock.keepLocked,
     unlock: lock.unlock,
     isLocked: state.isLocked,

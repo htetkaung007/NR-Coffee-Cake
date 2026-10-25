@@ -52,7 +52,7 @@ export const STAFF_ERROR_CODES = [
   "IMAGE_INVALID",
 ] as const;
 
-export type StaffErrorCode = (typeof STAFF_ERROR_CODES)[number];
+type StaffErrorCode = (typeof STAFF_ERROR_CODES)[number];
 
 function isStaffErrorCode(code: string): code is StaffErrorCode {
   return (STAFF_ERROR_CODES as readonly string[]).includes(code);

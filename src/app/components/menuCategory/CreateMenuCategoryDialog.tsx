@@ -15,7 +15,7 @@ import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { createMenuCategoryAction } from "@/app/backoffice/menu_categories/action";
 import { useTranslations } from "next-intl";
-import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError } from "@/app/lib/hooks/useStaffWords";
 import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 import SubmitButton from "@/app/components/SubmitButton";
 import MenuCategoryFields, { categoryNameError } from "./MenuCategoryFields";
@@ -46,6 +46,7 @@ export default function CreateMenuCategoryDialog({
   const t = useTranslations("bo.categoryFields");
   const tCommon = useTranslations("bo.common");
   const errorText = useStaffErrorMessage();
+  const genericError = useStaffGenericError();
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
   const [name, setName] = useState("");
@@ -82,7 +83,7 @@ export default function CreateMenuCategoryDialog({
       submitLock.keepLocked();
       onCreated({ id: result.data.id, name: result.data.name, nameMy: nameMy || null });
       onClose();
-    });
+    }, () => setError(genericError));
   }
   const isSaving = submitLock.status === "busy";
 

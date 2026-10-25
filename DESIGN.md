@@ -409,6 +409,18 @@ double-taps), or an optimistic update. A disabled control shows WHY
   description) and the name / price padding is 4px (price row 32px).
   Everything else — one-line name, unwrapped price, Add square wrapping
   under it, whole-card button — stays the same.
+  **"Popular" badge** (customer /menu only — staff New Order and the
+  menu form's preview never show it): the location's 3 best-selling
+  menus of the last 7 shop days, each with at least 5 sold (ties → the
+  lower menu id; fewer qualify → fewer badges) — `lib/menu/popularMenus`,
+  counted by Reports' item sales rule. Words only, never a number. A
+  small solid chip on the image's TOP-LEFT (the stock chips sit
+  elsewhere): `secondary` fill + contrastText (≥ 4.5:1 in both modes;
+  never the price tone or error), a star icon (aria-hidden) + "Popular"
+  / "လူကြိုက်များ" in caption 600, minHeight + padding (no fixed size).
+  The word is part of the card's accessible name ("Popular, Latte, …").
+  Not drawn on a card that can't be ordered (sold out / switched off);
+  the same on the compact card.
 - **Master-detail (Backoffice order detail, History):** side panel at `lg`
   and up; below `lg`, a bottom bar (total + action) that opens a right
   Drawer on tablets and a bottom sheet / full-screen Dialog on phones.
@@ -476,6 +488,18 @@ double-taps), or an optimistic update. A disabled control shows WHY
   (localStorage "boSidebar:v1", copied onto `<body data-bo-sidebar>` by
   an inline script before the first paint — never a flash). Laptops: no
   toggle, the sidebar as always; phones: the temporary drawer.
+- **Reports → Items: the view funnel.** Every item row (top and slow
+  sellers) ends with one more line at every width — "Viewers 40 ·
+  Ordered 12 · Viewed, not ordered 28 · Rate 30%" (ကြည့်သူ · မှာသူ ·
+  ကြည့်ပြီး မမှာ · မှာနှုန်း): each value named in words, body2, label
+  text.secondary + value text.primary 600, wrapping inside the row
+  (never a sideways scroll at 375px; no extra columns). Neutral —
+  counts and percentages, never the income tone. Rate shows from 10
+  viewers ("—" below); a period with no view data shows "—" everywhere,
+  never 0. Above the list, one caption: "Counts customers who opened
+  the menu on their phone (QR) — one per customer per day." The sold
+  quantity, money, share and change stay as they were; it follows the
+  Week | Month navigator; CSV unchanged.
 - **Reports header on phones:** Export (the download icon below `md`,
   "Export" from `md`, accessible name "Export", ≥ 44px) sits at the right
   end of the "Reports" title's row at every width (OrdersPageHeader's
@@ -855,7 +879,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-21 (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-10-22 (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

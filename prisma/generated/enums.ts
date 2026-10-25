@@ -18,6 +18,14 @@ export const VoidReason = {
 export type VoidReason = (typeof VoidReason)[keyof typeof VoidReason]
 
 
+export const PlacedBy = {
+  CUSTOMER: 'CUSTOMER',
+  STAFF: 'STAFF'
+} as const
+
+export type PlacedBy = (typeof PlacedBy)[keyof typeof PlacedBy]
+
+
 export const ORDERSTATUS = {
   CART: 'CART',
   PENDING_APPROVAL: 'PENDING_APPROVAL',

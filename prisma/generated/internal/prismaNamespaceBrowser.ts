@@ -71,6 +71,8 @@ export const ModelName = {
   Bill: 'Bill',
   OrderCancellation: 'OrderCancellation',
   OrderVoid: 'OrderVoid',
+  MenuViewDaily: 'MenuViewDaily',
+  MenuViewSeen: 'MenuViewSeen',
   UserPermission: 'UserPermission'
 } as const
 
@@ -100,7 +102,10 @@ export const UserScalarFieldEnum = {
   locationId: 'locationId',
   createdAt: 'createdAt',
   updateTime: 'updateTime',
-  isArchived: 'isArchived'
+  isArchived: 'isArchived',
+  failedLoginCount: 'failedLoginCount',
+  firstFailedLoginAt: 'firstFailedLoginAt',
+  lockedUntil: 'lockedUntil'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -323,7 +328,8 @@ export const OrderSessionScalarFieldEnum = {
   billSessionId: 'billSessionId',
   billId: 'billId',
   cancelReason: 'cancelReason',
-  clientRequestId: 'clientRequestId'
+  clientRequestId: 'clientRequestId',
+  placedBy: 'placedBy'
 } as const
 
 export type OrderSessionScalarFieldEnum = (typeof OrderSessionScalarFieldEnum)[keyof typeof OrderSessionScalarFieldEnum]
@@ -367,6 +373,29 @@ export const OrderVoidScalarFieldEnum = {
 } as const
 
 export type OrderVoidScalarFieldEnum = (typeof OrderVoidScalarFieldEnum)[keyof typeof OrderVoidScalarFieldEnum]
+
+
+export const MenuViewDailyScalarFieldEnum = {
+  id: 'id',
+  menuId: 'menuId',
+  locationId: 'locationId',
+  day: 'day',
+  viewers: 'viewers'
+} as const
+
+export type MenuViewDailyScalarFieldEnum = (typeof MenuViewDailyScalarFieldEnum)[keyof typeof MenuViewDailyScalarFieldEnum]
+
+
+export const MenuViewSeenScalarFieldEnum = {
+  id: 'id',
+  viewerKey: 'viewerKey',
+  menuId: 'menuId',
+  locationId: 'locationId',
+  day: 'day',
+  createdAt: 'createdAt'
+} as const
+
+export type MenuViewSeenScalarFieldEnum = (typeof MenuViewSeenScalarFieldEnum)[keyof typeof MenuViewSeenScalarFieldEnum]
 
 
 export const UserPermissionScalarFieldEnum = {

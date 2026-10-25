@@ -218,7 +218,7 @@ export default function TableCartPageClient({
       // open for drafting a next round. The lock opens after it, when
       // the button already shows the round's status.
       await refreshNow();
-    });
+    }, () => setError(errorMessage({ code: "INTERNAL_ERROR" })));
   }
 
   /** Pulls the table's state right away instead of waiting for a poll. */

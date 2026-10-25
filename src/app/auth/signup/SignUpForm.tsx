@@ -17,7 +17,7 @@ import AuthCard from "../AuthCard";
 import GoogleIcon from "@mui/icons-material/Google";
 import NextLink from "next/link";
 import { useTranslations } from "next-intl";
-import { useStaffErrorMessage } from "@/app/lib/hooks/useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError } from "@/app/lib/hooks/useStaffWords";
 import { registerAction } from "./action";
 import AuthCredentialFields from "../AuthCredentialFields";
 import { authButtonSx } from "../authButtonSx";
@@ -28,6 +28,7 @@ import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 export function SignUpForm() {
   const t = useTranslations("bo.auth");
   const errorText = useStaffErrorMessage();
+  const genericError = useStaffGenericError();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -69,7 +70,7 @@ export function SignUpForm() {
       }
 
       router.push("/backoffice");
-    });
+    }, () => setErrorMessage(genericError));
   }
 
   const handleGoogleSignUp = async () => {

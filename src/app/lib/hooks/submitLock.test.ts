@@ -52,6 +52,38 @@ describe("createSubmitLock", () => {
     expect(lock.isLocked).toBe(false);
   });
 
+  it("hands a thrown task to onError instead of rejecting (no unhandled rejection)", async () => {
+    const lock = createSubmitLock();
+    const errors: unknown[] = [];
+    const thrown = new Error("network");
+    await expect(
+      lock.run(async () => {
+        throw thrown;
+      }, (error) => errors.push(error)),
+    ).resolves.toBeUndefined();
+    expect(errors).toEqual([thrown]);
+  });
+
+  it("is already unlocked when onError runs (the error shows on an idle button)", async () => {
+    const lock = createSubmitLock();
+    let lockedDuringOnError: boolean | null = null;
+    await lock.run(async () => {
+      throw new Error("network");
+    }, () => {
+      lockedDuringOnError = lock.isLocked;
+    });
+    expect(lockedDuringOnError).toBe(false);
+  });
+
+  it("never calls onError when the task succeeds", async () => {
+    const lock = createSubmitLock();
+    let called = false;
+    await lock.run(async () => {}, () => {
+      called = true;
+    });
+    expect(called).toBe(false);
+  });
+
   it("stays locked after keepLocked (success, the page is leaving)", async () => {
     const lock = createSubmitLock();
     await lock.run(async () => lock.keepLocked());

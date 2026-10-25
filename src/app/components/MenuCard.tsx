@@ -10,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import {
   hoverCapableMedia,
   touchTabletMedia,
@@ -44,6 +45,8 @@ export interface MenuCardLabels {
   /** The Add affordance's words — given (customer Myanmar: "ထည့်မယ်")
    *  it shows them; null (English, staff New Order) shows the + icon. */
   addText: string | null;
+  /** The "Popular" badge's word (customer menu only). */
+  popular: string;
 }
 
 const ENGLISH_LABELS: MenuCardLabels = {
@@ -54,6 +57,7 @@ const ENGLISH_LABELS: MenuCardLabels = {
   outOfStockLabel: (name, price) => `${name}, ${price} — out of stock`,
   price: formatAmount,
   addText: null,
+  popular: "Popular",
 };
 
 interface MenuCardProps {
@@ -78,6 +82,11 @@ interface MenuCardProps {
   compact?: boolean;
   /** Translated words (customer side); English when left out. */
   labels?: MenuCardLabels;
+  /** One of the location's best-sellers (lib/menu/popularMenus): a
+   *  "Popular" badge on the image's top-left, also in the card's name.
+   *  Customer menu only — staff New Order and the preview never pass it.
+   *  Not drawn on a card that can't be ordered. */
+  isPopular?: boolean;
 }
 
 /** How faded an unavailable (out-of-stock) card's photo and text are. */
@@ -148,6 +157,7 @@ export default function MenuCard({
   showDescription = true,
   compact = false,
   labels = ENGLISH_LABELS,
+  isPopular = false,
 }: MenuCardProps) {
   const { palette } = useTheme();
   // The compact card's overrides, applied on touch tablets only.
@@ -162,6 +172,7 @@ export default function MenuCard({
   // Interactive only when there's something to open AND the item can be
   // ordered; the hover/pressed feedback follows the same condition.
   const isInteractive = Boolean(onAddToCart) && isAvailable;
+  const showPopular = isPopular && isAvailable;
   const hasDescription = item.description.trim().length > 0;
   const priceLabel = labels.price(item.price);
 
@@ -230,6 +241,33 @@ export default function MenuCard({
               height: "auto",
               minHeight: 20,
               "& .MuiChip-label": { px: 0.75 },
+            }}
+          />
+        )}
+        {/* Top-left, clear of the stock chips. Words only, never a
+           count; secondary's solid fill + contrastText (≥ 4.5:1). */}
+        {showPopular && (
+          <Chip
+            component="span"
+            color="secondary"
+            size="small"
+            icon={<StarRoundedIcon aria-hidden />}
+            label={
+              <Typography component="span" variant="caption" sx={{ fontWeight: 600 }}>
+                {labels.popular}
+              </Typography>
+            }
+            sx={{
+              position: "absolute",
+              top: 6,
+              left: 6,
+              zIndex: 2,
+              // Grows with its text (never a fixed height).
+              height: "auto",
+              minHeight: 20,
+              py: 0.25,
+              "& .MuiChip-label": { px: 0.75 },
+              "& .MuiChip-icon": { color: "inherit", ml: 0.5, mr: -0.25 },
             }}
           />
         )}
@@ -466,7 +504,10 @@ export default function MenuCard({
           disabled={!isAvailable}
           aria-label={
             isAvailable
-              ? labels.viewDetails(item.name, priceLabel)
+              ? // The badge is part of the name: "Popular, Latte, …".
+                [showPopular && labels.popular, labels.viewDetails(item.name, priceLabel)]
+                  .filter(Boolean)
+                  .join(", ")
               : labels.outOfStockLabel(item.name, priceLabel)
           }
           sx={{

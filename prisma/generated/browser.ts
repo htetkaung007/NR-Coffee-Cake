@@ -140,6 +140,30 @@ export type OrderCancellation = Prisma.OrderCancellationModel
  */
 export type OrderVoid = Prisma.OrderVoidModel
 /**
+ * Model MenuViewDaily
+ * *
+ *  * How many customers opened a menu's detail, per shop day and location —
+ *  * the totals Reports reads, so it never has to count raw view rows. One
+ *  * row per (menu, location, day); `viewers` goes up by one the first time
+ *  * a customer views that menu that day (MenuViewSeen decides "first").
+ *  * `day` is a shop day string, not a timestamp, so a day is the shop's
+ *  * day (Asia/Yangon) and never shifts with the server's clock.
+ */
+export type MenuViewDaily = Prisma.MenuViewDailyModel
+/**
+ * Model MenuViewSeen
+ * *
+ *  * "This customer already viewed this menu today" — the dedupe behind
+ *  * MenuViewDaily.viewers, so opening the same menu ten times counts once.
+ *  * `viewerKey` is a sha256 hex of the customer key — the Table
+ *  * contributorToken or the Counter bill root (billSessionId ?? id) —
+ *  * NEVER the raw token, so a leaked row can't be used as a session.
+ *  * It holds no IP, device or personal data. Rows older than 90 days are
+ *  * deleted (only today's rows matter for dedupe; the totals live on in
+ *  * MenuViewDaily).
+ */
+export type MenuViewSeen = Prisma.MenuViewSeenModel
+/**
  * Model UserPermission
  * *
  *  * One permission an owner granted one MANAGER — a row means "allowed",

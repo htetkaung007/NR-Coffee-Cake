@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { alpha, keyframes, useTheme } from "@mui/material/styles";
 import { cartLinesTotal, sumQuantities } from "@/app/lib/order/orderTotals";
-import { useStaffErrorMessage, useStaffMoney } from "@/app/lib/hooks/useStaffWords";
+import { useStaffErrorMessage, useStaffGenericError, useStaffMoney } from "@/app/lib/hooks/useStaffWords";
 import {
   touchTabletLandscapeMedia,
   reducedMotionQuery,
@@ -134,8 +134,18 @@ export default function StaffOrderClient({
   // stored cart and the order sent never change.
   const [menuLanguage, setMenuLanguage] = useStaffMenuLanguage(uiLanguage);
   const englishDetailLabels = useOrderUiLabels();
-  const detailLabels =
+  const menuSideLabels =
     myanmarWordsOrNull(menuLanguage)?.orderUi ?? englishDetailLabels;
+  // Its error (Add threw — a network drop) is a staff message: the
+  // Backoffice language, like every other error here.
+  const staffGenericError = useStaffGenericError();
+  const detailLabels = useMemo(
+    () => ({
+      ...menuSideLabels,
+      menuDetail: { ...menuSideLabels.menuDetail, genericError: staffGenericError },
+    }),
+    [menuSideLabels, staffGenericError],
+  );
   // The current order's line notices ("Only 1 left", "Sold out — …")
   // are staff controls: the Backoffice language, whatever the menu side.
   const noticeLabels =

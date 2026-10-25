@@ -73,12 +73,18 @@ function RowBadge({
   );
 }
 
-interface RowShellProps {
+/** What every row takes from its list: where it links and whether it's
+ *  the one open in the detail panel. */
+interface RowLinkProps {
   href: string;
   onSelect: () => void;
   selected: boolean;
-  badge: React.ReactNode;
-  title: string;
+}
+
+interface RowShellProps extends RowLinkProps {
+  /** The bill / round's place: its badge and title (no title = the
+   *  Counter). */
+  place: { title: string | null; isCounter: boolean };
   secondaryLine: React.ReactNode;
   amount: number;
 }
@@ -91,12 +97,13 @@ function RowShell({
   href,
   onSelect,
   selected,
-  badge,
-  title,
+  place,
   secondaryLine,
   amount,
 }: RowShellProps) {
+  const tCommon = useTranslations("bo.common");
   const money = useStaffMoney();
+  const title = place.title ?? tCommon("counter");
   return (
     <Box
       component={Link}
@@ -134,7 +141,7 @@ function RowShell({
         },
       })}
     >
-      {badge}
+      <RowBadge title={place.title ?? ""} isCounter={place.isCounter} />
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography variant="body1" noWrap sx={entryTitleSx}>
           {title}
@@ -168,25 +175,15 @@ function RowShell({
 
 export function PaidBillRow({
   item,
-  href,
-  onSelect,
-  selected,
-}: {
-  item: PaidBillListItem;
-  href: string;
-  onSelect: () => void;
-  selected: boolean;
-}) {
+  ...link
+}: RowLinkProps & { item: PaidBillListItem }) {
   const t = useTranslations("bo.history");
   const tCommon = useTranslations("bo.common");
   const words = useHistoryWords();
   return (
     <RowShell
-      href={href}
-      onSelect={onSelect}
-      selected={selected}
-      badge={<RowBadge title={item.title ?? ""} isCounter={item.isCounter} />}
-      title={item.title ?? tCommon("counter")}
+      {...link}
+      place={item}
       amount={item.total}
       secondaryLine={
         <Typography
@@ -207,25 +204,15 @@ export function PaidBillRow({
 
 export function CancelledRoundRow({
   item,
-  href,
-  onSelect,
-  selected,
-}: {
-  item: CancelledRoundListItem;
-  href: string;
-  onSelect: () => void;
-  selected: boolean;
-}) {
+  ...link
+}: RowLinkProps & { item: CancelledRoundListItem }) {
   const t = useTranslations("bo.history");
   const tCommon = useTranslations("bo.common");
   const words = useHistoryWords();
   return (
     <RowShell
-      href={href}
-      onSelect={onSelect}
-      selected={selected}
-      badge={<RowBadge title={item.title ?? ""} isCounter={item.isCounter} />}
-      title={item.title ?? tCommon("counter")}
+      {...link}
+      place={item}
       amount={item.amount}
       secondaryLine={
         // Wraps, so a long "Rejected · …" chip drops to its own line on a

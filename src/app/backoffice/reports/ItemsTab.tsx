@@ -34,6 +34,7 @@ import PairingSection from "./PairingSection";
 import { ErrorRetry, ItemRowsSkeleton } from "./ReportStates";
 import { usePairing } from "./usePairing";
 import type { ItemsState } from "./useReportItems";
+import { viewFunnel } from "@/app/lib/report/viewFunnel";
 
 const SEARCH_DEBOUNCE_MS = 200;
 
@@ -218,6 +219,15 @@ export default function ItemsTab({
             />
           ) : (
             <Box>
+              {/* What Viewers / Ordered count — read before the numbers. */}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="p"
+                sx={{ m: 0, mb: 1 }}
+              >
+                {t("viewsHelp")}
+              </Typography>
               <ItemsListHeader />
               <Stack
                 component="ol"
@@ -230,6 +240,12 @@ export default function ItemsTab({
                     row={row}
                     maxShare={maxShare}
                     kind={kind}
+                    funnel={viewFunnel({
+                      viewers: state.data.views.viewers
+                        ? (state.data.views.viewers[row.menuId] ?? 0)
+                        : null,
+                      orderers: state.data.views.orderers[row.menuId] ?? 0,
+                    })}
                     expanded={openMenus.includes(row.menuId)}
                     onToggle={() =>
                       setOpenMenus((ids) => toggle(ids, row.menuId))

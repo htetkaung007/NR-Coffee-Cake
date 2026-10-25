@@ -8,7 +8,7 @@ export const requiredName = (message: string) =>
 
 /** bcrypt only uses a password's first 72 BYTES — anything after them
  *  would be silently ignored, so a new password may not be longer. */
-export const PASSWORD_MAX_BYTES = 72;
+const PASSWORD_MAX_BYTES = 72;
 
 /** A password being SET (sign-up, a new manager): 8 to 72 characters,
  *  and at most 72 bytes in UTF-8 (Myanmar letters take 3 bytes each). */
