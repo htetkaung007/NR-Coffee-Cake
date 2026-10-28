@@ -4,7 +4,7 @@ import {
   MENU_CATEGORY_ORDER,
   MenuCategoryService,
 } from "./menuCategory.service";
-import { NotFoundError } from "../lib/errors";
+import { NotFoundError, ValidationError } from "../lib/errors";
 import { getFileStorageService } from "../lib/storage/getFileStorageService";
 import { isMenuListed } from "../lib/menu/menuOrderability";
 import { menuDeletionMode, type MenuDeletionMode } from "../lib/menu/menuDeletion";
@@ -13,7 +13,15 @@ import {
   MenuLocationService,
 } from "./menuLocation.service";
 import { firstUnownedId } from "../lib/access/ownership";
-import { resolveAssetUrl } from "../lib/storage/assetUrl";
+import { mainImageUrl, toMenuImages } from "../lib/storage/assetUrl";
+import {
+  MENU_IMAGES_MESSAGES,
+  checkImageSlots,
+  planMenuImages,
+} from "../lib/menu/menuImagePlan";
+import type { MenuImageSlot } from "../lib/menu/menuImageSlots";
+import { removeStoredFiles } from "../lib/storage/removeStoredFiles";
+import { MAIN_MENU_IMAGE, MENU_IMAGES } from "./menuImageQuery";
 import { cleanImageUpload } from "@/app/lib/storage/cleanImageUpload";
 import { popularMenuIds, popularSalesRange } from "../lib/menu/popularMenus";
 import { todayInShop } from "../lib/shopDay";
@@ -110,7 +118,6 @@ export class MenuService {
           name: input.name,
           nameMy: input.nameMy,
           price: input.price,
-          assetUrl: "",
           description: input.description,
           descriptionMy: input.descriptionMy,
         },
@@ -172,32 +179,95 @@ export class MenuService {
     if (unowned !== null) throw new NotFoundError("Menu category", unowned);
   }
 
-  /** Sets assetUrl after an image has been uploaded to storage — kept as
-   *  its own step (see createMenu's comment on why it's not
-   *  transactional). Private: only saveMenuImage calls it, after its
-   *  ownership check. */
-  private static async setMenuAsset(menuId: number, url: string) {
-    return prisma.menu.update({
-      where: { id: menuId },
-      data: { assetUrl: url },
-    });
-  }
-
-  /** A new photo for a saved menu: upload it to file storage, then store
-   *  its URL (setMenuAsset) — after the menu's own DB write, never inside
-   *  its transaction (an object-store PUT can't be rolled back; CLAUDE.md
-   *  Rule 7). The menu must be this company's (checked before the
-   *  upload, so nothing is stored for someone else's menu). */
-  static async saveMenuImage(menuId: number, companyId: number, image: File) {
+  /**
+   * The menu's photos after a save (CLAUDE.md §7: at most 3, positions
+   * 0..n-1, 0 = the main photo). `slots` is the FULL list in order —
+   * kept photos by MenuImage id, new ones by their index in `newImages`
+   * (lib/menu/menuImageSlots); a photo left out is removed.
+   *
+   * Storage can't roll back with a transaction (Rule 7), so: every new
+   * file is checked and resized first (a bad one stops the save before
+   * anything is stored), then written; then ONE transaction (the menu row
+   * locked, as deleteMenu does) checks the list against the menu's own
+   * photos (lib/menu/menuImagePlan — a kept id that isn't this menu's is
+   * NotFoundError) and rewrites the rows; only after the commit are the
+   * removed photos' files deleted. If anything fails after new files
+   * were written, those files are deleted again (no orphans) and the
+   * error stands. A failed file delete is logged, never thrown
+   * (removeStoredFiles). The menu must be this company's — checked
+   * before any upload.
+   */
+  static async saveMenuImages(
+    menuId: number,
+    companyId: number,
+    slots: readonly MenuImageSlot[],
+    newImages: readonly File[],
+  ) {
     await MenuService.getCompanyMenu(menuId, companyId);
-    // Checked by its content, re-encoded clean (never the browser's
-    // `image.type`) — a non-image is a ValidationError, nothing stored.
-    const { buffer, contentType } = await cleanImageUpload(
-      Buffer.from(await image.arrayBuffer()),
+    const problem = checkImageSlots(slots, newImages.length);
+    if (problem) throw new ValidationError(MENU_IMAGES_MESSAGES[problem], problem);
+
+    // Checked by their content and resized to ≤ 1200px WebP without
+    // metadata (never the browser's `type`) — a non-image is a
+    // ValidationError, nothing stored.
+    const photos = await Promise.all(
+      newImages.map(async (image) =>
+        cleanImageUpload(Buffer.from(await image.arrayBuffer()), "menuPhoto"),
+      ),
     );
     const storage = getFileStorageService();
-    const { url } = await storage.upload(buffer, contentType, "menu", menuId);
-    await MenuService.setMenuAsset(menuId, url);
+    const newKeys: string[] = [];
+    try {
+      for (const { buffer } of photos) {
+        newKeys.push((await storage.upload(buffer, "menu", menuId)).key);
+      }
+    } catch (error) {
+      await removeStoredFiles(storage, newKeys, "MenuService.saveMenuImages");
+      throw error;
+    }
+
+    let removedKeys: string[];
+    try {
+      removedKeys = await MenuService.writeMenuImages(menuId, slots, newKeys);
+    } catch (error) {
+      await removeStoredFiles(storage, newKeys, "MenuService.saveMenuImages");
+      throw error;
+    }
+    await removeStoredFiles(storage, removedKeys, "MenuService.saveMenuImages");
+  }
+
+  /** saveMenuImages' database step, in one transaction: lock the menu
+   *  row, read its photos, plan the save (menuImagePlan) and rewrite the
+   *  rows — deleted and created again, so a reorder never trips
+   *  @@unique([menuId, position]). Same photos in the same order: no
+   *  write. Returns the keys of the photos no longer kept. */
+  private static async writeMenuImages(
+    menuId: number,
+    slots: readonly MenuImageSlot[],
+    newKeys: readonly string[],
+  ): Promise<string[]> {
+    return prisma.$transaction(async (tx: Tx) => {
+      await tx.$queryRaw`SELECT id FROM "Menu" WHERE id = ${menuId} FOR UPDATE`;
+      const current = await tx.menuImage.findMany({
+        where: { menuId },
+        select: { id: true, imageKey: true, position: true },
+      });
+      const plan = planMenuImages(current, slots, newKeys);
+      if (!plan.ok) {
+        if (plan.code === "MENU_IMAGE_NOT_FOUND") {
+          throw new NotFoundError("Menu image", plan.imageId);
+        }
+        throw new ValidationError(MENU_IMAGES_MESSAGES[plan.code], plan.code);
+      }
+      if (plan.unchanged) return [];
+      await tx.menuImage.deleteMany({ where: { menuId } });
+      if (plan.rows.length > 0) {
+        await tx.menuImage.createMany({
+          data: plan.rows.map((row) => ({ menuId, ...row })),
+        });
+      }
+      return plan.removedKeys;
+    });
   }
 
   static async getMenus(companyId: number) {
@@ -211,7 +281,7 @@ export class MenuService {
 
     return prisma.menu.findMany({
       where: { id: { in: menuIds }, isArchived: false },
-      include: { disableLocationMenus: true },
+      include: { disableLocationMenus: true, menuImages: MAIN_MENU_IMAGE },
     });
   }
 
@@ -276,7 +346,7 @@ export class MenuService {
           categoryRefs.length > 0
             ? categoryRefs.map((category) => category.name)
             : ["Uncategorized"],
-        imageUrl: resolveAssetUrl(menu.assetUrl || null),
+        imageUrl: mainImageUrl(menu.menuImages),
         stockQuantity: stock?.quantity ?? 0,
         isManuallyDisabled: stock?.isManuallyDisabled ?? false,
         // An active DisableLocationMenus row here. The Backoffice list
@@ -344,7 +414,8 @@ export class MenuService {
       price: number;
       description: string | null;
       descriptionMy: string | null;
-      assetUrl: string | null;
+      /** Every photo (MENU_IMAGES). */
+      menuImages: readonly { id: number; imageKey: string; position: number }[];
     },
     stock: { quantity: number; isManuallyDisabled: boolean } | null,
   ) {
@@ -355,7 +426,8 @@ export class MenuService {
       price: menu.price,
       description: menu.description || "",
       descriptionMy: menu.descriptionMy,
-      imageUrl: resolveAssetUrl(menu.assetUrl || null),
+      // Every photo, in order — URLs and ids, never the keys.
+      images: toMenuImages(menu.menuImages),
       quantity: stock?.quantity ?? 0,
       isAvailable: !(stock?.isManuallyDisabled ?? false),
     };
@@ -371,6 +443,7 @@ export class MenuService {
   static async getMenuDetailForCustomer(menuId: number, locationId: number) {
     const menu = await prisma.menu.findFirst({
       where: { id: menuId, isArchived: false },
+      include: { menuImages: MENU_IMAGES },
     });
     if (!menu) return null;
 
@@ -424,15 +497,17 @@ export class MenuService {
    * after the lock waits for this transaction — and after a delete its
    * foreign key fails, so no order can point at a deleted menu.
    *
-   * The photo is deleted only after the transaction commits (CLAUDE.md
-   * Rule 7 — storage can't roll back); if that fails it's logged and the
-   * delete still succeeds: the menu row is already gone.
+   * A hard delete removes its MenuImage rows in the transaction (their
+   * keys read first) and the photo files only after it commits (CLAUDE.md
+   * Rule 7 — storage can't roll back); a failed file delete is logged and
+   * the delete still succeeds: the rows are already gone. An archived
+   * menu keeps its photos — History, receipts and order lines show them.
    */
   static async deleteMenu(
     menuId: number,
     companyId: number,
   ): Promise<{ mode: MenuDeletionMode }> {
-    const { mode, assetUrl } = await prisma.$transaction(async (tx: Tx) => {
+    const { mode, imageKeys } = await prisma.$transaction(async (tx: Tx) => {
       await MenuService.findCompanyMenu(tx, menuId, companyId);
       await tx.$queryRaw`SELECT id FROM "Menu" WHERE id = ${menuId} FOR UPDATE`;
 
@@ -440,7 +515,7 @@ export class MenuService {
       const mode = menuDeletionMode(orderCount);
       if (mode === "archive") {
         await tx.menu.update({ where: { id: menuId }, data: { isArchived: true } });
-        return { mode, assetUrl: null };
+        return { mode, imageKeys: [] };
       }
 
       await tx.menuMenuCategory.deleteMany({ where: { menuId } });
@@ -451,20 +526,20 @@ export class MenuService {
       // them, like its order history.
       await tx.menuViewSeen.deleteMany({ where: { menuId } });
       await tx.menuViewDaily.deleteMany({ where: { menuId } });
-      const deleted = await tx.menu.delete({
-        where: { id: menuId },
-        select: { assetUrl: true },
+      const images = await tx.menuImage.findMany({
+        where: { menuId },
+        select: { imageKey: true },
       });
-      return { mode, assetUrl: deleted.assetUrl };
+      await tx.menuImage.deleteMany({ where: { menuId } });
+      await tx.menu.delete({ where: { id: menuId } });
+      return { mode, imageKeys: images.map((image) => image.imageKey) };
     });
 
-    if (assetUrl) {
-      try {
-        await getFileStorageService().delete(assetUrl);
-      } catch (error) {
-        console.error("[MenuService.deleteMenu] Image delete failed:", error);
-      }
-    }
+    await removeStoredFiles(
+      getFileStorageService(),
+      imageKeys,
+      "MenuService.deleteMenu",
+    );
     return { mode };
   }
 
@@ -499,6 +574,7 @@ export class MenuService {
   ) {
     const menu = await prisma.menu.findFirst({
       where: { id: menuId, ...companyMenuWhere(companyId) },
+      include: { menuImages: MENU_IMAGES },
     });
     if (!menu) return null;
 

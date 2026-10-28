@@ -43,7 +43,7 @@ export type TableSumAggregateOutputType = {
 export type TableMinAggregateOutputType = {
   id: number | null
   name: string | null
-  qrcodeImageUrl: string | null
+  qrImageKey: string | null
   locationId: number | null
   counterAccessKey: string | null
   activeSessionId: number | null
@@ -57,7 +57,7 @@ export type TableMinAggregateOutputType = {
 export type TableMaxAggregateOutputType = {
   id: number | null
   name: string | null
-  qrcodeImageUrl: string | null
+  qrImageKey: string | null
   locationId: number | null
   counterAccessKey: string | null
   activeSessionId: number | null
@@ -71,7 +71,7 @@ export type TableMaxAggregateOutputType = {
 export type TableCountAggregateOutputType = {
   id: number
   name: number
-  qrcodeImageUrl: number
+  qrImageKey: number
   locationId: number
   counterAccessKey: number
   activeSessionId: number
@@ -101,7 +101,7 @@ export type TableSumAggregateInputType = {
 export type TableMinAggregateInputType = {
   id?: true
   name?: true
-  qrcodeImageUrl?: true
+  qrImageKey?: true
   locationId?: true
   counterAccessKey?: true
   activeSessionId?: true
@@ -115,7 +115,7 @@ export type TableMinAggregateInputType = {
 export type TableMaxAggregateInputType = {
   id?: true
   name?: true
-  qrcodeImageUrl?: true
+  qrImageKey?: true
   locationId?: true
   counterAccessKey?: true
   activeSessionId?: true
@@ -129,7 +129,7 @@ export type TableMaxAggregateInputType = {
 export type TableCountAggregateInputType = {
   id?: true
   name?: true
-  qrcodeImageUrl?: true
+  qrImageKey?: true
   locationId?: true
   counterAccessKey?: true
   activeSessionId?: true
@@ -230,7 +230,7 @@ export type TableGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type TableGroupByOutputType = {
   id: number
   name: string
-  qrcodeImageUrl: string | null
+  qrImageKey: string | null
   locationId: number
   counterAccessKey: string | null
   activeSessionId: number | null
@@ -267,7 +267,7 @@ export type TableWhereInput = {
   NOT?: Prisma.TableWhereInput | Prisma.TableWhereInput[]
   id?: Prisma.IntFilter<"Table"> | number
   name?: Prisma.StringFilter<"Table"> | string
-  qrcodeImageUrl?: Prisma.StringNullableFilter<"Table"> | string | null
+  qrImageKey?: Prisma.StringNullableFilter<"Table"> | string | null
   locationId?: Prisma.IntFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableFilter<"Table"> | number | null
@@ -284,7 +284,7 @@ export type TableWhereInput = {
 export type TableOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  qrcodeImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  qrImageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrderInput | Prisma.SortOrder
   activeSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -304,7 +304,7 @@ export type TableWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.TableWhereInput[]
   NOT?: Prisma.TableWhereInput | Prisma.TableWhereInput[]
   name?: Prisma.StringFilter<"Table"> | string
-  qrcodeImageUrl?: Prisma.StringNullableFilter<"Table"> | string | null
+  qrImageKey?: Prisma.StringNullableFilter<"Table"> | string | null
   locationId?: Prisma.IntFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableFilter<"Table"> | number | null
@@ -321,7 +321,7 @@ export type TableWhereUniqueInput = Prisma.AtLeast<{
 export type TableOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  qrcodeImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  qrImageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrderInput | Prisma.SortOrder
   activeSessionId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -343,7 +343,7 @@ export type TableScalarWhereWithAggregatesInput = {
   NOT?: Prisma.TableScalarWhereWithAggregatesInput | Prisma.TableScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Table"> | number
   name?: Prisma.StringWithAggregatesFilter<"Table"> | string
-  qrcodeImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Table"> | string | null
+  qrImageKey?: Prisma.StringNullableWithAggregatesFilter<"Table"> | string | null
   locationId?: Prisma.IntWithAggregatesFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableWithAggregatesFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableWithAggregatesFilter<"Table"> | number | null
@@ -356,7 +356,7 @@ export type TableScalarWhereWithAggregatesInput = {
 
 export type TableCreateInput = {
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
   contributorEpoch?: number
@@ -372,7 +372,7 @@ export type TableCreateInput = {
 export type TableUncheckedCreateInput = {
   id?: number
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
@@ -387,7 +387,7 @@ export type TableUncheckedCreateInput = {
 
 export type TableUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
@@ -403,7 +403,7 @@ export type TableUpdateInput = {
 export type TableUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -419,7 +419,7 @@ export type TableUncheckedUpdateInput = {
 export type TableCreateManyInput = {
   id?: number
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
@@ -432,7 +432,7 @@ export type TableCreateManyInput = {
 
 export type TableUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
@@ -445,7 +445,7 @@ export type TableUpdateManyMutationInput = {
 export type TableUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -459,7 +459,7 @@ export type TableUncheckedUpdateManyInput = {
 export type TableCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  qrcodeImageUrl?: Prisma.SortOrder
+  qrImageKey?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
@@ -480,7 +480,7 @@ export type TableAvgOrderByAggregateInput = {
 export type TableMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  qrcodeImageUrl?: Prisma.SortOrder
+  qrImageKey?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
@@ -494,7 +494,7 @@ export type TableMaxOrderByAggregateInput = {
 export type TableMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  qrcodeImageUrl?: Prisma.SortOrder
+  qrImageKey?: Prisma.SortOrder
   locationId?: Prisma.SortOrder
   counterAccessKey?: Prisma.SortOrder
   activeSessionId?: Prisma.SortOrder
@@ -610,7 +610,7 @@ export type TableUpdateOneWithoutOrderSessionsNestedInput = {
 
 export type TableCreateWithoutLocationInput = {
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
   contributorEpoch?: number
@@ -625,7 +625,7 @@ export type TableCreateWithoutLocationInput = {
 export type TableUncheckedCreateWithoutLocationInput = {
   id?: number
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
   contributorEpoch?: number
@@ -669,7 +669,7 @@ export type TableScalarWhereInput = {
   NOT?: Prisma.TableScalarWhereInput | Prisma.TableScalarWhereInput[]
   id?: Prisma.IntFilter<"Table"> | number
   name?: Prisma.StringFilter<"Table"> | string
-  qrcodeImageUrl?: Prisma.StringNullableFilter<"Table"> | string | null
+  qrImageKey?: Prisma.StringNullableFilter<"Table"> | string | null
   locationId?: Prisma.IntFilter<"Table"> | number
   counterAccessKey?: Prisma.StringNullableFilter<"Table"> | string | null
   activeSessionId?: Prisma.IntNullableFilter<"Table"> | number | null
@@ -682,7 +682,7 @@ export type TableScalarWhereInput = {
 
 export type TableCreateWithoutOrdersInput = {
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
   contributorEpoch?: number
@@ -697,7 +697,7 @@ export type TableCreateWithoutOrdersInput = {
 export type TableUncheckedCreateWithoutOrdersInput = {
   id?: number
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
@@ -727,7 +727,7 @@ export type TableUpdateToOneWithWhereWithoutOrdersInput = {
 
 export type TableUpdateWithoutOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
@@ -742,7 +742,7 @@ export type TableUpdateWithoutOrdersInput = {
 export type TableUncheckedUpdateWithoutOrdersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -756,7 +756,7 @@ export type TableUncheckedUpdateWithoutOrdersInput = {
 
 export type TableCreateWithoutOrderSessionsInput = {
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
   contributorEpoch?: number
@@ -771,7 +771,7 @@ export type TableCreateWithoutOrderSessionsInput = {
 export type TableUncheckedCreateWithoutOrderSessionsInput = {
   id?: number
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   locationId: number
   counterAccessKey?: string | null
   activeSessionId?: number | null
@@ -801,7 +801,7 @@ export type TableUpdateToOneWithWhereWithoutOrderSessionsInput = {
 
 export type TableUpdateWithoutOrderSessionsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
@@ -816,7 +816,7 @@ export type TableUpdateWithoutOrderSessionsInput = {
 export type TableUncheckedUpdateWithoutOrderSessionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locationId?: Prisma.IntFieldUpdateOperationsInput | number
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -831,7 +831,7 @@ export type TableUncheckedUpdateWithoutOrderSessionsInput = {
 export type TableCreateManyLocationInput = {
   id?: number
   name: string
-  qrcodeImageUrl?: string | null
+  qrImageKey?: string | null
   counterAccessKey?: string | null
   activeSessionId?: number | null
   contributorEpoch?: number
@@ -843,7 +843,7 @@ export type TableCreateManyLocationInput = {
 
 export type TableUpdateWithoutLocationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
@@ -858,7 +858,7 @@ export type TableUpdateWithoutLocationInput = {
 export type TableUncheckedUpdateWithoutLocationInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
@@ -873,7 +873,7 @@ export type TableUncheckedUpdateWithoutLocationInput = {
 export type TableUncheckedUpdateManyWithoutLocationInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  qrcodeImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  qrImageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   counterAccessKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   activeSessionId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   contributorEpoch?: Prisma.IntFieldUpdateOperationsInput | number
@@ -926,7 +926,7 @@ export type TableCountOutputTypeCountOrdersArgs<ExtArgs extends runtime.Types.Ex
 export type TableSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  qrcodeImageUrl?: boolean
+  qrImageKey?: boolean
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
@@ -944,7 +944,7 @@ export type TableSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type TableSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  qrcodeImageUrl?: boolean
+  qrImageKey?: boolean
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
@@ -959,7 +959,7 @@ export type TableSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type TableSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  qrcodeImageUrl?: boolean
+  qrImageKey?: boolean
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
@@ -974,7 +974,7 @@ export type TableSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type TableSelectScalar = {
   id?: boolean
   name?: boolean
-  qrcodeImageUrl?: boolean
+  qrImageKey?: boolean
   locationId?: boolean
   counterAccessKey?: boolean
   activeSessionId?: boolean
@@ -985,7 +985,7 @@ export type TableSelectScalar = {
   isArchived?: boolean
 }
 
-export type TableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "qrcodeImageUrl" | "locationId" | "counterAccessKey" | "activeSessionId" | "contributorEpoch" | "isCounter" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["table"]>
+export type TableOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "qrImageKey" | "locationId" | "counterAccessKey" | "activeSessionId" | "contributorEpoch" | "isCounter" | "createdAt" | "updateTime" | "isArchived", ExtArgs["result"]["table"]>
 export type TableInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   location?: boolean | Prisma.LocationDefaultArgs<ExtArgs>
   OrderSessions?: boolean | Prisma.Table$OrderSessionsArgs<ExtArgs>
@@ -1009,7 +1009,7 @@ export type $TablePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
-    qrcodeImageUrl: string | null
+    qrImageKey: string | null
     locationId: number
     counterAccessKey: string | null
     activeSessionId: number | null
@@ -1446,7 +1446,7 @@ export interface Prisma__TableClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface TableFieldRefs {
   readonly id: Prisma.FieldRef<"Table", 'Int'>
   readonly name: Prisma.FieldRef<"Table", 'String'>
-  readonly qrcodeImageUrl: Prisma.FieldRef<"Table", 'String'>
+  readonly qrImageKey: Prisma.FieldRef<"Table", 'String'>
   readonly locationId: Prisma.FieldRef<"Table", 'Int'>
   readonly counterAccessKey: Prisma.FieldRef<"Table", 'String'>
   readonly activeSessionId: Prisma.FieldRef<"Table", 'Int'>

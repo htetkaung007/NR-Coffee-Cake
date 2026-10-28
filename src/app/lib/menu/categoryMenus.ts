@@ -30,7 +30,8 @@ export interface CategoryMenu {
  */
 export function groupCategoryMenus(input: {
   links: readonly (MenuCategoryLink & {
-    menu: { name: string; nameMy?: string | null; assetUrl: string | null };
+    /** imageUrl: the main photo's URL, already resolved by the service. */
+    menu: { name: string; nameMy?: string | null; imageUrl: string | null };
   })[];
   visibleCategoryIds: ReadonlySet<number>;
   stockByMenuId: ReadonlyMap<
@@ -58,7 +59,7 @@ export function groupCategoryMenus(input: {
       id: link.menuId,
       name: link.menu.name,
       nameMy: link.menu.nameMy ?? null,
-      imageUrl: link.menu.assetUrl || null,
+      imageUrl: link.menu.imageUrl,
       status: menuCardStatus({
         stockQuantity: stock?.quantity ?? 0,
         isManuallyDisabled: stock?.isManuallyDisabled ?? false,

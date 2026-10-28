@@ -1,15 +1,16 @@
 "use client";
 
 import { Box, Stack, Typography } from "@mui/material";
-import MenuThumb from "@/app/components/MenuThumb";
+import MenuPhotos from "./MenuPhotos";
 import { localizedText } from "@/app/lib/i18n/localizedText";
 import type { MenuDetail } from "./types";
 import { useOrderUiLabels } from "../OrderUiLabels";
 
 /**
  * The tablet / desktop dialog's LEFT column (it doesn't scroll): the
- * photo in a fixed 4:3 box at the top (MenuThumb's letter tile, centred,
- * when there's none), then name, description, price and the picks so
+ * photo(s) in a fixed 4:3 box at the top (MenuPhotos — a swipe carousel
+ * with dots for 2–3, the letter tile, centred, when there's none), then
+ * name, description, price and the picks so
  * far ("Your choice: Hot · Large", hidden while nothing is picked). Any
  * extra height is plain space under the info, in the same tint.
  */
@@ -40,16 +41,14 @@ export default function MenuDetailAside({
         overflow: "hidden",
       }}
     >
-      <Box
-        sx={{
-          aspectRatio: "4 / 3",
-          width: "100%",
-          flexShrink: 0,
-          overflow: "hidden",
-        }}
-      >
-        {/* The whole picture — never cropped (fit contain). */}
-        <MenuThumb name={name} imageUrl={detail.imageUrl} alt={name} fit="contain" />
+      {/* The whole picture — never cropped (fit contain). */}
+      <Box sx={{ flexShrink: 0 }}>
+        <MenuPhotos
+          images={detail.images}
+          name={name}
+          placeholder
+          frameSx={{ aspectRatio: "4 / 3", width: "100%", overflow: "hidden" }}
+        />
       </Box>
 
       {/* 12px apart — the name, description and price never touch. */}

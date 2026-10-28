@@ -367,7 +367,7 @@ describe("toBrowserCartLine", () => {
     id: LATTE,
     name: "Latte",
     price: 2000,
-    imageUrl: "/latte.jpg",
+    images: [{ url: "/latte.jpg" }, { url: "/latte-side.jpg" }],
     addonCategories: [
       { name: "Size", addons: [{ id: SIZE_LARGE_ID, name: "Large", price: 800 }] },
       {
@@ -381,6 +381,10 @@ describe("toBrowserCartLine", () => {
     ],
   };
 
+  it("has no photo when the menu has none", () => {
+    expect(toBrowserCartLine({ ...detail, images: [] }, 1, [], "").display.imageUrl).toBeNull();
+  });
+
   it("keeps the customer's choices", () => {
     const built = toBrowserCartLine(detail, 2, [OAT_MILK], "hot");
     expect(built).toMatchObject({
@@ -391,7 +395,7 @@ describe("toBrowserCartLine", () => {
     });
   });
 
-  it("shows the menu's current name, price and photo", () => {
+  it("shows the menu's current name, price and MAIN photo", () => {
     const built = toBrowserCartLine(detail, 1, [], "");
     expect(built.display).toMatchObject({
       name: "Latte",

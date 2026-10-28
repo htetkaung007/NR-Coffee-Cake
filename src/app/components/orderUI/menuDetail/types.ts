@@ -1,3 +1,5 @@
+import type { MenuImageView } from "@/app/lib/storage/assetUrl";
+
 /** Shop data names carry an optional Myanmar twin (`nameMy`; null or
  *  absent: the English name shows — lib/i18n/localizedText). */
 export interface Addon {
@@ -23,7 +25,8 @@ export interface MenuDetail {
   price: number;
   description: string;
   descriptionMy?: string | null;
-  imageUrl: string | null;
+  /** Every photo, in order (0 = the main one) — 0 to 3 (MenuPhotos). */
+  images: MenuImageView[];
   quantity: number;
   isAvailable: boolean;
   addonCategories: AddonCategory[];

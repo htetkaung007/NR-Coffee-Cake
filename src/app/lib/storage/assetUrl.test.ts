@@ -1,79 +1,50 @@
 import { describe, it, expect } from "vitest";
-import { assetKeyFromUrl, rebaseAssetUrl } from "./assetUrl";
+import { mainImageUrl, resolveAssetUrl, toMenuImages } from "./assetUrl";
 
-const BUCKET = "cafe-images";
+const KEY = "menu/12-1730000000000-a1b2c3d4.webp";
 
-describe("rebaseAssetUrl", () => {
-  it("moves a localhost URL onto the current LAN address", () => {
+describe("resolveAssetUrl", () => {
+  it("turns a stored key into the app's own relative /assets URL", () => {
+    expect(resolveAssetUrl(KEY)).toBe(`/assets/${KEY}`);
+  });
+
+  it("is null for no image (null or empty)", () => {
+    expect(resolveAssetUrl(null)).toBeNull();
+    expect(resolveAssetUrl("")).toBeNull();
+  });
+
+  it("is null for anything that isn't one of our keys (an old full URL, a path)", () => {
     expect(
-      rebaseAssetUrl(
-        "http://localhost:9000/cafe-images/menu/12-1700000000.png",
-        "http://192.168.1.20:9000",
-        BUCKET,
-      ),
-    ).toBe("http://192.168.1.20:9000/cafe-images/menu/12-1700000000.png");
-  });
-
-  it("moves one IP onto another", () => {
-    expect(
-      rebaseAssetUrl(
-        "http://192.168.1.20:9000/cafe-images/table/5-1700000000.png",
-        "http://10.0.0.7:9000",
-        BUCKET,
-      ),
-    ).toBe("http://10.0.0.7:9000/cafe-images/table/5-1700000000.png");
-  });
-
-  it("leaves an already-current URL as it is", () => {
-    const url = "http://10.0.0.7:9000/cafe-images/menu/1-1.png";
-    expect(rebaseAssetUrl(url, "http://10.0.0.7:9000", BUCKET)).toBe(url);
-  });
-
-  it("ignores a trailing slash on the endpoint", () => {
-    expect(
-      rebaseAssetUrl(
-        "http://localhost:9000/cafe-images/menu/1-1.png",
-        "https://files.example.com/",
-        BUCKET,
-      ),
-    ).toBe("https://files.example.com/cafe-images/menu/1-1.png");
-  });
-
-  it("leaves a foreign URL untouched", () => {
-    const url = "https://images.example.com/photos/latte.jpg";
-    expect(rebaseAssetUrl(url, "http://10.0.0.7:9000", BUCKET)).toBe(url);
-  });
-
-  it("keeps an empty URL empty", () => {
-    expect(rebaseAssetUrl("", "http://10.0.0.7:9000", BUCKET)).toBe("");
-  });
-
-  it("changes nothing when no storage address is configured", () => {
-    const url = "http://localhost:9000/cafe-images/menu/1-1.png";
-    expect(rebaseAssetUrl(url, "", BUCKET)).toBe(url);
+      resolveAssetUrl("http://localhost:9000/cafe-images/menu/12-1.png"),
+    ).toBeNull();
+    expect(resolveAssetUrl("../secret.png")).toBeNull();
   });
 });
 
-describe("assetKeyFromUrl", () => {
-  it("reads the key after the bucket, whatever the host", () => {
+describe("mainImageUrl", () => {
+  it("is the URL of the menu's main photo (the position-0 row its query selected)", () => {
+    expect(mainImageUrl([{ imageKey: KEY }])).toBe(`/assets/${KEY}`);
+  });
+
+  it("is null for a menu with no photo", () => {
+    expect(mainImageUrl([])).toBeNull();
+  });
+});
+
+describe("toMenuImages", () => {
+  it("lists every photo in position order as id + URL + position — never the key", () => {
     expect(
-      assetKeyFromUrl("http://localhost:9000/cafe-images/menu/12-1.png", BUCKET),
-    ).toBe("menu/12-1.png");
+      toMenuImages([
+        { id: 9, imageKey: "menu/1-1730000000001-0000000b.webp", position: 1 },
+        { id: 8, imageKey: KEY, position: 0 },
+      ]),
+    ).toEqual([
+      { id: 8, url: `/assets/${KEY}`, position: 0 },
+      { id: 9, url: "/assets/menu/1-1730000000001-0000000b.webp", position: 1 },
+    ]);
   });
 
-  it("does not match the bucket name inside the host", () => {
-    expect(
-      assetKeyFromUrl("https://cafe-images.example.com/menu/1.png", BUCKET),
-    ).toBeNull();
-  });
-
-  it("is null for a foreign URL, a relative path or an empty string", () => {
-    expect(assetKeyFromUrl("https://example.com/a/b.png", BUCKET)).toBeNull();
-    expect(assetKeyFromUrl("/cafe-images/menu/1.png", BUCKET)).toBeNull();
-    expect(assetKeyFromUrl("", BUCKET)).toBeNull();
-  });
-
-  it("is null for the bucket itself with no key", () => {
-    expect(assetKeyFromUrl("http://localhost:9000/cafe-images/", BUCKET)).toBeNull();
+  it("leaves out a row whose key isn't one of ours", () => {
+    expect(toMenuImages([{ id: 1, imageKey: "nope", position: 0 }])).toEqual([]);
   });
 });

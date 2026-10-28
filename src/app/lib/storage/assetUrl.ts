@@ -1,50 +1,47 @@
-import { config } from "@/app/utils/config";
+import { isAssetKey } from "./assetKey";
 
 /**
- * Stored image URLs (Menu.assetUrl, Table.qrcodeImageUrl) hold the FULL
- * address from upload time — `${MINIO_ENDPOINT}/${bucket}/${key}`. When
- * the storage address changes (localhost → the shop's LAN IP, a new IP)
- * those old URLs stop loading. Rather than rewriting the database, every
- * stored URL is re-based onto the CURRENT address on its way out.
- *
- * The object key is whatever follows `/${bucket}/` — the one rule both
- * resolveAssetUrl (display) and S3CompatibleStorageService.delete use,
- * so an image uploaded under an old address can still be deleted.
+ * Stored images (MenuImage.imageKey, Table.qrImageKey) are KEYS, never
+ * URLs. The browser loads them from this app's own /assets/<key> route
+ * (app/assets/[...key]/route.ts), so the address the phone used (LAN IP,
+ * tunnel) and the storage provider never end up in the database — no
+ * re-basing, nothing to rewrite when either changes. Pure and
+ * client-safe.
  */
 
-/** The object key inside `bucket` that a stored URL points to, or null
- *  when it isn't one of ours (no `/${bucket}/` after the host, not an
- *  http(s) URL, empty). Pure. */
-export function assetKeyFromUrl(stored: string, bucket: string): string | null {
-  if (!bucket) return null;
-  const scheme = /^https?:\/\//i.exec(stored);
-  if (!scheme) return null;
-  const marker = `/${bucket}/`;
-  const at = stored.indexOf(marker, scheme[0].length);
-  if (at === -1) return null;
-  const key = stored.slice(at + marker.length);
-  return key === "" ? null : key;
+/** A stored key as the browser should load it: the relative URL
+ *  `/assets/<key>`. null for no image, and for anything that isn't one
+ *  of our keys (the route would 404 it anyway). */
+export function resolveAssetUrl(key: string | null): string | null {
+  if (!key || !isAssetKey(key)) return null;
+  return `/assets/${key}`;
 }
 
-/** `stored` re-based onto `endpoint` (the current storage address) when
- *  it points into `bucket`; anything else unchanged ("" stays ""). Pure. */
-export function rebaseAssetUrl(
-  stored: string,
-  endpoint: string,
-  bucket: string,
-): string {
-  if (!endpoint) return stored;
-  const key = assetKeyFromUrl(stored, bucket);
-  if (key === null) return stored;
-  return `${endpoint.replace(/\/+$/, "")}/${bucket}/${key}`;
+/** A menu's main photo URL from the `menuImages` its query selected
+ *  (MAIN_MENU_IMAGE — the position-0 row only); null when it has none. */
+export function mainImageUrl(
+  menuImages: readonly { imageKey: string }[],
+): string | null {
+  return resolveAssetUrl(menuImages[0]?.imageKey ?? null);
 }
 
-/** A stored asset URL as the browser should load it today — call it
- *  wherever one leaves the server for display. Server-side only (the
- *  storage address isn't public config); null stays null. */
-export function resolveAssetUrl(stored: string): string;
-export function resolveAssetUrl(stored: string | null): string | null;
-export function resolveAssetUrl(stored: string | null): string | null {
-  if (stored === null) return null;
-  return rebaseAssetUrl(stored, config.minioEndpoint, config.minioBucket);
+/** One of a menu's photos as screens get it — its id (the edit form
+ *  says "keep this one"), URL and position; never the stored key. */
+export interface MenuImageView {
+  id: number;
+  url: string;
+  position: number;
+}
+
+/** A menu's photos (MENU_IMAGES rows) in position order, as views;
+ *  a row whose key isn't one of ours is left out. */
+export function toMenuImages(
+  rows: readonly { id: number; imageKey: string; position: number }[],
+): MenuImageView[] {
+  return [...rows]
+    .sort((a, b) => a.position - b.position)
+    .flatMap((row) => {
+      const url = resolveAssetUrl(row.imageKey);
+      return url === null ? [] : [{ id: row.id, url, position: row.position }];
+    });
 }

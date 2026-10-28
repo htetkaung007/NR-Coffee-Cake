@@ -23,7 +23,7 @@ import {
   toLabelledCartLine,
 } from "@/app/lib/order/roundLine";
 import { toLineAddons } from "@/app/lib/order/lineAddons";
-import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
+import { mainImageUrl } from "@/app/lib/storage/assetUrl";
 import {
   formatAddonSelections,
   localizeAddonSelections,
@@ -131,7 +131,7 @@ export default async function OrderReceiptPage({
   const lines: ReceiptLine[] = round.orders.map((order) => ({
     id: order.id,
     menuName: localizedText(locale, order.menu.name, order.menu.nameMy),
-    imageUrl: resolveAssetUrl(order.menu.assetUrl),
+    imageUrl: mainImageUrl(order.menu.menuImages),
     addonsText: formatAddonSelections(
       localizeAddonSelections(locale, toLineAddons(order.OrdersAddons)),
     ),

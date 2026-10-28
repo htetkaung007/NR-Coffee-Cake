@@ -10,7 +10,7 @@ import {
   localizeAddonSelections,
 } from "@/app/lib/order/addonLabel";
 import { localizedText } from "@/app/lib/i18n/localizedText";
-import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
+import { mainImageUrl } from "@/app/lib/storage/assetUrl";
 import {
   effectiveItemCount,
   effectiveQuantity,
@@ -103,7 +103,7 @@ export default async function OrderDetailPage({
         by: voidedByLabel(entry),
       })),
       menuName: localizedText(locale, order.menu.name, order.menu.nameMy),
-      imageUrl: resolveAssetUrl(order.menu.assetUrl || null),
+      imageUrl: mainImageUrl(order.menu.menuImages),
       addonsText: formatAddonSelections(
         localizeAddonSelections(
           locale,

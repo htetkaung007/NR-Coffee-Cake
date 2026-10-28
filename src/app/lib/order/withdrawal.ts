@@ -1,5 +1,5 @@
 import type { BrowserCartLine } from "../cart/browserCart";
-import { resolveAssetUrl } from "../storage/assetUrl";
+import { mainImageUrl } from "../storage/assetUrl";
 
 /**
  * Customers withdrawing their own round — "Cancel order" / "Change order"
@@ -74,7 +74,8 @@ export interface RoundLineSource {
   unitPrice: number;
   note: string | null;
   contributorToken: string | null;
-  menu: { name: string; assetUrl: string | null };
+  /** With its main photo (ORDER_LINE_INCLUDE selects position 0). */
+  menu: { name: string; menuImages: readonly { imageKey: string }[] };
   OrdersAddons: {
     addonId: number;
     unitPrice: number;
@@ -117,7 +118,7 @@ export function toCounterHandBack(
           : {}),
         unitPrice: link.unitPrice,
       })),
-      imageUrl: resolveAssetUrl(line.menu.assetUrl),
+      imageUrl: mainImageUrl(line.menu.menuImages),
     },
   }));
 }

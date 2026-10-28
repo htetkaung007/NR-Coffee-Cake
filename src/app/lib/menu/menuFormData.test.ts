@@ -46,14 +46,25 @@ describe("parseMenuFormData", () => {
     expect(parseMenuFormData(form([])).isAvailable).toBe(false);
   });
 
-  it("keeps a picked image file", () => {
-    const image = new File(["png"], "latte.png", { type: "image/png" });
-    expect(parseMenuFormData(form([["image", image]])).image).toBeInstanceOf(File);
+  it("collects the photo slots and the new files, in the order sent", () => {
+    const first = new File(["a"], "a.png", { type: "image/png" });
+    const second = new File(["b"], "b.jpg", { type: "image/jpeg" });
+    const parsed = parseMenuFormData(
+      form([
+        ["imageSlots", "new:0"],
+        ["imageSlots", "keep:41"],
+        ["imageSlots", "new:1"],
+        ["newImages", first],
+        ["newImages", second],
+      ]),
+    );
+    expect(parsed.imageSlots).toEqual(["new:0", "keep:41", "new:1"]);
+    expect(parsed.newImages).toEqual([first, second]);
   });
 
-  it("treats an empty file input, or none, as no image", () => {
-    const empty = new File([], "", { type: "application/octet-stream" });
-    expect(parseMenuFormData(form([["image", empty]])).image).toBeNull();
-    expect(parseMenuFormData(form([])).image).toBeNull();
+  it("sends no photos as empty lists (the menu then has none)", () => {
+    const parsed = parseMenuFormData(form([]));
+    expect(parsed.imageSlots).toEqual([]);
+    expect(parsed.newImages).toEqual([]);
   });
 });

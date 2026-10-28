@@ -101,6 +101,11 @@ export function orderUiLabels(
       justSoldOut: tDetail("justSoldOut"),
       genericError: createTranslator({ locale, messages, namespace: "errors" })("generic"),
       close: tCommon("close"),
+      photosOf: (name) => tDetail("photosOf", { name }),
+      imageOf: (index, count) => tDetail("imageOf", { index, count }),
+      previousImage: tDetail("previousImage"),
+      nextImage: tDetail("nextImage"),
+      showImage: (index) => tDetail("showImage", { index }),
     },
     lineNotice: {
       priceUpdated: tNotice("priceUpdated"),

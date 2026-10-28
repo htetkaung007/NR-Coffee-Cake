@@ -36,7 +36,7 @@ export interface CartLine {
   menuNameMy?: string | null;
   quantity: number;
   price: number;
-  /** The menu's photo (Menu.assetUrl); null/absent falls back to an icon. */
+  /** The menu's main photo (/assets/<key>); null/absent falls back to an icon. */
   imageUrl?: string | null;
   /** The line's picked add-ons with their own price snapshots
    *  (OrdersAddon.unitPrice) — always populated: the ids re-open

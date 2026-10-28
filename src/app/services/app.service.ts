@@ -182,7 +182,7 @@ export class AppService {
     });
 
     const menu = await tx.menu.create({
-      data: { name: "Default Menu", nameMy: "နမူနာ မီနူး", price: 100, assetUrl: "" },
+      data: { name: "Default Menu", nameMy: "နမူနာ မီနူး", price: 100 },
     });
 
     await tx.menuMenuCategory.create({
@@ -236,7 +236,7 @@ export class AppService {
 
   private static createDefaultTable(tx: Tx, locationId: number) {
     return tx.table.create({
-      data: { name: "Default Table", locationId, qrcodeImageUrl: "" },
+      data: { name: "Default Table", locationId },
     });
   }
 

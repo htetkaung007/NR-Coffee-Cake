@@ -1,4 +1,5 @@
 import type { Prisma } from "../../../../prisma/generated/client";
+import { MAIN_MENU_IMAGE } from "../menuImageQuery";
 
 /** A line's voids as anyone may see them — how many and why. Never who
  *  voided it or the staff's note (those are STAFF_VOID_SELECT's). */
@@ -20,7 +21,7 @@ const STAFF_VOID_SELECT = {
 } satisfies Prisma.OrderVoidSelect;
 
 /** An order line as the customer and Backoffice screens show it: its
- *  menu, each add-on with its own price snapshot and name (for the
+ *  menu (and its main photo), each add-on with its own price snapshot and name (for the
  *  itemised bill and round cards), and its voids (customer-safe fields
  *  only) — every total built from these lines leaves voided units out
  *  (orderTotals.orderLineTotal). `satisfies` keeps the exact inferred
@@ -43,7 +44,8 @@ export const LINE_ADDONS_WITH_GROUP = {
 } satisfies Prisma.Order$OrdersAddonsArgs;
 
 export const ORDER_LINE_INCLUDE = {
-  menu: true,
+  // The menu with its main photo (lib/order/roundLine → imageUrl).
+  menu: { include: { menuImages: MAIN_MENU_IMAGE } },
   OrdersAddons: LINE_ADDONS_WITH_GROUP,
   voids: { select: VOID_SELECT, orderBy: { id: "asc" } },
 } satisfies Prisma.OrderInclude;

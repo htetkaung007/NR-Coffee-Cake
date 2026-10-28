@@ -40,7 +40,7 @@ export default async function EditTablePage({
       table={{
         id: table.id,
         name: table.name,
-        qrcodeImageUrl: resolveAssetUrl(table.qrcodeImageUrl),
+        qrImageUrl: resolveAssetUrl(table.qrImageKey),
         isArchived: table.isArchived,
       }}
     />

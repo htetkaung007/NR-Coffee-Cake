@@ -215,7 +215,12 @@
     "pleaseChoose": "ရွေးရန် လိုအပ်သည်: {groups}",
     "yourChoice": "သင့်ရွေးချယ်မှု: {choices}",
     "adding": "ထည့်နေသည်…",
-    "saving": "သိမ်းနေသည်…"
+    "saving": "သိမ်းနေသည်…",
+    "photosOf": "{name} ၏ ပုံများ",
+    "imageOf": "ပုံ {count} ပုံအနက် {index}",
+    "previousImage": "ယခင်ပုံ",
+    "nextImage": "နောက်ပုံ",
+    "showImage": "ပုံ {index} ကို ပြမည်"
   },
   "lineNotice": {
     "priceUpdated": "ဈေးနှုန်း ပြောင်းသွားပါပြီ:",
@@ -325,7 +330,9 @@
       "COUNTER_NAME_FIXED": "ကောင်တာ QR ကုဒ်၏ အမည်ကို ပြောင်း၍ မရပါ။",
       "NO_ACCESS_KEY": "ဤစားပွဲတွင် QR ကုဒ် ဖန်တီးရန် access key မရှိပါ။",
       "MENU_NEEDS_LOCATION": "ဆိုင်ခွဲ အနည်းဆုံး တစ်ခု ရွေးပါ။",
-      "IMAGE_INVALID": "ပုံသည် PNG, JPEG သို့မဟုတ် WEBP ဖိုင် ဖြစ်ရမည်။"
+      "IMAGE_INVALID": "ပုံသည် PNG, JPEG သို့မဟုတ် WEBP ဖိုင် ဖြစ်ရမည်။",
+      "MENU_IMAGES_TOO_MANY": "မီနူးတစ်ခုတွင် ပုံ 3 ပုံအထိသာ ထည့်နိုင်သည်။",
+      "MENU_IMAGES_INVALID": "ပုံစာရင်းကို ဖတ်၍မရပါ။ ထပ်ကြိုးစားပါ။"
     },
     "nav": {
       "sectionService": "ဝန်ဆောင်မှု",
@@ -971,6 +978,15 @@
       "imageDrop": "ဓာတ်ပုံကို ဤနေရာသို့ ဆွဲထည့်ပါ သို့မဟုတ် ရွေးပါ",
       "imageFormats": "PNG, JPG, WEBP 5MB အထိ",
       "imageInvalid": "5MB ထက် မကြီးသော PNG, JPEG သို့မဟုတ် WEBP ပုံ ရွေးပါ။",
+      "photosHint": "ပထမပုံသည် အဓိကပုံဖြစ်ပြီး မီနူးကတ်ပေါ်တွင် ပြသည်။",
+      "photoCount": "{max} ပုံအနက် {count}",
+      "mainPhoto": "အဓိကပုံ",
+      "addPhoto": "ပုံထည့်မည် (အများဆုံး {max} ပုံ)",
+      "photoAlt": "ပုံ {index}",
+      "movePhotoLeft": "ပုံ {index} ကို ဘယ်သို့ရွှေ့",
+      "movePhotoRight": "ပုံ {index} ကို ညာသို့ရွှေ့",
+      "removePhoto": "ပုံ {index} ကို ဖယ်ရှားမည်",
+      "tooManyPhotos": "မီနူးတစ်ခုတွင် ပုံ {max} ပုံအထိသာ ထည့်နိုင်သည်။",
       "addonsTitle": "ချိတ်ထားသော ထပ်ဖြည့်စရာများ",
       "addonsHint": "ဤပစ္စည်းနှင့် အပို topping၊ ဆော့စ် သို့မဟုတ် အတွဲများကို ချိတ်ပါ။",
       "addNewGroup": "အုပ်စုအသစ် ထည့်မည်",

@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# …except the list of names (no values) every setup needs.
+!.env.example
 
 # vercel
 .vercel
@@ -41,6 +43,9 @@ yarn-error.log*
 next-env.d.ts
 
 /prisma/generated
+
+# uploaded images (local storage provider, development UPLOAD_DIR)
+/.uploads/
 
 # accidental nested clone (was tracked as a gitlink)
 /NR-Coffee-Cake/

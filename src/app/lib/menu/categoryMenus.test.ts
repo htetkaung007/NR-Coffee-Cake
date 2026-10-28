@@ -76,7 +76,7 @@ describe("planCategoryMenuRemoval", () => {
 });
 
 describe("groupCategoryMenus", () => {
-  const menu = (name: string) => ({ name, assetUrl: null });
+  const menu = (name: string) => ({ name, imageUrl: null });
   const grouped = groupCategoryMenus({
     links: [
       { ...link(10, 1), menu: menu("Mocha") },

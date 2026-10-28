@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import MenuThumb from "@/app/components/MenuThumb";
+import MenuPhotos from "./MenuPhotos";
 
 import type { MenuDetail } from "./types";
 import { localizedText } from "@/app/lib/i18n/localizedText";
@@ -9,7 +9,8 @@ interface MenuDetailHeaderProps {
   detail: MenuDetail;
 }
 
-/** The phone sheet's top: a full-width rounded photo, then name / price
+/** The phone sheet's top: a full-width rounded photo band (MenuPhotos —
+ *  swipe + dots for 2–3 photos; nothing when there's none), then name / price
  *  (the card's price tone) / description left-aligned, in the theme's
  *  own variants (the same as the dialog). (Tablet / desktop: MenuDetailAside, the dialog's left column.) */
 export default function MenuDetailHeader({ detail }: MenuDetailHeaderProps) {
@@ -23,18 +24,20 @@ export default function MenuDetailHeader({ detail }: MenuDetailHeaderProps) {
   );
   return (
     <Box>
-      {detail.imageUrl && (
-        <Box
-          sx={{
-            width: "100%",
-            height: 160,
-            borderRadius: 3,
-            overflow: "hidden",
-            mb: 1.5,
-          }}
-        >
-          {/* The whole picture — never cropped (fit contain). */}
-          <MenuThumb name={name} imageUrl={detail.imageUrl} alt={name} fit="contain" />
+      {/* The whole picture — never cropped (fit contain). */}
+      {detail.images.length > 0 && (
+        <Box sx={{ mb: 1.5 }}>
+          <MenuPhotos
+            images={detail.images}
+            name={name}
+            placeholder={false}
+            frameSx={{
+              width: "100%",
+              height: 160,
+              borderRadius: 3,
+              overflow: "hidden",
+            }}
+          />
         </Box>
       )}
       <Typography

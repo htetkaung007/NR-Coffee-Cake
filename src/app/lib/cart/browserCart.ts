@@ -343,7 +343,8 @@ export function toBrowserCartLine(
     name: string;
     nameMy?: string | null;
     price: number;
-    imageUrl: string | null;
+    /** Its photos in order — the line shows the main one (0). */
+    images: readonly { url: string }[];
     addonCategories: {
       name: string;
       nameMy?: string | null;
@@ -384,7 +385,8 @@ export function toBrowserCartLine(
       ...(detail.nameMy ? { nameMy: detail.nameMy } : {}),
       unitPrice: detail.price,
       addons,
-      imageUrl: detail.imageUrl,
+      // The line's thumbnail: the menu's main photo.
+      imageUrl: detail.images[0]?.url ?? null,
     },
   };
 }

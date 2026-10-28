@@ -50,6 +50,13 @@ export interface OrderUiLabels {
     /** Add / Save threw (a network drop): the generic error. */
     genericError: string;
     close: string;
+    /** The photo carousel (MenuPhotos): its name, each slide's, the
+     *  laptop arrows and the dots. */
+    photosOf: (name: string) => string;
+    imageOf: (index: number, count: number) => string;
+    previousImage: string;
+    nextImage: string;
+    showImage: (index: number) => string;
   };
   lineNotice: {
     priceUpdated: string;
@@ -92,6 +99,11 @@ const ENGLISH: OrderUiLabels = {
     justSoldOut: "This item just sold out.",
     genericError: "Something went wrong. Please try again.",
     close: "Close",
+    photosOf: (name) => `Photos of ${name}`,
+    imageOf: (index, count) => `Image ${index} of ${count}`,
+    previousImage: "Previous image",
+    nextImage: "Next image",
+    showImage: (index) => `Show image ${index}`,
   },
   lineNotice: {
     priceUpdated: "Price updated:",

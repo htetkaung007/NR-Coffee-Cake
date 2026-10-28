@@ -35,8 +35,15 @@ const safeCreateMenu = toSafeResult(async (input: CreateMenuInput) => {
     shownLocationIds: input.shownLocationIds,
   });
 
-  if (input.image) {
-    await MenuService.saveMenuImage(menu.id, companyId, input.image);
+  // Its photos after the menu exists (their keys need its id). If this
+  // fails, the menu stays saved without them and the error shows.
+  if (input.imageSlots.length > 0) {
+    await MenuService.saveMenuImages(
+      menu.id,
+      companyId,
+      input.imageSlots,
+      input.newImages,
+    );
   }
 
   return { id: menu.id };
@@ -73,9 +80,14 @@ const safeUpdateMenu = toSafeResult(
       shownLocationIds: input.shownLocationIds,
     });
 
-    if (input.image) {
-      await MenuService.saveMenuImage(menu.id, companyId, input.image);
-    }
+    // The form sends the full photo list every time: kept, new,
+    // reordered — and a photo left out is removed.
+    await MenuService.saveMenuImages(
+      menu.id,
+      companyId,
+      input.imageSlots,
+      input.newImages,
+    );
 
     return { id: menu.id };
   },

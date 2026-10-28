@@ -1,7 +1,8 @@
 import { prisma } from "../utils/prisma";
 import { Prisma } from "../../../prisma/generated/client";
 import { AppError, NotFoundError, ValidationError } from "../lib/errors";
-import { resolveAssetUrl } from "../lib/storage/assetUrl";
+import { mainImageUrl } from "../lib/storage/assetUrl";
+import { MAIN_MENU_IMAGE } from "./menuImageQuery";
 import {
   groupCategoryMenus,
   planCategoryMenuRemoval,
@@ -119,7 +120,9 @@ export class MenuCategoryService {
       select: {
         menuId: true,
         menuCategoryId: true,
-        menu: { select: { name: true, nameMy: true, assetUrl: true } },
+        menu: {
+          select: { name: true, nameMy: true, menuImages: MAIN_MENU_IMAGE },
+        },
       },
     });
     const menuIds = [...new Set(links.map((link) => link.menuId))];
@@ -140,10 +143,13 @@ export class MenuCategoryService {
     ]);
 
     return groupCategoryMenus({
-      // Images re-based onto the current storage address.
       links: links.map((link) => ({
         ...link,
-        menu: { ...link.menu, assetUrl: resolveAssetUrl(link.menu.assetUrl) },
+        menu: {
+          name: link.menu.name,
+          nameMy: link.menu.nameMy,
+          imageUrl: mainImageUrl(link.menu.menuImages),
+        },
       })),
       visibleCategoryIds: new Set(visibleCategories.map((category) => category.id)),
       stockByMenuId: new Map(stocks.map((stock) => [stock.menuId, stock])),

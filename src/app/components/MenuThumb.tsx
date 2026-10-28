@@ -21,6 +21,7 @@ export default function MenuThumb({
   imageClassName,
   imageSx,
   fit = "cover",
+  loading = "lazy",
 }: {
   name: string;
   imageUrl: string | null | undefined;
@@ -31,6 +32,9 @@ export default function MenuThumb({
   imageClassName?: string;
   imageSx?: SxProps<Theme>;
   fit?: "cover" | "contain";
+  /** "eager" for a photo that's on screen at once (the detail's first
+   *  photo); everything else waits until it's near the screen. */
+  loading?: "lazy" | "eager";
 }) {
   // The URL that failed — a new URL gets a fresh try.
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -41,7 +45,7 @@ export default function MenuThumb({
         component="img"
         src={imageUrl}
         alt={alt}
-        loading="lazy"
+        loading={loading}
         className={imageClassName}
         onError={() => setFailedUrl(imageUrl)}
         // A server-rendered image can fail BEFORE hydration attaches

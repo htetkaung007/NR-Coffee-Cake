@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { UPLOAD_BODY_LIMIT_BYTES } from "./src/app/lib/storage/uploadLimits";
 
 /** Security headers on every response (OWASP WSTG-CONF / CLNT-09):
  *  - never framed by another site (clickjacking) — the old and the CSP
@@ -24,6 +25,14 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   // No "X-Powered-By: Next.js" — don't advertise the stack.
   poweredByHeader: false,
+  // A menu save carries up to 3 photos (lib/storage/uploadLimits — read
+  // its note: this limit applies to EVERY Server Action). Both limits:
+  // Server Action bodies (1 MB by default), and src/proxy.ts's, which
+  // runs on /backoffice and would cut a bigger body short (10 MB default).
+  experimental: {
+    serverActions: { bodySizeLimit: UPLOAD_BODY_LIMIT_BYTES },
+    proxyClientMaxBodySize: UPLOAD_BODY_LIMIT_BYTES,
+  },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },

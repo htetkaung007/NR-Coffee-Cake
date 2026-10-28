@@ -8,10 +8,10 @@
  * tab instead of downloading it.
  */
 export async function downloadQrCode(
-  qrcodeImageUrl: string,
+  qrImageUrl: string,
   tableName: string,
 ) {
-  const response = await fetch(qrcodeImageUrl);
+  const response = await fetch(qrImageUrl);
   const blob = await response.blob();
   const objectUrl = URL.createObjectURL(blob);
 

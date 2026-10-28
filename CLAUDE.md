@@ -136,11 +136,21 @@ left in a broken/inconsistent state?"
 - **No** (a single independent write) — plain prisma.x.create()/
   .update().
 - **Image/file uploads are deliberately NOT part of a DB transaction**
-  even when they conceptually belong with a create/update — an
-  object-store PUT can't be rolled back by a DB transaction, and the
-  object key often needs an ID (e.g. menuId) that doesn't exist until
-  after the DB row is created. Sequence: DB write, then external
-  upload, then a second separate DB write to store the resulting URL.
+  even when they conceptually belong with a create/update — a file
+  write can't be rolled back by a DB transaction, and the key needs an
+  ID (e.g. menuId) that doesn't exist until after the DB row is created.
+  Sequence: DB write, then the upload, then a second separate DB write
+  to store the resulting KEY.
+- **Replacing or deleting a stored file — the order is fixed:** write
+  the new file → update the DB → THEN delete the old file (never delete
+  first). If the DB step fails after a new file was written, delete that
+  new file again (no orphans) and let the error stand. Deleting a row
+  that owns files: read its keys, delete the row(s) (in the transaction
+  when there is one), then the files after the commit. A failed file
+  delete is logged, never thrown — always through `removeStoredFiles`
+  (`lib/storage/removeStoredFiles.ts`). Today: MenuService.saveMenuImages
+  / deleteMenu, TableService.regenerateQrImage / deleteTable,
+  LocationService.deleteLocation.
 - **Cancelling a round has ONE writer:**
   `OrderSessionService.cancelSession`
   (`services/orderService/orderSession.service.ts`, in the caller's
@@ -169,7 +179,24 @@ left in a broken/inconsistent state?"
   Customers see only "Removed by staff" + the reason — never the note
   or who (ORDER_LINE_INCLUDE's void select carries neither).
 - Deleting a menu: hard delete only when no Order row references it,
-  else isArchived; the image goes after the transaction.
+  else isArchived; a hard delete removes its MenuImage rows in the
+  transaction and the files after it; an archived menu keeps its images
+  (History, receipts and order lines still show them).
+- **A menu's photos (MenuImage) — ONE writer, `MenuService.saveMenuImages`**
+  (besides deleteMenu's hard delete). At most 3 (`MAX_MENU_IMAGES`,
+  lib/storage/uploadLimits), positions always continuous 0..n-1, 0 = the
+  MAIN photo (cards, lines, receipts — `MAIN_MENU_IMAGE`). The form sends
+  the FULL list in order on every save — "keep:<MenuImage.id>" / "new:<n>"
+  (lib/menu/menuImageSlots); a photo left out is removed. The rule is
+  `lib/menu/menuImagePlan` (checkImageSlots — Zod in the action AND the
+  service — and planMenuImages): too many → MENU_IMAGES_TOO_MANY, a
+  broken list → MENU_IMAGES_INVALID (bo.errors.*), a kept id that isn't
+  this menu's → NotFoundError. Order: check + resize every new file →
+  write them → ONE transaction (menu row locked; rows deleted and
+  created again, so a reorder never trips @@unique([menuId, position]);
+  same list → no write) → after the commit delete the removed files. A
+  failure after new files were written deletes them again. Screens get
+  `{ id, url, position }` (toMenuImages) — never keys.
 - **The cancellation `note` is staff-typed free text** (Other only,
   ≤ 120 characters, normalised by `rejectRoundSchema`). Never put it in a
   URL (query string, path, redirect).
@@ -286,38 +313,76 @@ or hard delete") — lay out the options before picking one.
 
 ## 12. File-storage abstraction
 
-Image uploads (menu photos, etc.) go through a swappable
-FileStorageService interface (lib/storage/FileStorageService.ts).
-Current implementation: S3CompatibleStorageService, targeting a local
-MinIO instance for offline/dev use — chosen specifically because MinIO,
-AWS S3, and DigitalOcean Spaces all speak the same S3 API, so moving to
-a real cloud provider later is a config change (.env's
-MINIO_ENDPOINT/keys), not a code change. All config values are read
-through the centralized config object in utils/config/index.ts —
-never process.env.X directly in a Service or component; add new env
-vars to the Config interface and object there first.
+Image uploads (menu photos, table QR codes) go through a swappable
+FileStorageService interface (`lib/storage/FileStorageService.ts`:
+`upload` → `{ key }`, `delete(key)`, `open(key)` for the image route).
+`getFileStorageService()` picks the provider from STORAGE_PROVIDER:
 
-Two exceptions read `process.env` directly, outside that object:
-`process.env.NODE_ENV` checks (e.g. Prisma's query logging), and
+- **"local" (the default)** — `LocalFileStorageService`: files on this
+  machine under UPLOAD_DIR (the shop runs offline on its LAN). Writes are
+  atomic (a temp file in the same folder, then rename); a missing file on
+  delete is not an error; every path is resolved and must stay inside
+  UPLOAD_DIR.
+- **"s3"** — `S3CompatibleStorageService`, kept as the path back to the
+  cloud: MinIO, AWS S3 and DigitalOcean Spaces speak the same S3 API, so
+  moving there is a .env change (MINIO_*), not a code change.
+
+All config values are read through the centralized config object in
+utils/config/index.ts — never process.env.X directly in a Service or
+component; add new env vars to the Config interface and object there
+first (and to `.env.example`: names + a one-line comment, never values).
+
+Three exceptions read `process.env` directly, outside that object:
+`process.env.NODE_ENV` checks (e.g. Prisma's query logging),
 `src/app/utils/prisma.ts` (the Prisma client bootstrap runs before/
-independently of the app config). Everything else still goes through
-`utils/config`.
+independently of the app config), and `process.env.NEXT_RUNTIME` in
+`src/instrumentation.ts` (Next's own "which runtime is loading this"
+flag). Everything else still goes through `utils/config`.
 
-- **Stored image URLs are re-based on the way out.** Menu.assetUrl and
-  Table.qrcodeImageUrl hold the full URL from upload time
-  (`${MINIO_ENDPOINT}/${bucket}/${key}`), so an address change (localhost
-  → LAN IP, a new IP) would break old images. Every place a stored URL
-  leaves the server for display calls `resolveAssetUrl`
-  (`lib/storage/assetUrl.ts`: the key after `/${bucket}/` on the CURRENT
-  endpoint; anything else unchanged) — never repeat that logic, never
-  rewrite the DB for it. Today: MenuService's list and detail reads,
-  MenuCategoryService.getCategoryMenus, `roundLine.toCartLine` (every
-  customer cart / draft / history line), `withdrawal.toCounterHandBack`,
-  the History receipt, the Backoffice order detail and the two tables
-  pages. `S3CompatibleStorageService.delete` finds the key the same way
-  (`assetKeyFromUrl`), so old images can still be deleted. It reads
-  server config, so it stays out of client bundles — the client-safe
-  `toLineAddons` lives in `lib/order/lineAddons.ts` for that reason.
+- **The database stores KEYS, never URLs** — `MenuImage.imageKey`,
+  `Table.qrImageKey` (null = no image, never ""). ONE key shape,
+  `lib/storage/assetKey.ts` (pure, client-safe):
+  `menu/<menuId>-<timestamp>-<8 hex>.webp` and
+  `table/<tableId>-<timestamp>-<8 hex>.png` — a new upload always gets a
+  new key, so a key's bytes never change.
+- **The browser loads every image from `/assets/<key>`**
+  (`app/assets/[...key]/route.ts`, GET only, public — src/proxy.ts's
+  matcher leaves it out). It looks up ONLY a key matching the assetKey
+  allowlist (folder from a fixed list, its own extension, id, 13-digit
+  timestamp, 8-hex suffix) — anything else is a bare 404 — and the
+  provider re-checks the resolved path is inside UPLOAD_DIR. It streams
+  (never reads a file whole) with Content-Type from the extension,
+  Content-Length, `Cache-Control: public, max-age=31536000, immutable`
+  and nosniff. With "s3" it proxies GetObject — the browser never talks
+  to the store.
+- **`resolveAssetUrl(key)`** (`lib/storage/assetUrl.ts`) turns a key into
+  the RELATIVE `/assets/<key>` (null / "" / not a key → null), so the
+  address the phone used (LAN IP, tunnel) never matters and there is no
+  URL re-basing and nothing to rewrite in the DB. A menu's main photo
+  (MenuImage position 0) is read with `MAIN_MENU_IMAGE`
+  (`services/menuImageQuery.ts`) and `mainImageUrl(menu.menuImages)` —
+  MenuService's list and detail reads, MenuCategoryService.getCategoryMenus,
+  ORDER_LINE_INCLUDE (`roundLine.toCartLine`, `withdrawal.toCounterHandBack`,
+  the History receipt, the Backoffice order detail). Components get URLs,
+  never keys. A new window (the QR print tab) needs an absolute URL:
+  `new URL(path, window.location.origin)`.
+- **Menu photos are resized on upload** (`cleanImageUpload(input,
+  "menuPhoto")`): format checked from the content (JPEG, PNG, WebP), turned
+  upright (EXIF), metadata stripped, ≤ 1200px wide (never enlarged), WebP
+  quality 80. A QR logo ("qrLogo") keeps its format; the QR PNG is unchanged.
+- **Upload size — ONE place, `lib/storage/uploadLimits.ts`:**
+  MAX_IMAGE_BYTES (5 MB, the Zod limit) and UPLOAD_BODY_LIMIT_BYTES
+  (3 × 5 MB + 1 MB = 16 MB), which next.config.ts sets as both Next's
+  Server Action body limit (default 1 MB) and the proxy's (src/proxy.ts
+  runs on /backoffice; default 10 MB). It applies to EVERY Server Action —
+  revisit when the online menu goes public through a tunnel.
+- **UPLOAD_DIR / STORAGE_PROVIDER are checked at startup**
+  (`utils/config/storageConfig.ts`, parsed on first use of
+  `config.storage` and read by `src/instrumentation.ts`'s register()) — a
+  bad value stops the server with a clear message. UPLOAD_DIR: development
+  defaults to `./.uploads` (git-ignored); production requires it, absolute.
+  MINIO_* are required only for "s3". Not checked at import, because
+  `next build` imports the config with NODE_ENV=production.
 - **Redirects are RELATIVE — never built from request.url.** Under
   `next start` request.url carries the server's own host (localhost),
   not the address the phone used (LAN IP, tunnel), so an absolute
@@ -366,8 +431,8 @@ independently of the app config). Everything else still goes through
   `deleteMenuAction`, owner only → `MenuService.deleteMenu`; the rule is
   `lib/menu/menuDeletion.ts`): a menu no Order row references (table
   drafts, archived, cancelled and voided lines counted too) is deleted
-  for good with its category / add-on group / hidden-at / stock / menu-view rows in
-  ONE transaction; one that was ever ordered is only archived
+  for good with its category / add-on group / hidden-at / stock / menu-view /
+  image rows in ONE transaction (the image files after it); one that was ever ordered is only archived
   (isArchived) — gone from every live list (Backoffice Menus, /menu,
   New Order, details, category lists, carts and drafts), still named in
   the Order List, History, receipts, print, Reports and CSV, which read
@@ -748,6 +813,11 @@ business reason?"
   network or React. If a pure function lives in a module that imports
   Prisma, stub that import with `vi.mock` (see
   `services/menuCategory.service.test.ts`).
+- **One named exception — the file system:** the FileStorageService
+  contract tests (`lib/storage/LocalFileStorageService.test.ts`) and the
+  `/assets` route tests (`app/assets/[...key]/route.test.ts`) use a real
+  TEMP folder (`mkdtemp` under `os.tmpdir()`, removed in afterEach) —
+  never the real UPLOAD_DIR.
 - One behaviour per `it`, named like a rule ("multiplies the whole set
   (menu + add-ons) by quantity") — test behaviour, not implementation.
 - **New pure business logic — money, line merging, validation, dates —

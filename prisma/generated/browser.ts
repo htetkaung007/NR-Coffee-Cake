@@ -48,6 +48,22 @@ export type SelectedLocation = Prisma.SelectedLocationModel
  */
 export type Menu = Prisma.MenuModel
 /**
+ * Model MenuImage
+ * *
+ *  * A menu's photos — up to 3, shown in `position` order (0 = the main
+ *  * photo on the menu card). `imageKey` is the storage KEY
+ *  * ("menu/12-1730000000000.webp"), never a URL: the URL is built when it
+ *  * is sent out, so an address or storage-provider change never touches
+ *  * the database.
+ *  * No companyId — like Menu's other children, it is scoped through the
+ *  * menu (and the menu through its categories).
+ *  * No onDelete: Cascade — MenuService.deleteMenu deletes these rows in
+ *  * its own transaction and must read the keys first, to delete the files
+ *  * after the commit (CLAUDE.md §7); a cascade would drop them silently.
+ *  * position 0..2 can't be expressed here: Zod and the service enforce it.
+ */
+export type MenuImage = Prisma.MenuImageModel
+/**
  * Model MenuStock
  * 
  */

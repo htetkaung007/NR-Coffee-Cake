@@ -393,7 +393,8 @@ double-taps), or an optimistic update. A disabled control shows WHY
   the scrollable tabs fill the rest). Picking
   a category while scrolled down brings the grid's top back just under
   the pinned part.
-- **Menu card:** ONE layout on phones — image (1.45/1) → name (1 line)
+- **Menu card:** ONE layout on phones — image (1.45/1; the menu's MAIN
+  photo only, position 0 — never a swipe on a card) → name (1 line)
   → description (1 line, ellipsis) + "See more" (never truncated) → price +
   the Add affordance: a ROUNDED SQUARE (32px tall, min 32px wide, theme
   radius, primary fill, contrastText, no shadow) — the + icon in English
@@ -701,6 +702,41 @@ double-taps), or an optimistic update. A disabled control shows WHY
   line above it names them — "Please choose: Size, Spicy level"
   (role="status"); tapping it scrolls to (and focuses) the first one.
   The line keeps its space, so the button never jumps.
+- **Menu photos — up to 3** (MenuImage, position 0 = the MAIN photo).
+  Everything that shows ONE picture shows the main photo only: menu
+  cards (customer /menu, staff New Order, Backoffice Menus, the menu
+  form's preview), category lists, cart / draft / History lines,
+  receipts and the Backoffice round cards.
+- **Menu detail photos** (`menuDetail/MenuPhotos`, sheet and dialog):
+  none → the letter tile (dialog) / no band (sheet); one → just the
+  photo; two or three → a **swipe carousel** — CSS scroll-snap (x
+  mandatory, each slide centred; no carousel library) inside the SAME
+  fixed box (4:3 / 160px, contain), so nothing jumps. Under the box, a
+  row of dots (each a 44px tap area around an 8px dot; the current one
+  is a 20px primary pill + aria-current — shape, not colour alone;
+  tapping one scrolls to it). ‹ › buttons (44px, round, paper + divider
+  edge, on the photo's sides) only behind `hoverCapableMedia` — touch
+  uses swipe + dots; hidden at the first / last photo. The first photo
+  loads eagerly, the others lazily. The region is `role="region"`,
+  `aria-roledescription="carousel"`, "Photos of <name>", focusable
+  (←/→ move between photos); each slide "Image 1 of 3". Scrolling is
+  smooth, plain jumps under `reducedMotionQuery`. On the phone sheet a
+  sideways swipe moves the photos and never closes the sheet (its
+  drag-to-close takes only a mostly-vertical gesture);
+  `overscroll-behavior-x: contain` keeps the browser's back gesture
+  out. Words come from OrderUiLabels (customer `menuDetail.*`; New Order
+  follows its EN | မြန်မာ menu-side toggle).
+- **Menu form photos** (`menuForm/MenuImageUploader`, Backoffice):
+  "N of 3" + the hint "The first photo is the main one — it shows on
+  the menu card."; one row per photo at every width (fits 375px):
+  96px 4:3 thumbnail (cover) with a "Main" chip on the first, then ←
+  (Move left), → (Move right), 🗑 (Remove) — 44px icon buttons, 8px
+  apart, each named "Move photo 2 left" etc.; disabled at the ends;
+  focus follows a moved photo. Below them a dashed "Add photo (up to
+  3)" zone (browse, several at once, or drop; gone at 3). Nothing is
+  saved until Save (the full list goes with it); buttons rather than
+  drag-and-drop — three photos don't need it, and a drag inside a
+  scrolling phone page fights the scroll.
 - **Dialog vs page:** a **dialog** for short tasks — about 1–3 fields,
   confirmations, and quick creates that must not lose the form behind
   them (e.g. "New category" from the menu form). A **page** for long
@@ -879,7 +915,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-22 (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-10-28 (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

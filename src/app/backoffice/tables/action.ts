@@ -13,7 +13,6 @@ import {
   type CreateTableInput,
   type UpdateTableInput,
 } from "@/app/lib/schemas/tableSchema";
-import { getFileStorageService } from "@/app/lib/storage/getFileStorageService";
 
 import { TableService } from "@/app/services";
 
@@ -111,27 +110,14 @@ export async function updateTableAction(tableId: number, formData: FormData) {
   return actionResult;
 }
 
-/**
- * Deletes DB row first, then the stored QR image. If storage.delete()
- * fails after a successful DB delete, we're left with an orphaned
- * image and no row pointing at it — annoying (a stray file in the
- * bucket) but harmless, since nothing can reach it through the app
- * anymore. The reverse order risks something worse: deleting the image
- * but failing to delete the row would leave a live Table with a broken
- * qrcodeImageUrl link, which is user-visible. DB is the source of
- * truth, so it goes first.
- */
+/** Deletes the table — the row, then its stored QR image
+ *  (TableService.deleteTable owns that order). */
 const safeDeleteTable = toSafeResult(async (tableId: number) => {
   const scope = await requirePermission("TABLES_MANAGE", {
     withLocation: true,
   });
 
-  const table = await TableService.deleteTable(tableId, scope);
-
-  if (table.qrcodeImageUrl) {
-    const storage = getFileStorageService();
-    await storage.delete(table.qrcodeImageUrl);
-  }
+  await TableService.deleteTable(tableId, scope);
 
   return { id: tableId };
 });

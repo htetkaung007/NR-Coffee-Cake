@@ -72,7 +72,7 @@ const line = (overrides: Partial<RoundLineSource> = {}): RoundLineSource => ({
   unitPrice: 2000,
   note: "less ice",
   contributorToken: "tok-a",
-  menu: { name: "Latte", assetUrl: "https://img/latte.png" },
+  menu: { name: "Latte", menuImages: [{ imageKey: "menu/1-1730000000000-a1b2c3d4.webp" }] },
   OrdersAddons: [{ addonId: 9, unitPrice: 500, addon: { name: "Extra shot" } }],
   ...overrides,
 });
@@ -89,7 +89,7 @@ describe("toCounterHandBack — Counter 'Change order'", () => {
           name: "Latte",
           unitPrice: 2000,
           addons: [{ id: 9, name: "Extra shot", unitPrice: 500 }],
-          imageUrl: "https://img/latte.png",
+          imageUrl: "/assets/menu/1-1730000000000-a1b2c3d4.webp",
         },
       },
     ]);

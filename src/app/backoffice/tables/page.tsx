@@ -56,7 +56,7 @@ export default async function TablesPage() {
                 table={{
                   id: table.id,
                   name: table.name,
-                  qrcodeImageUrl: resolveAssetUrl(table.qrcodeImageUrl),
+                  qrImageUrl: resolveAssetUrl(table.qrImageKey),
                   isArchived: table.isArchived,
                   isCounter: table.isCounter === true,
                 }}

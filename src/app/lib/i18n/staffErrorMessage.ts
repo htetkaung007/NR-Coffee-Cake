@@ -50,6 +50,8 @@ export const STAFF_ERROR_CODES = [
   "NO_ACCESS_KEY",
   "MENU_NEEDS_LOCATION",
   "IMAGE_INVALID",
+  "MENU_IMAGES_TOO_MANY",
+  "MENU_IMAGES_INVALID",
 ] as const;
 
 type StaffErrorCode = (typeof STAFF_ERROR_CODES)[number];

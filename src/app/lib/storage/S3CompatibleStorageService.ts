@@ -2,82 +2,73 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
+  NoSuchKey,
 } from "@aws-sdk/client-s3";
-import { config } from "../../utils/config";
-import type { FileStorageService } from "./FileStorageService";
-import { assetKeyFromUrl } from "./assetUrl";
+import type { S3Settings } from "../../utils/config/storageConfig";
+import { assetContentType, buildAssetKey, type AssetFolder } from "./assetKey";
+import type { FileStorageService, StoredFile } from "./FileStorageService";
 
 /**
- * Works against MinIO today (local, offline-capable) and, unchanged,
- * against AWS S3 or DigitalOcean Spaces later — all three speak the
- * same S3 API, so only the endpoint/credentials in .env need to change
- * when the deployment target changes. See getFileStorageService.ts.
+ * STORAGE_PROVIDER=s3 — kept as the path back to the cloud: MinIO, AWS
+ * S3 and DigitalOcean Spaces all speak the same S3 API, so moving there
+ * is a .env change (MINIO_*), not a code change. The object key is the
+ * same key the local provider uses. The browser never talks to the
+ * store: the /assets route streams objects through open().
  */
 export class S3CompatibleStorageService implements FileStorageService {
   private client: S3Client;
   private bucket: string;
-  private publicBaseUrl: string;
 
-  constructor() {
-    const { minioEndpoint, minioAccessKey, minioSecretKey, minioBucket } =
-      config;
-
-    if (!minioEndpoint || !minioAccessKey || !minioSecretKey || !minioBucket) {
-      throw new Error(
-        "Missing MinIO/S3 config — check minioEndpoint, minioAccessKey, " +
-          "minioSecretKey, minioBucket in .env.",
-      );
-    }
-
-    this.bucket = minioBucket;
-    this.publicBaseUrl = `${minioEndpoint}/${minioBucket}`;
-
+  constructor(settings: S3Settings) {
+    this.bucket = settings.bucket;
     this.client = new S3Client({
-      endpoint: minioEndpoint,
+      endpoint: settings.endpoint,
       region: "us-east-1", // required by the SDK, unused by MinIO itself
       credentials: {
-        accessKeyId: minioAccessKey,
-        secretAccessKey: minioSecretKey,
+        accessKeyId: settings.accessKey,
+        secretAccessKey: settings.secretKey,
       },
       // MinIO expects http://endpoint/bucket/key rather than AWS's
-      // virtual-hosted http://bucket.endpoint/key — this flag is the
-
-      forcePathStyle: true, //this is the one MinIO-specific line; everything else is plain S3 API.
+      // virtual-hosted http://bucket.endpoint/key — the one MinIO-specific
+      // line; everything else is plain S3 API.
+      forcePathStyle: true,
     });
   }
 
-  async upload(file: Buffer, mimeType: string, folder: string, id: number) {
-    const extension = mimeType.split("/")[1] ?? "bin";
-    const key = `${folder}/${id}-${Date.now()}.${extension}`;
-
+  async upload(file: Buffer, folder: AssetFolder, id: number) {
+    const key = buildAssetKey(folder, id);
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
         Body: file,
-        ContentType: mimeType,
+        ContentType: assetContentType(key),
       }),
     );
-
-    return { url: `${this.publicBaseUrl}/${key}` };
+    return { key };
   }
 
-  /**
-   * Deletes the stored image. Takes the full URL (the same string saved
-   * on Menu.assetUrl) rather than menuId, because upload() names each
-   * object with a timestamp — there's no way to reconstruct the exact
-   * key from menuId alone. The caller looks up the menu's current
-   * assetUrl first and passes it here before overwriting/clearing it.
-   * The key is found by `/${bucket}/` (lib/storage/assetUrl), not by the
-   * current address, so an image stored before the address changed
-   * (localhost → LAN IP) is still deleted.
-   */
-  async delete(assetUrl: string) {
-    const key = assetKeyFromUrl(assetUrl, this.bucket);
-    if (key === null) return; // not one of ours
-
+  /** S3's DeleteObject already succeeds for a key that isn't there. */
+  async delete(key: string) {
     await this.client.send(
       new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
     );
+  }
+
+  async open(key: string): Promise<StoredFile | null> {
+    try {
+      const object = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      if (!object.Body || object.ContentLength === undefined) return null;
+      return {
+        body: object.Body.transformToWebStream() as ReadableStream<Uint8Array>,
+        size: object.ContentLength,
+      };
+    } catch (error) {
+      if (error instanceof NoSuchKey) return null;
+      throw error;
+    }
   }
 }

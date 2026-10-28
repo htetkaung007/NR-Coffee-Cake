@@ -26,7 +26,7 @@ interface EditTableProps {
   table: {
     id: number;
     name: string;
-    qrcodeImageUrl: string | null;
+    qrImageUrl: string | null;
     isArchived: boolean;
   };
 }
@@ -145,7 +145,7 @@ export default function EditTable({ table }: EditTableProps) {
           )}
         </Box>
 
-        {table.qrcodeImageUrl && (
+        {table.qrImageUrl && (
           <Box>
             <Typography
               variant="caption"
@@ -156,7 +156,7 @@ export default function EditTable({ table }: EditTableProps) {
             </Typography>
             <CardMedia
               component="img"
-              image={table.qrcodeImageUrl}
+              image={table.qrImageUrl}
               alt={t("qrAlt", { name: table.name })}
               sx={{
                 width: 120,
@@ -172,8 +172,8 @@ export default function EditTable({ table }: EditTableProps) {
               variant="outlined"
               startIcon={<DownloadOutlinedIcon sx={{ fontSize: 14 }} />}
               onClick={() =>
-                table.qrcodeImageUrl &&
-                downloadQrCode(table.qrcodeImageUrl, table.name)
+                table.qrImageUrl &&
+                downloadQrCode(table.qrImageUrl, table.name)
               }
               sx={{ fontSize: "0.75rem" }}
             >
@@ -203,7 +203,7 @@ export default function EditTable({ table }: EditTableProps) {
       </FormCard>
 
       {/* Delete — immediate hard delete, no archive step. Removes the
-          Table row and its QR code image (MinIO) together. */}
+          Table row and its stored QR code image together. */}
       <DangerZone title={t("deleteTitle")} error={deleteError}>
         <Typography variant="caption" color="text.secondary">
           {t("deleteHint")}

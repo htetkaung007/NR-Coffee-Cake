@@ -7,6 +7,7 @@ import {
   locationDeletion,
 } from "../lib/location/locationDeletion";
 import { getFileStorageService } from "../lib/storage/getFileStorageService";
+import { removeStoredFiles } from "../lib/storage/removeStoredFiles";
 import { MenuLocationService } from "./menuLocation.service";
 
 type Tx = Prisma.TransactionClient;
@@ -205,7 +206,7 @@ export class LocationService {
    * leftover image is harmless, a failed DB delete must not lose them.
    */
   static async deleteLocation(locationId: number, companyId: number) {
-    const qrImageUrls = await prisma.$transaction(async (tx) => {
+    const qrImageKeys = await prisma.$transaction(async (tx) => {
       const deletion = locationDeletion(
         await LocationService.deletionFacts(tx, locationId, companyId),
       );
@@ -218,7 +219,7 @@ export class LocationService {
 
       const tables = await tx.table.findMany({
         where: { locationId },
-        select: { id: true, qrcodeImageUrl: true },
+        select: { id: true, qrImageKey: true },
       });
       const tableIds = tables.map((table) => table.id);
       await tx.ordersAddon.deleteMany({
@@ -251,18 +252,13 @@ export class LocationService {
       }
 
       await tx.location.delete({ where: { id: locationId } });
-      return tables
-        .map((table) => table.qrcodeImageUrl)
-        .filter((url): url is string => Boolean(url));
+      return tables.map((table) => table.qrImageKey);
     });
 
-    const storage = getFileStorageService();
-    await Promise.all(
-      qrImageUrls.map((url) =>
-        storage.delete(url).catch((error: unknown) => {
-          console.error("[deleteLocation] QR image not removed:", url, error);
-        }),
-      ),
+    await removeStoredFiles(
+      getFileStorageService(),
+      qrImageKeys,
+      "LocationService.deleteLocation",
     );
   }
 

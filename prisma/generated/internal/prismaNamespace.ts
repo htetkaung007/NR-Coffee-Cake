@@ -390,6 +390,7 @@ export const ModelName = {
   Location: 'Location',
   SelectedLocation: 'SelectedLocation',
   Menu: 'Menu',
+  MenuImage: 'MenuImage',
   MenuStock: 'MenuStock',
   MenuCategory: 'MenuCategory',
   MenuMenuCategory: 'MenuMenuCategory',
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill" | "orderCancellation" | "orderVoid" | "menuViewDaily" | "menuViewSeen" | "userPermission"
+    modelProps: "user" | "company" | "table" | "location" | "selectedLocation" | "menu" | "menuImage" | "menuStock" | "menuCategory" | "menuMenuCategory" | "addon" | "addonCategories" | "menuAddonCategories" | "disableLocationMenus" | "disableLocationMenuCategories" | "order" | "ordersAddon" | "orderSession" | "bill" | "orderCancellation" | "orderVoid" | "menuViewDaily" | "menuViewSeen" | "userPermission"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -867,6 +868,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.MenuCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.MenuCountAggregateOutputType> | number
+        }
+      }
+    }
+    MenuImage: {
+      payload: Prisma.$MenuImagePayload<ExtArgs>
+      fields: Prisma.MenuImageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MenuImageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MenuImageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>
+        }
+        findFirst: {
+          args: Prisma.MenuImageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MenuImageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>
+        }
+        findMany: {
+          args: Prisma.MenuImageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>[]
+        }
+        create: {
+          args: Prisma.MenuImageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>
+        }
+        createMany: {
+          args: Prisma.MenuImageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MenuImageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>[]
+        }
+        delete: {
+          args: Prisma.MenuImageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>
+        }
+        update: {
+          args: Prisma.MenuImageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>
+        }
+        deleteMany: {
+          args: Prisma.MenuImageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MenuImageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MenuImageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>[]
+        }
+        upsert: {
+          args: Prisma.MenuImageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MenuImagePayload>
+        }
+        aggregate: {
+          args: Prisma.MenuImageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMenuImage>
+        }
+        groupBy: {
+          args: Prisma.MenuImageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MenuImageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MenuImageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MenuImageCountAggregateOutputType> | number
         }
       }
     }
@@ -2201,7 +2276,7 @@ export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeo
 export const TableScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  qrcodeImageUrl: 'qrcodeImageUrl',
+  qrImageKey: 'qrImageKey',
   locationId: 'locationId',
   counterAccessKey: 'counterAccessKey',
   activeSessionId: 'activeSessionId',
@@ -2246,7 +2321,6 @@ export const MenuScalarFieldEnum = {
   name: 'name',
   nameMy: 'nameMy',
   price: 'price',
-  assetUrl: 'assetUrl',
   description: 'description',
   descriptionMy: 'descriptionMy',
   createdAt: 'createdAt',
@@ -2255,6 +2329,17 @@ export const MenuScalarFieldEnum = {
 } as const
 
 export type MenuScalarFieldEnum = (typeof MenuScalarFieldEnum)[keyof typeof MenuScalarFieldEnum]
+
+
+export const MenuImageScalarFieldEnum = {
+  id: 'id',
+  menuId: 'menuId',
+  imageKey: 'imageKey',
+  position: 'position',
+  createdAt: 'createdAt'
+} as const
+
+export type MenuImageScalarFieldEnum = (typeof MenuImageScalarFieldEnum)[keyof typeof MenuImageScalarFieldEnum]
 
 
 export const MenuStockScalarFieldEnum = {
@@ -2790,6 +2875,7 @@ export type GlobalOmitConfig = {
   location?: Prisma.LocationOmit
   selectedLocation?: Prisma.SelectedLocationOmit
   menu?: Prisma.MenuOmit
+  menuImage?: Prisma.MenuImageOmit
   menuStock?: Prisma.MenuStockOmit
   menuCategory?: Prisma.MenuCategoryOmit
   menuMenuCategory?: Prisma.MenuMenuCategoryOmit

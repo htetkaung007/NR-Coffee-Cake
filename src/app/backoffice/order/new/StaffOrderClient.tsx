@@ -380,7 +380,8 @@ export default function StaffOrderClient({
           id: menu.id,
           name: menu.name,
           price: menu.price,
-          imageUrl: menu.imageUrl,
+          // The card's main photo is all a quick add needs.
+          images: menu.imageUrl ? [{ url: menu.imageUrl }] : [],
           addonCategories: [],
         },
         1,

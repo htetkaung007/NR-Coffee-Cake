@@ -7,6 +7,7 @@ import { config } from "@/app/utils/config";
 import { canActAtLocation } from "@/app/lib/access/ownership";
 import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 import { cleanImageUpload } from "@/app/lib/storage/cleanImageUpload";
+import { removeStoredFiles } from "@/app/lib/storage/removeStoredFiles";
 
 // Name is fixed for the counter "table" row — it isn't a real seated
 // table a customer picks a name for, so locking it here (Service
@@ -30,11 +31,11 @@ function generateCounterKey() {
  * management and keeps AppService from growing further.
  *
  * Does one thing per method (Clean Code's "Do One Thing"): createTable
- * only creates the row; setTableQrCodeUrl only attaches an already-
- * uploaded QR code's URL. regenerateQrImage is the one orchestrating
+ * only creates the row; setQrImageKey only attaches an already-
+ * uploaded QR image's key. regenerateQrImage is the one orchestrating
  * method: it decides how a table's QR image is built and stored, but
- * still goes through FileStorageService rather than talking to S3/MinIO
- * itself.
+ * still goes through FileStorageService rather than talking to the disk
+ * or an object store itself.
  */
 export class TableService {
   static async getTablesByLocation(locationId: number) {
@@ -122,7 +123,7 @@ export class TableService {
   }
 
   /** Does one thing: creates a table with a name under a location.
-   *  Does not touch qrcodeImageUrl — the caller (action.ts) calls
+   *  Does not touch qrImageKey — the caller (action.ts) calls
    *  regenerateQrImage afterward, once it has the new table's id to
    *  encode.
    *
@@ -156,7 +157,7 @@ export class TableService {
     });
   }
 
-  /** Does one thing: renames. Does not touch qrcodeImageUrl or
+  /** Does one thing: renames. Does not touch qrImageKey or
    *  isArchived — those are other methods' jobs. Note the QR code
    *  itself is unaffected by a rename, since it encodes locationId +
    *  tableId, not the name (see buildQrCodeContent),
@@ -184,25 +185,31 @@ export class TableService {
     });
   }
 
-  /** Does one thing: attaches a QR code image URL to an existing table.
-   *  Mirrors MenuService.setMenuAsset — it only persists a URL that
-   *  FileStorageService.upload() already returned. Private: only
+  /** Does one thing: attaches a QR image's key to an existing table —
+   *  a key FileStorageService.upload() already returned. Private: only
    *  regenerateQrImage calls it, with a table its caller already looked
    *  up through the ownership check. */
-  private static async setTableQrCodeUrl(tableId: number, url: string) {
+  private static async setQrImageKey(tableId: number, qrImageKey: string) {
     return prisma.table.update({
       where: { id: tableId },
-      data: { qrcodeImageUrl: url },
+      data: { qrImageKey },
     });
   }
 
-  /** Does one thing: deletes the Table row (after the ownership check).
-   *  Does NOT touch the QR code image in storage — that's the
-   *  Controller's job (action.ts), which deletes it after this returns,
-   *  using the deleted row's qrcodeImageUrl returned here. */
+  /** Deletes the Table row (after the ownership check), then its QR image
+   *  file. The row goes first — the database is the source of truth: a
+   *  failed file delete only leaves a stray file nothing points at
+   *  (logged, never thrown — removeStoredFiles), while the reverse could
+   *  leave a live table with a broken QR image. */
   static async deleteTable(tableId: number, scope: LocatedScope) {
     await TableService.getTableById(tableId, scope);
-    return prisma.table.delete({ where: { id: tableId } });
+    const deleted = await prisma.table.delete({ where: { id: tableId } });
+    await removeStoredFiles(
+      getFileStorageService(),
+      [deleted.qrImageKey],
+      "TableService.deleteTable",
+    );
+    return deleted;
   }
 
   /** Issues a new counterAccessKey for ANY table (Counter or regular),
@@ -224,14 +231,15 @@ export class TableService {
    * The one place "regenerate this table's QR image and swap it in"
    * happens — createTable, updateTable (new logo), and rotateAccessKey
    * all funnel through this instead of each repeating build→render→
-   * upload→set→cleanup themselves. New image is uploaded and the DB row
-   * points at it *before* the old one is touched — if cleanup below
-   * fails, the table still has a working QR code, just an extra
-   * orphaned file in MinIO. Deleting the old image first would risk the
-   * opposite: a successful delete followed by a failed upload, leaving
-   * the table with no QR image at all. A brand-new table has no old
-   * image to clean up (qrcodeImageUrl defaults to ""), so this is safe
-   * to call from createTable too.
+   * upload→set→cleanup themselves (CLAUDE.md Rule 7): the new file is
+   * written and the DB row points at it *before* the old one is touched.
+   * If the DB write fails, the new file is deleted again (no orphan) and
+   * the old QR stays. If cleaning up the old file fails, it's logged,
+   * never thrown — the table already has its working new QR, just a
+   * stray old file. Deleting the old image first would risk a table with
+   * no QR image at all. A brand-new table has no old image (qrImageKey
+   * null), so this is safe to call from createTable too. Returns the new
+   * key.
    */
   static async regenerateQrImage(
     table: {
@@ -239,7 +247,7 @@ export class TableService {
       locationId: number;
       isCounter: boolean | null;
       counterAccessKey: string | null;
-      qrcodeImageUrl: string | null;
+      qrImageKey: string | null;
     },
     logoBuffer: Buffer | null,
   ) {
@@ -258,23 +266,25 @@ export class TableService {
     );
     // An uploaded logo is checked by its content first (a non-image — or
     // an SVG, which sharp would otherwise render — is a ValidationError).
-    const logo = logoBuffer ? (await cleanImageUpload(logoBuffer)).buffer : null;
+    const logo = logoBuffer
+      ? (await cleanImageUpload(logoBuffer, "qrLogo")).buffer
+      : null;
     const qrImageBuffer = await generateQrCodeWithLogo(qrContent, logo);
 
     const storage = getFileStorageService();
-    const { url } = await storage.upload(
-      qrImageBuffer,
-      "image/png",
-      "table",
-      table.id,
-    );
-    await TableService.setTableQrCodeUrl(table.id, url);
-
-    if (table.qrcodeImageUrl) {
-      await storage.delete(table.qrcodeImageUrl);
+    const { key } = await storage.upload(qrImageBuffer, "table", table.id);
+    try {
+      await TableService.setQrImageKey(table.id, key);
+    } catch (error) {
+      await removeStoredFiles(storage, [key], "TableService.regenerateQrImage");
+      throw error;
     }
-
-    return url;
+    await removeStoredFiles(
+      storage,
+      [table.qrImageKey],
+      "TableService.regenerateQrImage",
+    );
+    return key;
   }
 
   /**

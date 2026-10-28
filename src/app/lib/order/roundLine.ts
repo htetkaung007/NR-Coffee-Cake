@@ -10,7 +10,7 @@ import {
   type VoidReason,
 } from "@/app/lib/order/voids";
 import { toLineAddons, type LineAddonSource } from "@/app/lib/order/lineAddons";
-import { resolveAssetUrl } from "@/app/lib/storage/assetUrl";
+import { mainImageUrl } from "@/app/lib/storage/assetUrl";
 
 /** What a customer may know about items staff removed from their line:
  *  how many and the reason(s) — never the staff's note or who did it
@@ -39,7 +39,11 @@ export function toCartLine(order: {
   quantity: number;
   note: string | null;
   unitPrice: number;
-  menu: { name: string; nameMy?: string | null; assetUrl: string | null };
+  menu: {
+    name: string;
+    nameMy?: string | null;
+    menuImages: readonly { imageKey: string }[];
+  };
   OrdersAddons: LineAddonSource[];
   voids: readonly { quantity: number; reason: VoidReason }[];
 }): CartLine {
@@ -55,8 +59,8 @@ export function toCartLine(order: {
     // The line's own price snapshot — never Menu.price, which can have
     // moved since this line was added (see Order.unitPrice).
     price: order.unitPrice,
-    // Re-based onto the current storage address (lib/storage/assetUrl).
-    imageUrl: resolveAssetUrl(order.menu.assetUrl),
+    // The menu's main photo (ORDER_LINE_INCLUDE selects position 0).
+    imageUrl: mainImageUrl(order.menu.menuImages),
     addons: toLineAddons(order.OrdersAddons),
     note: order.note,
   };

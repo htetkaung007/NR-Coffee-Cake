@@ -215,7 +215,12 @@
     "pleaseChoose": "Please choose: {groups}",
     "yourChoice": "Your choice: {choices}",
     "adding": "Adding…",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "photosOf": "Photos of {name}",
+    "imageOf": "Image {index} of {count}",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "showImage": "Show image {index}"
   },
   "lineNotice": {
     "priceUpdated": "Price updated:",
@@ -325,7 +330,9 @@
       "COUNTER_NAME_FIXED": "The Counter QR code's name can't be changed.",
       "NO_ACCESS_KEY": "This table has no access key to build a QR code from.",
       "MENU_NEEDS_LOCATION": "Choose at least one location.",
-      "IMAGE_INVALID": "Image must be a PNG, JPEG, or WEBP file."
+      "IMAGE_INVALID": "Image must be a PNG, JPEG, or WEBP file.",
+      "MENU_IMAGES_TOO_MANY": "A menu can have up to 3 photos.",
+      "MENU_IMAGES_INVALID": "The photo list couldn't be read. Please try again."
     },
     "nav": {
       "sectionService": "Service",
@@ -971,6 +978,15 @@
       "imageDrop": "Drag & drop photo here, or browse",
       "imageFormats": "Supports PNG, JPG, WEBP up to 5MB",
       "imageInvalid": "Choose a PNG, JPEG, or WEBP image no larger than 5MB.",
+      "photosHint": "The first photo is the main one — it shows on the menu card.",
+      "photoCount": "{count} of {max}",
+      "mainPhoto": "Main",
+      "addPhoto": "Add photo (up to {max})",
+      "photoAlt": "Photo {index}",
+      "movePhotoLeft": "Move photo {index} left",
+      "movePhotoRight": "Move photo {index} right",
+      "removePhoto": "Remove photo {index}",
+      "tooManyPhotos": "A menu can have up to {max} photos.",
       "addonsTitle": "Connected Add-ons & Modifiers",
       "addonsHint": "Link extra toppings, sauces, or sides to this item.",
       "addNewGroup": "Add New Group",

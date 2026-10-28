@@ -28,7 +28,7 @@ import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
 interface TableCardData {
   id: number;
   name: string;
-  qrcodeImageUrl: string | null;
+  qrImageUrl: string | null;
   isArchived: boolean;
   /** The location's Counter QR (walk-in orders), not a seat. */
   isCounter: boolean;
@@ -41,20 +41,23 @@ interface TableCardProps {
 /**
  * Opens the table's QR code image in a new tab and triggers the
  * browser's native print dialog once it's loaded. No new library for
- * this — the QR code is already a plain image URL (qrcodeImageUrl),
+ * this — the QR code is already a plain image URL (qrImageUrl),
  * so window.print() on a dedicated tab is the simplest thing that
  * works, and it's the same approach a receipt/label print flow would
- * use anyway.
+ * use anyway. The URL is relative (/assets/<key>) and the new tab is a
+ * blank document, so it's made absolute from this page's own origin
+ * first — the address the staff's device is using (LAN IP, tunnel).
  */
-function handlePrintQrCode(qrcodeImageUrl: string, title: string) {
+function handlePrintQrCode(qrImageUrl: string, title: string) {
   const printWindow = window.open("", "_blank");
   if (!printWindow) return; // popup blocked — nothing we can do here
+  const imageUrl = new URL(qrImageUrl, window.location.origin).href;
 
   printWindow.document.write(`
     <html>
       <head><title>${title}</title></head>
       <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;">
-        <img src="${qrcodeImageUrl}" style="max-width:90%;" onload="window.print()" />
+        <img src="${imageUrl}" style="max-width:90%;" onload="window.print()" />
       </body>
     </html>
   `);
@@ -124,12 +127,12 @@ function QrActionButton({
  *  it was never set up. */
 function QrPreview({
   table,
-  qrcodeImageUrl,
+  qrImageUrl,
   problem,
   onImageError,
 }: {
   table: TableCardData;
-  qrcodeImageUrl: string | null;
+  qrImageUrl: string | null;
   problem: QrProblem | null;
   onImageError: () => void;
 }) {
@@ -169,10 +172,10 @@ function QrPreview({
           : { bgcolor: "action.hover", p: 1.5 }),
       }}
     >
-      {problem === null && qrcodeImageUrl ? (
+      {problem === null && qrImageUrl ? (
         <Box
           component="img"
-          src={qrcodeImageUrl}
+          src={qrImageUrl}
           alt={t("qrAlt", { name: table.name })}
           onError={onImageError}
           sx={{ width: "100%", height: "100%", objectFit: "contain" }}
@@ -215,14 +218,13 @@ function QrPreview({
 export default function TableCard({ table }: TableCardProps) {
   const t = useTranslations("bo.tables");
   const tCommon = useTranslations("bo.common");
-  // "" (the column default) means no QR, the same as null.
-  const qrcodeImageUrl = table.qrcodeImageUrl || null;
+  const qrImageUrl = table.qrImageUrl;
   // The URL whose image failed to load — a new URL gets a fresh try.
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const problem: QrProblem | null =
-    qrcodeImageUrl === null
+    qrImageUrl === null
       ? "missing"
-      : failedUrl === qrcodeImageUrl
+      : failedUrl === qrImageUrl
         ? "broken"
         : null;
   const KindIcon = table.isCounter
@@ -246,9 +248,9 @@ export default function TableCard({ table }: TableCardProps) {
     >
       <QrPreview
         table={table}
-        qrcodeImageUrl={qrcodeImageUrl}
+        qrImageUrl={qrImageUrl}
         problem={problem}
-        onImageError={() => setFailedUrl(qrcodeImageUrl)}
+        onImageError={() => setFailedUrl(qrImageUrl)}
       />
 
       <Stack
@@ -310,8 +312,8 @@ export default function TableCard({ table }: TableCardProps) {
           icon={<PrintOutlinedIcon fontSize="small" />}
           problem={problem}
           onClick={() =>
-            qrcodeImageUrl &&
-            handlePrintQrCode(qrcodeImageUrl, t("printTitle", { name: table.name }))
+            qrImageUrl &&
+            handlePrintQrCode(qrImageUrl, t("printTitle", { name: table.name }))
           }
         />
         <QrActionButton
@@ -319,7 +321,7 @@ export default function TableCard({ table }: TableCardProps) {
           icon={<DownloadOutlinedIcon fontSize="small" />}
           problem={problem}
           onClick={() =>
-            qrcodeImageUrl && downloadQrCode(qrcodeImageUrl, table.name)
+            qrImageUrl && downloadQrCode(qrImageUrl, table.name)
           }
         />
       </Box>

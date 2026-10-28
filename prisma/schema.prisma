@@ -59,7 +59,12 @@ model Company {
 model Table {
   id               Int            @id @default(autoincrement())
   name             String
-  qrcodeImageUrl   String?        @default("")
+  // Storage KEY of this table's QR PNG ("table/5-1730000000000.png"),
+  // never a URL — the URL is built when it is sent out, so an address or
+  // storage-provider change never touches the database. Stored (not drawn
+  // on demand) because the PNG carries the owner's per-table logo, which
+  // is kept nowhere else. null = no image yet — never "".
+  qrImageKey       String?
   location         Location       @relation(fields: [locationId], references: [id])
   locationId       Int
   OrderSessions    OrderSession[]
@@ -147,7 +152,6 @@ model Menu {
   // translated yet — the English `name` (required) is shown instead.
   nameMy               String?
   price                Int
-  assetUrl             String?
   description          String?
   // Myanmar description; null = show the English `description`.
   descriptionMy        String?
@@ -155,6 +159,8 @@ model Menu {
   menuAddonCategories  MenuAddonCategories[]
   disableLocationMenus DisableLocationMenus[]
   menuStocks           MenuStock[]
+  // Up to 3 photos, in `position` order (MenuImage).
+  menuImages           MenuImage[]
   orders               Order[]
   // How many customers opened this menu's detail, per day and location
   // (MenuViewDaily), and the dedupe rows behind it (MenuViewSeen).
@@ -164,6 +170,34 @@ model Menu {
   updateTime           DateTime               @updatedAt
   isArchived           Boolean                @default(false)
 }
+
+/**
+ * A menu's photos — up to 3, shown in `position` order (0 = the main
+ * photo on the menu card). `imageKey` is the storage KEY
+ * ("menu/12-1730000000000.webp"), never a URL: the URL is built when it
+ * is sent out, so an address or storage-provider change never touches
+ * the database.
+ * No companyId — like Menu's other children, it is scoped through the
+ * menu (and the menu through its categories).
+ * No onDelete: Cascade — MenuService.deleteMenu deletes these rows in
+ * its own transaction and must read the keys first, to delete the files
+ * after the commit (CLAUDE.md §7); a cascade would drop them silently.
+ * position 0..2 can't be expressed here: Zod and the service enforce it.
+ */
+model MenuImage {
+  id        Int      @id @default(autoincrement())
+  menu      Menu     @relation(fields: [menuId], references: [id])
+  menuId    Int
+  imageKey  String
+  // 0..2, continuous — the order the photos are shown in.
+  position  Int
+  createdAt DateTime @default(now())
+
+  // One photo per slot per menu. Also serves menuId lookups (menuId is
+  // the index's first column), so no separate @@index([menuId]).
+  @@unique([menuId, position])
+}
+
 model MenuStock {
   id                 Int      @id @default(autoincrement())
   menu               Menu     @relation(fields: [menuId], references: [id])

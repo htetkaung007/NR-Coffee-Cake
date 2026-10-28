@@ -57,6 +57,7 @@ export const ModelName = {
   Location: 'Location',
   SelectedLocation: 'SelectedLocation',
   Menu: 'Menu',
+  MenuImage: 'MenuImage',
   MenuStock: 'MenuStock',
   MenuCategory: 'MenuCategory',
   MenuMenuCategory: 'MenuMenuCategory',
@@ -126,7 +127,7 @@ export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeo
 export const TableScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  qrcodeImageUrl: 'qrcodeImageUrl',
+  qrImageKey: 'qrImageKey',
   locationId: 'locationId',
   counterAccessKey: 'counterAccessKey',
   activeSessionId: 'activeSessionId',
@@ -171,7 +172,6 @@ export const MenuScalarFieldEnum = {
   name: 'name',
   nameMy: 'nameMy',
   price: 'price',
-  assetUrl: 'assetUrl',
   description: 'description',
   descriptionMy: 'descriptionMy',
   createdAt: 'createdAt',
@@ -180,6 +180,17 @@ export const MenuScalarFieldEnum = {
 } as const
 
 export type MenuScalarFieldEnum = (typeof MenuScalarFieldEnum)[keyof typeof MenuScalarFieldEnum]
+
+
+export const MenuImageScalarFieldEnum = {
+  id: 'id',
+  menuId: 'menuId',
+  imageKey: 'imageKey',
+  position: 'position',
+  createdAt: 'createdAt'
+} as const
+
+export type MenuImageScalarFieldEnum = (typeof MenuImageScalarFieldEnum)[keyof typeof MenuImageScalarFieldEnum]
 
 
 export const MenuStockScalarFieldEnum = {

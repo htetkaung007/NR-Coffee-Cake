@@ -7,6 +7,9 @@ import {
 } from "./common";
 import { CURRENCY_LABEL } from "@/app/lib/orderFormat";
 import { NO_LOCATION_MESSAGE } from "@/app/lib/menu/menuLocations";
+import { MAX_IMAGE_BYTES, MAX_MENU_IMAGES } from "@/app/lib/storage/uploadLimits";
+import { parseImageSlot, type MenuImageSlot } from "@/app/lib/menu/menuImageSlots";
+import { MENU_IMAGES_MESSAGES, checkImageSlots } from "@/app/lib/menu/menuImagePlan";
 
 /** The longest names / descriptions — ONE number per field pair, shared
  *  by the English field and its Myanmar twin, here and in the forms'
@@ -26,6 +29,30 @@ export const MENU_NAME_REQUIRED_MESSAGE = "Menu item name is required.";
 export const MENU_PRICE_WHOLE_MESSAGE = `Price must be a whole number of ${CURRENCY_LABEL}.`;
 export const MENU_PRICE_POSITIVE_MESSAGE = "Price must be greater than zero.";
 export const MENU_CATEGORY_REQUIRED_MESSAGE = "Select at least one menu category.";
+
+/** One new photo as the browser sent it — checked again by its content
+ *  on the server (cleanImageUpload). */
+const menuPhotoFileSchema = z
+  .custom<File>((value) => value instanceof File && value.size > 0, {
+    message: "Image upload is invalid.",
+  })
+  .refine((file) => file.size <= MAX_IMAGE_BYTES, "Image must be 5MB or smaller.")
+  .refine(
+    (file) => ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+    "Image must be a PNG, JPEG, or WEBP file.",
+  );
+
+/** One "imageSlots" entry (lib/menu/menuImageSlots) — read into a slot. */
+const menuImageSlotSchema = z
+  .unknown()
+  .transform((value, context): MenuImageSlot => {
+    const slot = parseImageSlot(value);
+    if (slot === null) {
+      context.addIssue({ code: "custom", message: MENU_IMAGES_MESSAGES.MENU_IMAGES_INVALID });
+      return z.NEVER;
+    }
+    return slot;
+  });
 
 export const createMenuSchema = z.object({
   name: z
@@ -67,20 +94,25 @@ export const createMenuSchema = z.object({
     minMessage: NO_LOCATION_MESSAGE,
     max: MAX_SHOWN_LOCATIONS,
   }),
-  image: z
-    .custom<File | null>((value) => value === null || value instanceof File, {
-      message: "Image upload is invalid.",
-    })
-    .refine(
-      (file) => file === null || file.size <= 5 * 1024 * 1024,
-      "Image must be 5MB or smaller.",
-    )
-    .refine(
-      (file) =>
-        file === null ||
-        ["image/jpeg", "image/png", "image/webp"].includes(file.type),
-      "Image must be a PNG, JPEG, or WEBP file.",
-    ),
+  /** The photos the menu should have, in order (position 0 = main) —
+   *  the full list on every save (lib/menu/menuImageSlots). */
+  imageSlots: z
+    .array(menuImageSlotSchema)
+    .max(MAX_MENU_IMAGES, MENU_IMAGES_MESSAGES.MENU_IMAGES_TOO_MANY),
+  /** The new files the "new:<n>" slots point at, in that order. */
+  newImages: z
+    .array(menuPhotoFileSchema)
+    .max(MAX_MENU_IMAGES, MENU_IMAGES_MESSAGES.MENU_IMAGES_TOO_MANY),
+}).superRefine((menu, context) => {
+  // The same rule MenuService.saveMenuImages checks again.
+  const problem = checkImageSlots(menu.imageSlots, menu.newImages.length);
+  if (problem) {
+    context.addIssue({
+      code: "custom",
+      path: ["imageSlots"],
+      message: MENU_IMAGES_MESSAGES[problem],
+    });
+  }
 });
 
 export type CreateMenuInput = z.infer<typeof createMenuSchema>;

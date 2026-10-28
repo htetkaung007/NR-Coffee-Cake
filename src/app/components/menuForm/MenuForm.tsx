@@ -29,7 +29,10 @@ import MenuCard, { MenuCardData } from "../MenuCard";
 import { SurfaceThemeScope } from "@/app/lib/theme/ThemeModeProvider";
 import ConnectedAddonsSection from "./ConnectedAddonsSection";
 import MenuCategoryChips, { MenuCategoryOption } from "./MenuCategoryChips";
-import MenuImageUploader from "./MenuImageUploader";
+import MenuImageUploader, { type FormPhoto } from "./MenuImageUploader";
+import type { MenuImageView } from "@/app/lib/storage/assetUrl";
+import { moveImage, removeImage } from "@/app/lib/menu/menuImagePlan";
+import { toImageSlots } from "@/app/lib/menu/menuImageSlots";
 import StockQuantityStepper from "./StockQuantityStepper";
 import LocationChecklist, { type LocationOption } from "./LocationChecklist";
 import CreateMenuCategoryDialog, {
@@ -67,7 +70,8 @@ interface MenuFormInitialData {
   isAvailable: boolean;
   categoryIds: number[];
   addonCategoryIds: number[];
-  imageUrl: string | null;
+  /** Its photos now, in order (0 = the main one). */
+  images: MenuImageView[];
   /** The active locations it shows at now. */
   shownLocationIds: number[];
 }
@@ -164,10 +168,19 @@ export default function MenuForm({
   const [selectedAddonCategoryIds, setSelectedAddonCategoryIds] = useState<
     number[]
   >(initialData?.addonCategoryIds ?? []);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(
-    initialData?.imageUrl ?? null,
+  // The photos, in order — the menu's own (kept by id) and files picked
+  // now; nothing reaches the server until Save sends the whole list.
+  const [photos, setPhotos] = useState<FormPhoto[]>(() =>
+    (initialData?.images ?? []).map((image) => ({
+      kind: "keep",
+      key: `keep-${image.id}`,
+      imageId: image.id,
+      url: image.url,
+      position: image.position,
+    })),
   );
+  // The picked files' preview URLs, freed when removed or on leaving.
+  const objectUrls = useRef(new Set<string>());
   // "+ New category" creates in a dialog: the new one joins the chips
   // and is selected, and nothing typed in the form is touched. Kept
   // apart from the server's list so a refresh can't show it twice.
@@ -211,12 +224,13 @@ export default function MenuForm({
   const locationsRef = useRef<HTMLDivElement>(null);
 
 
-  useEffect(
-    () => () => {
-      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-    },
-    [imagePreviewUrl],
-  );
+  useEffect(() => {
+    const urls = objectUrls.current;
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+      urls.clear();
+    };
+  }, []);
 
   function toggleCategory(id: number) {
     setSelectedCategoryIds((previous) =>
@@ -239,15 +253,24 @@ export default function MenuForm({
     });
   }
 
-  function handleFileSelected(file: File) {
+  /** Picked files join the end (the uploader already capped how many). */
+  function handlePhotosAdded(files: File[]) {
     setError(null);
-    setImageFile(file);
-    setImagePreviewUrl(URL.createObjectURL(file));
+    const added: FormPhoto[] = files.map((file, index) => {
+      const url = URL.createObjectURL(file);
+      objectUrls.current.add(url);
+      return { kind: "new", key: url, url, file, position: photos.length + index };
+    });
+    setPhotos([...photos, ...added]);
   }
 
-  function handleRemoveImage() {
-    setImageFile(null);
-    setImagePreviewUrl(null);
+  function handleRemovePhoto(index: number) {
+    const removed = photos[index];
+    if (removed?.kind === "new") {
+      URL.revokeObjectURL(removed.url);
+      objectUrls.current.delete(removed.url);
+    }
+    setPhotos(removeImage(photos, index));
   }
 
   /** Brings the first problem's field into view and focuses it when it
@@ -305,7 +328,10 @@ export default function MenuForm({
     submittedLocationIds.forEach((id) =>
       formData.append("shownLocationIds", String(id)),
     );
-    if (imageFile) formData.set("image", imageFile);
+    // The full photo list, in order (lib/menu/menuImageSlots).
+    const { slots, files } = toImageSlots(photos);
+    slots.forEach((slot) => formData.append("imageSlots", slot));
+    files.forEach((file) => formData.append("newImages", file));
 
     save(
       () =>
@@ -329,7 +355,7 @@ export default function MenuForm({
     category: previewCategory
       ? localizedText(locale, previewCategory.name, previewCategory.nameMy)
       : tCommon("uncategorized"),
-    imageUrl: imagePreviewUrl,
+    imageUrl: photos[0]?.url ?? null,
     stockQuantity: quantity,
     isAvailable,
   };
@@ -510,9 +536,12 @@ export default function MenuForm({
           )}
 
           <MenuImageUploader
-            imagePreviewUrl={imagePreviewUrl}
-            onFileSelected={handleFileSelected}
-            onRemove={handleRemoveImage}
+            photos={photos}
+            onFilesAdded={handlePhotosAdded}
+            onMove={(index, direction) =>
+              setPhotos((current) => moveImage(current, index, direction))
+            }
+            onRemove={handleRemovePhoto}
             onError={setError}
           />
 

@@ -1,8 +1,8 @@
 /** The menu form's FormData as plain fields for createMenuSchema — one
- *  reader for both createMenuAction and updateMenuAction. An empty file
- *  input (size 0) means "no new image". */
+ *  reader for both createMenuAction and updateMenuAction. The photos
+ *  come as "imageSlots" (in order) + "newImages" (the files those slots
+ *  point at, lib/menu/menuImageSlots); the schema checks both. */
 export function parseMenuFormData(formData: FormData) {
-  const imageEntry = formData.get("image");
   return {
     name: formData.get("name"),
     nameMy: formData.get("nameMy"),
@@ -14,7 +14,7 @@ export function parseMenuFormData(formData: FormData) {
     categoryIds: formData.getAll("categoryIds"),
     addonCategoryIds: formData.getAll("addonCategoryIds"),
     shownLocationIds: formData.getAll("shownLocationIds"),
-    image:
-      imageEntry instanceof File && imageEntry.size > 0 ? imageEntry : null,
+    imageSlots: formData.getAll("imageSlots"),
+    newImages: formData.getAll("newImages"),
   };
 }

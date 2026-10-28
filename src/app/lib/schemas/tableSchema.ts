@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_IMAGE_BYTES } from "@/app/lib/storage/uploadLimits";
 
 /** What create and update share: the optional QR-centre logo. */
 const tableLogoShape = z.object({
@@ -7,7 +8,7 @@ const tableLogoShape = z.object({
       message: "Logo upload is invalid.",
     })
     .refine(
-      (file) => file === null || file.size <= 5 * 1024 * 1024,
+      (file) => file === null || file.size <= MAX_IMAGE_BYTES,
       "Logo must be 5MB or smaller.",
     )
     .refine(

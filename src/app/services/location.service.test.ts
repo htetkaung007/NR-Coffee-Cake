@@ -37,7 +37,10 @@ vi.mock("@/app/utils/prisma", () => {
     bill: { count: async () => counts.bills },
     user: { count: async () => counts.managers },
     table: {
-      findMany: async () => [{ id: 1, qrcodeImageUrl: "http://store/qr-1.png" }],
+      findMany: async () => [
+        { id: 1, qrImageKey: "table/1-1730000000000-0000000a.png" },
+        { id: 2, qrImageKey: null },
+      ],
       deleteMany: record("table.deleteMany"),
     },
     ordersAddon: { deleteMany: record("ordersAddon.deleteMany") },
@@ -60,8 +63,8 @@ vi.mock("@/app/utils/prisma", () => {
 });
 vi.mock("@/app/lib/storage/getFileStorageService", () => ({
   getFileStorageService: () => ({
-    delete: async (url: string) => {
-      removedImages.push(url);
+    delete: async (key: string) => {
+      removedImages.push(key);
     },
   }),
 }));
@@ -120,6 +123,6 @@ describe("LocationService.deleteLocation", () => {
 
   it("removes the tables' QR images only after the database delete", async () => {
     await LocationService.deleteLocation(5, 1);
-    expect(removedImages).toEqual(["http://store/qr-1.png"]);
+    expect(removedImages).toEqual(["table/1-1730000000000-0000000a.png"]);
   });
 });
