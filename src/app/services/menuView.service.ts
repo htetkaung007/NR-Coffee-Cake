@@ -73,7 +73,18 @@ export class MenuViewService {
       where: { locationId, day: { gte: firstDay, lte: lastDay } },
       _sum: { viewers: true },
     });
-    if (rows.length === 0) return null;
-    return new Map(rows.map((row) => [row.menuId, row._sum.viewers ?? 0]));
+    return rows.length === 0 ? null : toViewersByMenu(rows);
   }
+}
+
+/** One getViewersByMenu groupBy row — written out so the rows are
+ *  checked against it instead of typed by inference inside a callback. */
+type ViewerSumRow = { menuId: number; _sum: { viewers: number | null } };
+
+function toViewersByMenu(rows: ViewerSumRow[]): Map<number, number> {
+  const viewersByMenu = new Map<number, number>();
+  for (const row of rows) {
+    viewersByMenu.set(row.menuId, row._sum.viewers ?? 0);
+  }
+  return viewersByMenu;
 }

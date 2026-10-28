@@ -619,7 +619,8 @@ independently of the app config). Everything else still goes through
   only the hash; screens show totals only. MenuViewSeen rows older than
   90 shop days are deleted (at most once a day per server process, on a
   recorded view); MenuViewDaily is kept. A menu's hard delete removes
-  both; archiving keeps them. CSV exports don't include views (yet).
+  both, and so does a location's delete (LocationService.deleteLocation,
+  same transaction); archiving either keeps them. CSV exports don't include views (yet).
 
 ## 14. Service imports — always via the barrel file, never the concrete path
 

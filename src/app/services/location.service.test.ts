@@ -3,18 +3,28 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // A fake Prisma client that records every write in order, so the test
 // can check the delete's sequence and that nothing is written when the
 // rule refuses. The counts the rule reads are set per test.
-const { counts, writes, removedImages, record } = vi.hoisted(() => {
-  const writes: string[] = [];
-  return {
-    counts: { sessions: 0, bills: 0, managers: 0 },
-    writes,
-    removedImages: [] as string[],
-    record: (name: string) => async () => {
-      writes.push(name);
-      return { count: 1 };
-    },
-  };
-});
+const { counts, writes, viewDeletes, removedImages, record, recordViewDelete } =
+  vi.hoisted(() => {
+    const writes: string[] = [];
+    const viewDeletes: { table: string; where: unknown }[] = [];
+    return {
+      counts: { sessions: 0, bills: 0, managers: 0 },
+      writes,
+      viewDeletes,
+      removedImages: [] as string[],
+      record: (name: string) => async () => {
+        writes.push(name);
+        return { count: 1 };
+      },
+      recordViewDelete:
+        (table: string) =>
+        async ({ where }: { where: unknown }) => {
+          writes.push(`${table}.deleteMany`);
+          viewDeletes.push({ table, where });
+          return { count: 1 };
+        },
+    };
+  });
 
 vi.mock("@/app/utils/prisma", () => {
   const tx = {
@@ -37,6 +47,8 @@ vi.mock("@/app/utils/prisma", () => {
     disableLocationMenuCategories: {
       deleteMany: record("disableLocationMenuCategories.deleteMany"),
     },
+    menuViewDaily: { deleteMany: recordViewDelete("menuViewDaily") },
+    menuViewSeen: { deleteMany: recordViewDelete("menuViewSeen") },
     selectedLocation: {
       updateMany: record("selectedLocation.updateMany"),
       deleteMany: record("selectedLocation.deleteMany"),
@@ -59,6 +71,7 @@ import { LocationService } from "./location.service";
 beforeEach(() => {
   Object.assign(counts, { sessions: 0, bills: 0, managers: 0 });
   writes.length = 0;
+  viewDeletes.length = 0;
   removedImages.length = 0;
 });
 
@@ -90,8 +103,18 @@ describe("LocationService.deleteLocation", () => {
       "menuStock.deleteMany",
       "disableLocationMenus.deleteMany",
       "disableLocationMenuCategories.deleteMany",
+      "menuViewDaily.deleteMany",
+      "menuViewSeen.deleteMany",
       "selectedLocation.updateMany",
       "location.delete",
+    ]);
+  });
+
+  it("removes the location's menu-view rows by locationId (MenuViewDaily's FK would block the delete)", async () => {
+    await LocationService.deleteLocation(5, 1);
+    expect(viewDeletes).toEqual([
+      { table: "menuViewDaily", where: { locationId: 5 } },
+      { table: "menuViewSeen", where: { locationId: 5 } },
     ]);
   });
 

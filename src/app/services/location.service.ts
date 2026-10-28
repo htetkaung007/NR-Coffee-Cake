@@ -194,8 +194,9 @@ export class LocationService {
    * away (lib/location/locationDeletion — a location with sales can only ever be
    * archived). One transaction, rule re-checked inside it: its setup rows
    * go first — draft picks at its tables (no round was ever sent there,
-   * so every Order at them is a draft), the tables, stock rows and both
-   * per-location hide tables — then any admin whose selected location
+   * so every Order at them is a draft), the tables, stock rows, both
+   * per-location hide tables and its menu-view rows (MenuViewDaily,
+   * MenuViewSeen — archiving keeps them) — then any admin whose selected location
    * it was moves to the company's first other active location (or has
    * none, and is asked to pick one), then the location itself.
    *
@@ -230,6 +231,10 @@ export class LocationService {
       await tx.disableLocationMenuCategories.deleteMany({
         where: { locationId },
       });
+      // Menu views (§13d): MenuViewDaily's FK would block the delete;
+      // MenuViewSeen has no FK but is this location's data too.
+      await tx.menuViewDaily.deleteMany({ where: { locationId } });
+      await tx.menuViewSeen.deleteMany({ where: { locationId } });
 
       const fallback = await tx.location.findFirst({
         where: { companyId, isArchived: false, id: { not: locationId } },
