@@ -94,8 +94,11 @@ export default function GroupNameFields({
           sx={{ color: "text.secondary" }}
         />
         <Typography variant="caption" color="text.secondary">
+          {/* The Myanmar word is a <my> tag in the message (a function for
+              a plain {placeholder} rendered nothing), so it carries its
+              own lang. */}
           {t.rich("leaveEmpty", {
-            language: () => <span lang="my">မြန်မာ</span>,
+            my: (chunks) => <span lang="my">{chunks}</span>,
           })}
         </Typography>
       </Stack>

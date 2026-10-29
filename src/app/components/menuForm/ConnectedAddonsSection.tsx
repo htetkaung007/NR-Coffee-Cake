@@ -53,6 +53,12 @@ export default function ConnectedAddonsSection({
     );
   }
 
+  const openConnect = () => setDialogOpen(true);
+
+  // Phones: title + hint, the groups, then "Connect add-on group" LAST,
+  // full width (its words may wrap). From sm: the button top-right in the
+  // header row; the title side shrinks first (minWidth 0), never the
+  // button. One button per layout, the other display: none.
   return (
     <Box
       sx={{
@@ -60,136 +66,169 @@ export default function ConnectedAddonsSection({
         borderColor: "divider",
         borderRadius: 2.5,
         p: { xs: 1.5, sm: 2 },
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "minmax(0, 1fr)",
+          sm: "minmax(0, 1fr) auto",
+        },
+        gridTemplateAreas: {
+          xs: '"header" "content" "button"',
+          sm: '"header button" "content content"',
+        },
+        columnGap: 2,
+        rowGap: 1.5,
+        alignItems: "start",
       }}
     >
-      <Stack
-        direction="row"
+      <Box sx={{ gridArea: "header", minWidth: 0 }}>
+        <Typography variant="body2">{t("addonsTitle")}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {t("addonsHint")}
+        </Typography>
+      </Box>
+      <Button
+        size="small"
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={openConnect}
         sx={{
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          mb: 1.5,
+          gridArea: "button",
+          display: { xs: "none", sm: "inline-flex" },
+          whiteSpace: "nowrap",
         }}
       >
-        <Box>
-          <Typography variant="body2">{t("addonsTitle")}</Typography>
-          <Typography variant="caption" color="text.secondary">
-            {t("addonsHint")}
-          </Typography>
-        </Box>
-        <Button
-          size="small"
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setDialogOpen(true)}
-          sx={{ whiteSpace: "nowrap" }}
-        >
-          {t("addNewGroup")}
-        </Button>
-      </Stack>
+        {t("connectGroup")}
+      </Button>
+      <Button
+        variant="outlined"
+        startIcon={<AddIcon />}
+        onClick={openConnect}
+        fullWidth
+        sx={{
+          gridArea: "button",
+          display: { xs: "inline-flex", sm: "none" },
+          minHeight: 44,
+        }}
+      >
+        {t("connectGroup")}
+      </Button>
 
-      {connectedCategories.length === 0 ? (
-        <Typography variant="caption" color="text.secondary">
-          {t("noGroups")}
-        </Typography>
-      ) : (
-        <>
-          <Stack
-            spacing={1.5}
-            sx={{
-              maxHeight: showAll ? SCROLL_MAX_HEIGHT : "none",
-              overflowY: showAll ? "auto" : "visible",
-              pr: showAll ? 0.5 : 0,
-            }}
-          >
-            {visibleCategories.map((category) => (
-              <Box
-                key={category.id}
-                sx={{
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 2,
-                  p: 1.5,
-                }}
-              >
-                <Stack
-                  direction="row"
-                  spacing={1}
+      <Box sx={{ gridArea: "content", minWidth: 0 }}>
+        {connectedCategories.length === 0 ? (
+          <Typography variant="caption" color="text.secondary">
+            {t("noGroups")}
+          </Typography>
+        ) : (
+          <>
+            <Stack
+              spacing={1.5}
+              sx={{
+                maxHeight: showAll ? SCROLL_MAX_HEIGHT : "none",
+                overflowY: showAll ? "auto" : "visible",
+                pr: showAll ? 0.5 : 0,
+              }}
+            >
+              {visibleCategories.map((category) => (
+                <Box
+                  key={category.id}
                   sx={{
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    p: 1.5,
                   }}
                 >
                   <Stack
                     direction="row"
                     spacing={1}
-                    sx={{ alignItems: "center" }}
+                    sx={{
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 1,
+                    }}
                   >
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {localizedText(locale, category.name, category.nameMy)}
-                    </Typography>
-                    <Chip
-                      label={t("connected")}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  </Stack>
-                  <Stack direction="row" spacing={0.5}>
-                    <IconButton
-                      component={Link}
-                      href={`/backoffice/addons/${category.id}`}
-                      size="small"
-                      aria-label={t("editGroup", { name: category.name })}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: "center" }}
                     >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => disconnect(category.id)}
-                      aria-label={t("disconnectGroup", { name: category.name })}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                        {localizedText(locale, category.name, category.nameMy)}
+                      </Typography>
+                      <Chip
+                        label={t("connected")}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Stack>
+                    <Stack direction="row" spacing={0.5}>
+                      <IconButton
+                        component={Link}
+                        href={`/backoffice/addons/${category.id}`}
+                        size="small"
+                        aria-label={t("editGroup", { name: category.name })}
+                      >
+                        <EditOutlinedIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => disconnect(category.id)}
+                        aria-label={t("disconnectGroup", {
+                          name: category.name,
+                        })}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
                   </Stack>
-                </Stack>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{ flexWrap: "wrap", gap: 1 }}
-                >
-                  {category.addons.map((addon) => (
-                    <Chip
-                      key={addon.id}
-                      size="small"
-                      label={
-                        addon.price === 0
-                          ? localizedText(locale, addon.name, addon.nameMy)
-                          : t("optionWithPrice", {
-                              name: localizedText(locale, addon.name, addon.nameMy),
-                              price: money.delta(addon.price),
-                            })
-                      }
-                      variant="outlined"
-                      sx={{ bgcolor: "background.paper", borderColor: "divider" }}
-                    />
-                  ))}
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ flexWrap: "wrap", gap: 1 }}
+                  >
+                    {category.addons.map((addon) => (
+                      <Chip
+                        key={addon.id}
+                        size="small"
+                        label={
+                          addon.price === 0
+                            ? localizedText(locale, addon.name, addon.nameMy)
+                            : t("optionWithPrice", {
+                                name: localizedText(
+                                  locale,
+                                  addon.name,
+                                  addon.nameMy,
+                                ),
+                                price: money.delta(addon.price),
+                              })
+                        }
+                        variant="outlined"
+                        sx={{
+                          bgcolor: "background.paper",
+                          borderColor: "divider",
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
 
-          {connectedCategories.length > VISIBLE_LIMIT && (
-            <Button
-              size="small"
-              onClick={() => setShowAll((current) => !current)}
-              sx={{ mt: 1 }}
-            >
-              {showAll ? t("showLess") : t("showMore", { count: hiddenCount })}
-            </Button>
-          )}
-        </>
-      )}
+            {connectedCategories.length > VISIBLE_LIMIT && (
+              <Button
+                size="small"
+                onClick={() => setShowAll((current) => !current)}
+                sx={{ mt: 1 }}
+              >
+                {showAll
+                  ? t("showLess")
+                  : t("showMore", { count: hiddenCount })}
+              </Button>
+            )}
+          </>
+        )}
+      </Box>
 
       <ConnectAddonGroupDialog
         open={dialogOpen}

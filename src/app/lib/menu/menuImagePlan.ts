@@ -4,7 +4,7 @@ import type { MenuImageSlot } from "./menuImageSlots";
 /**
  * A menu's photos (MenuImage, CLAUDE.md §7): at most MAX_MENU_IMAGES,
  * positions always continuous 0..n-1 (0 = the main photo on the menu
- * card). The form reorders / removes with moveImage / removeImage; a
+ * card). The form reorders / removes with makeMain / removeImage; a
  * save is checked by checkImageSlots (Zod, then the service again) and
  * turned into rows by planMenuImages. Pure.
  */
@@ -18,18 +18,16 @@ export function normalizePositions<T extends Positioned>(items: readonly T[]): T
     .map((item, index) => ({ ...item, position: index }));
 }
 
-/** The photo at `index` moved one place left (-1) or right (1); nothing
- *  changes at either end. */
-export function moveImage<T extends Positioned>(
+/** The photo at `index` made the main one (position 0); the others keep
+ *  their order behind it. An index that isn't there changes nothing. */
+export function makeMain<T extends Positioned>(
   items: readonly T[],
   index: number,
-  direction: -1 | 1,
 ): T[] {
   const ordered = normalizePositions(items);
-  const target = index + direction;
-  if (target < 0 || target >= ordered.length) return ordered;
-  [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
-  return ordered.map((item, position) => ({ ...item, position }));
+  if (index <= 0 || index >= ordered.length) return ordered;
+  const [main] = ordered.splice(index, 1);
+  return [main, ...ordered].map((item, position) => ({ ...item, position }));
 }
 
 /** The photos without the one at `index`, renumbered. */

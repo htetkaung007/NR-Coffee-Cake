@@ -726,17 +726,33 @@ double-taps), or an optimistic update. A disabled control shows WHY
   `overscroll-behavior-x: contain` keeps the browser's back gesture
   out. Words come from OrderUiLabels (customer `menuDetail.*`; New Order
   follows its EN | မြန်မာ menu-side toggle).
-- **Menu form photos** (`menuForm/MenuImageUploader`, Backoffice):
-  "N of 3" + the hint "The first photo is the main one — it shows on
-  the menu card."; one row per photo at every width (fits 375px):
-  96px 4:3 thumbnail (cover) with a "Main" chip on the first, then ←
-  (Move left), → (Move right), 🗑 (Remove) — 44px icon buttons, 8px
-  apart, each named "Move photo 2 left" etc.; disabled at the ends;
-  focus follows a moved photo. Below them a dashed "Add photo (up to
-  3)" zone (browse, several at once, or drop; gone at 3). Nothing is
-  saved until Save (the full list goes with it); buttons rather than
-  drag-and-drop — three photos don't need it, and a drag inside a
-  scrolling phone page fights the scroll.
+- **Menu form Photos card** (`menuForm/MenuImageUploader`, Backoffice;
+  max 520px wide): title "Photos" with "N / 3" on the right, then the
+  hint "The big one is the main photo — customers see it on the menu
+  card. Tap ★ on another photo to make it the main one." The MAIN photo
+  (position 0) is LARGE — full width, 4:3, cover, radius × 2 — with a
+  "★ Main" chip top-left (paper fill, text.primary, star aria-hidden)
+  and Remove bottom-right. Photos 2–3 sit in two columns under it (4:3),
+  each with ☆ "Make photo 2 the main photo", ⇄ "Replace photo 2" (the
+  file picker; the new file takes that slot) and 🗑 "Remove photo 2" —
+  44px buttons spread across a full-width paper strip on the tile's
+  bottom edge (they fit a 375px phone's ~154px tile, ≥ 8px apart).
+  Buttons on a photo always sit on paper (background.paper + a soft
+  shadow) so they read on any picture. ★ moves that photo to the front;
+  the others keep their order (`makeMain`). Every empty slot is a dashed
+  "+ Add photo" tile (the big one when there's no photo; browse several
+  at once, or drop files on it). Footer: two captions — "JPG · PNG ·
+  WebP · up to 5 MB each" and "We resize them for you". Nothing is saved
+  until Save. Under the live preview card (main photo only, no dots —
+  cards never swipe), from 2 photos: "When a customer opens the item,
+  they can swipe through all N photos."
+- **Menu form Add-ons box** (`menuForm/ConnectedAddonsSection`): the
+  button says what it does — "Connect add-on group" (it opens the
+  Connect dialog). Phones: title + hint, the groups (or "no groups"),
+  then the button LAST, full width (outlined, + icon, ≥ 44px; its words
+  may wrap). From `sm`: the button top-right in the header row; the
+  title side has minWidth 0 and shrinks first — never a sideways
+  overflow.
 - **Dialog vs page:** a **dialog** for short tasks — about 1–3 fields,
   confirmations, and quick creates that must not lose the form behind
   them (e.g. "New category" from the menu form). A **page** for long
@@ -915,7 +931,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-28 (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-10-29 (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

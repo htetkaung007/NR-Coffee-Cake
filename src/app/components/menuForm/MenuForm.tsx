@@ -31,7 +31,7 @@ import ConnectedAddonsSection from "./ConnectedAddonsSection";
 import MenuCategoryChips, { MenuCategoryOption } from "./MenuCategoryChips";
 import MenuImageUploader, { type FormPhoto } from "./MenuImageUploader";
 import type { MenuImageView } from "@/app/lib/storage/assetUrl";
-import { moveImage, removeImage } from "@/app/lib/menu/menuImagePlan";
+import { makeMain, removeImage } from "@/app/lib/menu/menuImagePlan";
 import { toImageSlots } from "@/app/lib/menu/menuImageSlots";
 import StockQuantityStepper from "./StockQuantityStepper";
 import LocationChecklist, { type LocationOption } from "./LocationChecklist";
@@ -264,13 +264,35 @@ export default function MenuForm({
     setPhotos([...photos, ...added]);
   }
 
+  /** A picked file's preview URL, once nothing shows it any more. */
+  function releasePreview(photo: FormPhoto | undefined) {
+    if (photo?.kind !== "new") return;
+    URL.revokeObjectURL(photo.url);
+    objectUrls.current.delete(photo.url);
+  }
+
   function handleRemovePhoto(index: number) {
-    const removed = photos[index];
-    if (removed?.kind === "new") {
-      URL.revokeObjectURL(removed.url);
-      objectUrls.current.delete(removed.url);
-    }
+    releasePreview(photos[index]);
     setPhotos(removeImage(photos, index));
+  }
+
+  /** ⇄: the new file takes this slot. A photo the menu already had is
+   *  dropped from the list, so the save deletes its file after the
+   *  commit (MenuService.saveMenuImages). */
+  function handleReplacePhoto(index: number, file: File) {
+    const replaced = photos[index];
+    if (!replaced) return;
+    setError(null);
+    releasePreview(replaced);
+    const url = URL.createObjectURL(file);
+    objectUrls.current.add(url);
+    setPhotos(
+      photos.map((photo, position) =>
+        position === index
+          ? { kind: "new", key: url, url, file, position: photo.position }
+          : photo,
+      ),
+    );
   }
 
   /** Brings the first problem's field into view and focuses it when it
@@ -538,9 +560,8 @@ export default function MenuForm({
           <MenuImageUploader
             photos={photos}
             onFilesAdded={handlePhotosAdded}
-            onMove={(index, direction) =>
-              setPhotos((current) => moveImage(current, index, direction))
-            }
+            onReplace={handleReplacePhoto}
+            onMakeMain={(index) => setPhotos((current) => makeMain(current, index))}
             onRemove={handleRemovePhoto}
             onError={setError}
           />
@@ -662,6 +683,18 @@ export default function MenuForm({
               <MenuCard item={previewData} labels={previewWords?.cardLabels} />
             </Box>
           </SurfaceThemeScope>
+          {/* The card shows the main photo only (cards never swipe); the
+              detail shows them all. */}
+          {photos.length >= 2 && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ maxWidth: 360, mx: "auto", mt: 1, textAlign: "center" }}
+            >
+              {t("previewSwipeHint", { count: photos.length })}
+            </Typography>
+          )}
         </Box>
       </Box>
 

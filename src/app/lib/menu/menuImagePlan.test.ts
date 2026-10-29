@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   checkImageSlots,
-  moveImage,
+  makeMain,
   normalizePositions,
   planMenuImages,
   removeImage,
@@ -40,32 +40,29 @@ describe("normalizePositions", () => {
   });
 });
 
-describe("moveImage", () => {
+describe("makeMain", () => {
   const photos = [
     { name: "a", position: 0 },
     { name: "b", position: 1 },
     { name: "c", position: 2 },
   ];
 
-  it("moves a photo one place left, positions staying 0..n-1", () => {
-    expect(moveImage(photos, 2, -1)).toEqual([
-      { name: "a", position: 0 },
-      { name: "c", position: 1 },
+  it("makes the chosen photo the main one; the others keep their order", () => {
+    expect(makeMain(photos, 2)).toEqual([
+      { name: "c", position: 0 },
+      { name: "a", position: 1 },
       { name: "b", position: 2 },
     ]);
   });
 
-  it("moves a photo one place right — moving the main photo right makes the next one main", () => {
-    expect(moveImage(photos, 0, 1).map((photo) => photo.name)).toEqual([
-      "b",
-      "a",
-      "c",
-    ]);
+  it("works from the second photo too", () => {
+    expect(makeMain(photos, 1).map((photo) => photo.name)).toEqual(["b", "a", "c"]);
   });
 
-  it("changes nothing at either end", () => {
-    expect(moveImage(photos, 0, -1)).toEqual(photos);
-    expect(moveImage(photos, 2, 1)).toEqual(photos);
+  it("changes nothing for the main photo itself, or an index that isn't there", () => {
+    expect(makeMain(photos, 0)).toEqual(photos);
+    expect(makeMain(photos, 3)).toEqual(photos);
+    expect(makeMain(photos, -1)).toEqual(photos);
   });
 });
 
