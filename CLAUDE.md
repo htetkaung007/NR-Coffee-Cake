@@ -804,6 +804,17 @@ business reason?"
 
 ## 16. Testing
 
+- **The Prisma client is never committed.** `prisma/generated` is
+  git-ignored; `npm install` / `npm ci` regenerate it (package.json's
+  `postinstall: prisma generate`), so a fresh clone always gets a client
+  that matches schema.prisma. After a schema change, `prisma generate`
+  (or the migrate that runs it) updates it locally. The `prisma` CLI and
+  `dotenv` (read by prisma.config.ts) are devDependencies — install WITH
+  dev dependencies wherever the app is built (a `--omit=dev` install
+  would fail at postinstall).
+- **Line endings are LF everywhere** (`.gitattributes`: `* text=auto
+  eol=lf`, images binary) — Windows, the Linux container and the server
+  alike; never commit a CRLF flip.
 - **Vitest** (`vitest.config.mts` at the repo root). Run `npm test` once,
   or `npm run test:watch` while working.
 - Test files sit **next to the module they test**, named `*.test.ts`

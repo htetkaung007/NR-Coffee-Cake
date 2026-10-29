@@ -1,0 +1,11 @@
+# Line endings: LF in the repo and in every checkout — Windows, the Linux
+# container and the Ubuntu server alike. Without this, CRLF / LF flips
+# showed up as thousands of "changed" lines.
+* text=auto eol=lf
+
+# Images are bytes, never text — no line-ending conversion.
+*.png binary
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
