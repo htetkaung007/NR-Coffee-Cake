@@ -3,7 +3,8 @@ import { Box, Typography } from "@mui/material";
 /**
  * The history list's total — ONE card at the END of the list, after the
  * last order card. It scrolls with the cards (never fixed); the page
- * keeps BOTTOM_BAR_CLEARANCE, so it never ends under the bottom bar.
+ * keeps the bar's room (barClearanceSx / railClearanceSx), so it never
+ * ends under the bottom bar or the landscape rail.
  * Row 1: what it is (the bill number / "Table total") · the count; on a
  * table, the customer's own part under it; then "Total amount" with the
  * amount on the right in the customer price tone (palette.decor.price,

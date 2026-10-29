@@ -19,7 +19,11 @@ import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import { isPlainLeftClick } from "@/app/lib/isPlainLeftClick";
-import { hoverCapableMedia } from "@/app/lib/theme/sharedThemeTokens";
+import {
+  hoverCapableMedia,
+  topBarHeight,
+  touchTabletLandscapeMedia,
+} from "@/app/lib/theme/sharedThemeTokens";
 import {
   bottomBarHref,
   bottomBarTab,
@@ -27,7 +31,12 @@ import {
   isBottomBarVisible,
   type BottomBarTab,
 } from "@/app/lib/storefront/bottomBarVisibility";
-import { BOTTOM_BAR_OFFSET_PX } from "@/app/lib/storefront/bottomBarLayout";
+import {
+  BOTTOM_BAR_OFFSET_PX,
+  RAIL_ITEM_MIN_HEIGHT_PX,
+  RAIL_ITEM_WIDTH_PX,
+  RAIL_OFFSET_PX,
+} from "@/app/lib/storefront/bottomBarLayout";
 import { useOnScreenKeyboardOpen } from "@/app/lib/hooks/useOnScreenKeyboardOpen";
 
 /** What the page on screen tells the bar. */
@@ -122,6 +131,13 @@ const noSubscribe = () => () => {};
  * was seen to occasionally leave the old page's tree mounted (Router
  * Cache quirk) — the anchors stay real links for middle-click etc.
  * Hidden while the on-screen keyboard is open (useOnScreenKeyboardOpen).
+ *
+ * On a touch screen held LANDSCAPE (touchTabletLandscapeMedia — never a
+ * laptop) the same bar is a vertical RAIL on the right edge instead,
+ * centred in the space between the top bar (+8px) and the bottom offset,
+ * so it frees rows of menu. CSS only — the first paint is already right.
+ * The <nav> is the positioning box (click-through outside the pill); the
+ * pill inside it carries the look in both shapes.
  */
 export default function OrderBotBar() {
   const t = useTranslations("nav");
@@ -174,20 +190,27 @@ export default function OrderBotBar() {
         bottom: `calc(${BOTTOM_BAR_OFFSET_PX}px + env(safe-area-inset-bottom, 0px))`,
         maxWidth: 480,
         mx: "auto",
+        // The rail: a column on the right edge, from just below the top
+        // bar to the bottom offset; the pill is centred in it, so on a
+        // short screen it still never covers the top bar.
+        [touchTabletLandscapeMedia]: {
+          left: "auto",
+          right: `calc(${RAIL_OFFSET_PX}px + env(safe-area-inset-right, 0px))`,
+          top: `calc(${topBarHeight(theme)}px + env(safe-area-inset-top, 0px) + 8px)`,
+          maxWidth: "none",
+          mx: 0,
+          display: "flex",
+          alignItems: "center",
+          pointerEvents: "none",
+        },
         // Above the page (its sticky bars), below drawers and dialogs.
         zIndex: theme.zIndex.appBar,
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 999,
-        boxShadow: theme.shadows[3],
         // Keyboard open: fade out (opacity only, ≤ 150ms, ease-out), no
         // taps, and — once faded — out of the tab order and the
         // accessibility tree (visibility). Comes straight back on close.
-        // The pages keep BOTTOM_BAR_CLEARANCE either way: no layout jump.
+        // The pages keep their clearance either way: no layout jump.
         // Reduced motion: the global rule makes it instant.
         opacity: keyboardOpen ? 0 : 1,
-        pointerEvents: keyboardOpen ? "none" : undefined,
         visibility: keyboardOpen ? "hidden" : "visible",
         transition: keyboardOpen
           ? "opacity 150ms ease-out, visibility 0s linear 150ms"
@@ -196,14 +219,27 @@ export default function OrderBotBar() {
     >
       <Box
         component="ul"
-        sx={{
+        sx={(theme) => ({
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: 0.5,
           listStyle: "none",
           m: 0,
           p: 0.5,
-        }}
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 999,
+          boxShadow: theme.shadows[3],
+          pointerEvents: keyboardOpen ? "none" : "auto",
+          // The rail: the same items stacked, Menu / Cart / History top
+          // to bottom (the focus order follows).
+          [touchTabletLandscapeMedia]: {
+            gridTemplateColumns: `${RAIL_ITEM_WIDTH_PX}px`,
+            // 8px between the items — never cramped.
+            gap: 1,
+          },
+        })}
       >
         {TABS.map((tab) => {
           const href = bottomBarHref(tab.value, ids);
@@ -230,8 +266,15 @@ export default function OrderBotBar() {
                 }}
                 sx={(theme) => ({
                   width: "100%",
-                  // The 44px touch minimum — no taller.
+                  // The bottom pill: the 44px touch minimum — no taller.
                   minHeight: 44,
+                  // The rail: taller items, the icon and caption with
+                  // room around them.
+                  [touchTabletLandscapeMedia]: {
+                    minHeight: RAIL_ITEM_MIN_HEIGHT_PX,
+                    py: 1,
+                    gap: 0.5,
+                  },
                   flexDirection: "column",
                   borderRadius: 999,
                   color: selected ? "primary.main" : "text.secondary",
@@ -269,7 +312,17 @@ export default function OrderBotBar() {
                 <Typography
                   variant="caption"
                   component="span"
-                  sx={{ whiteSpace: "nowrap" }}
+                  sx={{
+                    whiteSpace: "nowrap",
+                    // On the rail the caption may wrap ("ခြင်းတောင်း"),
+                    // never get cut; the item grows taller.
+                    [touchTabletLandscapeMedia]: {
+                      whiteSpace: "normal",
+                      textAlign: "center",
+                      maxWidth: "100%",
+                      px: 0.5,
+                    },
+                  }}
                 >
                   {label}
                 </Typography>

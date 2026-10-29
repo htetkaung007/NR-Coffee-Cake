@@ -3,7 +3,10 @@
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Avatar, Box, Stack } from "@mui/material";
-import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
+import {
+  barClearanceSx,
+  railClearanceSx,
+} from "@/app/lib/storefront/bottomBarLayout";
 import BackCircleButton from "./BackCircleButton";
 
 /**
@@ -12,8 +15,9 @@ import BackCircleButton from "./BackCircleButton";
  * (to the menu) top-left, then a 400px column led by a large round icon
  * in the outcome's colour role. Each screen supplies its own texts and
  * buttons as children. Od theme colours only. The floating bottom bar
- * stays on these screens; the page keeps BOTTOM_BAR_CLEARANCE free at the
- * bottom, so the column (and its buttons) is centred above the bar.
+ * stays on these screens; the page keeps its room free (barClearanceSx,
+ * railClearanceSx), so the column (and its buttons) is centred above the
+ * bar — or beside the rail on a landscape touch screen.
  */
 export default function OutcomeScreenShell({
   onBack,
@@ -33,16 +37,20 @@ export default function OutcomeScreenShell({
   const tCommon = useTranslations("common");
   return (
     <Box
-      sx={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
-        p: 3,
-        pb: BOTTOM_BAR_CLEARANCE,
-        position: "relative",
-      }}
+      sx={[
+        {
+          minHeight: "100dvh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "background.default",
+          p: 3,
+          position: "relative",
+        },
+        // The bar's room (bottom, or the rail's on the right).
+        barClearanceSx,
+        railClearanceSx,
+      ]}
     >
       <BackCircleButton
         ariaLabel={tCommon("backToMenu")}

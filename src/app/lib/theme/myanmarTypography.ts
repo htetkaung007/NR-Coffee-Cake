@@ -27,33 +27,58 @@ const MIN_LINE_HEIGHT_BODY = 1.8;
  *  their minimum line-height, and the CSS selector of the element drawn
  *  in them. Form fields are never targeted (≥ 16px on phones —
  *  lib/theme/inputFontSize). */
-const TARGETS: { variant: string; selector: string; minLineHeight: number }[] = [
-  ...["h1", "h2", "h3", "h4", "h5", "h6", "subtitle1", "subtitle2"].map((variant) => ({
-    variant,
-    selector: `.MuiTypography-${variant}`,
-    minLineHeight: MIN_LINE_HEIGHT_HEADING,
-  })),
-  ...["body1", "body2", "caption", "overline"].map((variant) => ({
-    variant,
-    selector: `.MuiTypography-${variant}`,
-    minLineHeight: MIN_LINE_HEIGHT_BODY,
-  })),
-  // Buttons and tabs are drawn in the `button` variant.
-  { variant: "button", selector: ".MuiButton-root", minLineHeight: MIN_LINE_HEIGHT_HEADING },
-  { variant: "button", selector: ".MuiTab-root", minLineHeight: MIN_LINE_HEIGHT_HEADING },
-  { variant: "button", selector: ".MuiToggleButton-root", minLineHeight: MIN_LINE_HEIGHT_HEADING },
-  // Staff screens: menu rows (the account menu, selects' lists) and
-  // table cells draw their text without a Typography element.
-  { variant: "body1", selector: ".MuiMenuItem-root", minLineHeight: MIN_LINE_HEIGHT_BODY },
-  { variant: "body2", selector: ".MuiTableCell-root", minLineHeight: MIN_LINE_HEIGHT_BODY },
-];
+const TARGETS: { variant: string; selector: string; minLineHeight: number }[] =
+  [
+    ...["h1", "h2", "h3", "h4", "h5", "h6", "subtitle1", "subtitle2"].map(
+      (variant) => ({
+        variant,
+        selector: `.MuiTypography-${variant}`,
+        minLineHeight: MIN_LINE_HEIGHT_HEADING,
+      }),
+    ),
+    ...["body1", "body2", "caption", "overline"].map((variant) => ({
+      variant,
+      selector: `.MuiTypography-${variant}`,
+      minLineHeight: MIN_LINE_HEIGHT_BODY,
+    })),
+    // Buttons and tabs are drawn in the `button` variant.
+    {
+      variant: "button",
+      selector: ".MuiButton-root",
+      minLineHeight: MIN_LINE_HEIGHT_HEADING,
+    },
+    {
+      variant: "button",
+      selector: ".MuiTab-root",
+      minLineHeight: MIN_LINE_HEIGHT_HEADING,
+    },
+    {
+      variant: "button",
+      selector: ".MuiToggleButton-root",
+      minLineHeight: MIN_LINE_HEIGHT_HEADING,
+    },
+    // Staff screens: menu rows (the account menu, selects' lists) and
+    // table cells draw their text without a Typography element.
+    {
+      variant: "body1",
+      selector: ".MuiMenuItem-root",
+      minLineHeight: MIN_LINE_HEIGHT_BODY,
+    },
+    {
+      variant: "body2",
+      selector: ".MuiTableCell-root",
+      minLineHeight: MIN_LINE_HEIGHT_BODY,
+    },
+  ];
 
 type FontSize = string | number;
 
 /** A theme font size times `scale`: "1rem" → "calc(1rem * 0.92)" (any
  *  unit), a pixel number → pixels. */
 export function scaledFontSize(size: FontSize, scale: number): string {
-  return typeof size === "number" ? `${size * scale}px` : `calc(${size} * ${scale})`;
+  return typeof size === "number"
+    ? `${size * scale}px`
+    : `calc(${size} * ${scale})`;
 }
 
 /** A variant's line-height raised to at least `min` (a unitless number
@@ -73,7 +98,10 @@ export function myanmarTypographyStyles(
   for (const target of TARGETS) {
     const variant = typography[target.variant];
     if (!variant || typeof variant !== "object") continue;
-    const { fontSize, lineHeight, ...rest } = variant as Record<string, unknown>;
+    const { fontSize, lineHeight, ...rest } = variant as Record<
+      string,
+      unknown
+    >;
     const rule: Record<string, unknown> = {
       lineHeight: atLeast(lineHeight, target.minLineHeight),
       letterSpacing: "normal",
@@ -83,9 +111,11 @@ export function myanmarTypographyStyles(
     }
     // Responsive sizes (the theme's "@media (min-width: …)" keys).
     for (const [key, value] of Object.entries(rest)) {
-      if (!key.startsWith("@media") || !value || typeof value !== "object") continue;
+      if (!key.startsWith("@media") || !value || typeof value !== "object")
+        continue;
       const mediaSize = (value as { fontSize?: FontSize }).fontSize;
-      if (mediaSize !== undefined) rule[key] = { fontSize: scaledFontSize(mediaSize, scale) };
+      if (mediaSize !== undefined)
+        rule[key] = { fontSize: scaledFontSize(mediaSize, scale) };
     }
     styles[`${target.selector}:lang(my)`] = rule;
   }

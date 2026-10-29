@@ -21,7 +21,10 @@ import OrderTopBar from "@/app/components/orderUI/OrderTopBar";
 import OrderHistoryCard from "@/app/components/orderUI/OrderHistoryCard";
 import HistoryTotalCard from "@/app/components/orderUI/HistoryTotalCard";
 import BackCircleButton from "@/app/components/orderUI/BackCircleButton";
-import { BOTTOM_BAR_CLEARANCE } from "@/app/lib/storefront/bottomBarLayout";
+import {
+  barClearanceSx,
+  railClearanceSx,
+} from "@/app/lib/storefront/bottomBarLayout";
 
 // Same reasoning as /menu and /cart — see those pages' own comment.
 export const dynamic = "force-dynamic";
@@ -105,23 +108,24 @@ export default async function HistoryPage({
 
       return (
         <Box
-          sx={{
-            minHeight: "100dvh",
-            display: "flex",
-            flexDirection: "column",
-            // The floating bottom bar's room.
-            pb: BOTTOM_BAR_CLEARANCE,
-          }}
+          sx={[
+            { minHeight: "100dvh", display: "flex", flexDirection: "column" },
+            // The floating bar's room (bottom, or the rail's on the right).
+            barClearanceSx,
+          ]}
         >
           <OrderTopBar shopName={shopName} cartItemCount={0} />
           <Box
-            sx={{
-              flex: 1,
-              width: "100%",
-              p: { xs: 2, sm: 3 },
-              maxWidth: 720,
-              mx: "auto",
-            }}
+            sx={[
+              {
+                flex: 1,
+                width: "100%",
+                p: { xs: 2, sm: 3 },
+                maxWidth: 720,
+                mx: "auto",
+              },
+              railClearanceSx,
+            ]}
           >
             <Stack
               direction="row"
@@ -202,9 +206,11 @@ export default async function HistoryPage({
 
   if (!session || session.status === "CART") {
     return (
-      <Box sx={{ minHeight: "100dvh", pb: BOTTOM_BAR_CLEARANCE }}>
+      <Box sx={[{ minHeight: "100dvh" }, barClearanceSx]}>
         <OrderTopBar shopName={null} cartItemCount={0} />
-        <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }}>
+        <Box
+          sx={[{ p: { xs: 2, sm: 3 }, maxWidth: 720, mx: "auto" }, railClearanceSx]}
+        >
           <Typography variant="h6" sx={{ mb: 1 }}>
             {t("noHistoryTitle")}
           </Typography>
@@ -230,23 +236,24 @@ export default async function HistoryPage({
 
   return (
     <Box
-      sx={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        // The floating bottom bar's room.
-        pb: BOTTOM_BAR_CLEARANCE,
-      }}
+      sx={[
+        { minHeight: "100dvh", display: "flex", flexDirection: "column" },
+        // The floating bar's room (bottom, or the rail's on the right).
+        barClearanceSx,
+      ]}
     >
       <OrderTopBar shopName={shopName} cartItemCount={0} />
       <Box
-        sx={{
-          flex: 1,
-          width: "100%",
-          p: { xs: 2, sm: 3 },
-          maxWidth: 720,
-          mx: "auto",
-        }}
+        sx={[
+          {
+            flex: 1,
+            width: "100%",
+            p: { xs: 2, sm: 3 },
+            maxWidth: 720,
+            mx: "auto",
+          },
+          railClearanceSx,
+        ]}
       >
         <Stack
           direction="row"

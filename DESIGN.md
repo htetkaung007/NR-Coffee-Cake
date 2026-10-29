@@ -623,9 +623,36 @@ double-taps), or an optimistic update. A disabled control shows WHY
   `useOnScreenKeyboardOpen`, used only by the bar) it fades out (opacity,
   150ms ease-out; no taps, out of the tab order once faded) and comes back
   when the keyboard closes; reduced motion just hides / shows it. Pages
-  keep `BOTTOM_BAR_CLEARANCE` (`lib/storefront/bottomBarLayout`) free at the
-  bottom — never their own numbers; a page's own bottom action (/cart's
-  Send) sits 8px ABOVE the bar, both visible.
+  keep the bar's room through `barClearanceSx` (the frame) and
+  `railClearanceSx` (the content under the top bar) from
+  `lib/storefront/bottomBarLayout` — never their own numbers or media
+  queries; a page's own bottom action (/cart's Send) sits 8px ABOVE the
+  bar, both visible.
+- **Landscape rail** (`touchTabletLandscapeMedia` only — a touch tablet
+  held landscape, or a phone held sideways; never a laptop, never a
+  width breakpoint): the SAME bar (still OrderBotBar, mounted once) is a
+  vertical pill on the RIGHT edge — `right: 10px +
+  env(safe-area-inset-right)`, centred in the space between the top bar
+  (+8px) and the bottom offset, so even on a short screen it never
+  covers the top bar. Same look (paper, 1px divider, radius 999, the
+  soft shadow), the same three items stacked Menu / Cart / History top to
+  bottom (focus order follows), each 56px wide and ≥ 92px tall (8px
+  padding, 8px apart); the rail is 66px wide. A caption wider than its
+  48px wraps between syllables — never inside one, never cut: Myanmar
+  has no spaces, so a long word carries a zero-width space (U+200B) at
+  its syllable break in messages/my.json ("ခြင်း​တောင်း" → "ခြင်း" /
+  "တောင်း"; tested). Never `overflowWrap: anywhere` / `break-word` —
+  they split a syllable.
+  Same selected pill + aria-current, cart badge in the name, z-order,
+  keyboard fade and visibility rules. Pure CSS — the first paint is
+  already right. Under it the content keeps `RAIL_CLEARANCE` free on the
+  right (rail + 10px + 8px + safe-area-inset-right; the top bar stays
+  full width), the bottom clearance drops to the page's normal 16px +
+  safe area, and /cart's Send (and the outcome screens' buttons) sit at
+  that normal bottom edge. The auto-fill menu grid reflows: 1180×820
+  and 1024×768 both keep 4 columns (4 × 212px + gaps need 896px; the
+  grid has 1056px / 900px). Phones and tablets in portrait, laptops and desktops:
+  the bottom pill, exactly as before.
 - **History totals are compact.** The list's total is ONE card at the
   END of the list, after the last order (`HistoryTotalCard`), scrolling
   with it — never a fixed block above the bar. Row 1: Counter — the bill
@@ -775,7 +802,12 @@ the landscape notch (customer theme CssBaseline).
 
 The customer bottom bar floats at `calc(12px + env(safe-area-inset-bottom,
 0px))`; pages under it reserve `BOTTOM_BAR_CLEARANCE` (bar + offset +
-8px + safe area) instead of their own safe-area padding.
+8px + safe area, through `barClearanceSx`) instead of their own
+safe-area padding. On a landscape touch screen the bar is the right-side
+rail at `calc(10px + env(safe-area-inset-right, 0px))` (below the top
+bar's `env(safe-area-inset-top)`), and the content reserves
+`RAIL_CLEARANCE` (rail + 10px + 8px + `safe-area-inset-right`, through
+`railClearanceSx`) — the landscape notch never hides it.
 
 ## 20. Perceived performance
 
@@ -931,7 +963,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-10-29 (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-10-29 (#111): the customer bar becomes a right-side rail on landscape touch screens (touchTabletLandscapeMedia, centred below the top bar, 66px, items 56 × ≥ 92px, Myanmar captions wrap at a U+200B; barClearanceSx / railClearanceSx). Earlier (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit
