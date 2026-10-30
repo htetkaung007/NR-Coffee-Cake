@@ -1,0 +1,20 @@
+[Unit]
+Description=NR Cafe POS (Next.js)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hkh
+Group=hkh
+WorkingDirectory=/home/hkh/cafe/NR-Coffee-Cake
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

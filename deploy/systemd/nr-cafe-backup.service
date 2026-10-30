@@ -1,0 +1,10 @@
+[Unit]
+Description=NR Cafe backup (database + images)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 30); do docker inspect -f "{{.State.Health.Status}}" cafe-maw-db 2>/dev/null | grep -qx healthy && exit 0; sleep 2; done; echo "DB not healthy"; exit 1'
+ExecStart=/usr/local/sbin/nr-cafe-backup
+Nice=10
