@@ -18,6 +18,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.7
+    container_name: cafe-maw-tunnel
+    restart: unless-stopped
+    network_mode: host
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
 volumes:
   pgdata:
+
