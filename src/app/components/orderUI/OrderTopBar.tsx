@@ -32,6 +32,16 @@ interface OrderTopBarProps {
   awaitingApproval?: boolean;
 }
 
+/** The bar's box — shared with its loading skeleton
+ *  (CustomerPageSkeletons). */
+export const orderTopBarSx = {
+  bgcolor: "background.paper",
+  borderBottom: "1px solid",
+  borderColor: "divider",
+  // DESIGN.md §19: clear of the status bar / notch (installed app).
+  pt: "env(safe-area-inset-top, 0px)",
+};
+
 /**
  * Simple customer-facing header — Logo + shop name on the left, the cart
  * icon (with its item-count badge) on the right, per the design mock.
@@ -51,13 +61,7 @@ export default function OrderTopBar({
       position="sticky"
       elevation={0}
       color="transparent"
-      sx={{
-        bgcolor: "background.paper",
-        borderBottom: "1px solid",
-        borderColor: "divider",
-        // DESIGN.md §19: clear of the status bar / notch (installed app).
-        pt: "env(safe-area-inset-top, 0px)",
-      }}
+      sx={orderTopBarSx}
     >
       {/* [shop icon + name][language][cart] — the cart and the switch
          never shrink; the shop name gives way first (ellipsis). */}

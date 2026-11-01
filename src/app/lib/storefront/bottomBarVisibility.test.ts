@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  activeTab,
   bottomBarHref,
   bottomBarTab,
   idFromParam,
@@ -7,6 +8,28 @@ import {
 } from "./bottomBarVisibility";
 
 const SHOWN = { hiddenByScreen: false };
+
+describe("activeTab", () => {
+  it("shows the tapped tab while its navigation runs", () => {
+    expect(activeTab("/menu", "cart")).toBe("cart");
+  });
+
+  it("shows the path's own tab when nothing is running", () => {
+    expect(activeTab("/cart", null)).toBe("cart");
+  });
+
+  it("falls back to the real tab once a failed navigation clears the tap", () => {
+    expect(activeTab("/menu", null)).toBe("menu");
+  });
+
+  it("counts a receipt as the History tab", () => {
+    expect(activeTab("/history/42", null)).toBe("history");
+  });
+
+  it("has no active tab off the tab pages", () => {
+    expect(activeTab("/counter/continue", null)).toBeNull();
+  });
+});
 
 describe("isBottomBarVisible", () => {
   it("shows on the menu, cart, history and an order's receipt", () => {

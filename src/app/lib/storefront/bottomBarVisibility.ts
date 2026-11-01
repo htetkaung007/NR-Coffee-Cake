@@ -25,6 +25,15 @@ export function bottomBarTab(pathname: string): BottomBarTab | null {
   return null;
 }
 
+/** Which tab LOOKS active: the one just tapped while its navigation runs
+ *  (null — none running), otherwise the one the path belongs to. */
+export function activeTab(
+  pathname: string,
+  pendingTab: BottomBarTab | null,
+): BottomBarTab | null {
+  return pendingTab ?? bottomBarTab(pathname);
+}
+
 /** Shown on /menu, /cart, /history and /history/<orderId> — unless the
  *  page is showing a full-screen state of its own (HideBottomBar — the
  *  receipt, /history/<orderId>, always does: it has its own Back and

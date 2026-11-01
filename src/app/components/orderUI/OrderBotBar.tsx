@@ -2,10 +2,13 @@
 
 import {
   createContext,
+  startTransition,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
+  useOptimistic,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -25,8 +28,8 @@ import {
   touchTabletLandscapeMedia,
 } from "@/app/lib/theme/sharedThemeTokens";
 import {
+  activeTab,
   bottomBarHref,
-  bottomBarTab,
   idFromParam,
   isBottomBarVisible,
   type BottomBarTab,
@@ -56,6 +59,11 @@ interface BottomBarContextValue {
   setPage: (page: BottomBarPage | null) => void;
   hiddenCount: number;
   setHiddenCount: (update: (count: number) => number) => void;
+  /** The last cart count a page reported, and how many loading skeletons
+   *  are on screen — see KeepBottomBarCount. */
+  lastCartCount: number;
+  skeletonCount: number;
+  setSkeletonCount: (update: (count: number) => number) => void;
 }
 
 const BottomBarContext = createContext<BottomBarContextValue | null>(null);
@@ -73,11 +81,25 @@ function useBottomBarContext() {
 /** Holds what the current page told the bar — mounted once, around the
  *  storefront's pages and the bar. */
 export function BottomBarProvider({ children }: { children: ReactNode }) {
-  const [page, setPage] = useState<BottomBarPage | null>(null);
+  const [page, setPageState] = useState<BottomBarPage | null>(null);
   const [hiddenCount, setHiddenCount] = useState(0);
+  const [lastCartCount, setLastCartCount] = useState(0);
+  const [skeletonCount, setSkeletonCount] = useState(0);
+  const setPage = useCallback((next: BottomBarPage | null) => {
+    setPageState(next);
+    if (next && next.cartCount !== null) setLastCartCount(next.cartCount);
+  }, []);
   const value = useMemo(
-    () => ({ page, setPage, hiddenCount, setHiddenCount }),
-    [page, hiddenCount],
+    () => ({
+      page,
+      setPage,
+      hiddenCount,
+      setHiddenCount,
+      lastCartCount,
+      skeletonCount,
+      setSkeletonCount,
+    }),
+    [page, setPage, hiddenCount, lastCartCount, skeletonCount],
   );
   return (
     <BottomBarContext.Provider value={value}>
@@ -112,6 +134,17 @@ export function HideBottomBar() {
   return null;
 }
 
+/** Rendered by a loading skeleton: no page is telling the bar its cart
+ *  count while the next one loads, and the badge must not blink off. */
+export function KeepBottomBarCount() {
+  const { setSkeletonCount } = useBottomBarContext();
+  useLayoutEffect(() => {
+    setSkeletonCount((count) => count + 1);
+    return () => setSkeletonCount((count) => count - 1);
+  }, [setSkeletonCount]);
+  return null;
+}
+
 /** Each tab's label is nav.<value> in the customer's language. */
 const TABS: { value: BottomBarTab; icon: ReactNode }[] = [
   { value: "menu", icon: <GridViewOutlinedIcon fontSize="small" /> },
@@ -130,6 +163,11 @@ const noSubscribe = () => () => {};
  * navigation) for the same reason the cart pages do: a soft navigation
  * was seen to occasionally leave the old page's tree mounted (Router
  * Cache quirk) — the anchors stay real links for middle-click etc.
+ * A tapped tab looks active at once (useOptimistic, in the navigation's
+ * transition: the real pathname takes over when it commits, and a failed
+ * navigation falls back by itself). useLinkStatus can't do this: this
+ * bar's onClick cancels the Link's own navigation, so it never goes
+ * pending.
  * Hidden while the on-screen keyboard is open (useOnScreenKeyboardOpen).
  *
  * On a touch screen held LANDSCAPE (touchTabletLandscapeMedia — never a
@@ -144,7 +182,9 @@ export default function OrderBotBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { page, hiddenCount } = useBottomBarContext();
+  const { page, hiddenCount, lastCartCount, skeletonCount } =
+    useBottomBarContext();
+  const [pendingTab, setPendingTab] = useOptimistic<BottomBarTab | null>(null);
   // Not in the server HTML: a page that hides the bar (ShopUnavailable,
   // the receipt) says so only once it runs, and the bar must not
   // flash there first. It's fixed, so appearing moves nothing.
@@ -164,12 +204,13 @@ export default function OrderBotBar() {
     return null;
   }
 
-  const active = bottomBarTab(pathname);
+  const active = activeTab(pathname, pendingTab);
   const ids = {
     locationId: page?.locationId ?? idFromParam(searchParams.get("locationId")),
     tableId: page?.tableId ?? idFromParam(searchParams.get("tableId")),
   };
-  const cartCount = page?.cartCount ?? 0;
+  const cartCount =
+    page?.cartCount ?? (skeletonCount > 0 ? lastCartCount : 0);
 
   return (
     <Box
@@ -259,10 +300,15 @@ export default function OrderBotBar() {
                 onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
                   if (!isPlainLeftClick(event)) return;
                   event.preventDefault();
-                  // Already here (not a receipt under History).
+                  // Already here (not a receipt under History), or already
+                  // on the way there.
                   if (pathname === `/${tab.value}`) return;
-                  router.push(href);
-                  router.refresh();
+                  if (pendingTab === tab.value) return;
+                  startTransition(() => {
+                    setPendingTab(tab.value);
+                    router.push(href);
+                    router.refresh();
+                  });
                 }}
                 sx={(theme) => ({
                   width: "100%",
