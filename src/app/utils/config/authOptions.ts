@@ -4,6 +4,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 import { ensureDefaultSetup } from "./ensureDefaultSetup";
 import { config } from "./index";
+import { LoginAttemptsWarningError, LoginLockedError } from "@/app/lib/errors";
+import {
+  loginAttemptsSignal,
+  loginLockedSignal,
+} from "@/app/lib/access/loginThrottle";
 import { loginSchema } from "@/app/lib/schemas/authSchema";
 import { AppService, CompanyService } from "@/app/services";
 
@@ -33,7 +38,18 @@ export const authOptions: NextAuthOptions = {
         const user = await AppService.verifyCredentials(
           parsed.data.email,
           parsed.data.password,
-        );
+        ).catch((error: unknown) => {
+          // Thrown, because a null can't say why: NextAuth hands the
+          // message to signIn() as `error` (the JSON answer, not the
+          // address bar — the form uses redirect: false).
+          if (error instanceof LoginLockedError) {
+            throw new Error(loginLockedSignal(error.retryInMinutes));
+          }
+          if (error instanceof LoginAttemptsWarningError) {
+            throw new Error(loginAttemptsSignal(error.attemptsLeft));
+          }
+          throw error;
+        });
         if (!user) return null;
 
         return {

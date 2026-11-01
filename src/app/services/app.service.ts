@@ -1,14 +1,30 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "../../../prisma/generated/client";
 import { prisma } from "../utils/prisma";
-import { AppError, ValidationError } from "../lib/errors";
+import {
+  AppError,
+  LoginAttemptsWarningError,
+  LoginLockedError,
+  ValidationError,
+} from "../lib/errors";
 import { SIGNUP_CLOSED_MESSAGE } from "../lib/access/signUp";
+import {
+  CLEAR_LOGIN_THROTTLE,
+  afterFailedLogin,
+  checkAfterFailure,
+  checkLoginAllowed,
+  shouldWarnAttempts,
+} from "../lib/access/loginThrottle";
+import { createUnknownEmailThrottle } from "../lib/access/unknownEmailThrottle";
 
 /** A bcrypt hash (cost 10, as every stored password) of a random string
  *  nobody knows — compared against when an email has no password, so a
  *  sign-in for an unknown email takes as long as a wrong password. */
 const NO_ACCOUNT_HASH =
   "$2b$10$B8yty1tw/hpin8QPm/qZGeFst4mmrR9.ytXyeO.v5lKGqe38.6EJ.";
+
+/** Failures of emails with no User row — see unknownEmailThrottle. */
+const unknownEmails = createUnknownEmailThrottle();
 
 // Transaction-scoped Prisma client type, used by the private setup helpers below.
 type Tx = Prisma.TransactionClient;
@@ -136,19 +152,82 @@ export class AppService {
     );
   }
 
+  /** The user, or null for a wrong password; throws LoginLockedError
+   *  while the email is locked (lib/access/loginThrottle) — and on the
+   *  failure that locks it — and LoginAttemptsWarningError for a wrong
+   *  password with few tries left. Every path runs exactly one bcrypt compare, so
+   *  the response time doesn't tell which emails exist (OWASP WSTG-ATHN).
+   *  An unknown email locks too, on its in-memory counter, so the lock
+   *  message doesn't tell either. */
   static async verifyCredentials(email: string, password: string) {
     const user = await AppService.getUserByEmail(email);
-    // No account, or a Google-only one (no password set): still run one
-    // bcrypt compare (against a hash nothing matches) so the response
-    // time doesn't tell which emails exist (OWASP WSTG-ATHN).
+    const check = user
+      ? checkLoginAllowed(user, new Date())
+      : unknownEmails.check(email, new Date());
+    if (!check.allowed) {
+      // Against a hash nothing matches: a locked email's real password
+      // is never checked.
+      await bcrypt.compare(password, NO_ACCOUNT_HASH);
+      throw new LoginLockedError(check.retryInMinutes);
+    }
+
+    // No account, or a Google-only one (no password set): compared against
+    // the same hash nothing matches.
     const isValidPassword = await bcrypt.compare(
       password,
       user?.password ?? NO_ACCOUNT_HASH,
     );
-    if (!user || !user.password || !isValidPassword) return null;
+    if (user && user.password && isValidPassword) {
+      await AppService.clearFailedLogins(user.id);
+      return user;
+    }
 
-    return user;
+    const after = user
+      ? await AppService.recordFailedLogin(user.id)
+      : unknownEmails.recordFailure(email, new Date());
+    if (!after.allowed) throw new LoginLockedError(after.retryInMinutes);
+    if (shouldWarnAttempts(after.attemptsLeft)) {
+      throw new LoginAttemptsWarningError(after.attemptsLeft);
+    }
+    return null;
   }
+
+  /** One statement, and no write at all for the usual clean account. */
+  private static clearFailedLogins(userId: number) {
+    return prisma.user.updateMany({
+      where: {
+        id: userId,
+        OR: [
+          { failedLoginCount: { gt: 0 } },
+          { firstFailedLoginAt: { not: null } },
+          { lockedUntil: { not: null } },
+        ],
+      },
+      data: CLEAR_LOGIN_THROTTLE,
+    });
+  }
+
+  /** The row is locked first and re-read under the lock, so two parallel
+   *  wrong attempts both count. */
+  private static recordFailedLogin(userId: number) {
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
+      const state = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          failedLoginCount: true,
+          firstFailedLoginAt: true,
+          lockedUntil: true,
+        },
+      });
+      const now = new Date();
+      const next = afterFailedLogin(state ?? CLEAR_LOGIN_THROTTLE, now);
+      // Removed while signing in: nothing left to count on.
+      if (state) await tx.user.update({ where: { id: userId }, data: next });
+      return checkAfterFailure(next, now);
+    });
+  }
+
   private static createDefaultCompany(tx: Tx) {
     return tx.company.create({ data: { name: "Default Company" } });
   }

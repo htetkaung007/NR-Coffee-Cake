@@ -407,14 +407,24 @@ flag). Everything else still goes through `utils/config`.
 
 ## 13. Known project gaps / TODOs
 
-- Login rate limiting / account lockout — IN PROGRESS (#97l): the rule
-  is `lib/access/loginThrottle.ts` (5 wrong passwords within 15 minutes
-  lock that EMAIL for 15 minutes; a successful sign-in resets it;
-  counted per email, never per IP — the shop shares one address). The
-  three User columns are in schema.prisma, waiting for their migration;
-  then AppService.verifyCredentials applies it. Already live: an unknown
-  email still runs one bcrypt compare (a dummy hash), so the response
-  time doesn't reveal which emails exist.
+- Login rate limiting / account lockout — DONE (#114): the rule is
+  `lib/access/loginThrottle.ts` (5 wrong passwords within 15 minutes lock
+  that EMAIL for 15 minutes; a successful sign-in resets it; counted per
+  email, never per IP — the shop shares one address), applied by
+  AppService.verifyCredentials (one bcrypt compare on every path; a
+  failure is written under a row lock). `authorize()` passes the lock to
+  the form as `LOGIN_LOCKED:<minutes>`, and from 3 tries left a wrong
+  password as `LOGIN_ATTEMPTS_LEFT:<n>` (a warning; unknown emails get it
+  too). Google sign-in isn't locked.
+  - An unknown email gets the same lock message from an in-memory counter
+    (`lib/access/unknownEmailThrottle.ts`, at most 1000 entries, a full map
+    evicts the oldest), so the message doesn't tell which emails exist. It
+    lives in ONE Node process: it resets on a restart and would split
+    across processes under PM2 cluster mode or more than one instance.
+  - The app is reachable through a Cloudflare Tunnel, so anyone can lock
+    a known email for 15 minutes (the cost of a per-email lockout). The
+    recommended extra layer is Cloudflare Access on /backoffice and /auth
+    — an ops setting, not code.
 - A full script/style Content-Security-Policy. Today next.config.ts
   sends frame-ancestors 'none' (+ X-Frame-Options, nosniff,
   Referrer-Policy, Permissions-Policy) on every route; script-src /

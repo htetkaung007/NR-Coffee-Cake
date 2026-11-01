@@ -13,7 +13,7 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import { useTranslations } from "next-intl";
-import { MAX_VOLUME, MIN_VOLUME } from "@/app/lib/hooks/useOrderAlertSound";
+import { MAX_VOLUME, MIN_VOLUME } from "@/app/lib/hooks/orderAlertSoundRules";
 
 interface OrderSoundToggleProps {
   enabled: boolean;

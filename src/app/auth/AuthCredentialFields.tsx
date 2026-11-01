@@ -2,6 +2,7 @@
 
 import { TextField } from "@mui/material";
 import { useTranslations } from "next-intl";
+import PasswordField from "@/app/components/PasswordField";
 
 /** The email + password fields of the sign-in and sign-up forms. */
 export default function AuthCredentialFields({
@@ -9,11 +10,13 @@ export default function AuthCredentialFields({
   onEmailChange,
   password,
   onPasswordChange,
+  passwordAutoComplete,
 }: {
   email: string;
   onEmailChange: (value: string) => void;
   password: string;
   onPasswordChange: (value: string) => void;
+  passwordAutoComplete: "current-password" | "new-password";
 }) {
   const t = useTranslations("bo.auth");
   return (
@@ -28,10 +31,10 @@ export default function AuthCredentialFields({
         value={email}
         onChange={(e) => onEmailChange(e.target.value)}
       />
-      <TextField
+      <PasswordField
         fullWidth
         label={t("password")}
-        type="password"
+        autoComplete={passwordAutoComplete}
         variant="outlined"
         margin="normal"
         required

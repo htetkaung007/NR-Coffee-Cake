@@ -18,6 +18,7 @@ import {
 } from "@/app/lib/access/permissions";
 import { useSubmitLock } from "@/app/lib/hooks/useSubmitLock";
 import SubmitButton from "@/app/components/SubmitButton";
+import PasswordField from "@/app/components/PasswordField";
 import PermissionChecklist from "./PermissionChecklist";
 import { createManagerAction } from "./action";
 
@@ -106,9 +107,9 @@ export default function AddManagerForm({ locations }: AddManagerFormProps) {
               onChange={(event) => setEmail(event.target.value)}
             />
 
-            <TextField
+            <PasswordField
               label={t("password")}
-              type="password"
+              autoComplete="new-password"
               required
               fullWidth
               value={password}

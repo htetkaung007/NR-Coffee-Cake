@@ -1,6 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  BEEP_SECONDS,
+  DEFAULT_VOLUME,
+  UNLOCK_GESTURES,
+  beepStartOffsets,
+  clampVolume,
+  volumeFromStorage,
+} from "./orderAlertSoundRules";
 import { readStorage, useStoredValue, writeStorage } from "./useStoredValue";
 
 /**
@@ -18,10 +26,11 @@ import { readStorage, useStoredValue, writeStorage } from "./useStoredValue";
  *    context and plays one test beep straight away (instant proof it
  *    works);
  *  - an "on" preference restored after a reload shows `isLocked`
- *    (callers render a "Tap anywhere to enable sound" hint) and the
- *    first pointerdown/keydown anywhere unlocks it;
+ *    (callers render a "Tap anywhere to enable sound" hint) and a
+ *    gesture anywhere (UNLOCK_GESTURES) unlocks it — every one tries
+ *    again until the audio is really running;
  *  - play() always awaits resume() before making sound.
- * Volume (10–100%, default 50) is remembered the same way, under its
+ * An alert is three short beeps. Volume (10–100%, default 80) is remembered the same way, under its
  * own key.
  * Called only from OrderAlertsProvider (mounted in the Backoffice
  * layout), so there's one AudioContext, held in a ref, for the whole
@@ -30,12 +39,6 @@ import { readStorage, useStoredValue, writeStorage } from "./useStoredValue";
 
 const STORAGE_KEY = "orders-alert-sound";
 const VOLUME_STORAGE_KEY = "orders-alert-volume";
-const BEEP_SECONDS = 0.15;
-
-export const MIN_VOLUME = 10;
-export const MAX_VOLUME = 100;
-const DEFAULT_VOLUME = 50;
-
 let enabledInMemory = false;
 let volumeInMemory = DEFAULT_VOLUME;
 
@@ -49,17 +52,8 @@ function writeEnabled(enabled: boolean) {
   writeStorage(STORAGE_KEY, enabled ? "on" : "off");
 }
 
-function clampVolume(percent: number) {
-  return Math.min(MAX_VOLUME, Math.max(MIN_VOLUME, Math.round(percent)));
-}
-
 function readVolume() {
-  const stored = readStorage(VOLUME_STORAGE_KEY);
-  if (stored !== null) {
-    const percent = Number(stored);
-    if (Number.isFinite(percent)) return clampVolume(percent);
-  }
-  return volumeInMemory;
+  return volumeFromStorage(readStorage(VOLUME_STORAGE_KEY), volumeInMemory);
 }
 
 function writeVolume(percent: number) {
@@ -69,13 +63,18 @@ function writeVolume(percent: number) {
 
 /** Squared, because loudness is perceived roughly logarithmically — a
  *  linear map would make the bottom half of the slider barely differ
- *  from the top. 50% → 0.25, 100% → 1.0 (full scale). */
+ *  from the top. 50% → 0.25, 80% → 0.64, 100% → 1.0 (full scale). */
 function peakGainFor(volume: number) {
   return (volume / 100) ** 2;
 }
 
 function playBeep(context: AudioContext, volume: number) {
-  const start = context.currentTime;
+  for (const offset of beepStartOffsets()) {
+    playTone(context, volume, context.currentTime + offset);
+  }
+}
+
+function playTone(context: AudioContext, volume: number, start: number) {
   const oscillator = context.createOscillator();
   const gain = context.createGain();
   oscillator.type = "sine";
@@ -137,19 +136,23 @@ export function useOrderAlertSound() {
     if (enabled) void resumeContext();
   }, [enabled, resumeContext]);
 
-  // Still locked with the preference "on": the first tap/keypress
-  // anywhere unlocks it. One-time; removed once it fires and on unmount.
+  // Still locked with the preference "on": a tap/keypress anywhere
+  // unlocks it. The listeners stay until the audio really runs (isLocked
+  // going false removes them) — a gesture the browser refuses must not be
+  // the last try. Capture, so nothing on the page can stop them.
   const isLocked = enabled && !isRunning;
   useEffect(() => {
     if (!isLocked) return;
-    const gestures = ["pointerdown", "keydown"] as const;
     function onGesture() {
-      gestures.forEach((name) => window.removeEventListener(name, onGesture));
       void resumeContext();
     }
-    gestures.forEach((name) => window.addEventListener(name, onGesture));
+    UNLOCK_GESTURES.forEach((name) =>
+      window.addEventListener(name, onGesture, true),
+    );
     return () =>
-      gestures.forEach((name) => window.removeEventListener(name, onGesture));
+      UNLOCK_GESTURES.forEach((name) =>
+        window.removeEventListener(name, onGesture, true),
+      );
   }, [isLocked, resumeContext]);
 
   // Release the AudioContext when the Backoffice layout unmounts.

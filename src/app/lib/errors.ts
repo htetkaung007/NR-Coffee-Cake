@@ -56,6 +56,24 @@ export class ValidationError extends AppError {
     this.name = "ValidationError";
   }
 }
+/** Too many wrong passwords for this email (lib/access/loginThrottle) —
+ *  the same for a real account and an unknown email. */
+export class LoginLockedError extends AppError {
+  constructor(public readonly retryInMinutes: number) {
+    super("Too many sign-in attempts.", "LOGIN_LOCKED");
+    this.name = "LoginLockedError";
+  }
+}
+
+/** A wrong password with few tries left before the lock — the same for a
+ *  real account and an unknown email. */
+export class LoginAttemptsWarningError extends AppError {
+  constructor(public readonly attemptsLeft: number) {
+    super("Wrong email or password.", "LOGIN_ATTEMPTS_LEFT");
+    this.name = "LoginAttemptsWarningError";
+  }
+}
+
 export class InsufficientStockError extends AppError {
   constructor(menuName: string, available: number) {
     super(

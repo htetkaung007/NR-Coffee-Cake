@@ -124,6 +124,7 @@ export function SignUpForm() {
           onEmailChange={setEmail}
           password={password}
           onPasswordChange={setPassword}
+          passwordAutoComplete="new-password"
         />
 
         {errorMessage && (

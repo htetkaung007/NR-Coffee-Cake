@@ -300,6 +300,9 @@ double-taps), or an optimistic update. A disabled control shows WHY
 ## 16. Forms and inputs
 
 - Real labels, not placeholder-only.
+- **Password fields** are `components/PasswordField`: an eye button at
+  the end (44px, "Show password" / "Hide password", aria-pressed, keeps
+  the field's focus), hidden by default and again after a submit.
 - **Character limits are visible**: every name / description field
   shows "12/50 characters" (`components/CharacterCount`, in the staff's
   language), and its Myanmar twin shows the SAME counter (beside its
@@ -904,8 +907,12 @@ bills and table sessions are untouched; only new scans need the new QR.
   except the Order List; the whole banner is one link to the Order List; it
   disappears on its own when nothing is pending.
 - Sound is **off by default**, enabled by a user gesture (browsers never
-  show a sound permission prompt). Turning it on plays a test beep. At most
-  one beep per poll. Volume uses a perceived-loudness (squared) curve.
+  show a sound permission prompt). Turning it on plays a test alert. An
+  alert is three short beeps, at most one alert per poll. Volume defaults
+  to 80% (a saved volume stays) and uses a perceived-loudness (squared)
+  curve. After a reload every tap or keypress tries to unlock audio until
+  it really runs (a touch unlocks when the finger lifts, never on
+  pointerdown).
 - The tab title is prefixed with the pending count, e.g. "(2) Orders".
 - A card that receives a new round gets a one-time highlight (Rule 2), never
   a looping animation.
@@ -971,7 +978,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-11-01 (#113): customer tabs feel instant — the tapped tab looks active at once, delayed-fade skeletons on Menu, Cart, History and the receipt. Earlier (#111): the customer bar becomes a right-side rail on landscape touch screens (touchTabletLandscapeMedia, centred below the top bar, 66px, items 56 × ≥ 92px, Myanmar captions wrap at a U+200B; barClearanceSx / railClearanceSx). Earlier (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-11-01 (#114): PasswordField's eye button; the alert is three beeps at 80% by default. Earlier (#113): customer tabs feel instant — the tapped tab looks active at once, delayed-fade skeletons on Menu, Cart, History and the receipt. Earlier (#111): the customer bar becomes a right-side rail on landscape touch screens (touchTabletLandscapeMedia, centred below the top bar, 66px, items 56 × ≥ 92px, Myanmar captions wrap at a U+200B; barClearanceSx / railClearanceSx). Earlier (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

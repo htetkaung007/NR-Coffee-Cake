@@ -16,6 +16,10 @@ import AuthCard from "../AuthCard";
 import NextLink from "next/link";
 import GoogleIcon from "@mui/icons-material/Google";
 import { SIGNUP_CLOSED_ERROR } from "@/app/lib/access/signUp";
+import {
+  parseLoginAttempts,
+  parseLoginLocked,
+} from "@/app/lib/access/loginThrottle";
 import AuthCredentialFields from "../AuthCredentialFields";
 import { isAppPath } from "@/app/lib/http/appPath";
 import { authButtonSx } from "../authButtonSx";
@@ -45,6 +49,7 @@ export default function SignInForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [errorSeverity, setErrorSeverity] = useState<"error" | "warning">("error");
   const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
@@ -73,7 +78,16 @@ export default function SignInForm({
       setLoading(false);
 
       if (result?.error) {
-        setError(t("invalidCredentials"));
+        const lockedMinutes = parseLoginLocked(result.error);
+        const attemptsLeft = parseLoginAttempts(result.error);
+        setErrorSeverity(attemptsLeft !== null ? "warning" : "error");
+        setError(
+          lockedMinutes !== null
+            ? t("accountLocked", { minutes: lockedMinutes })
+            : attemptsLeft !== null
+              ? t("attemptsLeft", { attempts: attemptsLeft })
+              : t("invalidCredentials"),
+        );
         return;
       }
 
@@ -82,6 +96,7 @@ export default function SignInForm({
     } catch (err) {
       console.error("[SignInForm] Credentials sign-in failed:", err);
       setLoading(false);
+      setErrorSeverity("error");
       setError(t("unexpected"));
     }
   }
@@ -131,10 +146,11 @@ export default function SignInForm({
           onEmailChange={setEmail}
           password={password}
           onPasswordChange={setPassword}
+          passwordAutoComplete="current-password"
         />
 
         {error && (
-          <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+          <Alert severity={errorSeverity} sx={{ mt: 2, borderRadius: 2 }}>
             {error}
           </Alert>
         )}
