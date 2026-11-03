@@ -9,6 +9,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useTheme } from "@mui/material/styles";
 import { useTranslations } from "next-intl";
@@ -27,7 +28,7 @@ export interface NewOrderNotice {
 /** A toast's words, as a bo.alerts message key and its values. */
 type NewOrderMessage =
   | { key: "newOrder" | "newRound"; values: { title: string } }
-  | { key: "manyNew"; values: { count: number } };
+  | { key: "manyNew" | "bannerWaiting"; values: { count: number } };
 
 const AUTO_HIDE_MS = 5000;
 
@@ -54,10 +55,25 @@ export function describeNewRounds(
   };
 }
 
+/** The toast while the alert rings with no fresh notice to show (rounds
+ *  already waiting after a reload, or the sound just turned on). */
+export function waitingNotice(count: number): NewOrderNotice {
+  return {
+    id: 0,
+    message: { key: "bannerWaiting", values: { count } },
+    href: null,
+  };
+}
+
 interface NewOrderToastProps {
   notice: NewOrderNotice | null;
   open: boolean;
   onClose: () => void;
+  /** The alert is ringing: the toast stays (no auto-hide — on the Order
+   *  List it is the only way to stop it) and Silence replaces the ×. */
+  isRinging: boolean;
+  /** Acknowledges every waiting round on this device. */
+  onAcknowledge: () => void;
 }
 
 /** Bottom-right on md+, bottom-center below. `notice` stays set after
@@ -66,6 +82,8 @@ export default function NewOrderToast({
   notice,
   open,
   onClose,
+  isRinging,
+  onAcknowledge,
 }: NewOrderToastProps) {
   const t = useTranslations("bo.alerts");
   const theme = useTheme();
@@ -75,11 +93,11 @@ export default function NewOrderToast({
     <Snackbar
       key={notice?.id}
       open={open}
-      autoHideDuration={AUTO_HIDE_MS}
+      autoHideDuration={isRinging ? null : AUTO_HIDE_MS}
       onClose={(_event, reason) => {
         // A tap elsewhere on the page shouldn't dismiss an alert the
-        // cashier hasn't read yet.
-        if (reason === "clickaway") return;
+        // cashier hasn't read yet; while ringing only Silence / View do.
+        if (reason === "clickaway" || isRinging) return;
         onClose();
       }}
       anchorOrigin={{
@@ -110,20 +128,40 @@ export default function NewOrderToast({
                 href={notice.href}
                 color="inherit"
                 size="small"
-                onClick={onClose}
+                onClick={() => {
+                  // Tapping the toast's View is an acknowledgement.
+                  onAcknowledge();
+                  onClose();
+                }}
                 sx={{ minHeight: 44 }}
               >
                 {t("view")}
               </Button>
             )}
-            <IconButton
-              aria-label={t("close")}
-              color="inherit"
-              onClick={onClose}
-              sx={{ width: 44, height: 44 }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
+            {isRinging ? (
+              <Button
+                color="inherit"
+                size="small"
+                startIcon={<VolumeOffIcon aria-hidden />}
+                onClick={() => {
+                  // Stops the sound AND closes the toast.
+                  onAcknowledge();
+                  onClose();
+                }}
+                sx={{ minHeight: 44, ml: 1 }}
+              >
+                {t("silence")}
+              </Button>
+            ) : (
+              <IconButton
+                aria-label={t("close")}
+                color="inherit"
+                onClick={onClose}
+                sx={{ width: 44, height: 44 }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
           </>
         }
         sx={{

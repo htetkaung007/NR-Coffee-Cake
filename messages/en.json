@@ -385,6 +385,7 @@
       "manyNew": "{count} new orders need approval",
       "view": "View",
       "close": "Close",
+      "silence": "Silence",
       "withdrawnOne": "Customer cancelled order {number}",
       "withdrawnOneAt": "Customer cancelled order {number} · {table}",
       "withdrawnMany": "Customers cancelled {count} orders",

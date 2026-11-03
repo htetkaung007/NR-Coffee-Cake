@@ -8,6 +8,10 @@ export const MAX_VOLUME = 100;
 /** First use only — a volume already saved on this device stays. */
 export const DEFAULT_VOLUME = 80;
 
+/** While a round waits unacknowledged, the alert plays again this often
+ *  (orderAlertRepeat) — ONE number. */
+export const ALERT_REPEAT_SECONDS = 5;
+
 export const BEEP_COUNT = 3;
 export const BEEP_SECONDS = 0.15;
 const BEEP_GAP_SECONDS = 0.1;

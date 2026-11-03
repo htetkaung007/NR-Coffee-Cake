@@ -11,8 +11,22 @@ import {
   useState,
 } from "react";
 import { Alert, Snackbar } from "@mui/material";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { usePolling } from "@/app/lib/hooks/usePolling";
+import {
+  acknowledge,
+  parseAcknowledged,
+  pruneAcknowledged,
+  ringingIds,
+  serializeAcknowledged,
+  shouldPlayAlert,
+} from "@/app/lib/hooks/orderAlertRepeat";
+import {
+  readStorage,
+  useStoredValue,
+  writeStorage,
+} from "@/app/lib/hooks/useStoredValue";
 import { describeWithdrawals } from "@/app/lib/order/cancelReason";
 import { DEFAULT_REFRESH_INTERVAL_MS } from "@/app/lib/hooks/useAutoRefresh";
 import { useOrderAlertSound } from "@/app/lib/hooks/useOrderAlertSound";
@@ -52,6 +66,33 @@ export interface RecentWithdrawal {
   tableName: string | null;
 }
 
+export const ORDER_LIST_PATH = "/backoffice/order";
+/** An Order List entry's detail page; group 1 is its entryKey. */
+export const ENTRY_DETAIL_PATH = /^\/backoffice\/order\/([^/]+)$/;
+
+/** The rounds acknowledged on THIS device (a JSON list of session ids,
+ *  pruned to the ones still waiting) — shared by every Backoffice tab of
+ *  the browser through useStoredValue (the `storage` event). */
+const ACKNOWLEDGED_STORAGE_KEY = "orders-alert-acknowledged";
+const NOTHING_ACKNOWLEDGED = "[]";
+// The copy for when storage is blocked (one tab only, then).
+let acknowledgedInMemory = NOTHING_ACKNOWLEDGED;
+
+function readAcknowledged() {
+  return readStorage(ACKNOWLEDGED_STORAGE_KEY) ?? acknowledgedInMemory;
+}
+
+function writeAcknowledged(ids: readonly number[]) {
+  const next = serializeAcknowledged(ids);
+  if (next === readAcknowledged()) return;
+  acknowledgedInMemory = next;
+  writeStorage(ACKNOWLEDGED_STORAGE_KEY, next);
+}
+
+/** The repeat timer's tick. It only decides (shouldPlayAlert decides
+ *  the 5s cadence); one tick a second keeps "at once" honest. */
+const ALERT_TICK_MS = 1000;
+
 /** How long the "Customer cancelled order …" toast stays. */
 const WITHDRAWAL_TOAST_MS = 6000;
 
@@ -74,6 +115,14 @@ interface OrderAlertsContextValue {
     volume: number;
     setVolume: (percent: number) => void;
     playTest: () => void;
+  };
+  /** The repeating alert: ringing while a waiting round hasn't been
+   *  acknowledged on this device (and the sound is on). */
+  alert: {
+    isRinging: boolean;
+    /** Acknowledges EVERY round waiting now — the Silence buttons, the
+     *  banner and the toast's View. */
+    acknowledge: () => void;
   };
   /** Called once per refresh that brought new rounds; returns unsubscribe. */
   subscribeToNewRounds: (listener: NewRoundsListener) => () => void;
@@ -120,8 +169,15 @@ async function pollPendingApprovals() {
  *  - new-round detection — compares each refresh against the session
  *    ids already seen; the first refresh only seeds that set (whatever
  *    was waiting when the Backoffice opened isn't "new"), then fires
- *    subscribers and beeps at most ONCE per refresh, however many
- *    rounds arrived together;
+ *    subscribers at most ONCE per refresh, however many rounds arrived
+ *    together (the toast and the card cues);
+ *  - the repeating alert (lib/hooks/orderAlertRepeat): ONE timer for
+ *    the whole Backoffice plays the alert at once and every
+ *    ALERT_REPEAT_SECONDS while a waiting round hasn't been
+ *    acknowledged on this device — after a reload too. Acknowledged
+ *    ids live in localStorage (pruned to what still waits), so Silence
+ *    in one tab silences the others; opening a waiting entry's detail
+ *    page acknowledges too. It stops on its own once nothing waits;
  *  - the sound (useOrderAlertSound) — one AudioContext for the whole
  *    Backoffice session;
  *  - the "(N) " tab-title prefix.
@@ -139,6 +195,18 @@ export function OrderAlertsProvider({
   const { enabled, isLocked, toggle, play, volume, setVolume, playTest } =
     useOrderAlertSound();
   const t = useTranslations("bo.alerts");
+  const pathname = usePathname();
+
+  // The raw string is the snapshot (a primitive, so useSyncExternalStore
+  // can compare it); a broken value parses to an empty list.
+  const storedAcknowledged = useStoredValue(
+    readAcknowledged,
+    NOTHING_ACKNOWLEDGED,
+  );
+  const acknowledgedIds = useMemo(
+    () => parseAcknowledged(storedAcknowledged),
+    [storedAcknowledged],
+  );
 
   const seenSessionIds = useRef<Set<number> | null>(null);
   // Withdrawals already shown (or already there when the Backoffice
@@ -168,6 +236,17 @@ export function OrderAlertsProvider({
   const ingest = useCallback(
     (next: PendingApprovalRound[], allEntryKeys: string[]) => {
       setPending((current) => (samePending(current, next) ? current : next));
+      // Real data only (never the empty list before the first refresh,
+      // which would wipe the store on every reload): forget rounds that
+      // stopped waiting, so the stored list never grows. Rounds already
+      // waiting when the Backoffice opened are NOT acknowledged — they
+      // ring (the alert below), unless silenced before on this device.
+      writeAcknowledged(
+        pruneAcknowledged(
+          parseAcknowledged(readAcknowledged()),
+          next.map((round) => round.sessionId),
+        ),
+      );
 
       const seen = seenSessionIds.current;
       if (seen === null) {
@@ -197,11 +276,10 @@ export function OrderAlertsProvider({
       knownEntryKeys.current = new Set(allEntryKeys);
       if (roundCount === 0) return;
 
-      void play();
       const event = { entries: [...arrived.values()], roundCount };
       listeners.current.forEach((listener) => listener(event));
     },
-    [play],
+    [],
   );
 
   // How many Order Lists are feeding (0 or 1; a count so StrictMode's
@@ -274,6 +352,86 @@ export function OrderAlertsProvider({
 
   useDocumentTitleCount(pending.length);
 
+  // ── The repeating alert ─────────────────────────────────────────────
+  const waitingIds = useMemo(
+    () => pending.map((round) => round.sessionId),
+    [pending],
+  );
+  const isRinging =
+    enabled && ringingIds(waitingIds, acknowledgedIds).length > 0;
+
+  // The ONE timer reads the latest facts through refs, so it's set up
+  // once (not per round, not per render) and cleared on unmount.
+  const lastAlertAt = useRef<number | null>(null);
+  const alertFacts = useRef({ waitingIds, acknowledgedIds, enabled, play });
+  useEffect(() => {
+    alertFacts.current = { waitingIds, acknowledgedIds, enabled, play };
+  });
+
+  const ringIfDue = useCallback(() => {
+    const facts = alertFacts.current;
+    if (ringingIds(facts.waitingIds, facts.acknowledgedIds).length === 0) {
+      // Nothing left to ring for — the next round rings at once.
+      lastAlertAt.current = null;
+      return;
+    }
+    const now = Date.now();
+    if (
+      !shouldPlayAlert({
+        waitingIds: facts.waitingIds,
+        acknowledgedIds: facts.acknowledgedIds,
+        lastAlertAt: lastAlertAt.current,
+        now,
+        soundEnabled: facts.enabled,
+      })
+    ) {
+      return;
+    }
+    lastAlertAt.current = now;
+    // Silent (never throws) while audio is still locked after a reload.
+    void facts.play();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(ringIfDue, ALERT_TICK_MS);
+    return () => clearInterval(timer);
+  }, [ringIfDue]);
+
+  // Straight away — not a tick later — when a refresh brings a round,
+  // an acknowledgement lands (this tab or another) or the sound changes.
+  useEffect(() => {
+    ringIfDue();
+  }, [waitingIds, acknowledgedIds, enabled, ringIfDue]);
+
+  // Audio just unlocked (the first tap after a reload): ring now instead
+  // of waiting out the interval of the alert the browser refused.
+  useEffect(() => {
+    if (isLocked) return;
+    lastAlertAt.current = null;
+    ringIfDue();
+  }, [isLocked, ringIfDue]);
+
+  /** Acknowledges every round waiting now, on this device. */
+  const acknowledgeAlert = useCallback(() => {
+    const facts = alertFacts.current;
+    writeAcknowledged(acknowledge(facts.waitingIds, facts.acknowledgedIds));
+    lastAlertAt.current = null;
+  }, []);
+
+  // Opening a waiting entry's detail page acknowledges (every round, as
+  // Silence does). Any other page — New Order, Menus — never does.
+  const viewingEntryKey = ENTRY_DETAIL_PATH.exec(pathname)?.[1] ?? null;
+  const isViewingWaitingEntry =
+    viewingEntryKey !== null &&
+    pending.some(
+      (round) =>
+        round.entryKey === viewingEntryKey &&
+        !acknowledgedIds.includes(round.sessionId),
+    );
+  useEffect(() => {
+    if (isViewingWaitingEntry) acknowledgeAlert();
+  }, [isViewingWaitingEntry, acknowledgeAlert]);
+
   const subscribeToNewRounds = useCallback((listener: NewRoundsListener) => {
     listeners.current.add(listener);
     return () => {
@@ -285,6 +443,7 @@ export function OrderAlertsProvider({
     () => ({
       pending,
       sound: { enabled, isLocked, toggle, volume, setVolume, playTest },
+      alert: { isRinging, acknowledge: acknowledgeAlert },
       subscribeToNewRounds,
       registerListFeed,
       feedFromList,
@@ -297,6 +456,8 @@ export function OrderAlertsProvider({
       volume,
       setVolume,
       playTest,
+      isRinging,
+      acknowledgeAlert,
       subscribeToNewRounds,
       registerListFeed,
       feedFromList,

@@ -872,6 +872,14 @@ business reason?"
   throw (blocked / full storage); never touch `window.localStorage`
   directly (the inline sidebar script in lib/backofficeSidebar, which
   runs before React, is the one exception).
+- **New-order alerts have ONE owner, `OrderAlertsProvider`** (Backoffice
+  layout): the pending list (its own 5s poll, or the Order List's feed),
+  new-round events, the tab-title count, the sound (useOrderAlertSound) and
+  the repeating alert — ONE timer, the rule in `lib/hooks/orderAlertRepeat`
+  (DESIGN.md §25). Acknowledgements are per device: localStorage key
+  `orders-alert-acknowledged` (via useStoredValue, pruned to what still
+  waits), never the database. Components acknowledge through
+  `useOrderAlerts().alert.acknowledge` — never a second timer or store.
 - Before creating a new file with the same apparent purpose as an
   existing one (e.g. a second polling hook), search for an existing
   implementation first — a duplicate hook with two different

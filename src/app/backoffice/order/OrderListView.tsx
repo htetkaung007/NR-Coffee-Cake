@@ -38,6 +38,7 @@ import MarkPaidDialog from "./MarkPaidDialog";
 import { useCan } from "@/app/components/StaffAccessProvider";
 import PrintBillButton from "./PrintBillButton";
 import NewOrderToast, {
+  waitingNotice,
   describeNewRounds,
   type NewOrderNotice,
 } from "./NewOrderToast";
@@ -428,7 +429,17 @@ export default function OrderListView({
   );
   const [notice, setNotice] = useState<NewOrderNotice | null>(null);
   const [isNoticeOpen, setIsNoticeOpen] = useState(false);
-  const { sound } = useOrderAlerts();
+  const { sound, alert, pending } = useOrderAlerts();
+  // While the alert rings the toast is the Order List's way to stop it
+  // (no banner here): it stays open until Silence / View, and closes by
+  // itself once nothing is waiting. Not ringing → today's toast.
+  const [wasRinging, setWasRinging] = useState(alert.isRinging);
+  if (wasRinging !== alert.isRinging) {
+    setWasRinging(alert.isRinging);
+    if (!alert.isRinging) setIsNoticeOpen(false);
+  }
+  const toastNotice =
+    alert.isRinging && !isNoticeOpen ? waitingNotice(pending.length) : notice;
   const t = useTranslations("bo.orders");
   const tCommon = useTranslations("bo.common");
 
@@ -597,9 +608,11 @@ export default function OrderListView({
       </Grid>
 
       <NewOrderToast
-        notice={notice}
-        open={isNoticeOpen}
+        notice={toastNotice}
+        open={isNoticeOpen || alert.isRinging}
         onClose={() => setIsNoticeOpen(false)}
+        isRinging={alert.isRinging}
+        onAcknowledge={alert.acknowledge}
       />
     </Box>
   );
