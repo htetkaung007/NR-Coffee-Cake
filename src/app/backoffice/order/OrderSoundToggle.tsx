@@ -1,54 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
-  Box,
   IconButton,
   Popover,
-  Slider,
   Stack,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import TuneIcon from "@mui/icons-material/Tune";
 import { useTranslations } from "next-intl";
-import { MAX_VOLUME, MIN_VOLUME } from "@/app/lib/hooks/orderAlertSoundRules";
+import SidePanelDrawer from "@/app/components/SidePanelDrawer";
+import AlertSettingsPanel, {
+  type AlertSettingsPanelProps,
+} from "./AlertSettingsPanel";
 
-interface OrderSoundToggleProps {
+type SettingsProps = Omit<AlertSettingsPanelProps, "onClose" | "titleId">;
+
+interface OrderSoundToggleProps extends SettingsProps {
   enabled: boolean;
   /** Sound is on but the browser hasn't allowed audio yet (a reloaded
    *  page needs one tap/keypress first). */
   isLocked: boolean;
   onToggle: () => void;
-  /** Integer percent, MIN_VOLUME–MAX_VOLUME. */
-  volume: number;
-  onVolumeChange: (percent: number) => void;
-  /** One beep at the current volume. */
-  onTestBeep: () => void;
 }
 
-const VOLUME_POPOVER_ID = "order-alert-volume";
+const SETTINGS_ID = "order-alert-settings";
+/** The popover's width; never wider than the screen. */
+const POPOVER_WIDTH = 340;
 
-/** Bell that turns the new-order beep on/off, plus a volume button
- *  (disabled while the bell is off) opening a slider. The bell's icon
- *  itself changes (active vs crossed-out), so the state isn't carried
- *  by color. */
+/** Bell that turns the new-order alert on/off, plus an "Alert settings"
+ *  button (disabled while the bell is off) — volume, sound and repeat
+ *  for this device (AlertSettingsPanel). A popover from sm; a bottom
+ *  sheet on phones, where a popover hung off the header would cover
+ *  most of the screen (SidePanelDrawer, drag down to close). The bell's
+ *  icon itself changes (active vs crossed-out), so the state isn't
+ *  carried by color. */
 export default function OrderSoundToggle({
   enabled,
   isLocked,
   onToggle,
-  volume,
-  onVolumeChange,
-  onTestBeep,
+  ...settings
 }: OrderSoundToggleProps) {
   const t = useTranslations("bo.alerts");
-  const [volumeAnchor, setVolumeAnchor] = useState<HTMLElement | null>(null);
-  // The bell going off (e.g. from another tab) closes the slider for
-  // good — adjusting state during render, so it can't reopen on its own
-  // when the bell comes back on.
-  if (!enabled && volumeAnchor !== null) setVolumeAnchor(null);
-  const isVolumeOpen = volumeAnchor !== null;
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
+  const titleId = useId();
+  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(
+    null,
+  );
+  // The bell going off (e.g. from another tab) closes the settings for
+  // good — adjusting state during render, so they can't reopen on their
+  // own when the bell comes back on.
+  if (!enabled && settingsAnchor !== null) setSettingsAnchor(null);
+  const isSettingsOpen = settingsAnchor !== null;
+  const close = () => setSettingsAnchor(null);
+
+  const panel = (
+    <AlertSettingsPanel {...settings} onClose={close} titleId={titleId} />
+  );
 
   return (
     <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -66,55 +79,55 @@ export default function OrderSoundToggle({
         {enabled ? <NotificationsActiveIcon /> : <NotificationsOffIcon />}
       </IconButton>
       <IconButton
-        aria-label={t("volume")}
-        aria-haspopup="true"
-        aria-expanded={isVolumeOpen}
-        aria-controls={isVolumeOpen ? VOLUME_POPOVER_ID : undefined}
+        aria-label={t("alertSettings")}
+        aria-haspopup="dialog"
+        aria-expanded={isSettingsOpen}
+        aria-controls={isSettingsOpen ? SETTINGS_ID : undefined}
         disabled={!enabled}
-        onClick={(event) => setVolumeAnchor(event.currentTarget)}
+        onClick={(event) => setSettingsAnchor(event.currentTarget)}
         sx={{ width: 44, height: 44 }}
       >
-        <VolumeUpIcon />
+        <TuneIcon />
       </IconButton>
 
-      <Popover
-        id={VOLUME_POPOVER_ID}
-        open={isVolumeOpen}
-        anchorEl={volumeAnchor}
-        onClose={() => setVolumeAnchor(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        transformOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        {/* Side padding leaves room for the value label at 10% / 100%. */}
-        <Box
-          sx={{
-            width: 240,
-            maxWidth: "calc(100vw - 32px)",
-            px: 3,
-            pt: 1.5,
-            pb: 1,
+      {isPhone ? (
+        <SidePanelDrawer
+          open={isSettingsOpen}
+          onClose={close}
+          label={t("alertSettings")}
+          placement="sheet"
+          swipeToClose
+        >
+          <div id={SETTINGS_ID} style={{ display: "contents" }}>
+            {panel}
+          </div>
+        </SidePanelDrawer>
+      ) : (
+        <Popover
+          id={SETTINGS_ID}
+          open={isSettingsOpen}
+          anchorEl={settingsAnchor}
+          onClose={close}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{
+            paper: {
+              role: "dialog",
+              "aria-labelledby": titleId,
+              sx: {
+                width: POPOVER_WIDTH,
+                maxWidth: "calc(100vw - 32px)",
+                // Taller than the screen → its content scrolls inside.
+                maxHeight: "calc(100dvh - 32px)",
+                display: "flex",
+                flexDirection: "column",
+              },
+            },
           }}
         >
-          <Typography variant="caption" color="text.secondary" component="p">
-            {t("volume")}
-          </Typography>
-          <Slider
-            aria-label={t("volume")}
-            min={MIN_VOLUME}
-            max={MAX_VOLUME}
-            step={10}
-            value={volume}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => `${value}%`}
-            onChange={(_event, value) => onVolumeChange(value as number)}
-            // Once per release (or key press) — never on every drag step.
-            onChangeCommitted={(_event, value) => {
-              onVolumeChange(value as number);
-              onTestBeep();
-            }}
-          />
-        </Box>
-      </Popover>
+          {panel}
+        </Popover>
+      )}
     </Stack>
   );
 }

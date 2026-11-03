@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { ALERT_REPEAT_SECONDS } from "./orderAlertSoundRules";
+import {
+  ALERT_REPEAT_CHOICES,
+  ALERT_REPEAT_SECONDS,
+} from "./orderAlertSoundRules";
 import {
   acknowledge,
   parseAcknowledged,
@@ -16,15 +19,20 @@ function check(overrides: Partial<Parameters<typeof shouldPlayAlert>[0]>) {
   return shouldPlayAlert({
     waitingIds: [1],
     acknowledgedIds: [],
+    alertedIds: [],
     lastAlertAt: null,
     now: NOW,
     soundEnabled: true,
+    repeat: ALERT_REPEAT_SECONDS,
     ...overrides,
   });
 }
 
+/** Round 1 has already rung once, `msAgo` ago. */
+const rang = (msAgo: number) => ({ alertedIds: [1], lastAlertAt: NOW - msAgo });
+
 describe("ALERT_REPEAT_SECONDS", () => {
-  it("repeats every 5 seconds", () => {
+  it("repeats every 5 seconds by default", () => {
     expect(ALERT_REPEAT_SECONDS).toBe(5);
   });
 });
@@ -35,17 +43,45 @@ describe("shouldPlayAlert", () => {
   });
 
   it("does not repeat before the interval has passed", () => {
-    expect(check({ lastAlertAt: NOW - INTERVAL_MS + 1 })).toBe(false);
+    expect(check(rang(INTERVAL_MS - 1))).toBe(false);
   });
 
   it("repeats once the interval has passed", () => {
-    expect(check({ lastAlertAt: NOW - INTERVAL_MS })).toBe(true);
+    expect(check(rang(INTERVAL_MS))).toBe(true);
+  });
+
+  it("repeats on time for every interval choice", () => {
+    for (const seconds of [3, 5, 10, 30] as const) {
+      expect(check({ repeat: seconds, ...rang(seconds * 1000 - 1) })).toBe(
+        false,
+      );
+      expect(check({ repeat: seconds, ...rang(seconds * 1000) })).toBe(true);
+    }
+  });
+
+  it("never repeats with Once", () => {
+    expect(check({ repeat: "once", ...rang(INTERVAL_MS * 100) })).toBe(false);
+  });
+
+  it("rings once with Once for a round that hasn't rung yet", () => {
+    expect(check({ repeat: "once" })).toBe(true);
+  });
+
+  it("rings at once for a newly arrived round in every mode, not waiting for the interval", () => {
+    for (const repeat of ALERT_REPEAT_CHOICES) {
+      expect(
+        check({
+          repeat,
+          waitingIds: [1, 2],
+          alertedIds: [1],
+          lastAlertAt: NOW - 1,
+        }),
+      ).toBe(true);
+    }
   });
 
   it("stops when nothing is waiting for approval any more", () => {
-    expect(check({ waitingIds: [], lastAlertAt: NOW - INTERVAL_MS })).toBe(
-      false,
-    );
+    expect(check({ waitingIds: [], ...rang(INTERVAL_MS) })).toBe(false);
   });
 
   it("stops once every waiting round is acknowledged", () => {
@@ -53,16 +89,14 @@ describe("shouldPlayAlert", () => {
       check({
         waitingIds: [1, 2],
         acknowledgedIds: [1, 2],
-        lastAlertAt: NOW - INTERVAL_MS,
+        ...rang(INTERVAL_MS),
       }),
     ).toBe(false);
   });
 
   it("never rings with the sound off", () => {
     expect(check({ soundEnabled: false })).toBe(false);
-    expect(check({ soundEnabled: false, lastAlertAt: NOW - INTERVAL_MS })).toBe(
-      false,
-    );
+    expect(check({ soundEnabled: false, ...rang(INTERVAL_MS) })).toBe(false);
   });
 });
 

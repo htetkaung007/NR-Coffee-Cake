@@ -536,7 +536,12 @@ export default function OrderListView({
                 onToggle={sound.toggle}
                 volume={sound.volume}
                 onVolumeChange={sound.setVolume}
-                onTestBeep={sound.playTest}
+                onTestAlert={sound.playTest}
+                preset={sound.preset}
+                onPresetChange={sound.setPreset}
+                onPreview={sound.preview}
+                repeat={sound.repeat}
+                onRepeatChange={sound.setRepeat}
               />
             </>
           }

@@ -2,13 +2,14 @@
  * The repeating new-order alert's rule — pure; OrderAlertsProvider owns
  * the timer and the sound (useOrderAlertSound).
  *
- * A round awaiting approval rings until someone on THIS device
- * acknowledges it. An acknowledgement covers every round waiting at
+ * A round awaiting approval rings at once, then every few seconds (the
+ * device's repeat choice, "once" = no repeat) until someone on THIS
+ * device acknowledges it. An acknowledgement covers every round waiting at
  * that moment; a round arriving later rings again. The acknowledged ids
  * are kept per device (localStorage, via useStoredValue) and pruned to
  * the rounds still waiting, so the list never grows.
  */
-import { ALERT_REPEAT_SECONDS } from "./orderAlertSoundRules";
+import type { AlertRepeat } from "./orderAlertSoundRules";
 
 /** Waiting rounds nobody on this device has acknowledged yet. */
 export function ringingIds(
@@ -21,27 +22,38 @@ export function ringingIds(
 
 /**
  * Play the alert now? Only with the sound on and at least one
- * unacknowledged round waiting — at once when nothing has played since
- * ringing last stopped (`lastAlertAt` null), else once
- * ALERT_REPEAT_SECONDS have passed. Times in ms.
+ * unacknowledged round waiting. Then:
+ *  - a waiting round that hasn't rung yet (not in `alertedIds` — the
+ *    rounds rung for since ringing last stopped) rings AT ONCE, in every
+ *    mode;
+ *  - otherwise it repeats once `repeat` seconds have passed since the
+ *    last alert — never with "once".
+ * Times in ms.
  */
 export function shouldPlayAlert({
   waitingIds,
   acknowledgedIds,
+  alertedIds,
   lastAlertAt,
   now,
   soundEnabled,
+  repeat,
 }: {
   waitingIds: readonly number[];
   acknowledgedIds: readonly number[];
+  alertedIds: readonly number[];
   lastAlertAt: number | null;
   now: number;
   soundEnabled: boolean;
+  repeat: AlertRepeat;
 }) {
   if (!soundEnabled) return false;
-  if (ringingIds(waitingIds, acknowledgedIds).length === 0) return false;
-  if (lastAlertAt === null) return true;
-  return now - lastAlertAt >= ALERT_REPEAT_SECONDS * 1000;
+  const ringing = ringingIds(waitingIds, acknowledgedIds);
+  if (ringing.length === 0) return false;
+  const alerted = new Set(alertedIds);
+  if (ringing.some((id) => !alerted.has(id))) return true;
+  if (repeat === "once" || lastAlertAt === null) return false;
+  return now - lastAlertAt >= repeat * 1000;
 }
 
 /** Acknowledges EVERY round waiting now (plus those acknowledged before). */

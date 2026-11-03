@@ -909,14 +909,15 @@ bills and table sessions are untouched; only new scans need the new QR.
   rings; it disappears on its own when nothing is pending.
 - Sound is **off by default**, enabled by a user gesture (browsers never
   show a sound permission prompt). Turning it on plays a test alert. An
-  alert is three short beeps, played at most once per
-  `ALERT_REPEAT_SECONDS` however many rounds are waiting. Volume defaults
+  alert is the device's chosen sound (Classic: three short beeps),
+  played at most once per tick however many rounds are waiting. Volume defaults
   to 80% (a saved volume stays) and uses a perceived-loudness (squared)
   curve. After a reload every tap or keypress tries to unlock audio until
   it really runs (a touch unlocks when the finger lifts, never on
   pointerdown).
 - **The alert repeats until someone acknowledges it** (#115). A round
-  awaiting approval rings at once, then every `ALERT_REPEAT_SECONDS` (5,
+  awaiting approval rings at once, then repeats at the device's choice
+  (Alert settings below — default `ALERT_REPEAT_SECONDS`, 5s,
   `lib/hooks/orderAlertSoundRules`; the rule is `lib/hooks/orderAlertRepeat`),
   from ONE browser timer in OrderAlertsProvider on the data the 5s poll
   already brings — no extra server calls. It stops when someone on THIS
@@ -929,6 +930,32 @@ bills and table sessions are untouched; only new scans need the new QR.
   (localStorage, pruned to what still waits; Silence in one tab silences
   the device's other tabs); rounds waiting after a reload that were never
   acknowledged here ring again. Sound off → never rings.
+- **Alert settings (#117) — per device**, behind the Order List's
+  "Alert settings" button (a tune icon, 44px, next to the bell; disabled
+  while the bell is off): a **popover from `sm`, a bottom sheet on
+  phones** (SidePanelDrawer, drag down to close — a popover hung off the
+  header would cover most of a phone), the same panel in both
+  (`backoffice/order/AlertSettingsPanel`), title + × at the top, its
+  content scrolling inside when taller than the screen, never wider than
+  it. Three sections:
+  - **Volume** — the slider as before (a test alert on release).
+  - **Sound** — five synthesized presets (`lib/hooks/orderAlertPresets`,
+    no audio files): Classic (the original three 880 Hz beeps, the
+    default), Chime, High alert, Soft bell, Rising — ပုံမှန် · ဒင်ဒေါင် ·
+    အသံစူး · ခေါင်းလောင်း ညင်သာ · အသံတက်. A radiogroup of rows (radio +
+    name, ≥ 44px) each with its OWN ▶ button beside it (44px, "Play
+    <name>"; never nested). Picking a sound plays it once (a user gesture,
+    so it also unlocks audio).
+  - **Repeat** — a segmented control Once | 3 | 5 | 10 | 30 (≥ 44px); each
+    segment's accessible name is the full words ("Every 5 seconds" / "5
+    စက္ကန့်တိုင်း", "Once" / "တစ်ကြိမ်" — never the bare number, digits
+    0–9), and a caption under it spells out the choice. Default 5s. A new
+    round rings at once in EVERY mode; the interval only spaces the
+    repeats after that; Once = one alert per new round, no repeat (the
+    acknowledgement rules don't change).
+  Volume, sound and repeat live in localStorage (`orders-alert-volume`,
+  `orders-alert-preset`, `orders-alert-repeat`, via useStoredValue);
+  unknown values fall back to the defaults; two tabs stay in step.
 - **On the Order List the toast is the off switch**: while ringing it stays
   (no auto-hide; after a reload it opens with "N need approval") and
   Silence replaces its × — Silence stops the sound AND closes it; it closes
@@ -1005,7 +1032,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-11-03 (#115): the new-order alert repeats every 5s until acknowledged on this device (detail page, banner, toast's View, Silence) or nothing waits; the Order List toast stays while ringing; the locked-sound hint on every Backoffice page. Earlier (#114): PasswordField's eye button; the alert is three beeps at 80% by default. Earlier (#113): customer tabs feel instant — the tapped tab looks active at once, delayed-fade skeletons on Menu, Cart, History and the receipt. Earlier (#111): the customer bar becomes a right-side rail on landscape touch screens (touchTabletLandscapeMedia, centred below the top bar, 66px, items 56 × ≥ 92px, Myanmar captions wrap at a U+200B; barClearanceSx / railClearanceSx). Earlier (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-11-03 (#117): Alert settings — five synthesized sounds and Once / 3 / 5 / 10 / 30s repeat, per device; a popover from sm, a bottom sheet on phones. Earlier (#115): the new-order alert repeats every 5s until acknowledged on this device (detail page, banner, toast's View, Silence) or nothing waits; the Order List toast stays while ringing; the locked-sound hint on every Backoffice page. Earlier (#114): PasswordField's eye button; the alert is three beeps at 80% by default. Earlier (#113): customer tabs feel instant — the tapped tab looks active at once, delayed-fade skeletons on Menu, Cart, History and the receipt. Earlier (#111): the customer bar becomes a right-side rail on landscape touch screens (touchTabletLandscapeMedia, centred below the top bar, 66px, items 56 × ≥ 92px, Myanmar captions wrap at a U+200B; barClearanceSx / railClearanceSx). Earlier (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

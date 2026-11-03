@@ -8,13 +8,15 @@ export const MAX_VOLUME = 100;
 /** First use only — a volume already saved on this device stays. */
 export const DEFAULT_VOLUME = 80;
 
-/** While a round waits unacknowledged, the alert plays again this often
- *  (orderAlertRepeat) — ONE number. */
-export const ALERT_REPEAT_SECONDS = 5;
+/** The repeat choices in Alert settings (orderAlertRepeat): "once" =
+ *  one alert per newly waiting round, no repeat; a number = the seconds
+ *  between repeats while a round waits unacknowledged. A new round always
+ *  rings at once, whatever the choice. Per device (useOrderAlertSound). */
+export const ALERT_REPEAT_CHOICES = ["once", 3, 5, 10, 30] as const;
+export type AlertRepeat = (typeof ALERT_REPEAT_CHOICES)[number];
 
-export const BEEP_COUNT = 3;
-export const BEEP_SECONDS = 0.15;
-const BEEP_GAP_SECONDS = 0.1;
+/** The default repeat — ONE number. */
+export const ALERT_REPEAT_SECONDS = 5 satisfies AlertRepeat;
 
 /** What may start audio after a reload. Never pointerdown: on a touch
  *  screen the finger LIFTING is the user activation, so a resume() on
@@ -40,10 +42,15 @@ export function volumeFromStorage(stored: string | null, fallback: number) {
   return fallback;
 }
 
-/** When each beep starts, in seconds from the first. */
-export function beepStartOffsets() {
-  return Array.from(
-    { length: BEEP_COUNT },
-    (_, index) => index * (BEEP_SECONDS + BEEP_GAP_SECONDS),
+/** A saved repeat choice (localStorage), or the 5s default when there's
+ *  none or it isn't one of the choices. Never throws. */
+export function repeatFromStorage(stored: string | null): AlertRepeat {
+  return (
+    ALERT_REPEAT_CHOICES.find((choice) => String(choice) === stored) ??
+    ALERT_REPEAT_SECONDS
   );
+}
+
+export function serializeRepeat(choice: AlertRepeat) {
+  return String(choice);
 }

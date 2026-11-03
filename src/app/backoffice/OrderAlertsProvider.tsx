@@ -30,6 +30,8 @@ import {
 import { describeWithdrawals } from "@/app/lib/order/cancelReason";
 import { DEFAULT_REFRESH_INTERVAL_MS } from "@/app/lib/hooks/useAutoRefresh";
 import { useOrderAlertSound } from "@/app/lib/hooks/useOrderAlertSound";
+import type { AlertPresetId } from "@/app/lib/hooks/orderAlertPresets";
+import type { AlertRepeat } from "@/app/lib/hooks/orderAlertSoundRules";
 import { useDocumentTitleCount } from "@/app/lib/hooks/useDocumentTitle";
 import { getPendingApprovalsAction } from "./order/action";
 
@@ -115,6 +117,15 @@ interface OrderAlertsContextValue {
     volume: number;
     setVolume: (percent: number) => void;
     playTest: () => void;
+    /** The device's alert sound (lib/hooks/orderAlertPresets). */
+    preset: AlertPresetId;
+    /** Picks the sound and plays it once (a user gesture). */
+    setPreset: (id: AlertPresetId) => void;
+    /** Plays a sound once without picking it — the ▶ buttons. */
+    preview: (id: AlertPresetId) => void;
+    /** The device's repeat choice — "once" or seconds. */
+    repeat: AlertRepeat;
+    setRepeat: (choice: AlertRepeat) => void;
   };
   /** The repeating alert: ringing while a waiting round hasn't been
    *  acknowledged on this device (and the sound is on). */
@@ -172,8 +183,9 @@ async function pollPendingApprovals() {
  *    subscribers at most ONCE per refresh, however many rounds arrived
  *    together (the toast and the card cues);
  *  - the repeating alert (lib/hooks/orderAlertRepeat): ONE timer for
- *    the whole Backoffice plays the alert at once and every
- *    ALERT_REPEAT_SECONDS while a waiting round hasn't been
+ *    the whole Backoffice plays the alert at once for every new round,
+ *    then repeats at the device's repeat choice (Alert settings — 3 / 5
+ *    / 10 / 30s, or "once") while a waiting round hasn't been
  *    acknowledged on this device — after a reload too. Acknowledged
  *    ids live in localStorage (pruned to what still waits), so Silence
  *    in one tab silences the others; opening a waiting entry's detail
@@ -192,8 +204,20 @@ export function OrderAlertsProvider({
   children: React.ReactNode;
 }) {
   const [pending, setPending] = useState<PendingApprovalRound[]>([]);
-  const { enabled, isLocked, toggle, play, volume, setVolume, playTest } =
-    useOrderAlertSound();
+  const {
+    enabled,
+    isLocked,
+    toggle,
+    play,
+    volume,
+    setVolume,
+    playTest,
+    preset,
+    setPreset,
+    preview,
+    repeat,
+    setRepeat,
+  } = useOrderAlertSound();
   const t = useTranslations("bo.alerts");
   const pathname = usePathname();
 
@@ -363,16 +387,34 @@ export function OrderAlertsProvider({
   // The ONE timer reads the latest facts through refs, so it's set up
   // once (not per round, not per render) and cleared on unmount.
   const lastAlertAt = useRef<number | null>(null);
-  const alertFacts = useRef({ waitingIds, acknowledgedIds, enabled, play });
-  useEffect(() => {
-    alertFacts.current = { waitingIds, acknowledgedIds, enabled, play };
+  // The rounds this tab has rung for since ringing last stopped — a new
+  // one rings at once in every mode; the repeat choice only spaces the
+  // repeats after that ("once" = none).
+  const alertedIds = useRef<number[]>([]);
+  const alertFacts = useRef({
+    waitingIds,
+    acknowledgedIds,
+    enabled,
+    play,
+    repeat,
   });
+  useEffect(() => {
+    alertFacts.current = { waitingIds, acknowledgedIds, enabled, play, repeat };
+  });
+
+  /** Ringing stopped (or audio just unlocked): the next round — or the
+   *  ones still waiting — ring at once again. */
+  const resetRinging = useCallback(() => {
+    lastAlertAt.current = null;
+    alertedIds.current = [];
+  }, []);
 
   const ringIfDue = useCallback(() => {
     const facts = alertFacts.current;
-    if (ringingIds(facts.waitingIds, facts.acknowledgedIds).length === 0) {
+    const ringing = ringingIds(facts.waitingIds, facts.acknowledgedIds);
+    if (ringing.length === 0) {
       // Nothing left to ring for — the next round rings at once.
-      lastAlertAt.current = null;
+      resetRinging();
       return;
     }
     const now = Date.now();
@@ -380,17 +422,20 @@ export function OrderAlertsProvider({
       !shouldPlayAlert({
         waitingIds: facts.waitingIds,
         acknowledgedIds: facts.acknowledgedIds,
+        alertedIds: alertedIds.current,
         lastAlertAt: lastAlertAt.current,
         now,
         soundEnabled: facts.enabled,
+        repeat: facts.repeat,
       })
     ) {
       return;
     }
     lastAlertAt.current = now;
+    alertedIds.current = ringing;
     // Silent (never throws) while audio is still locked after a reload.
     void facts.play();
-  }, []);
+  }, [resetRinging]);
 
   useEffect(() => {
     const timer = setInterval(ringIfDue, ALERT_TICK_MS);
@@ -398,25 +443,26 @@ export function OrderAlertsProvider({
   }, [ringIfDue]);
 
   // Straight away — not a tick later — when a refresh brings a round,
-  // an acknowledgement lands (this tab or another) or the sound changes.
+  // an acknowledgement lands (this tab or another), the sound or the
+  // repeat choice changes.
   useEffect(() => {
     ringIfDue();
-  }, [waitingIds, acknowledgedIds, enabled, ringIfDue]);
+  }, [waitingIds, acknowledgedIds, enabled, repeat, ringIfDue]);
 
-  // Audio just unlocked (the first tap after a reload): ring now instead
-  // of waiting out the interval of the alert the browser refused.
+  // Audio just unlocked (the first tap after a reload): ring now — the
+  // alerts the browser refused while locked don't count as heard.
   useEffect(() => {
     if (isLocked) return;
-    lastAlertAt.current = null;
+    resetRinging();
     ringIfDue();
-  }, [isLocked, ringIfDue]);
+  }, [isLocked, resetRinging, ringIfDue]);
 
   /** Acknowledges every round waiting now, on this device. */
   const acknowledgeAlert = useCallback(() => {
     const facts = alertFacts.current;
     writeAcknowledged(acknowledge(facts.waitingIds, facts.acknowledgedIds));
-    lastAlertAt.current = null;
-  }, []);
+    resetRinging();
+  }, [resetRinging]);
 
   // Opening a waiting entry's detail page acknowledges (every round, as
   // Silence does). Any other page — New Order, Menus — never does.
@@ -442,7 +488,19 @@ export function OrderAlertsProvider({
   const value = useMemo(
     () => ({
       pending,
-      sound: { enabled, isLocked, toggle, volume, setVolume, playTest },
+      sound: {
+        enabled,
+        isLocked,
+        toggle,
+        volume,
+        setVolume,
+        playTest,
+        preset,
+        setPreset,
+        preview,
+        repeat,
+        setRepeat,
+      },
       alert: { isRinging, acknowledge: acknowledgeAlert },
       subscribeToNewRounds,
       registerListFeed,
@@ -456,6 +514,11 @@ export function OrderAlertsProvider({
       volume,
       setVolume,
       playTest,
+      preset,
+      setPreset,
+      preview,
+      repeat,
+      setRepeat,
       isRinging,
       acknowledgeAlert,
       subscribeToNewRounds,

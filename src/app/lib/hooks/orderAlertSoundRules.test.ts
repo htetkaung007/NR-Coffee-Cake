@@ -1,9 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
-  BEEP_COUNT,
+  ALERT_REPEAT_CHOICES,
+  ALERT_REPEAT_SECONDS,
   DEFAULT_VOLUME,
   UNLOCK_GESTURES,
-  beepStartOffsets,
+  repeatFromStorage,
+  serializeRepeat,
   volumeFromStorage,
 } from "./orderAlertSoundRules";
 
@@ -27,17 +29,31 @@ describe("volumeFromStorage", () => {
   });
 });
 
-describe("beepStartOffsets", () => {
-  it("plays three beeps", () => {
-    expect(BEEP_COUNT).toBe(3);
-    expect(beepStartOffsets()).toHaveLength(3);
+describe("ALERT_REPEAT_CHOICES", () => {
+  it("offers Once, 3s, 5s, 10s and 30s", () => {
+    expect(ALERT_REPEAT_CHOICES).toEqual(["once", 3, 5, 10, 30]);
   });
 
-  it("starts at once and never overlaps a beep with the next", () => {
-    const offsets = beepStartOffsets();
-    expect(offsets[0]).toBe(0);
-    expect(offsets[1]).toBeGreaterThan(0.15);
-    expect(offsets[2] - offsets[1]).toBeCloseTo(offsets[1] - offsets[0]);
+  it("includes the 5s default", () => {
+    expect(ALERT_REPEAT_CHOICES).toContain(ALERT_REPEAT_SECONDS);
+  });
+});
+
+describe("repeatFromStorage", () => {
+  it("defaults to every 5 seconds when nothing is saved", () => {
+    expect(repeatFromStorage(null)).toBe(5);
+  });
+
+  it("reads back every choice", () => {
+    for (const choice of ALERT_REPEAT_CHOICES) {
+      expect(repeatFromStorage(serializeRepeat(choice))).toBe(choice);
+    }
+  });
+
+  it("falls back to 5 seconds for an unknown or broken value", () => {
+    for (const stored of ["7", "", "never", "5.5", "-3", "{}"]) {
+      expect(repeatFromStorage(stored)).toBe(5);
+    }
   });
 });
 

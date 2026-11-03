@@ -891,6 +891,11 @@ business reason?"
   `orders-alert-acknowledged` (via useStoredValue, pruned to what still
   waits), never the database. Components acknowledge through
   `useOrderAlerts().alert.acknowledge` — never a second timer or store.
+  The SOUND is data: `lib/hooks/orderAlertPresets` (pure — the notes,
+  `noteVoices` splits a note's level across its partials); the repeat
+  choices are `ALERT_REPEAT_CHOICES` (orderAlertSoundRules). The device's
+  sound / repeat are localStorage (useOrderAlertSound), passed into the
+  pure rule — never a hardcoded beep in a component.
 - Before creating a new file with the same apparent purpose as an
   existing one (e.g. a second polling hook), search for an existing
   implementation first — a duplicate hook with two different

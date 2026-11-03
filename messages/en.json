@@ -391,7 +391,20 @@
       "withdrawnMany": "Customers cancelled {count} orders",
       "tapToEnableSound": "Tap anywhere to enable sound",
       "soundToggle": "Sound alert for new orders",
-      "volume": "Alert volume"
+      "volume": "Alert volume",
+      "alertSettings": "Alert settings",
+      "sound": "Sound",
+      "repeat": "Repeat",
+      "once": "Once",
+      "everySeconds": "Every {seconds} seconds",
+      "play": "Play {name}",
+      "presets": {
+        "classic": "Classic",
+        "chime": "Chime",
+        "highAlert": "High alert",
+        "softBell": "Soft bell",
+        "rising": "Rising"
+      }
     },
     "access": {
       "ownerOnlyPage": "Only the owner can open this page.",
