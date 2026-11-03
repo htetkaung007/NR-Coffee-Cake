@@ -9,6 +9,7 @@ import {
   WITHDRAW_BLOCK_MESSAGES,
 } from "@/app/lib/order/withdrawal";
 import { ACTIVE_ORDER_LINES } from "./orderLineQuery";
+import { decideCounterScan } from "@/app/lib/storefront/counterScanDecision";
 import {
   OrderSessionService,
   generateOrderNumber,
@@ -28,8 +29,8 @@ export class CounterSessionService {
    *  terminal (rejected, timed out, or paid) to decide whether the
    *  customer's cookie/scan should recover onto a still-open sibling
    *  round instead of being treated as "nothing left" (see
-   *  pollOrderStatusAction and resolveCounterSession, both of which
-   *  call this before clearing a cookie or locking a scan).
+   *  pollOrderStatusAction and resolveCounterSession: the poll calls
+   *  this before clearing a cookie, the scan before starting anew).
    *
    *  Returns null in two cases: billSessionId is null (this session
    *  IS the bill's own first round — there's nothing before it to
@@ -93,69 +94,61 @@ export class CounterSessionService {
     return isThisShopsCounter ? session : null;
   }
 
-  /** Counter QR (design doc section 4). Session identity is carried by
-   *  a browser cookie (OrderSession.token, an opaque cuid — never the
-   *  numeric id) instead of the Table row, since many unrelated
-   *  customers share the same physical Counter QR.
+  /** Counter QR scan (design doc section 4) — the session the scan
+   *  lands in. Session identity is carried by a browser cookie
+   *  (OrderSession.token, an opaque cuid — never the numeric id) instead
+   *  of the Table row, since many unrelated customers share the same
+   *  physical Counter QR. Only ever called AFTER the route checked the
+   *  QR's rotating key (findCounterTableByKey) — that key is the proof
+   *  the customer is at the counter.
    *
-   *  Deliberately does NOT auto-start a new session once the cookie's
-   *  session is terminal (e.g. PAID) — and there is NO customer-facing
-   *  way to reopen it either. Once a cookie's order is paid, that
-   *  browser is permanently shown the read-only menu view (design doc
-   *  section 6) until either (a) the cookie's 24h expiry passes and
-   *  the very next visit is treated as a first-time scan, or (b) staff
-   *  place a new order for that customer directly (design doc section
-   *  7). There is no online payment at this business, so a
-   *  self-service "order again" affordance on a cookie the server
-   *  can't verify is physically at the counter would let a
-   *  paid-and-gone customer's browser place further orders no one
-   *  asked for. */
+   *  What happens to the cookie's session is decideCounterScan
+   *  (lib/storefront/counterScanDecision): an open bill is reused, never
+   *  replaced; an ended "Order More" round goes back to the bill's open
+   *  first round; an abandoned cart is cancelled (UNSUBMITTED, through
+   *  cancelSession — the one cancel writer); and a FINISHED bill (paid,
+   *  rejected, expired, withdrawn) or no cookie at all starts a new
+   *  session at once, like a first scan (#116 — it used to answer
+   *  "locked" and send the browser to the read-only menu, so every
+   *  later visit needed a second scan). A finished cookie still can't
+   *  order WITHOUT a scan: cart submit, Order More and the poll keep
+   *  refusing it. A round still waiting past its approval window is
+   *  expired here first (getSessionStatus — the poll's own lazy
+   *  expiry), so the scan sees what really happened. */
   static async resolveCounterSession(
     locationId: number,
     counterTableId: number,
     cookieToken: string | null,
   ) {
-    if (!cookieToken) {
-      const session = await CounterSessionService.startNewCounterSession(
-        locationId,
-        counterTableId,
-      );
-      return { status: "active" as const, session };
-    }
+    const found = cookieToken
+      ? await prisma.orderSession.findFirst({
+          where: { token: cookieToken, isArchived: false },
+        })
+      : null;
+    const current =
+      found?.status === "PENDING_APPROVAL"
+        ? await OrderSessionService.getSessionStatus(found.id)
+        : found;
+    const root = current
+      ? await CounterSessionService.getOpenBillRoot(current)
+      : null;
 
-    const current = await prisma.orderSession.findFirst({
-      where: { token: cookieToken, isArchived: false },
+    const decision = decideCounterScan(current, {
+      hasOpenBillRoot: root !== null,
     });
-
-    if (!current) {
-      // Cookie pointed at a session that no longer exists — treat as
-      // a first visit rather than erroring out.
-      const session = await CounterSessionService.startNewCounterSession(
-        locationId,
-        counterTableId,
+    if (decision === "reuse" && current) return current;
+    if (decision === "reuseBillRoot" && root) return root;
+    if (decision === "cancelAbandonedThenStart" && current) {
+      await prisma.$transaction((tx: Tx) =>
+        OrderSessionService.cancelSession(tx, current.id, "UNSUBMITTED"),
       );
-      return { status: "active" as const, session };
     }
-
-    if (!isSessionTerminal(current.status)) {
-      return { status: "active" as const, session: current };
-    }
-
-    // Terminal, but this might just be one round of a still-open bill
-    // going terminal on its own (Rejected/timed-out "Order More"
-    // round — see getOpenBillRoot) rather than the whole bill being
-    // settled — recover onto the bill's still-open first round
-    // instead of locking the customer out of a bill that was never
-    // actually paid.
-    const root = await CounterSessionService.getOpenBillRoot(current);
-    if (root) {
-      return { status: "active" as const, session: root };
-    }
-
-    // Terminal and no way back for this browser — see the method
-    // comment above. The caller should clear the cookie (Max-Age=0)
-    // and render/redirect to the read-only menu view.
-    return { status: "locked" as const, lastSession: current };
+    // "start", and after cancelling an abandoned cart: a new session,
+    // exactly as a first scan.
+    return CounterSessionService.startNewCounterSession(
+      locationId,
+      counterTableId,
+    );
   }
 
   /** Counter QR's counterpart to getRoundHistoryForTable — "Order

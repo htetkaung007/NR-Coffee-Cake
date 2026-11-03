@@ -13,7 +13,11 @@ import {
   deriveRequestedAt,
 } from "@/app/lib/order/cancellation";
 import { APPROVAL_WINDOW_MINUTES } from "@/app/lib/approval/approvalWindow";
-import { isSessionTerminal } from "@/app/lib/order/sessionStatus";
+import {
+  isAbandonedCart,
+  isPastApprovalWindow,
+  isSessionTerminal,
+} from "@/app/lib/order/sessionStatus";
 import { canActAtLocation } from "@/app/lib/access/ownership";
 import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 
@@ -32,48 +36,10 @@ type CancelArgs =
 // The "is this session done" rule lives in lib/order/sessionStatus.ts
 // (pure, shared with the client-safe table occupancy rule); re-exported
 // here so Services and the barrel keep one import address.
-export { isSessionTerminal };
-
-// A session still sitting in CART this long after being created — no
-// order ever submitted through it — is treated as abandoned (customer
-// scanned and never came back to it). Checked lazily wherever a
-// session is resolved from its cookie (getActiveSessionByToken), never
-// on a timer: there's no polling while a session is still CART (the
-// customer's client only polls once PENDING_APPROVAL — see
-// CounterOrderClient), so in practice this gets noticed the next time
-// the customer's browser makes any request — a page reload, or an
-// add-to-cart/submit attempt — not the instant the 40 minutes elapse.
-const CART_ABANDON_MINUTES = 5;
-
-/** Exported for CounterSessionService's cookie lookups — the one
- *  definition, shared with getOrStartCartRound below.
- *
- *  A session that has ever left CART (submitted at least once, even
- *  if that submission was later rejected) is no longer at risk of
- *  being treated as "abandoned" — see CART_ABANDON_MINUTES. Only a
- *  session that has NEVER been submitted can still be sitting in CART
- *  by the time this runs, so checking the current status is enough;
- *  no separate "has this ever been submitted" flag is needed. */
-export function isAbandonedCart(session: { status: string; createdAt: Date }) {
-  if (session.status !== "CART") return false;
-  const ageMs = Date.now() - session.createdAt.getTime();
-  return ageMs > CART_ABANDON_MINUTES * 60_000;
-}
-
-/** A PENDING_APPROVAL round whose approval window has run out — it
- *  counts as timed out even before anything has written EXPIRED (that
- *  happens lazily, see getSessionStatus). The one definition, shared by
- *  that lazy expiry and the read-only checks that must not write. */
-export function isPastApprovalWindow(
-  session: { status: string; approvalExpiresAt: Date | null },
-  now: Date = new Date(),
-) {
-  return (
-    session.status === "PENDING_APPROVAL" &&
-    session.approvalExpiresAt !== null &&
-    session.approvalExpiresAt < now
-  );
-}
+// The cart-abandon (CART_ABANDON_MINUTES, from the scan) and approval-
+// window rules live there too, pure, so the scan decision
+// (lib/storefront/counterScanDecision) shares them.
+export { isAbandonedCart, isPastApprovalWindow, isSessionTerminal };
 
 /** Placeholder scheme — see design doc section 9 ("orderNumber
  *  generation strategy not yet decided"). Swap this one function for a

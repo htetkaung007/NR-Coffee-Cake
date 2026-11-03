@@ -66,32 +66,24 @@ export async function GET(request: NextRequest) {
 
   const existingToken =
     request.cookies.get(COUNTER_SESSION_COOKIE)?.value ?? null;
-  const result = await CounterSessionService.resolveCounterSession(
+  // The cookie's session, or a new one (CounterSessionService
+  // .resolveCounterSession / lib/storefront/counterScanDecision): an open
+  // bill is reused; a finished bill or an abandoned cart starts anew at
+  // once — the valid key above is the same proof as a first scan. Set/
+  // renew the cookie and land on /counter/continue, which opens the cart
+  // if this browser already has one for the location (built while
+  // browsing Online, or kept from before) and the menu otherwise.
+  const session = await CounterSessionService.resolveCounterSession(
     counterTable.locationId,
     counterTable.id,
     existingToken,
   );
-
-  if (result.status === "locked") {
-    // Cookie's session is terminal (PAID/etc.) — see design doc
-    // section 4/6. Clear the now-useless cookie and send them to
-    // read-only browsing; there is deliberately no "order again" path
-    // from here (see CounterSessionService.resolveCounterSession).
-    const response = redirectTo(menuPath);
-    response.cookies.set(COUNTER_SESSION_COOKIE, "", { maxAge: 0 });
-    return response;
-  }
-
-  // status === "active" — reused or freshly-started session. Set/renew
-  // the cookie and land on /counter/continue, which opens the cart if
-  // this browser already has one for the location (built while
-  // browsing Online) and the menu otherwise.
   const response = redirectTo(
-    relativePath("/counter/continue", { locationId: result.session.locationId }),
+    relativePath("/counter/continue", { locationId: session.locationId }),
   );
   response.cookies.set(
     COUNTER_SESSION_COOKIE,
-    result.session.token,
+    session.token,
     counterSessionCookieOptions(isSecureRequest(request)),
   );
   return response;

@@ -505,6 +505,17 @@ flag). Everything else still goes through `utils/config`.
   the QR Route Handlers gather the facts server-side, before any session
   starts or token is minted. Limitation: per browser (its cookies) —
   another browser or a cleared cookie is a new customer.
+- **A Counter QR scan with a valid key always gets in at once** (#116 —
+  ONE pure rule, `lib/storefront/counterScanDecision`, applied by
+  `CounterSessionService.resolveCounterSession`): the cookie's open bill
+  is reused (never replaced); an ended "Order More" round goes back to
+  the bill's open first round; a finished bill (paid, rejected, expired,
+  withdrawn) or no cookie starts a new session; an unsent cart older
+  than `CART_ABANDON_MINUTES` (15, counted from the scan —
+  lib/order/sessionStatus) is cancelled (UNSUBMITTED, cancelSession) and
+  a new one starts. There is no "locked" read-only outcome any more. A
+  finished cookie still can't order WITHOUT a scan (cart submit, Order
+  More, the poll refuse it).
 - **"Popular" badge** (customer /menu only): the rule is
   `lib/menu/popularMenus.ts` (top 3 of the last 7 shop days, ≥ 5 sold);
   the sales come from `ReportService.getMenuQuantitiesSold` — the SAME
