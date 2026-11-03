@@ -159,10 +159,15 @@ const noSubscribe = () => () => {};
  * from sm, above the safe area, max 480px) with Menu / Cart / History,
  * mounted ONCE in the storefront layout. Where it shows is
  * isBottomBarVisible; its links keep locationId (+ tableId) as the pages
- * read them. Navigates with router.push + refresh (not a soft Link
- * navigation) for the same reason the cart pages do: a soft navigation
- * was seen to occasionally leave the old page's tree mounted (Router
- * Cache quirk) — the anchors stay real links for middle-click etc.
+ * read them. Navigates with router.push only (#116): every tab page is
+ * force-dynamic, so a push already fetches it fresh, and each tab has its
+ * own loading.tsx (#113), so the old page never lingers while the next
+ * one loads. The router.refresh() that used to follow (against a Router
+ * Cache quirk seen on Next 16.2, cf67d8e) doubled every tap — the page
+ * rendered twice plus the other tabs' prefetches again — and the
+ * storefront layout has nothing a tab change could leave stale (the
+ * language refreshes on its own change). The cart pages keep their own
+ * refresh. The anchors stay real links for middle-click etc.
  * A tapped tab looks active at once (useOptimistic, in the navigation's
  * transition: the real pathname takes over when it commits, and a failed
  * navigation falls back by itself). useLinkStatus can't do this: this
@@ -307,7 +312,6 @@ export default function OrderBotBar() {
                   startTransition(() => {
                     setPendingTab(tab.value);
                     router.push(href);
-                    router.refresh();
                   });
                 }}
                 sx={(theme) => ({
