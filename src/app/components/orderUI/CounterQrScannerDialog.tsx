@@ -25,6 +25,7 @@ import {
   type CameraFailure,
   type ScannedCode,
 } from "@/app/lib/storefront/counterQrScan";
+import { useCloseOnBack } from "@/app/lib/hooks/useCloseOnBack";
 
 type WrongCode = Exclude<ScannedCode["kind"], "counter">;
 
@@ -114,21 +115,8 @@ export default function CounterQrScannerDialog({
     onCloseRef.current = onClose;
   });
 
-  // Back closes the dialog (DESIGN.md Rule 17): opening adds one history
-  // entry; Back pops it, and closing any other way removes it again.
-  useEffect(() => {
-    window.history.pushState(null, "", window.location.href);
-    let popped = false;
-    function handlePopState() {
-      popped = true;
-      onCloseRef.current();
-    }
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      if (!popped) window.history.back();
-    };
-  }, []);
+  // Back closes the dialog (DESIGN.md Rule 17) — lib/hooks/useCloseOnBack.
+  useCloseOnBack(() => onCloseRef.current());
 
   useEffect(() => {
     if (phase.kind !== "scanning") return;

@@ -57,6 +57,13 @@ export interface OrderUiLabels {
     previousImage: string;
     nextImage: string;
     showImage: (index: number) => string;
+    /** Opening a photo full screen (PhotoViewer): the photo's button
+     *  ("View photo" for one, "View photo 1 of 3" for several), the
+     *  viewer's "1 / 3" and its ×. */
+    viewPhoto: string;
+    viewPhotoOf: (index: number, count: number) => string;
+    photoCount: (index: number, count: number) => string;
+    closePhotos: string;
   };
   lineNotice: {
     priceUpdated: string;
@@ -104,6 +111,10 @@ const ENGLISH: OrderUiLabels = {
     previousImage: "Previous image",
     nextImage: "Next image",
     showImage: (index) => `Show image ${index}`,
+    viewPhoto: "View photo",
+    viewPhotoOf: (index, count) => `View photo ${index} of ${count}`,
+    photoCount: (index, count) => `${index} / ${count}`,
+    closePhotos: "Close photos",
   },
   lineNotice: {
     priceUpdated: "Price updated:",

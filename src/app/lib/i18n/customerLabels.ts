@@ -106,6 +106,10 @@ export function orderUiLabels(
       previousImage: tDetail("previousImage"),
       nextImage: tDetail("nextImage"),
       showImage: (index) => tDetail("showImage", { index }),
+      viewPhoto: tDetail("viewPhoto"),
+      viewPhotoOf: (index, count) => tDetail("viewPhotoOf", { index, count }),
+      photoCount: (index, count) => tDetail("photoCount", { index, count }),
+      closePhotos: tDetail("closePhotos"),
     },
     lineNotice: {
       priceUpdated: tNotice("priceUpdated"),

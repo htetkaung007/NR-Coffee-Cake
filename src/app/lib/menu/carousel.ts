@@ -29,3 +29,23 @@ export function activeSlideFromScroll(
 export function stepSlide(current: number, direction: -1 | 1, count: number): number {
   return Math.min(Math.max(current + direction, 0), Math.max(count - 1, 0));
 }
+
+/** How far (px) a pointer may move, and the row scroll, between press
+ *  and click for it to still count as a tap. */
+export const TAP_SLOP_PX = 10;
+
+/** A press on a photo was a TAP (open the viewer) — not a sideways swipe
+ *  through the photos, not the sheet's drag-to-close, not a scroll-snap
+ *  settling under the finger. Browsers already skip the click after a
+ *  touch pan; this guards the cases that still produce one. */
+export function isTap(gesture: {
+  movedX: number;
+  movedY: number;
+  scrolledBy: number;
+}): boolean {
+  return (
+    Math.abs(gesture.movedX) < TAP_SLOP_PX &&
+    Math.abs(gesture.movedY) < TAP_SLOP_PX &&
+    Math.abs(gesture.scrolledBy) < TAP_SLOP_PX
+  );
+}

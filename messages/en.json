@@ -222,7 +222,11 @@
     "imageOf": "Image {index} of {count}",
     "previousImage": "Previous image",
     "nextImage": "Next image",
-    "showImage": "Show image {index}"
+    "showImage": "Show image {index}",
+    "viewPhoto": "View photo",
+    "viewPhotoOf": "View photo {index} of {count}",
+    "photoCount": "{index} / {count}",
+    "closePhotos": "Close photos"
   },
   "lineNotice": {
     "priceUpdated": "Price updated:",

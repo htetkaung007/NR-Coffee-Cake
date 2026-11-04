@@ -222,7 +222,11 @@
     "imageOf": "ပုံ {count} ပုံအနက် {index}",
     "previousImage": "ယခင်ပုံ",
     "nextImage": "နောက်ပုံ",
-    "showImage": "ပုံ {index} ကို ပြမည်"
+    "showImage": "ပုံ {index} ကို ပြမည်",
+    "viewPhoto": "ဓာတ်ပုံ ကြည့်မည်",
+    "viewPhotoOf": "ပုံ {count} ပုံအနက် {index} ကို ကြည့်မည်",
+    "photoCount": "{index} / {count}",
+    "closePhotos": "ပုံများကို ပိတ်မည်"
   },
   "lineNotice": {
     "priceUpdated": "ဈေးနှုန်း ပြောင်းသွားပါပြီ:",

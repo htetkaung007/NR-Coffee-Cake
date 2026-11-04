@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { activeSlideFromScroll, carouselMode, stepSlide } from "./carousel";
+import {
+  TAP_SLOP_PX,
+  activeSlideFromScroll,
+  carouselMode,
+  isTap,
+  stepSlide,
+} from "./carousel";
 
 describe("carouselMode", () => {
   it("shows the placeholder for no photo", () => {
@@ -43,5 +49,34 @@ describe("stepSlide", () => {
   it("stops at the first and the last slide (no wrap-around)", () => {
     expect(stepSlide(0, -1, 3)).toBe(0);
     expect(stepSlide(2, 1, 3)).toBe(2);
+  });
+});
+
+describe("isTap", () => {
+  const still = { movedX: 0, movedY: 0, scrolledBy: 0 };
+
+  it("is a tap when the finger didn't move and the row didn't scroll", () => {
+    expect(isTap(still)).toBe(true);
+  });
+
+  it("is still a tap with a small jitter under the limit", () => {
+    expect(isTap({ movedX: 6, movedY: -5, scrolledBy: 4 })).toBe(true);
+  });
+
+  it("is not a tap after a sideways swipe (the photos move instead)", () => {
+    expect(isTap({ ...still, movedX: -60 })).toBe(false);
+  });
+
+  it("is not a tap after a vertical drag (the sheet closing)", () => {
+    expect(isTap({ ...still, movedY: 80 })).toBe(false);
+  });
+
+  it("is not a tap when the row scrolled in between (a snap settling)", () => {
+    expect(isTap({ ...still, scrolledBy: -40 })).toBe(false);
+  });
+
+  it("allows up to the limit, not past it", () => {
+    expect(isTap({ ...still, movedX: TAP_SLOP_PX - 1 })).toBe(true);
+    expect(isTap({ ...still, movedX: TAP_SLOP_PX })).toBe(false);
   });
 });
