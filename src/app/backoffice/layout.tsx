@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
@@ -17,6 +18,11 @@ import StaffIntlProvider from "../components/StaffIntlProvider";
 interface Props {
   children?: React.ReactNode;
 }
+
+/** One tab title for the whole staff area — "Backoffice · NR Coffee".
+ *  The Order List still sets its own ("Orders") and the alerts prefix the
+ *  pending count, e.g. "(2) Orders" (DESIGN.md §25). */
+export const metadata: Metadata = { title: "Backoffice" };
 
 export default async function BackOfficeLayout({ children }: Props) {
   const session = await getServerSession(authOptions);

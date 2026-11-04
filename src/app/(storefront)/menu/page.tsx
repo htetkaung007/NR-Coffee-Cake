@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { storefrontTabTitle } from "@/app/lib/storefront/tabTitle";
 import { cookies } from "next/headers";
 import {
   CounterSessionService,
@@ -22,6 +24,11 @@ import { parseOpenPlaceNotice } from "@/app/lib/storefront/openOrderPlace";
 // a stale copy of this route after navigating away and back (e.g. the
 // cart icon then the browser's own Back button).
 export const dynamic = "force-dynamic";
+
+/** The tab title — "Menu · NR Coffee", in the customer's language. */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: await storefrontTabTitle("menu") };
+}
 
 function buildMenuOptions(
   menus: Awaited<ReturnType<typeof MenuService.getMenusForLocation>>["menus"],

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { storefrontTabTitle } from "@/app/lib/storefront/tabTitle";
 import { cookies } from "next/headers";
 import { getLocale, getTranslations } from "next-intl/server";
 import { localizedText } from "@/app/lib/i18n/localizedText";
@@ -28,6 +30,11 @@ import {
 
 // Same reasoning as /menu and /cart — see those pages' own comment.
 export const dynamic = "force-dynamic";
+
+/** The tab title — "History · NR Coffee", in the customer's language. */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: await storefrontTabTitle("history") };
+}
 
 /**
  * Read-only "what have I ordered so far" screen for a customer still

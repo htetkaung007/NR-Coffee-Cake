@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { storefrontTabTitle } from "@/app/lib/storefront/tabTitle";
 import { cookies } from "next/headers";
 import {
   CartSubmitService,
@@ -23,6 +25,11 @@ import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
 
 // Same reasoning as /menu — see that page's dynamic export comment.
 export const dynamic = "force-dynamic";
+
+/** The tab title — "Cart · NR Coffee", in the customer's language. */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: await storefrontTabTitle("cart") };
+}
 
 /**
  * Its own route (not a section within /menu) — per design feedback,

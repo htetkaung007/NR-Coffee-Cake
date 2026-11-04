@@ -4,6 +4,7 @@ import {
   DM_Sans,
   Noto_Sans_Myanmar,
 } from "next/font/google";
+import type { Metadata } from "next";
 import { Providers } from "./components/Providers";
 import "./globals.css";
 
@@ -40,7 +41,15 @@ const myanmarFont = Noto_Sans_Myanmar({
   display: "swap",
 });
 
-// src/app/layout.tsx
+/** The browser tab: "NR Coffee" alone, or "<page> · NR Coffee" when a
+ *  segment sets its own title (the storefront tabs, the Backoffice). The
+ *  icons come from the file conventions next to this layout (favicon.ico,
+ *  icon*.png / .svg, apple-icon.png). */
+export const metadata: Metadata = {
+  title: { default: "NR Coffee", template: "%s · NR Coffee" },
+  description: "NR Coffee — browse the menu and order from your table or the counter.",
+};
+
 export default function RootLayout({
   children,
 }: {
