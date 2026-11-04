@@ -90,6 +90,9 @@ interface CartPageClientProps {
   /** Arrived straight from scanning the counter QR (/counter/continue) —
    *  shows a one-time "you can send now" banner. */
   justScanned: boolean;
+  /** The origin the shop's QR codes are printed with (lib/qr/qrOrigin) —
+   *  the in-app scanner accepts a counter QR from it too. */
+  qrOrigin: string | null;
 }
 
 /** A browser cart line in the row shape CartLineRow renders. */
@@ -129,6 +132,7 @@ export default function CartPageClient({
   session,
   initialSendState,
   justScanned,
+  qrOrigin,
 }: CartPageClientProps) {
   const router = useRouter();
   const t = useTranslations("cart");
@@ -633,7 +637,9 @@ export default function CartPageClient({
         </CartListPanel>
       </CartPageShell>
 
-      {scannerOpen && <CounterQrScannerDialog onClose={closeScanner} />}
+      {scannerOpen && (
+        <CounterQrScannerDialog onClose={closeScanner} qrOrigin={qrOrigin} />
+      )}
 
       <MenuDetailDialog
         open={editingLine !== null}

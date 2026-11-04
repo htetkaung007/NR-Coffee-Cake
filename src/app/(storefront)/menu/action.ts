@@ -21,7 +21,7 @@ import { menuViewerKeyAt } from "@/app/lib/storefront/menuViewer";
 export async function getMenuDetailAction(menuId: number, locationId: number) {
   const parsed = menuDetailSchema.safeParse({ menuId, locationId });
   if (!parsed.success) return null;
-  if ((await checkMenuAccess(parsed.data.locationId)) === "unavailable") {
+  if ((await checkMenuAccess(parsed.data.locationId)).access !== "menu") {
     return null;
   }
   const detail = await MenuService.getMenuDetailForCustomer(

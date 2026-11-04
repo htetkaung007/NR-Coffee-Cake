@@ -218,7 +218,7 @@ export class OrderListService {
       tables: tableOccupancy({
         tables: tables.map((table) => ({
           id: table.id,
-          isCounter: table.isCounter === true,
+          isCounter: table.isCounter,
         })),
         rounds: entries.flatMap((entry) => entry.sessions),
         tablesWithDraft,

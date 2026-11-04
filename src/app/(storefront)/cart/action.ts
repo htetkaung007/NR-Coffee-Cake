@@ -29,7 +29,7 @@ import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
 const safeValidateCart = toSafeResult(async (input: ValidateCartInput) => {
   // The check answers with menu names and prices: the menu-access rule
   // applies (online menu off + no QR session here → refused).
-  if ((await checkMenuAccess(input.locationId)) === "unavailable") {
+  if ((await checkMenuAccess(input.locationId)).access !== "menu") {
     throw new AppError("The shop is unavailable now.", "SHOP_UNAVAILABLE");
   }
   const store = await cookies();

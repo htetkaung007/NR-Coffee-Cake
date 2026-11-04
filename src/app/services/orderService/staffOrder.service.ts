@@ -177,7 +177,7 @@ export class StaffOrderService {
         return {
           locationId: table.locationId,
           tableId: table.id,
-          isCounter: table.isCounter === true,
+          isCounter: table.isCounter,
           billSessionId: null,
         };
       }

@@ -22,6 +22,7 @@ import { CartButtonStatus } from "@/app/components/orderUI/CartButton";
 import ShopUnavailable from "@/app/components/orderUI/ShopUnavailable";
 import { readTableSessionPlace } from "@/app/lib/storefront/tableSessionAccess";
 import { checkMenuAccess } from "@/app/lib/storefront/menuAccessCheck";
+import { qrCodeOrigin } from "@/app/lib/qr/qrOrigin";
 
 // Same reasoning as /menu — see that page's dynamic export comment.
 export const dynamic = "force-dynamic";
@@ -66,9 +67,8 @@ export default async function CartPage({
   if (table) {
     const { tableId, locationId, contributorToken } = table;
     // Scanned in — unless the location is gone or closed.
-    if ((await checkMenuAccess(locationId)) === "unavailable") {
-      return <ShopUnavailable />;
-    }
+    const access = await checkMenuAccess(locationId);
+    if (access.access !== "menu") return <ShopUnavailable refusal={access} />;
     const [
       draftItems,
       activeRound,
@@ -131,13 +131,13 @@ export default async function CartPage({
   const locationId = session?.locationId ?? urlLocationId;
 
   // The browser cart shows menu names and prices: the menu-access rule
-  // applies (online menu off + no QR session here → unavailable).
-  if (
-    locationId === null ||
-    (await checkMenuAccess(locationId)) === "unavailable"
-  ) {
-    return <ShopUnavailable />;
+  // applies (online menu off + no QR session here → refused; no
+  // locationId at all is a dead link).
+  if (locationId === null) {
+    return <ShopUnavailable refusal={{ access: "locationUnavailable" }} />;
   }
+  const access = await checkMenuAccess(locationId);
+  if (access.access !== "menu") return <ShopUnavailable refusal={access} />;
 
   const [shopName, sendState, bill] = await Promise.all([
     LocationService.getShopNameForLocation(locationId),
@@ -157,6 +157,7 @@ export default async function CartPage({
       locationId={locationId}
       shopName={shopName}
       initialSendState={sendState}
+      qrOrigin={qrCodeOrigin()}
       justScanned={scanned === "1"}
       session={
         session && bill

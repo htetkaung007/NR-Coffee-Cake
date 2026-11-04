@@ -14,19 +14,34 @@ import {
   useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import QrCode2Icon from "@mui/icons-material/QrCode2";
 // Type only — erased at build time, so the library itself is still
 // loaded on demand (see start() below).
 import type { IScannerControls } from "@zxing/browser";
 
 import {
   classifyCameraError,
-  parseCounterQrUrl,
+  classifyScannedCode,
   type CameraFailure,
+  type ScannedCode,
 } from "@/app/lib/storefront/counterQrScan";
+
+type WrongCode = Exclude<ScannedCode["kind"], "counter">;
 
 type Phase =
   | { kind: "scanning" }
-  | { kind: "failed"; reason: CameraFailure };
+  | { kind: "failed"; reason: CameraFailure }
+  /** Read a QR that isn't the counter's — the camera stays OFF until
+   *  Try again (the same QR is usually still in front of it). */
+  | { kind: "wrongCode"; reason: WrongCode };
+
+/** Why a scanned QR was refused, in the customer's words
+ *  (scanner.wrongQr<…> in messages/*.json). */
+const WRONG_CODE_MESSAGE = {
+  tableQr: "wrongQrTable",
+  otherAddress: "wrongQrOtherAddress",
+  otherCode: "wrongQrOtherCode",
+} as const satisfies Record<WrongCode, string>;
 
 /** Whether "Try again" can help for each failure (e.g. after allowing
  *  the camera in the browser's settings). What the customer is told is
@@ -60,15 +75,23 @@ function unsupportedReason(): CameraFailure | null {
  * never loads it up front; if it can't load, the fallback explains how to
  * scan with the phone's own camera instead.
  *
- * Scanned text is never trusted: only this shop's counter QR (same
- * origin, the counter route, a key — see parseCounterQrUrl) is followed,
- * as a full navigation in this tab so the route handler can set the scan
- * cookie; the scan landing then brings the customer back to their cart.
+ * Scanned text is never trusted (classifyScannedCode): only this shop's
+ * counter QR — from this page's origin or the one the QR codes are
+ * printed with (`qrOrigin`) — is followed, always to /counter on THIS
+ * origin, as a full navigation in this tab so the route handler can set
+ * the scan cookie; the scan landing then brings the customer back to
+ * their cart. Any other QR stops the camera and says why (a table's QR,
+ * a counter link on another address, anything else); only Try again
+ * starts it again — never on its own, or the same QR still in front of
+ * the camera would make it flicker on and off.
  */
 export default function CounterQrScannerDialog({
   onClose,
+  qrOrigin,
 }: {
   onClose: () => void;
+  /** The origin the shop's QR codes are printed with (lib/qr/qrOrigin). */
+  qrOrigin: string | null;
 }) {
   const t = useTranslations("scanner");
   const tCommon = useTranslations("common");
@@ -80,11 +103,11 @@ export default function CounterQrScannerDialog({
     const reason = unsupportedReason();
     return reason ? { kind: "failed", reason } : { kind: "scanning" };
   });
-  // Bumped to (re)start the camera: Try again, after a wrong code, and
-  // when the page becomes visible again.
+  // Bumped to (re)start the camera: Try again, and when the page becomes
+  // visible again. Never after a wrong code (see the Phase type).
   const [attempt, setAttempt] = useState(0);
-  const [wrongCode, setWrongCode] = useState(false);
   const [cameraLive, setCameraLive] = useState(false);
+  const tryAgainRef = useRef<HTMLButtonElement | null>(null);
 
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -157,16 +180,15 @@ export default function CounterQrScannerDialog({
             // First decode: the camera goes off right away, whatever it read.
             stopped = true;
             release();
-            const url = parseCounterQrUrl(
-              result.getText(),
-              window.location.origin,
-            );
-            if (!url) {
-              setWrongCode(true);
-              setAttempt((count) => count + 1);
+            const scanned = classifyScannedCode(result.getText(), {
+              currentOrigin: window.location.origin,
+              qrOrigin,
+            });
+            if (scanned.kind !== "counter") {
+              setPhase({ kind: "wrongCode", reason: scanned.kind });
               return;
             }
-            window.location.assign(url.toString());
+            window.location.assign(scanned.url.toString());
           },
         );
         if (stopped) release();
@@ -192,11 +214,15 @@ export default function CounterQrScannerDialog({
       document.removeEventListener("visibilitychange", handleVisibility);
       release();
     };
-  }, [phase.kind, attempt]);
+  }, [phase.kind, attempt, qrOrigin]);
+
+  // A refused QR: the camera is off and Try again is the next step.
+  useEffect(() => {
+    if (phase.kind === "wrongCode") tryAgainRef.current?.focus();
+  }, [phase.kind]);
 
   function tryAgain() {
     const reason = unsupportedReason();
-    setWrongCode(false);
     setPhase(reason ? { kind: "failed", reason } : { kind: "scanning" });
     setAttempt((count) => count + 1);
   }
@@ -209,13 +235,15 @@ export default function CounterQrScannerDialog({
           canRetry: CAN_RETRY[phase.reason],
         }
       : null;
+  const wrongCode =
+    phase.kind === "wrongCode"
+      ? { title: t("wrongQrTitle"), detail: t(WRONG_CODE_MESSAGE[phase.reason]) }
+      : null;
   const status = failure
     ? failure.title
-    : wrongCode
-      ? t("wrongCode")
-      : cameraLive
-        ? ""
-        : t("starting");
+    : wrongCode || cameraLive
+      ? ""
+      : t("starting");
 
   return (
     <Dialog
@@ -288,16 +316,45 @@ export default function CounterQrScannerDialog({
           </>
         )}
 
-        {/* Announced to screen readers; always present so each change is. */}
-        <Typography
-          role="status"
-          aria-live="polite"
-          variant={failure ? "h6" : "body2"}
-          color={failure ? "text.primary" : "text.secondary"}
-          sx={{ textAlign: failure ? "left" : "center", minHeight: "1.5em" }}
-        >
-          {status}
-        </Typography>
+        {wrongCode && (
+          <QrCode2Icon
+            aria-hidden
+            fontSize="large"
+            sx={{ color: "text.secondary", alignSelf: "center" }}
+          />
+        )}
+
+        {/* Announced to screen readers; always present so each change is
+            (a refused QR's title and reason included). */}
+        <Box role="status" aria-live="polite" sx={{ minHeight: "1.5em" }}>
+          {wrongCode ? (
+            <Stack spacing={1} sx={{ textAlign: "center" }}>
+              <Typography variant="h6" component="p">
+                {wrongCode.title}
+              </Typography>
+              <Typography variant="body2">{wrongCode.detail}</Typography>
+            </Stack>
+          ) : (
+            <Typography
+              variant={failure ? "h6" : "body2"}
+              color={failure ? "text.primary" : "text.secondary"}
+              sx={{ textAlign: failure ? "left" : "center" }}
+            >
+              {status}
+            </Typography>
+          )}
+        </Box>
+
+        {wrongCode && (
+          <Button
+            ref={tryAgainRef}
+            variant="contained"
+            onClick={tryAgain}
+            sx={{ minHeight: 44 }}
+          >
+            {tCommon("tryAgain")}
+          </Button>
+        )}
 
         {failure && (
           <Stack spacing={2}>

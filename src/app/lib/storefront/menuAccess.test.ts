@@ -16,13 +16,13 @@ describe("menuAccess", () => {
     expect(menuAccess({ ...open, hasQrSession: false, onlineMenuEnabled: true })).toBe("menu");
   });
 
-  it("is unavailable without a QR session when the online menu is off", () => {
+  it("is refused as onlineMenuOff without a QR session when the online menu is off", () => {
     expect(menuAccess({ ...open, hasQrSession: false, onlineMenuEnabled: false })).toBe(
-      "unavailable",
+      "onlineMenuOff",
     );
   });
 
-  it("is unavailable for a location that doesn't exist, whatever else", () => {
+  it("is refused as locationUnavailable for a location that doesn't exist, whatever else", () => {
     expect(
       menuAccess({
         locationExists: false,
@@ -30,10 +30,10 @@ describe("menuAccess", () => {
         hasQrSession: true,
         onlineMenuEnabled: true,
       }),
-    ).toBe("unavailable");
+    ).toBe("locationUnavailable");
   });
 
-  it("is unavailable for an archived location, even with a QR session and the online menu on", () => {
+  it("is refused as locationUnavailable for an archived location, even with a QR session and the online menu on", () => {
     expect(
       menuAccess({
         locationExists: true,
@@ -41,7 +41,18 @@ describe("menuAccess", () => {
         hasQrSession: true,
         onlineMenuEnabled: true,
       }),
-    ).toBe("unavailable");
+    ).toBe("locationUnavailable");
+  });
+
+  it("says the location is gone, not that the menu is off, for an archived location with the switch off", () => {
+    expect(
+      menuAccess({
+        locationExists: true,
+        isArchived: true,
+        hasQrSession: false,
+        onlineMenuEnabled: false,
+      }),
+    ).toBe("locationUnavailable");
   });
 });
 

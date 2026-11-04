@@ -16,6 +16,7 @@ import {
   shouldWarnAttempts,
 } from "../lib/access/loginThrottle";
 import { createUnknownEmailThrottle } from "../lib/access/unknownEmailThrottle";
+import { generateCounterKey } from "../lib/qr/tableAccessKey";
 
 /** A bcrypt hash (cost 10, as every stored password) of a random string
  *  nobody knows — compared against when an email has no password, so a
@@ -313,9 +314,18 @@ export class AppService {
     return location;
   }
 
+  /** A regular table, made the same way TableService.createTable makes
+   *  one — isCounter false and its own access key — so the table card's
+   *  "Create QR" can build its QR. The image itself is NOT made here: no
+   *  file write inside the sign-up transaction (CLAUDE.md Rule 7). */
   private static createDefaultTable(tx: Tx, locationId: number) {
     return tx.table.create({
-      data: { name: "Default Table", locationId },
+      data: {
+        name: "Default Table",
+        locationId,
+        isCounter: false,
+        counterAccessKey: generateCounterKey(),
+      },
     });
   }
 

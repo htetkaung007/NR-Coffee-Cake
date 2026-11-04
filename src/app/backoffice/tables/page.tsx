@@ -44,10 +44,7 @@ export default async function TablesPage() {
         >
           {/* The Counter QR first, then the tables in order. */}
           {[...tables]
-            .sort(
-              (a, b) =>
-                Number(b.isCounter === true) - Number(a.isCounter === true),
-            )
+            .sort((a, b) => Number(b.isCounter) - Number(a.isCounter))
             .map((table) => (
               // Only what the card shows — never the whole row: the access
               // key (counterAccessKey) must not reach the browser.
@@ -58,7 +55,7 @@ export default async function TablesPage() {
                   name: table.name,
                   qrImageUrl: resolveAssetUrl(table.qrImageKey),
                   isArchived: table.isArchived,
-                  isCounter: table.isCounter === true,
+                  isCounter: table.isCounter,
                 }}
               />
             ))}

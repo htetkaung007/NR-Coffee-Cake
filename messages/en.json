@@ -106,8 +106,10 @@
     "cartWithCount": "Cart, {count, plural, one {# item} other {# items}}"
   },
   "shop": {
-    "unavailableTitle": "The shop is unavailable now",
-    "unavailableHint": "Scan the QR code at your table or the counter to order.",
+    "menuInCafeTitle": "Our menu is in the café",
+    "menuInCafeHint": "Visit us and scan the QR at your table or the counter to see the menu and order.",
+    "linkGoneTitle": "This menu link doesn't work any more",
+    "seeOurMenus": "See our menus",
     "openingOrder": "Opening your order"
   },
   "approval": {
@@ -239,9 +241,12 @@
   "scanner": {
     "title": "Scan counter QR",
     "pointCamera": "Point your camera at the QR code on the counter",
-    "wrongCode": "This isn't this shop's counter QR. Point your camera at the QR code on the counter.",
+    "wrongQrTitle": "This isn't the counter QR",
+    "wrongQrTable": "This is a table's QR. To order at the counter, scan the QR at the counter.",
+    "wrongQrOtherAddress": "Scan it with your phone's camera instead.",
+    "wrongQrOtherCode": "This QR code isn't from our shop.",
     "starting": "Starting the camera…",
-    "phoneCameraHint": "You can also scan the counter QR with your phone's camera app — your cart will still be here.",
+    "phoneCameraHint": "Scan the QR with your phone's camera app instead.",
     "permissionDeniedTitle": "Camera permission was blocked",
     "permissionDeniedDetail": "To scan here, allow camera access for this site in your browser's settings, then tap Try again.",
     "noCameraTitle": "No camera available",
@@ -259,7 +264,7 @@
     "generic": "Something went wrong. Please try again.",
     "VALIDATION_ERROR": "Please check your order and try again.",
     "NOT_FOUND": "We couldn't find that. Please refresh and try again.",
-    "SHOP_UNAVAILABLE": "The shop is unavailable now.",
+    "SHOP_UNAVAILABLE": "The menu isn't available online right now.",
     "NO_SESSION": "We couldn't find your order. Scan the counter QR code again.",
     "TABLE_SESSION_CLOSED": "This table's order was closed. Scan the QR code again to start a new one.",
     "NO_WAITING_ORDER": "There's no order waiting at this table.",

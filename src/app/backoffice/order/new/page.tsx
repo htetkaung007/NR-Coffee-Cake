@@ -68,7 +68,7 @@ export default async function NewStaffOrderPage({
       tables={tables.map((table) => ({
         id: table.id,
         name: table.name,
-        isCounter: table.isCounter === true,
+        isCounter: table.isCounter,
       }))}
       menus={menus.map((menu) => ({
         id: menu.id,

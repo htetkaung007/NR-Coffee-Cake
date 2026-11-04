@@ -91,9 +91,8 @@ export default async function MenuPage({
     const { tableId, locationId, contributorToken } = table;
     // Scanned in: the menu works, online menu on or off — unless the
     // location is gone or closed (lib/storefront/menuAccess).
-    if ((await checkMenuAccess(locationId)) === "unavailable") {
-      return <ShopUnavailable />;
-    }
+    const access = await checkMenuAccess(locationId);
+    if (access.access !== "menu") return <ShopUnavailable refusal={access} />;
     const [
       menuData,
       popularMenuIds,
@@ -148,13 +147,13 @@ export default async function MenuPage({
 
   // The online menu IS this page: with no QR session here it shows only
   // while the owner has it switched on (lib/storefront/menuAccess). The
-  // server decides — "unavailable" loads and sends no menu data.
-  if (
-    effectiveLocationId === null ||
-    (await checkMenuAccess(effectiveLocationId)) === "unavailable"
-  ) {
-    return <ShopUnavailable />;
+  // server decides — a refusal loads and sends no menu data (no
+  // locationId at all is a dead link too).
+  if (effectiveLocationId === null) {
+    return <ShopUnavailable refusal={{ access: "locationUnavailable" }} />;
   }
+  const access = await checkMenuAccess(effectiveLocationId);
+  if (access.access !== "menu") return <ShopUnavailable refusal={access} />;
 
   const [menuData, popularMenuIds, shopName, bill] = await Promise.all([
     MenuService.getMenusForLocation(effectiveLocationId),

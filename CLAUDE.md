@@ -485,8 +485,13 @@ companyId }`, a relation filter (`location: { companyId }`), or a chain
     session, or a current Table contributor token for a table there) →
     the page works as always, ON or OFF;
   - no QR session + ON → the menu as always (browse, browser cart);
-  - no QR session + OFF, or the location missing / archived → only "The
-    shop is unavailable now" (ShopUnavailable), no menu data loaded.
+  - no QR session + OFF → refused as `onlineMenuOff`; the location
+    missing / archived (whatever else) → `locationUnavailable` — no menu
+    data loaded either way. The reason only picks the words
+    (ShopUnavailable: "Our menu is in the café" + the location's name, or
+    "This menu link doesn't work any more" + a link to `/`);
+    `checkMenuAccess` returns `{ access, shopName? }` — callers refuse on
+    anything but `access === "menu"`.
 - **The server decides.** `checkMenuAccess` (`lib/storefront/
 menuAccessCheck.ts`) gathers the facts with the existing checks only
   (CartSubmitService.getSendState, TableDraftService

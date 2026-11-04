@@ -554,11 +554,22 @@ double-taps), or an optimistic update. A disabled control shows WHY
     warning role), **"N in stock"** (5+, neutral).
 - **Online menu = the /menu page** (`lib/storefront/menuAccess`): with
   the owner's switch ON, anyone sees the menu as it is today; OFF, a
-  visitor who hasn't scanned the QR (and any missing or closed location)
-  gets ONE simple screen instead — "The shop is unavailable now" + "Scan
-  the QR code at your table or the counter to order." (customer theme,
-  `role="status"`, no menu data). The /cart page follows the same rule.
-  Ordering always needs the QR, ON or OFF.
+  visitor who hasn't scanned the QR gets a screen instead — never menu
+  data, and never words that make an open shop sound closed
+  (`ShopUnavailable`, customer theme, `role="status"`, no bottom bar,
+  max 360px, centred). The rule says WHY, and only the words differ:
+  - **online menu off** (the shop is open): a café icon (aria-hidden,
+    primary — friendly, not a warning), the location's name (subtitle2),
+    "Our menu is in the café" / "မီနူးကို ဆိုင်မှာ ကြည့်လို့ရပါတယ်" (h6)
+    and "Visit us and scan the QR at your table or the counter to see the
+    menu and order." (body2);
+  - **location missing or archived** (a dead link): a broken-link icon,
+    "This menu link doesn't work any more" / "ဒီ မီနူး link ကို
+    မသုံးနိုင်တော့ပါ" and a contained "See our menus" button (≥ 44px) to
+    the landing page `/`.
+  The /cart page follows the same rule; a refused cart check or menu
+  detail says "The menu isn't available online right now."
+  (errors.SHOP_UNAVAILABLE). Ordering always needs the QR, ON or OFF.
 - **Landing page `/`** (customer side, storefront layout — customer
   theme, language card, EN | မြန်မာ switch top-right): centred, max
   480px — the shop's initials badge (56px, primary) + name (h5), then
@@ -589,6 +600,19 @@ double-taps), or an optimistic update. A disabled control shows WHY
   `primary.main` fill + contrastText, same 1px border (no jump). The row
   lines up with the search field above (same padding). role="tab",
   aria-selected and the arrow keys come from Tabs.
+- **In-app counter-QR scanner** (the cart's "Scan counter QR",
+  `CounterQrScannerDialog`): it follows ONLY this shop's counter QR — from
+  this page's address or the one the QR codes are printed with
+  (`lib/qr/qrOrigin`) — and always goes to /counter on THIS address, so the
+  cart stays (`lib/storefront/counterQrScan` classifyScannedCode). **A wrong
+  QR is its own state:** the camera goes OFF and stays off, and the dialog
+  shows a QR icon (aria-hidden), "This isn't the counter QR" and one line
+  saying what was scanned — a table's QR, a counter QR on another address
+  ("Scan it with your phone's camera instead."), or anything else ("This QR
+  code isn't from our shop.") — in the `role="status"` region, plus a
+  primary **Try again** (≥ 44px, focused) and the ×. Only Try again starts
+  the camera again (never on its own — the same QR in front of it would make
+  it flicker); no animation.
 - **"Scanned ✓" note** (Counter menu after a QR scan): shows, then after
   ~4s fades out (opacity, ease-out) and only then leaves the layout (no
   height animation); × closes it; reduced motion just removes it. The
@@ -1032,7 +1056,7 @@ bills and table sessions are untouched; only new scans need the new QR.
 
 ---
 
-*Last synced 2026-11-03 (#117): Alert settings — five synthesized sounds and Once / 3 / 5 / 10 / 30s repeat, per device; a popover from sm, a bottom sheet on phones. Earlier (#115): the new-order alert repeats every 5s until acknowledged on this device (detail page, banner, toast's View, Silence) or nothing waits; the Order List toast stays while ringing; the locked-sound hint on every Backoffice page. Earlier (#114): PasswordField's eye button; the alert is three beeps at 80% by default. Earlier (#113): customer tabs feel instant — the tapped tab looks active at once, delayed-fade skeletons on Menu, Cart, History and the receipt. Earlier (#111): the customer bar becomes a right-side rail on landscape touch screens (touchTabletLandscapeMedia, centred below the top bar, 66px, items 56 × ≥ 92px, Myanmar captions wrap at a U+200B; barClearanceSx / railClearanceSx). Earlier (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
+*Last synced 2026-11-04 (#120): the online-menu-off screen is friendly ("Our menu is in the café"), a dead location link gets its own screen with "See our menus"; #119: the in-app scanner's wrong-QR state. Earlier (#117): Alert settings — five synthesized sounds and Once / 3 / 5 / 10 / 30s repeat, per device; a popover from sm, a bottom sheet on phones. Earlier (#115): the new-order alert repeats every 5s until acknowledged on this device (detail page, banner, toast's View, Silence) or nothing waits; the Order List toast stays while ringing; the locked-sound hint on every Backoffice page. Earlier (#114): PasswordField's eye button; the alert is three beeps at 80% by default. Earlier (#113): customer tabs feel instant — the tapped tab looks active at once, delayed-fade skeletons on Menu, Cart, History and the receipt. Earlier (#111): the customer bar becomes a right-side rail on landscape touch screens (touchTabletLandscapeMedia, centred below the top bar, 66px, items 56 × ≥ 92px, Myanmar captions wrap at a U+200B; barClearanceSx / railClearanceSx). Earlier (#110): the menu form's Photos card (big main photo, ★ / ⇄ / 🗑 on the small ones, dashed add tiles, the preview's swipe caption) and the Add-ons box's "Connect add-on group" button (last and full width on phones). Earlier (#109): up to 3 menu photos — cards and lines show the main one; the menu detail's swipe carousel (scroll-snap, dots, ‹ › on laptops, a11y, reduced motion); the menu form's photo rows (Main chip, ← → remove). Earlier (#106b): Reports → Items' view funnel line (Viewers · Ordered · Viewed, not ordered · Rate). Earlier (#105): the customer menu card's "Popular" badge (top-left, secondary, words only). Earlier (#103): New Order's Current order keeps to its content (capped at the viewport); Settings fluid up to 960px with 2-column forms from md. Earlier (#102): submit buttons lock on the first tap (useSubmitLock) and show busy / done labels (SubmitButton). Earlier (#101): the Backoffice Menus status chips. Earlier (#100): the Delete menu dialog and the rename hint. Earlier (#99): Myanmar fields show the same character counter as their English twins; Settings in the shared centred column; sold-out menus last in both menu grids. Earlier (#98): the Backoffice in Myanmar (#98) — the account menu's Language row (BO_LOCALE), the print voucher's EN | မြန်မာ, Myanmar Backoffice layout rules. Earlier (2026-10-19): reducedMotionMedia / reducedMotionQuery, the language switch label at every width (#97k); one 375px page minimum on <body> for both surfaces (#97j); visually hidden text only via visuallyHiddenSx (#97i); Backoffice height owner = the shell (100dvh, #97h); touch tablets (#97–#97g) — `touchTabletMedia`
 (+ `touchScreenMedia` for phones too): smaller grid MINs (customer 212px,
 max 3 × ≥ 150px in portrait (CSS px — an "800px" tablet is ~600px),
 Backoffice Menus 170px), the Add-ons bottom sheet (drag to close, Edit

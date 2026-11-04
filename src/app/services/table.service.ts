@@ -1,4 +1,3 @@
-import { randomBytes } from "crypto";
 import { prisma } from "../utils/prisma";
 import { AppError, NotFoundError, ValidationError } from "../lib/errors";
 import { generateQrCodeWithLogo } from "@/app/lib/qr/qrCode";
@@ -8,21 +7,13 @@ import { canActAtLocation } from "@/app/lib/access/ownership";
 import type { LocatedScope } from "@/app/lib/access/rolePolicy";
 import { cleanImageUpload } from "@/app/lib/storage/cleanImageUpload";
 import { removeStoredFiles } from "@/app/lib/storage/removeStoredFiles";
+import { generateCounterKey } from "@/app/lib/qr/tableAccessKey";
 
 // Name is fixed for the counter "table" row — it isn't a real seated
 // table a customer picks a name for, so locking it here (Service
 // layer) means the rule holds even if something calls createTable
 // directly, not just through the create-table form.
 const COUNTER_TABLE_NAME = "Counter QR code";
-
-/** Short, URL-safe, unguessable key embedded in a table's (Counter or
- *  regular) printed QR link (e.g. /counter?tableId=5&key=<this> for
- *  Counter, /table?tableId=8&key=<this> for a regular table).
- *  Regenerating it invalidates every previously-printed copy of that
- *  QR at once — see TableService.rotateAccessKey. */
-function generateCounterKey() {
-  return randomBytes(6).toString("base64url");
-}
 
 /**
  * Table domain — CRUD for a Location's physical tables. Split into its
@@ -245,7 +236,7 @@ export class TableService {
     table: {
       id: number;
       locationId: number;
-      isCounter: boolean | null;
+      isCounter: boolean;
       counterAccessKey: string | null;
       qrImageKey: string | null;
     },
@@ -261,7 +252,7 @@ export class TableService {
     const qrContent = TableService.buildQrCodeContent(
       table.locationId,
       table.id,
-      table.isCounter === true,
+      table.isCounter,
       table.counterAccessKey,
     );
     // An uploaded logo is checked by its content first (a non-image — or

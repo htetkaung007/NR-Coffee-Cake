@@ -8,7 +8,13 @@
 
 import { z } from "zod";
 
-export type MenuAccess = "menu" | "unavailable";
+/** "menu", or WHY it's refused — the refusal is the same either way
+ *  (no menu data); only the words the customer sees differ:
+ *  - "onlineMenuOff": the shop is open, only its online menu is off —
+ *    the customer may come in and scan a QR;
+ *  - "locationUnavailable": no such location, or it's archived — the
+ *    link itself is dead. */
+export type MenuAccess = "menu" | "onlineMenuOff" | "locationUnavailable";
 
 const idParamSchema = z.coerce.number().int().positive();
 
@@ -31,9 +37,9 @@ export function menuAccess(facts: {
   isArchived: boolean;
 }): MenuAccess {
   // A missing or closed location has no menu for anyone.
-  if (!facts.locationExists || facts.isArchived) return "unavailable";
+  if (!facts.locationExists || facts.isArchived) return "locationUnavailable";
   // Scanned in the shop: the menu works as always, on or off.
   if (facts.hasQrSession) return "menu";
   // Not scanned: only while the owner has the online menu on.
-  return facts.onlineMenuEnabled ? "menu" : "unavailable";
+  return facts.onlineMenuEnabled ? "menu" : "onlineMenuOff";
 }

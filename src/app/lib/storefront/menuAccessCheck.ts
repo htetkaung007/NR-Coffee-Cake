@@ -9,7 +9,15 @@ import {
   CONTRIBUTOR_TOKEN_COOKIE,
 } from "./orderSessionCookie";
 import { parseContributorTokenMap } from "./contributorToken";
-import { menuAccess, type MenuAccess } from "./menuAccess";
+import { menuAccess } from "./menuAccess";
+
+/** checkMenuAccess's answer: the menu, or why not. With "onlineMenuOff"
+ *  comes the location's name (the storefront's shop name) for the
+ *  friendly screen — from the row the check reads anyway. */
+export type MenuAccessResult =
+  | { access: "menu" }
+  | { access: "onlineMenuOff"; shopName: string }
+  | { access: "locationUnavailable" };
 
 /**
  * The server side of the menu-access rule (menuAccess): looks the
@@ -22,34 +30,30 @@ import { menuAccess, type MenuAccess } from "./menuAccess";
  *
  * Every place that shows menu data without a QR session calls this
  * first: the menu and cart pages, the menu detail and cart-check
- * actions. The server decides — "unavailable" means no menu data is
- * loaded or sent.
+ * actions. The server decides — anything but "menu" means no menu data
+ * is loaded or sent (the reason only picks the words — ShopUnavailable).
  */
 export async function checkMenuAccess(
   locationId: number | null,
-): Promise<MenuAccess> {
+): Promise<MenuAccessResult> {
   const location = locationId
     ? await LocationService.getLocationById(locationId)
     : null;
-  if (!location) {
-    return menuAccess({
-      locationExists: false,
-      isArchived: false,
-      onlineMenuEnabled: false,
-      hasQrSession: false,
-    });
-  }
+  if (!location) return { access: "locationUnavailable" };
   // Only look for a session when it would change the answer.
   const hasQrSession =
     !location.isArchived && !location.onlineMenuEnabled
       ? await hasQrSessionAt(location.id)
       : false;
-  return menuAccess({
+  const access = menuAccess({
     locationExists: true,
     isArchived: location.isArchived,
     onlineMenuEnabled: location.onlineMenuEnabled,
     hasQrSession,
   });
+  return access === "onlineMenuOff"
+    ? { access, shopName: location.name }
+    : { access };
 }
 
 /** Does this browser hold a QR session for `locationId` — the Counter
