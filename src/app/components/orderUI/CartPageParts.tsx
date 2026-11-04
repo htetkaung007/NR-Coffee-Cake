@@ -116,7 +116,7 @@ export function CartPageHeader({
       <Stack>
         <Typography variant="h6">{title}</Typography>
         <Typography variant="caption" color="text.secondary">
-          {shopName ?? "Café Maw"}
+          {shopName ?? "Café Shop"}
         </Typography>
       </Stack>
     </Stack>

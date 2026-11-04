@@ -1,6 +1,6 @@
 /**
  * The shop's initials for the language card's badge: the first letter of
- * up to two words ("Café Maw" → "CM"). A "letter" is one base character
+ * up to two words ("Cafe Shop" → "CM"). A "letter" is one base character
  * with its combining marks, so a Burmese consonant keeps its vowel signs
  * ("ကော်ဖီ" → "ကော်"). Shop data — never translated. Pure.
  */

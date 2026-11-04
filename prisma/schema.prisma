@@ -100,7 +100,12 @@ model Table {
   // Counter sessions never read this field, since each Counter phone
   // is already its own independent session with nothing to "reopen".
   contributorEpoch Int            @default(0)
-  isCounter        Boolean?
+  // true = the location's Counter QR (one per location, its own
+  // counterAccessKey); false = a regular table. Never null: the Table QR
+  // lookups filter `isCounter: false`, and NULL never equals false in
+  // SQL, so a null row (the sign-up's "Default Table" used to get one)
+  // could never be scanned.
+  isCounter        Boolean        @default(false)
   createdAt        DateTime       @default(now())
   updateTime       DateTime       @updatedAt
   isArchived       Boolean        @default(false)

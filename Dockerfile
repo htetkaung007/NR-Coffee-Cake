@@ -4,7 +4,7 @@
 FROM node:20-slim
 
 # ===== Line 2: System libraries install =====
-# Café Maw project က `sharp` (image processing library) ကို သုံးထားတယ်
+#  Cafe Shop project က `sharp` (image processing library) ကို သုံးထားတယ်
 # sharp က native binary (C++ code) ကို compile လုပ်ဖို့ system-level
 # libraries (build-essential, python3, libvips-dev) လိုအပ်ပါတယ်
 # git ကိုလည်း ထည့်တယ် — Claude Code က git diff/commit တွေ လုပ်ရနိုင်လို့

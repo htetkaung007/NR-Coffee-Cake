@@ -91,7 +91,7 @@ export default function StorefrontLanding({
             component="h1"
             sx={{ overflowWrap: "anywhere" }}
           >
-            {shopName ?? "Café Maw"}
+            {shopName ?? "Café Shop"}
           </Typography>
         </Box>
 
@@ -130,7 +130,11 @@ export default function StorefrontLanding({
               >
                 <Typography
                   variant="body1"
-                  sx={{ flex: "1 1 8rem", minWidth: 0, overflowWrap: "anywhere" }}
+                  sx={{
+                    flex: "1 1 8rem",
+                    minWidth: 0,
+                    overflowWrap: "anywhere",
+                  }}
                 >
                   {location.name}
                 </Typography>

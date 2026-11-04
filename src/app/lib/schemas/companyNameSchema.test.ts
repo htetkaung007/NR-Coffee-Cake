@@ -9,11 +9,11 @@ const errorOf = (value: unknown) => {
 
 describe("companyNameSchema", () => {
   it("trims leading and trailing whitespace", () => {
-    expect(parse("  Café Maw  ").data).toBe("Café Maw");
+    expect(parse("  Cafe Shop   ").data).toBe("Cafe Shop");
   });
 
   it("collapses inner runs of whitespace to one space", () => {
-    expect(parse("Café \t  Maw\n Yangon").data).toBe("Café Maw Yangon");
+    expect(parse("Cafe \t  Shop\n Yangon").data).toBe("Cafe Shop Yangon");
   });
 
   it("rejects an empty name", () => {

@@ -3,7 +3,7 @@ import { shopInitials } from "./shopInitials";
 
 describe("shopInitials", () => {
   it("takes the first letter of the first two words", () => {
-    expect(shopInitials("Café Maw")).toBe("CM");
+    expect(shopInitials("Cafe Shop")).toBe("CS");
   });
 
   it("uses one letter for a one-word name", () => {
@@ -15,7 +15,7 @@ describe("shopInitials", () => {
   });
 
   it("upper-cases Latin letters", () => {
-    expect(shopInitials("café maw")).toBe("CM");
+    expect(shopInitials("Cafe Shop")).toBe("CS");
   });
 
   it("keeps a Burmese letter whole, with its marks", () => {

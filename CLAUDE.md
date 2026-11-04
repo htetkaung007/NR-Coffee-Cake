@@ -1,10 +1,10 @@
-# Café Maw (NR Coffee Cake) — Project Rules for Claude Code
+# Cafe Shop (NR Coffee Cake) — Project Rules for Claude Code
 
 This file is the standing reference for how this codebase is organized
 and why. Read this before making changes — it captures decisions made
 deliberately, not accidents to "clean up."
 
-@DESIGN.md covers what the user *sees and feels* (animation, UI/UX,
+@DESIGN.md covers what the user _sees and feels_ (animation, UI/UX,
 accessibility, responsive layout) — read it before any UI change. This
 file covers code structure/architecture only.
 
@@ -190,7 +190,7 @@ left in a broken/inconsistent state?"
   (lib/menu/menuImageSlots); a photo left out is removed. The rule is
   `lib/menu/menuImagePlan` (checkImageSlots — Zod in the action AND the
   service — and planMenuImages): too many → MENU_IMAGES_TOO_MANY, a
-  broken list → MENU_IMAGES_INVALID (bo.errors.*), a kept id that isn't
+  broken list → MENU_IMAGES_INVALID (bo.errors.\*), a kept id that isn't
   this menu's → NotFoundError. Order: check + resize every new file →
   write them → ONE transaction (menu row locked; rows deleted and
   created again, so a reorder never trips @@unique([menuId, position]);
@@ -325,7 +325,7 @@ FileStorageService interface (`lib/storage/FileStorageService.ts`:
   UPLOAD_DIR.
 - **"s3"** — `S3CompatibleStorageService`, kept as the path back to the
   cloud: MinIO, AWS S3 and DigitalOcean Spaces speak the same S3 API, so
-  moving there is a .env change (MINIO_*), not a code change.
+  moving there is a .env change (MINIO\_\*), not a code change.
 
 All config values are read through the centralized config object in
 utils/config/index.ts — never process.env.X directly in a Service or
@@ -367,7 +367,7 @@ flag). Everything else still goes through `utils/config`.
   never keys. A new window (the QR print tab) needs an absolute URL:
   `new URL(path, window.location.origin)`.
 - **Menu photos are resized on upload** (`cleanImageUpload(input,
-  "menuPhoto")`): format checked from the content (JPEG, PNG, WebP), turned
+"menuPhoto")`): format checked from the content (JPEG, PNG, WebP), turned
   upright (EXIF), metadata stripped, ≤ 1200px wide (never enlarged), WebP
   quality 80. A QR logo ("qrLogo") keeps its format; the QR PNG is unchanged.
 - **Upload size — ONE place, `lib/storage/uploadLimits.ts`:**
@@ -379,9 +379,9 @@ flag). Everything else still goes through `utils/config`.
 - **UPLOAD_DIR / STORAGE_PROVIDER are checked at startup**
   (`utils/config/storageConfig.ts`, parsed on first use of
   `config.storage` and read by `src/instrumentation.ts`'s register()) — a
-  bad value stops the server with a clear message. UPLOAD_DIR: development
+  bad value stops the server with a clear message. UPLOAD*DIR: development
   defaults to `./.uploads` (git-ignored); production requires it, absolute.
-  MINIO_* are required only for "s3". Not checked at import, because
+  MINIO*\* are required only for "s3". Not checked at import, because
   `next build` imports the config with NODE_ENV=production.
 - **Redirects are RELATIVE — never built from request.url.** Under
   `next start` request.url carries the server's own host (localhost),
@@ -466,7 +466,7 @@ flag). Everything else still goes through `utils/config`.
   (`ManagerService.createManagerForLocation`), never by sign-up.
 - **Every client-supplied id is checked against the session's company
   (and a manager's location) inside the Service** — `where: { id,
-  companyId }`, a relation filter (`location: { companyId }`), or a chain
+companyId }`, a relation filter (`location: { companyId }`), or a chain
   lookup — with the companyId / scope passed in by the action from the
   guard, never from client input. "Doesn't exist" and "belongs to someone
   else" are the same NotFoundError. A manager may act only at their own
@@ -488,7 +488,7 @@ flag). Everything else still goes through `utils/config`.
   - no QR session + OFF, or the location missing / archived → only "The
     shop is unavailable now" (ShopUnavailable), no menu data loaded.
 - **The server decides.** `checkMenuAccess` (`lib/storefront/
-  menuAccessCheck.ts`) gathers the facts with the existing checks only
+menuAccessCheck.ts`) gathers the facts with the existing checks only
   (CartSubmitService.getSendState, TableDraftService
   .hasCurrentTokenAtLocation). Every place that shows menu data without a
   QR session calls it first: the /menu and /cart pages,
@@ -607,7 +607,7 @@ flag). Everything else still goes through `utils/config`.
   requireStaff first) sets `BO_LOCALE` ("en" | "my", default "en";
   httpOnly, sameSite lax, 1 year, `secure` from the request) +
   router.refresh(). Never localStorage. Every staff word is `bo.*` in
-  messages/*.json: sidebar, top bar, menus, pages, dialogs, snackbars,
+  messages/\*.json: sidebar, top bar, menus, pages, dialogs, snackbars,
   aria-labels, the permissions catalog's words
   (`bo.permissions.<KEY>`, `askOwner.<KEY>` — lib/access/permissions.ts
   keeps only keys), staff enum labels (`bo.voidReason`,
@@ -686,7 +686,7 @@ flag). Everything else still goes through `utils/config`.
   response; errors logged, never thrown) — never by
   getStaffMenuDetailAction.
 - **The viewer key** (`lib/menu/menuViews` pure, `lib/storefront/
-  menuViewer` server lookup): a QR session at the location only — the
+menuViewer` server lookup): a QR session at the location only — the
   Table contributorToken ("table:<token>") or the Counter bill root
   ("bill:<billSessionId ?? id>"), stored as its sha256 hex. No QR
   session (online visitor) → no key → not counted. One per customer per
@@ -834,7 +834,7 @@ business reason?"
   dev dependencies wherever the app is built (a `--omit=dev` install
   would fail at postinstall).
 - **Line endings are LF everywhere** (`.gitattributes`: `* text=auto
-  eol=lf`, images binary) — Windows, the Linux container and the server
+eol=lf`, images binary) — Windows, the Linux container and the server
   alike; never commit a CRLF flip.
 - **Vitest** (`vitest.config.mts` at the repo root). Run `npm test` once,
   or `npm run test:watch` while working.

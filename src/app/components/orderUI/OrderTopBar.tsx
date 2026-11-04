@@ -72,9 +72,14 @@ export default function OrderTopBar({
         <Typography
           variant="h6"
           noWrap
-          sx={{ flexGrow: 1, minWidth: 0, fontWeight: 700, color: "text.primary" }}
+          sx={{
+            flexGrow: 1,
+            minWidth: 0,
+            fontWeight: 700,
+            color: "text.primary",
+          }}
         >
-          {shopName ?? "Café Maw"}
+          {shopName ?? " Cafe Shop"}
         </Typography>
 
         {awaitingApproval && (
